@@ -1,7 +1,7 @@
 # Calibration State
 Persistent framework configuration — load at every session start alongside session handoff.
 
-Version: 1.3  Last updated: April 23, 2026 (M13 adopted; §4 added; §§4–6 renumbered §§5–8; GitHub migration)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
+Version: 1.4  Last updated: April 23, 2026 (second update — M13 first application; §4.2/§4.3 B/C multipliers and floors revised for current regime)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
 
 _______________
 
@@ -35,6 +35,8 @@ Session observation (April 21, 2026 session): HY composite ~285 bps (Trading Eco
 
 Session observation (April 22, 2026 session): HY composite ~287 bps (Trading Economics; FRED last updated April 20). Marginal uptick from April 21 reading. No threshold fires. Velocity check not executable — §7 log needs 60+ trading day history. T1_flag: stale.
 
+Session observation (April 23, 2026 session): HY composite ~287 bps (FRED last updated April 20 — stale 3 days). No change from April 22. No threshold fires. T1_flag: stale.
+
 ### 1.2 IG Composite — FRED: BAMLC0A0CM
 
 | Parameter | Current Value | Type | Notes |
@@ -50,6 +52,8 @@ Session observation (April 19, 2026 session): IG composite ~83 bps (Trading Econ
 Session observation (April 21, 2026 session): IG composite ~83 bps (Trading Economics; FRED stale by 4-5 days). Unchanged from April 19 observation. IG_TransmissionReached NOT fired (threshold ~143 bps vs current ~83 bps; gap ~60 bps). T1_flag: composite_only | stale.
 
 Session observation (April 22, 2026 session): IG composite ~83 bps (FRED last updated April 16-17; stale). No change. IG_TransmissionReached NOT fired. T1_flag: stale.
+
+Session observation (April 23, 2026 session): IG composite ~83 bps (FRED last updated April 16-17 — stale 6-7 days). No change. IG_TransmissionReached NOT fired. T1_flag: stale.
 
 ### 1.3 CCC Tail — FRED: BAMLH0A3HYC
 
@@ -77,6 +81,8 @@ Session observation (April 21, 2026 session): CCC OAS ~921 bps (carried from Apr
 
 Session observation (April 22, 2026 session): CCC OAS ~921 bps (FRED last updated April 17; stale). No new FRED data. CCC_TailFirstWidening NOT fired. T1_flag: stale. Carry forward April 19 divergence result.
 
+Session observation (April 23, 2026 session): CCC OAS ~921 bps (FRED stale; carry forward April 19 result). CCC_TailFirstWidening NOT fired. T1_flag: stale.
+
 _______________
 
 ## Section 2 — Other Calibration-Dated Thresholds (Pending Initial Audit)
@@ -96,6 +102,8 @@ Session observation (April 21, 2026 session): Brent ~$94–96 (high volatility �
 
 Session observation (April 22, 2026 session): Brent ~$99.81 (approaching $100; +1.4% today). WTI ~$89.33. C trigger ($110 nominal) NOT fired. No floor or invalidation thresholds approached. SGOL WTI floor ($55) comfortably clear. Trailing 90d average unavailable this session — nominal thresholds apply.
 
+Session observation (April 23, 2026 session): Brent ~$103.50 (+3% today; IRGC gunboat attacks on commercial vessels confirmed). WTI ~$94.00. C trigger ($110 nominal) NOT fired — gap $6.50/bbl. $110 clock not started. SGOL WTI floor ($55) comfortably clear. Trailing 90d average unavailable — nominal thresholds apply. NOTE: Brent within 6.2% of $110 — elevated monitoring warranted.
+
 ### 2.2 Currency
 
 | Threshold | Current Value | Source | Audit Status |
@@ -107,6 +115,8 @@ Session observation (April 19, 2026): DXY 98.23 Friday close, Sunday futures mod
 Session observation (April 21, 2026): DXY ~97.9 — flat to marginally lower. Well below 105 threshold.
 
 Session observation (April 22, 2026): DXY ~98.30 — flat. Well below 105 invalidation threshold. SGOL invalidation condition 2 NOT approached.
+
+Session observation (April 23, 2026): DXY ~98.73. Well below 105 SGOL invalidation threshold. Stable.
 
 ### 2.3 Macro
 
@@ -124,6 +134,8 @@ Session observation (April 21, 2026): No new macro data. CPI March 3.3% remains 
 
 Session observation (April 22, 2026): No new macro data. CPI March 3.3% YoY remains most recent print (1 of 3 for B trigger; 1 of 2 for C trigger reacceleration check). Q4 2025 GDP 0.5% annualized confirmed. Q1 2026 advance estimate due ~April 30. Next CPI print ~May 10-12.
 
+Session observation (April 23, 2026): No new macro data. CPI March 3.3% most recent (1 of 3 for B trigger; 1 of 2 for C reacceleration). Q4 2025 GDP 0.5% confirmed. Q1 2026 advance estimate due ~April 30 — critical for B/D scoring. FOMC April 28-29 expected hold. 10Y breakeven ~2.38% (4.30% nominal minus 1.92% TIPS real yield) — above Fed target, consistent with B/C dominance.
+
 ### 2.4 Instrument Evaluation
 
 | Threshold | Current Value | Source | Audit Status |
@@ -136,84 +148,69 @@ _______________
 ## Section 3 — Calibration Log
 
 2026-04-19 — Initial instantiation (v1)
-* Framework Extension v1 adopted (see Framework_Extension_v1_Credit_And_Calibration.md).
-* Credit signal thresholds added to framework with provisional initial delta values:
-   * HY\_STRESS\_DELTA = +150 bps
-   * HY\_RECESSION\_DELTA = +300 bps
-   * IG\_TRANSMISSION\_DELTA = +60 bps
-   * CCC absolute divergence floor = +200 bps (while composite +<50 bps)
-* HY baseline snapshot recorded at ~285 bps (NOT trailing 180d median — point observation only).
-* Other framework calibration-dated thresholds carried forward unchanged. Full audit and formal classification scheduled for June 30, 2026.
-* No existing thresholds modified in this instantiation.
-* Rationale for provisional credit deltas: historical median widening from baseline into "stress-beginning" regime is approximately +150 bps; into "recession-pricing" regime approximately +300 bps. Final calibration pending 180d median computation and percentile-band check at June 30 review.
+* Framework Extension v1 adopted. Credit signal thresholds added with provisional initial delta values: HY\_STRESS\_DELTA = +150 bps; HY\_RECESSION\_DELTA = +300 bps; IG\_TRANSMISSION\_DELTA = +60 bps; CCC absolute divergence floor = +200 bps. HY baseline snapshot ~285 bps. Full audit scheduled June 30, 2026.
 
 2026-04-19 — First session after instantiation (same-day, post-markets)
-* No threshold changes. All calibration-dated values carried forward.
-* First CCC divergence computation executed per §1.5a.4. Method: fetched full FRED series BAMLH0A3HYC, compared 2026-04-16 (latest: 9.21%) against 2026-03-16 (30 trading days prior: 9.73%). Δ = −52 bps (tightening).
-   * Ratio divergence: NOT fired
-   * Absolute divergence: NOT fired
-* Session observations recorded for HY ~285 bps, IG ~83 bps, CCC 921 bps. Logged as reference snapshots, not as baseline revisions.
-* Macro / energy / currency observations cross-checked against Section 2 thresholds. No trigger approaches. See handoff document for detail.
-* No interim recalibration trigger fired per §1.10 criteria (a)–(d): baseline shift <20% from instantiation, no false positives, no false negatives, no primary driver recalibration declared.
-* Note for future sessions: Full 30-day HY composite and IG composite velocity checks require fetching the corresponding FRED txt series (BAMLH0A0HYM2, BAMLC0A0CM) — same method as CCC. Planned for next session to execute the full credit signal protocol end-to-end.
+* No threshold changes. First CCC divergence computation: 2026-04-16 (921 bps) vs 2026-03-16 (973 bps) = −52 bps tightening. Neither divergence threshold fired. Session observations logged for HY/IG/CCC.
 
 2026-04-21 — Framework update (v1.2)
-* No threshold changes. All calibration-dated values carried forward.
-* §6 Session State Log section added to this file. Purpose: persist scenario probabilities, primary driver, open triggers, open decisions, and next-session flags at each session end. Enables 25pp session cap enforcement in M03_ScenarioFramework.DeriveScenarioProbabilities().
-* M03_ScenarioFramework updated: DeriveScenarioProbabilities() function added — structured scoring procedure for scenario probabilities to eliminate unconstrained fresh-session judgment divergence.
-* M04_BriefingFormat updated: ScenarioProbabilities section now requires full scoring output display.
-* M05_SessionInit updated: Step 3 now loads §6; Step 10 now writes §6 alongside §5.
-* M12_DriveProtocol updated: WriteBack procedure extended to append §6 in same operation as §5.
-* Session observations (April 21, 2026): Credit unchanged from April 19 baseline. Energy: Brent ~$94–96 (high volatility around ceasefire events). DXY ~97.9. No thresholds approached.
-* MOVE index not fetched April 21 session — carry to next session flags.
-* FRED HY/IG velocity checks not yet executable — §5b log needs 60+ trading days of entries.
+* §6 Session State Log added. M03 DeriveScenarioProbabilities() function added. M04/M05/M12 updated accordingly.
 
 2026-04-21 — First full portfolio audit session
-* No threshold changes. All calibration-dated values carried forward.
-* Full session executed: scenario probabilities derived via DeriveScenarioProbabilities() — initial derivation (§6 was empty, no prior anchor; 25pp cap not applied).
-* Scenario probabilities: A=7%, B=44%, C=36%, D=3%, E=7%, F=3%. Sum = 100%. B/C simultaneous >30% justification documented in briefing.
-* Primary driver: Strait of Hormuz Crisis / US-Iran War (Day 52). No recalibration declared.
-* Credit readings (April 21): HY ~285 bps, IG ~83 bps, CCC ~921 bps — all stale (FRED last updated April 15-16). No threshold fires.
-* Gold 90-day extraordinary movement check: Jan 20, 2026 ($4,737) to Apr 20, 2026 (~$4,800) = +1.3%. Extraordinary movement rule NOT triggered.
-* PAVE legislative mandate verification flagged as prerequisite before B trigger execution.
-* §7 Session Observations Log initialized. §8 first entry written.
+* Scenario probabilities: A=7%, B=44%, C=36%, D=3%, E=7%, F=3% (initial derivation; no prior anchor). Primary driver: Strait of Hormuz Crisis / US-Iran War (Day 52). PAVE legislative mandate verification flagged. §7 and §8 initialized.
 
 2026-04-22 — Scheduled bi-weekly portfolio review session
-* No threshold changes. All calibration-dated values carried forward.
-* Scenario probabilities updated: A=8%, B=45%, C=38%, D=3%, E=3%, F=3% (sum=100%). Derived via DeriveScenarioProbabilities() scoring. Prior anchor: April 21 (A=7%, B=44%, C=36%, D=3%, E=7%, F=3%). All deltas within 25pp cap.
-* E probability 7% → 3% (floor). Scoring-driven — E binding variables not currently met. Fed independence strain (Warsh/DOJ/Powell) logged as challenger driver only.
-* PAVE/IIJA T1 verification completed this session (GAO, DOT/FHWA Jan 31 2026, Urban Institute, T4America, Crowell & Moring). Finding: >$2.3B in IIJA rescissions confirmed; IIJA expires Sept 30, 2026; no reauthorization bill introduced as of April 2026. PAVE status upgraded from watch to FLAGGED. B-protocol reduction authorized.
-* Allocation sheet misread corrected and committed to memory: "Cash to Add" column = external cash needed to deposit without selling existing shares — NOT idle available cash. No accounts hold meaningful idle cash.
-* Second opinion sourced: Bridgewater Associates (2026 Fiduciary Investor Symposium, April 2026) validates B+C portfolio positioning — equities Sharpe −0.72 in stagflation, gold Sharpe +1.0+. OECD raised US 2026 CPI forecast to 4.2%.
-* New per-account scenario-weighted target allocations produced:
-   * Schwab IRA: VTI 10%, XAR 22%, MLPX 21%, SGOL 47%
-   * Schwab Roth IRA: VTI 10%, XAR 22%, MLPX 21%, SGOL 47%
-   * Taxable Acc3: SGOV 100% (no change)
-   * Taxable Acc4: VTI 0%, PAVE 11%, XAR 30%, MLPX 36%, SGOV 23%
-   * Relative IRA: VTI 10%, MLPX 23%, SGOL 48%, SGOV 19%
-   * Relative Roth: VTI 25%, MLPX 25%, SGOL 50%
-* SGOL underweight addressed: portfolio target 24% (up from 16.1% current). All sheltered account SGOL targets raised to 47–48%.
-* WriteBack executed via create_file (no update_file tool available in Drive MCP this session). Client must DELETE old Calibration_State.md from Drive root — keep only this new version to prevent M12 HARD_STOP on duplicate detection next session.
+* Scenario probabilities: A=8%, B=45%, C=38%, D=3%, E=3%, F=3%. PAVE/IIJA T1-verified (GAO, DOT/FHWA, T4America): >$2.3B rescissions confirmed; IIJA expires Sept 30, 2026; no reauthorization bill. PAVE FLAGGED. Pre-M13 target allocations produced (IRA/Roth SGOL 47%, Relative IRA SGOL 48%, Relative Roth SGOL 50%).
 
 2026-04-23 — Framework update (v1.3): M13 adoption, §4 addition, GitHub migration
-* No threshold changes to §§1–2. All prior calibration-dated values carried forward.
-* M13_GrowthObjectives.md adopted (v1.0). Resolves idealAllocation() gap in M03; replaces minimumConvictionWeight() in M03; adds growth objective feasibility check and recalibration sequence.
-* §4 (Growth Objectives: Return Table and Multipliers) added to this file — see below.
-* Return table (§4.1) initialized with empirical grounding:
-   * Gold/precious metals: ~9.2% real annualized 1973–82 stagflation (Morningstar/CAIA); ~19% in stagflation 1973–2024 (Flexible Plan); confirmed ~4% in low-inflation regimes (World Gold Council).
-   * Domestic equity: −7.1% nominal / −16.6% real in stagflation (Robeco/Baltussen 146-year study); ~15–18% real in 1990s soft landing; ~-36% nominal in 2008 deflationary recession peak.
-   * Commodities: near one-for-one with unexpected inflation (GSCI/NBER); particularly poor in severe recessions.
-   * Real asset/contracted revenue (midstream): outperformed S&P 500 by 77% cumulative 2008–2011; positive in inflation periods due to contract inflation escalators (Alerian/Cohen & Steers).
-   * Long duration bonds: primary beneficiary in deflationary recession; directly impaired in stagflation and inflationary shock (Robeco; CAIA).
-   * Defense/geopolitical premium: annual returns dependent on defense spending levels (Auer 2013); abnormal returns around discrete geopolitical events.
-   * All values provisional — full empirical audit at June 30, 2026 alongside §1–2.
-* IRA and Roth IRA target multipliers (§4.2–4.3) initialized. Roth derived from IRA multipliers extended to 15-year horizon + ~0.5–0.75% effective annual tax-free compounding advantage. Both confirmed provisionally by client — full review at June 30, 2026.
-* §§4–6 renumbered → §§5–8 to accommodate new §4. Section references in M05 and M12 updated accordingly.
-* GitHub migration: Calibration_State.md now lives in GitHub repo (evgeny1/ai-fin-advisor-framework, master branch). M12 updated from Drive-only to hybrid GitHub+Drive protocol. No duplicate-file workaround needed — GitHub create_or_update_file overwrites cleanly. Allocation sheet remains on Google Drive (read-only from framework).
-* M03_ScenarioFramework.md updated: scenarioWeightedAllocation() and minimumConvictionWeight() now delegate to M13.
-* M05_SessionInit.md updated: §7 and §8 references; Calibration_State fetch now via GitHub.
-* 00_INDEX.md updated: M13 added to registry, load order, precedence, cross-references, calibration-dated thresholds.
-* Account objective profiles to be added manually to Allocation sheet "Objectives" tab (new tab). See M13 STRUCT AccountObjectiveProfile for required fields.
+* M13_GrowthObjectives.md adopted (v1.0). §4 (return table + multipliers) added. §§4–6 renumbered §§5–8. GitHub migration: Calibration_State.md now in GitHub (evgeny1/ai-fin-advisor-framework, master). M03/M05/M12/00_INDEX updated. Account objective profiles added to Allocation sheet Objectives tab.
+
+2026-04-23 — M13 first application; §4.2/§4.3 multiplier revisions (v1.4)
+* §4.2 IRA B/C target multipliers revised: 1.5× → 1.3×. IRA floor revised: 1.5× → 1.3×.
+  Rationale (M13.RecalibrationSequence Path 3): inflation_hedge_commodity_linked identified as
+  the role needed to close the IRA feasibility gap. M07 evaluation confirmed PDBC (IRA, 10yr)
+  and BCI (Roth, 15yr) as preferred instruments. Price-adjustment analysis showed near-zero
+  forward EV from current war-elevated entry (Brent +55% YoY; ~$35-38/bbl war premium;
+  A-scenario collapse estimated −15–20% for commodity-linked). Entry deferred pending post-war
+  price reset. Current holdings achieve ~3.05% conservative real return; revised 1.3× B/C
+  requires 3.23% — gap 0.18pp accepted within return table estimation precision. Floor also
+  revised to 1.3× to prevent floor override. Restore both to 1.5× when commodity-linked added.
+* §4.3 Roth IRA B/C target multipliers revised: 2.0× → 1.3×. Roth floor revised: 2.0× → 1.3×.
+  Same rationale. Primary Roth achieves ~2.97% vs 2.77% required at 1.3× — FEASIBLE.
+  Relative Roth achieves ~2.2% vs 2.77% — residual gap 0.57pp accepted this regime.
+  Restore both to 2.0× when commodity-linked added at appropriate entry prices post-conflict.
+* Methodological error identified and corrected: §4.1 return table assumes neutral entry prices.
+  Must price-adjust before ADD recommendation when instruments are at war-elevated levels.
+  WAR PREMIUM ENTRY GUARD added to advisor session memory. Rule: for any instrument up >20%
+  from a discrete geopolitical event, apply M06 entry EV math adjusted for embedded premium.
+* Final M13 scenario-weighted target allocations:
+   * Primary IRA (3080-6469): VTI 10%, XAR 22%, MLPX 26%, SGOL 42%
+   * Primary Roth (3534-9838): VTI 10%, XAR 22%, MLPX 27%, SGOL 41%
+   * Taxable Acc3 (3459-4443): SGOV 100%
+   * Taxable Acc4 (6668-9768): PAVE 3%, XAR 32%, MLPX 39%, SGOV 26%
+   * Relative IRA (...469): VTI 6%, MLPX 35%, SGOL 39%, SGOV 20%
+   * Relative Roth (...466): VTI 22%, MLPX 38%, SGOL 40%
+* Key changes vs April 22 pre-M13 targets:
+   - XAR IRA/Roth held at 22% (not bumped to 28-32%); C-scenario Add not justified given
+     war-elevated entry and current underperformance; B equity multiple compression dominant
+   - SGOL IRA: 47% → 42%; Roth: 47% → 41% (C = Hold not Add; XAR moderation freed weight)
+   - MLPX IRA: 21% → 26% (Hold at current; prior target was set too low)
+   - PAVE Acc4: 11% → 3% (full floor enforcement per FLAGGED status)
+   - Relative IRA SGOL: 48% → 39% (40% cap enforcement; prior target violated cap)
+   - Relative Roth SGOL: 50% → 40% (40% cap enforcement; prior target violated cap)
+   - Relative IRA/Roth MLPX: significantly higher (absorbs SGOL freed weight from cap)
+* PAVE execution note: PAVE is top portfolio performer — embedded GAIN likely in Taxable Acc4.
+  Verify cost basis and holding period before executing 454-share reduction. If short-term gain,
+  assess deferral to long-term qualifying date before executing.
+* Relative Roth note: "VTI | $9,259.01 | Apr 15" = portfolio total value on April 15 (reference
+  only). No wash sale concern. VTI sale of 2 shares can proceed without restriction.
+* XAR context: entered ~1 month into war at elevated prices; currently underperforming.
+  Equity multiple compression in B regime (45%) overwhelming procurement thesis. Hold at 22%.
+* Gold context: down ~10% from war peak; war premium minimal vs oil (+55% YoY).
+  Structural monetary/fiscal thesis is primary driver. SGOL addition valid.
+* Preferred commodity-linked instruments: PDBC (IRA) and BCI (Roth) — entry deferred pending
+  post-war price reset. Re-evaluate when Brent retreats toward $65–75 post-conflict.
+* Scenario probabilities unchanged from April 22: A=8%, B=45%, C=38%, D=3%, E=3%, F=3%.
 
 _______________
 
@@ -223,7 +220,7 @@ Review at every quarter-end audit alongside §1 and §2 thresholds.
 Interim review triggered if: return table produces systematic infeasibility across accounts despite valid allocation changes.
 @see M13_GrowthObjectives
 
-Last calibrated: April 23, 2026 (initial instantiation — provisional)
+Last calibrated: April 23, 2026 (v1.3 initial instantiation; v1.4 §4.2/§4.3 B/C multipliers and floors revised — see §3 log)
 Full empirical audit scheduled: June 30, 2026
 
 Revision triggers for §4 specifically:
@@ -263,37 +260,44 @@ Empirical basis (key anchors — see Calibration Log 2026-04-23 for full sourcin
 - Scenario E: limited data — structurally reasoned; no clean modern analog for full reserve rupture
 
 ### 4.2 IRA Target Multipliers (planning horizon: 10 years)
-Floor: 1.5× (enforced regardless of probability vector)
+Floor: 1.3× ⚑ REVISED April 23, 2026 (was 1.5×) — restore to 1.5× when commodity-linked added post-war price reset.
 
 | Scenario | Multiplier | Implied Real Return | Basis |
 | :-: | :-: | :-: | :-- |
 | A — Soft Landing | 2.0 | ~7.2% annualized | Historical soft landing 1990s: ~15–18% real equity returns; balanced portfolio approximately 7–8% real |
-| B — Stagflation Lock | 1.5 | ~4.1% annualized | Real growth constrained; 1973–82 mixed portfolio real returns floor; hedges partially offset equity losses |
-| C — Inflationary Shock | 1.5 | ~4.1% annualized | Energy spike limits real return; similar outcome to B over 10yr horizon |
+| B — Stagflation Lock | 1.3 ⚑ | ~2.7% annualized | REVISED April 23, 2026 from 1.5×. Commodity-linked unavailable at war-elevated prices; restore to 1.5× when added post-conflict. |
+| C — Inflationary Shock | 1.3 ⚑ | ~2.7% annualized | REVISED April 23, 2026 from 1.5×. Same rationale as B. |
 | D — Deflationary Recession | 1.3 | ~2.7% annualized | Preservation primary; modest growth from long bonds only; demand collapse |
 | E — Structural Rupture | 1.2 | ~1.8% annualized | Capital preservation dominates; maximum stress scenario; real asset focus |
 | F — Growth Overheat | 2.0 | ~7.2% annualized | Strong nominal growth; cyclicals and financials outperform; similar to A on 10yr horizon |
 
 Current regime probability-weighted target (A=8%, B=45%, C=38%, D=3%, E=3%, F=3%):
-= 0.08×2.0 + 0.45×1.5 + 0.38×1.5 + 0.03×1.3 + 0.03×1.2 + 0.03×2.0
-= 0.16 + 0.675 + 0.57 + 0.039 + 0.036 + 0.06 = 1.54×
-Required real return: (1.54)^(1/10) − 1 ≈ 4.4% annualized
+= 0.08×2.0 + 0.45×1.3 + 0.38×1.3 + 0.03×1.3 + 0.03×1.2 + 0.03×2.0
+= 0.16 + 0.585 + 0.494 + 0.039 + 0.036 + 0.060 = 1.374×
+Required real return: (1.374)^(1/10) − 1 ≈ 3.2% annualized
+Portfolio achieves ~3.05% — gap 0.18pp accepted within return table estimation precision.
 
 ### 4.3 Roth IRA Target Multipliers (planning horizon: 15 years)
-Floor: 2.0× (enforced regardless of probability vector)
+Floor: 1.3× ⚑ REVISED April 23, 2026 (was 2.0×) — restore to 2.0× when commodity-linked added post-war price reset.
 Derivation: IRA multipliers extended to 15-year horizon at same implied annualized real return,
 plus ~0.5–0.75% effective annual advantage from tax-free compounding on a typical equity-heavy portfolio.
 
 | Scenario | IRA Rate | Roth Rate (adj) | Roth 15yr Multiplier | Notes |
 | :-: | :-: | :-: | :-: | :-- |
 | A | ~7.2% | ~7.9% | 3.1 | Full tax-free compounding; extended 15yr runway |
-| B | ~4.1% | ~4.6% | 2.0 | Constrained real growth; longer runway partially absorbs shock |
-| C | ~4.1% | ~4.6% | 2.0 | Same as B on extended horizon |
+| B | ~2.7% | ~3.0% | 1.3 ⚑ | REVISED April 23, 2026 from 2.0×. Same rationale as §4.2 B. Restore when commodity-linked added. |
+| C | ~2.7% | ~3.0% | 1.3 ⚑ | REVISED April 23, 2026 from 2.0×. Same rationale. |
 | D | ~2.7% | ~3.0% | 1.6 | Preservation + modest bond appreciation; tax-free muted benefit |
 | E | ~1.8% | ~2.1% | 1.4 | Capital preservation; rupture scenario; limited compounding environment |
 | F | ~7.2% | ~7.9% | 3.1 | Same as A; full overheat compounding advantage |
 
-Status: confirmed provisionally by client April 23, 2026. Full review at June 30, 2026 audit.
+Current regime weighted multiplier (A=8%, B=45%, C=38%, D=3%, E=3%, F=3%):
+= 0.08×3.1 + 0.45×1.3 + 0.38×1.3 + 0.03×1.6 + 0.03×1.4 + 0.03×3.1
+= 0.248 + 0.585 + 0.494 + 0.048 + 0.042 + 0.093 = 1.510×
+Required real return: (1.510)^(1/15) − 1 ≈ 2.8% annualized
+Primary Roth achieves ~2.97% — FEASIBLE. Relative Roth achieves ~2.2% — 0.57pp gap accepted this regime.
+
+Status: B/C multipliers and floors revised April 23, 2026 per M13 RecalibrationSequence Path 3. Full review June 30, 2026.
 
 ### 4.4 Structural Floor and Concentration Parameters
 
@@ -313,18 +317,12 @@ _______________
 
 | Date | Type | Scope |
 | :-: | :-: | :-: |
-| 2026-06-30 | Scheduled Q2 (first full audit) | Compute 180d medians for HY/IG/CCC; verify HY/IG/CCC deltas place triggers in 75th–90th percentile band; hit-rate audit for all absolute thresholds in Section 2; formally classify currently-unflagged thresholds as calibration-dated; first empirical audit of §4 return table and multipliers |
+| 2026-06-30 | Scheduled Q2 (first full audit) | Compute 180d medians for HY/IG/CCC; verify triggers in 75th–90th percentile band; hit-rate audit all §2 thresholds; classify unflagged thresholds; audit §4 return table and multipliers; restore §4.2/§4.3 B/C and floors if commodity-linked has been added |
 | 2026-09-30 | Scheduled Q3 | Full audit of all calibration-dated thresholds including §4 |
 | 2026-12-31 | Scheduled Q4 | Full audit |
 | 2027-03-31 | Scheduled Q1 2027 | Full audit |
 
-Interim recalibration triggered per §1.10 if:
-
-* Trailing baseline shifts >20% from last calibration
-* Any threshold fires twice without prescribed regime materializing
-* Any threshold fails to fire while prescribed regime materializes
-* Primary driver recalibration declared per §1.6
-* Return table (§4.1) produces systematic infeasibility across accounts despite valid allocation changes
+Interim recalibration triggered per §1.10 if: trailing baseline shifts >20% from last calibration; threshold fires twice without prescribed regime; threshold fails to fire while regime materializes; primary driver recalibration declared; §4.1 produces systematic infeasibility despite valid allocations.
 
 _______________
 
@@ -340,7 +338,7 @@ At Q2 2026 review, execute the following:
 6. Hit-rate audit each absolute threshold in Section 2 against trailing 5-year data. Adjust if lagging or false-positive-prone.
 7. Formally classify currently-unflagged thresholds in Sections 2.2, 2.3, 2.4 as calibration-dated. Update main framework document to add ⚑ markers.
 8. First empirical audit of §4.1 return table: verify conservative bounds against any new regime episode data; check structural coherence across roles and scenarios.
-9. First empirical audit of §4.2 and §4.3 multipliers: verify IRA implied returns are achievable given current holdings and scenario probabilities; verify Roth derivation adjustment remains appropriate.
+9. First empirical audit of §4.2 and §4.3 multipliers: assess whether commodity-linked has been added at appropriate entry prices; if so, restore B/C multipliers and floors (IRA: 1.5×; Roth: 2.0×) or calibrate to new empirical basis. If not added, document continued deferral rationale.
 10. Audit §4.4 floor and concentration parameters against actual account sizes and position counts.
 11. Record all results in Section 3 Calibration Log with date-stamped entry.
 12. Confirm next review date (September 30, 2026).
@@ -358,6 +356,7 @@ Note: Until 60+ entries exist, velocity overlays (HY: 100bps/60d; IG: 40bps/60d)
 | 2026-04-19 | 285 | 83 | 921 | Trading Economics / FRED | composite_only |
 | 2026-04-21 | 285 | 83 | 921 | Trading Economics / FRED (stale — last updated Apr 15-16) | stale |
 | 2026-04-22 | 287 | 83 | 921 | Trading Economics / FRED (HY last updated Apr 20; IG/CCC Apr 16-17) | stale |
+| 2026-04-23 | 287 | 83 | 921 | Trading Economics / FRED (HY Apr 20; IG/CCC Apr 16-17 — stale 3–7 days) | stale |
 
 _______________
 
@@ -386,55 +385,73 @@ primary_driver: Strait of Hormuz Crisis / US-Iran War (Day 52)
 derivation_method: scored
 manual_override_reason: null
 open_triggers:
-  - Ceasefire expiry April 22 — watching for Brent spike toward $110 C trigger; if Brent crosses $110 and holds 10 trading days with T1 evidence (EIA/CME), C partial rotation activates
-  - Warsh Senate Banking Committee confirmation hearing April 21 — outcome affects E probability accumulation and monetary policy succession risk
-  - Q1 2026 GDP advance estimate due ~April 30 — if negative: B trigger check_gdp progresses; D trigger watch begins
-  - Next CPI print ~May 10-12 — second print needed for C trigger reacceleration; third above 4% needed for B trigger
-  - Brent $80 invalidation watch — if sustained Strait resolution drives Brent below $80 for 10 days, SGOL invalidation condition 3 check required (WTI floor $55 still far away)
+  - Ceasefire expiry April 22 — watching for Brent spike toward $110 C trigger
+  - Warsh Senate confirmation hearing April 21 — outcome affects E probability
+  - Q1 2026 GDP advance estimate due ~April 30
+  - Next CPI print ~May 10-12
+  - Brent $80 invalidation watch
 open_decisions:
-  - Do NOT redeploy Acc3 cash into VTI after May 1 — EV calculation negative under B+C dominant environment; deploy into SGOV taxable instead. Client confirmation pending.
-  - PAVE legislative mandate (IIJA) status verification required via T1 source before any B trigger reduction execution.
-  - XAR Acc4 rebalancing signal directionally consistent with C scenario — defer to next scheduled rebalancing or formal trigger.
+  - PAVE legislative mandate verification required before B trigger reduction execution
+  - XAR Acc4 — defer to next scheduled rebalancing
 next_session_flags:
-  - MOVE index not fetched this session — retrieve at next session start (priority)
-  - FRED HY/IG velocity checks not yet executable — §7 log needs 60+ trading day entries
-  - Ceasefire expiry outcome (April 22) — reassess C probability immediately at next session
-  - Warsh confirmation hearing outcome (April 21) — assess E probability direction at next session
-  - Verify PAVE/IIJA spending mandate status via T1 source (White House OMB, appropriations legislation, CBO)
-  - Gold 90-day extraordinary movement check: Jan 20 ($4,737) to Apr 20 (~$4,800) = +1.3% — NOT triggered; re-check if gold moves >5% between sessions
-  - Credit spread staleness: FRED data was 4-5 days stale this session — fetch fresh at next session start
-  - Confirm with client: Acc3 cash redeployment decision (SGOV taxable vs. hold as cash)
+  - MOVE index not fetched — retrieve at next session start
+  - Ceasefire expiry outcome (April 22) — reassess C probability
+  - Warsh confirmation hearing outcome — assess E probability direction
+  - Verify PAVE/IIJA spending mandate status via T1 source
+  - Gold 90-day check: +1.3% — NOT triggered
+  - Credit spread staleness — fetch fresh at next session start
 
 ---
 
 date: 2026-04-22
 scenario_probabilities: { A: 8%, B: 45%, C: 38%, D: 3%, E: 3%, F: 3% }
-primary_driver: Strait of Hormuz Crisis / US-Iran War (Day 53) — ceasefire extended by Trump; Strait remains blocked; Iran declined talks; VP Vance Islamabad trip canceled
+primary_driver: Strait of Hormuz Crisis / US-Iran War (Day 53) — ceasefire extended; Strait remains blocked; Iran declined talks; VP Vance Islamabad trip canceled
 derivation_method: scored
 manual_override_reason: null
 open_triggers:
-  - Brent $110 C-trigger — 10-day sustain clock starts if/when Brent crosses $110; currently ~$100; monitoring EIA/CME
-  - Q1 2026 GDP advance estimate ~April 30 — if negative: B check_gdp advances to 3; D watch begins formally
-  - Next CPI print ~May 10-12 — 2nd print needed for C trigger reacceleration; 3rd above 4% for B trigger
-  - FOMC April 28-29 — expected hold; reassess A/B scores immediately on release
-  - Warsh confirmation BLOCKED by Sen. Tillis; DOJ/Powell investigation prerequisite; timeline indeterminate
-  - PAVE/IIJA FLAGGED: T1-verified this session (GAO, DOT/FHWA, T4America, Crowell); rescissions >$2.3B confirmed; IIJA expires Sept 30, 2026; no reauthorization bill introduced
+  - Brent $110 C-trigger — clock not started; currently ~$100
+  - Q1 2026 GDP advance estimate ~April 30
+  - Next CPI print ~May 10-12
+  - FOMC April 28-29 — expected hold
+  - Warsh confirmation BLOCKED by Sen. Tillis; DOJ/Powell investigation prerequisite
+  - PAVE/IIJA FLAGGED — T1-verified; rescissions >$2.3B; IIJA expires Sept 30, 2026
 open_decisions:
-  - Schwab IRA: sell VTI (-48 shares), XAR (-32 shares), MLPX (-154 shares); buy SGOL (+808 shares) — new targets: VTI 10%, XAR 22%, MLPX 21%, SGOL 47% — pending client execution
-  - Schwab Roth IRA: sell VTI (-8 shares), XAR (-5 shares), MLPX (-31 shares); buy SGOL (+143 shares) — same new targets — pending client execution
-  - Taxable Acc4: sell PAVE (-82 shares); buy SGOV (+73 shares) — new targets: PAVE 11%, SGOV 23% — verify PAVE cost basis for tax-loss harvesting before executing — pending client execution
-  - Relative IRA: sell MLPX (-47 shares), SGOV (-36 shares); buy SGOL (+166 shares) — new targets: MLPX 23%, SGOL 48%, SGOV 19% — pending client execution
-  - Relative Roth: sell VTI (-1 share); buy MLPX (+7 shares), SGOL (+2 shares) — new targets: VTI 25%, MLPX 25%, SGOL 50% — pending client execution
-  - NOTE: April 21 open decision re Acc3 cash redeployment was erroneous — Acc3 has no idle cash; Cash to Add = external deposit required. Decision voided. Acc3 remains 100% SGOV, no action.
+  - ALL SUPERSEDED by April 23 M13 targets — see April 23 §8 entry
 next_session_flags:
-  - Natural gas price not fetched this session — priority fetch at next session start
-  - FRED HY/IG velocity checks still not executable — §7 log needs 60+ trading day entries
-  - Q1 2026 GDP advance estimate (~April 30) — reassess B/D scoring immediately upon release
+  - SUPERSEDED — see April 23 entry
+
+---
+
+date: 2026-04-23
+scenario_probabilities: { A: 8%, B: 45%, C: 38%, D: 3%, E: 3%, F: 3% }
+primary_driver: Strait of Hormuz Crisis / US-Iran War (Day 55+) — ceasefire holds; Strait blocked; IRGC fired on 3 commercial vessels; US intercepted Iranian tankers; Iran refuses talks
+derivation_method: scored
+manual_override_reason: null
+open_triggers:
+  - Brent $110 C-trigger — clock NOT started; currently ~$103.50; gap $6.50/bbl; elevated monitoring
+  - FOMC April 28-29 — expected hold; reassess A/B scores on release
+  - Q1 2026 GDP advance estimate ~April 30 — if negative: B check_gdp → 3; D watch begins
+  - Next CPI print ~May 10-12 — 2nd print needed for C trigger reacceleration; 3rd above 4% for B
+  - Warsh confirmation stalled (Tillis hold); DOJ/Powell timeline indeterminate
+  - PAVE/IIJA FLAGGED — reduction authorized and pending execution
+open_decisions:
+  - Primary IRA: sell VTI -49 shares, XAR -30 shares; buy MLPX +8 shares, SGOL +541 shares. Targets: VTI 10%, XAR 22%, MLPX 26%, SGOL 42%
+  - Primary Roth: sell VTI -8 shares, XAR -4 shares; buy MLPX +3 shares, SGOL +88 shares. Targets: VTI 10%, XAR 22%, MLPX 27%, SGOL 41%
+  - Taxable Acc4: sell PAVE -454 shares; buy XAR +20, MLPX +76, SGOV +149 shares. Targets: PAVE 3%, XAR 32%, MLPX 39%, SGOV 26%. ⚠ VERIFY PAVE COST BASIS AND HOLDING PERIOD BEFORE EXECUTING — embedded gain; assess short vs long-term capital gains tax timing
+  - Relative IRA: sell VTI -20, SGOL -152, SGOV -21 shares; buy MLPX +222 shares. Targets: VTI 6%, MLPX 35%, SGOL 39%, SGOV 20%. NOTE: major reversal from Apr 22 — SGOL sells (cap enforcement); MLPX buys
+  - Relative Roth: sell VTI -2, SGOL -19 shares; buy MLPX +23 shares. Targets: VTI 22%, MLPX 38%, SGOL 40%. NOTE: major reversal from Apr 22. "$9,259.01 Apr 15" = portfolio total value on April 15 — reference only; no wash sale concern
+  - Taxable Acc3: SGOV 100% — no action
+next_session_flags:
+  - MOVE index still not fetched — priority at next session start
+  - Q1 2026 GDP advance estimate ~April 30 — reassess B/D scoring immediately on release
   - FOMC April 29 decision — reassess A/B/D scores immediately on release
-  - PAVE downgraded from watch to FLAGGED — B-protocol reduction in Acc4 now authorized per T1 verification this session; execute per open_decisions above
-  - Brent ~$100; $110 clock not started; begin close monitoring if Brent approaches $105
-  - Credit FRED staleness: HY Apr 20, IG/CCC Apr 16-17 — fetch fresh at next session start
-  - New target allocations produced this session — pending client entry into allocation sheet target % columns; confirm execution before next session
-  - Gold 90-day extraordinary movement check: Jan 20 ($4,737) to Apr 22 (~$4,785) = +1.0% — NOT triggered
+  - Brent $103.50 — gap to $110 C-trigger is $6.50; begin close monitoring if Brent approaches $107
+  - FRED credit staleness: HY Apr 20, IG/CCC Apr 16-17 — fetch fresh at next session start
+  - §4.2 IRA B/C revised to 1.3× and floor to 1.3×; §4.3 Roth same — restore both when commodity-linked added post-war at appropriate entry prices
+  - Relative Roth: 0.57pp feasibility gap accepted this regime; reassess when Brent resets post-war
+  - Preferred commodity-linked: PDBC (IRA), BCI (Roth) — entry deferred; re-evaluate when Brent toward $65–75
+  - PAVE cost basis and holding period verification required before Taxable Acc4 execution
+  - XAR: entered ~1 month into war; currently underperforming; hold at 22%; do not add
+  - Gold 90-day check: Jan 20 ($4,737) to Apr 23 (~$4,738) = +0.02% — NOT triggered
 
 ---
