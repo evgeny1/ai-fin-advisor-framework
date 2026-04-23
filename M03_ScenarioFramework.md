@@ -1,17 +1,18 @@
 # M03 — Scenario Framework
 <!-- Cross-references: @see M02_IntelGathering.identifyPrimaryDriver, @see CALIBRATION_STATE -->
 <!-- Consumed by: M09_ScenariosABC, M10_ScenariosDEF -->
+<!-- Updated April 23, 2026: scenarioWeightedAllocation() and minimumConvictionWeight() delegate to M13 -->
 
 ```
 MODULE ScenarioFramework {
 
-  // ─── CORE PRINCIPLE ─────────────────────────────────────────────────────
+  // ─── CORE PRINCIPLE ───────────────────────────────────────────────────
   // Scenarios describe STRUCTURAL MACRO ENVIRONMENTS — not individual events.
   // They are durable across driver shifts.
   // Only probability weights change when the primary driver changes.
   // Scenario LABELS never change.
 
-  // ─── SIX UNIVERSAL SCENARIOS ────────────────────────────────────────────
+  // ─── SIX UNIVERSAL SCENARIOS ──────────────────────────────────────────────
 
   ENUM Scenario {
     A: {
@@ -64,7 +65,7 @@ MODULE ScenarioFramework {
     REQUIRE: sum(all_scenario_probabilities) == 100%  // at all times
   }
 
-  // ─── B vs C SEPARATION RULE ─────────────────────────────────────────────
+  // ─── B vs C SEPARATION RULE ───────────────────────────────────────────────
   // These two are separable by different T1 indicators and must never
   // simultaneously exceed 30% without explicit documented justification.
 
@@ -82,7 +83,7 @@ MODULE ScenarioFramework {
     }
   }
 
-  // ─── PROBABILITY UPDATE DISCIPLINE ──────────────────────────────────────
+  // ─── PROBABILITY UPDATE DISCIPLINE ──────────────────────────────────────────────
 
   GUARD ProbabilityDiscipline {
     NEVER:  move_probabilities on single_unverified_report
@@ -90,7 +91,7 @@ MODULE ScenarioFramework {
     ALWAYS: state_explicitly what_evidence_caused_each_update
   }
 
-  // ─── RECALIBRATION TRIGGER ───────────────────────────────────────────────
+  // ─── RECALIBRATION TRIGGER ───────────────────────────────────────────────────
 
   RULE RecalibrationRule {
     WHEN primary_driver_shifts_materially {
@@ -100,7 +101,7 @@ MODULE ScenarioFramework {
     }
   }
 
-  // ─── SIGNAL CONVERGENCE RULE ─────────────────────────────────────────────
+  // ─── SIGNAL CONVERGENCE RULE ──────────────────────────────────────────────────
 
   RULE SignalConvergence {
     IF independent_T1_signals_pointing_same_direction >= 3
@@ -112,42 +113,46 @@ MODULE ScenarioFramework {
     }
   }
 
-  // ─── SCENARIO-WEIGHTED ALLOCATION MATH ──────────────────────────────────
+  // ─── SCENARIO-WEIGHTED ALLOCATION MATH ───────────────────────────────────────────
   // Used by M06_ClientAndAdvisory and all execution protocols.
+  // idealAllocation() is defined in M13_GrowthObjectives — delegates there.
 
-  FUNCTION scenarioWeightedAllocation(asset) -> Float {
-    // weighted_allocation = Σ (scenario_probability × ideal_allocation_in_that_scenario)
+  FUNCTION scenarioWeightedAllocation(asset, account) -> Float {
+    // account parameter required — load from Allocation sheet "Objectives" tab
+    // @see M13_GrowthObjectives.idealAllocation()
     result = 0
     FOR each s IN Scenario {
-      result += s.probability * idealAllocation(asset, s)
+      result += s.probability × M13_GrowthObjectives.idealAllocation(asset, s, account)
     }
     RETURN result
-    // NEVER present allocation numbers as intuition — always show this math
+    // NEVER present allocation numbers without showing the full per-scenario breakdown
+    // NEVER present without showing M13.idealAllocation() inputs per scenario
   }
 
-  // ─── MINIMUM CONVICTION WEIGHT ───────────────────────────────────────────
-  // Referenced by all Scenario Execution Protocols.
+  // ─── MINIMUM CONVICTION WEIGHT ───────────────────────────────────────────────
+  // Defined in M13_GrowthObjectives.minimumConvictionWeight().
+  // All references in M09/M10 execution protocols resolve to M13 version.
+  // account parameter required.
 
-  FUNCTION minimumConvictionWeight(asset) -> Float {
-    // Floor = scenarioWeightedAllocation at time of execution
-    // Run the calculation explicitly — do not estimate
-    // Floor is NEVER zero unless scenario-weighted result is zero
-    RETURN scenarioWeightedAllocation(asset)  // using current probabilities
+  FUNCTION minimumConvictionWeight(asset, account) -> Float {
+    RETURN M13_GrowthObjectives.minimumConvictionWeight(asset, account)
+    // Do NOT call this without an account context.
+    // Do NOT estimate — always compute explicitly.
   }
 
-  // ─── SCENARIO PROBABILITY DERIVATION ────────────────────────────────────
+  // ─── SCENARIO PROBABILITY DERIVATION ─────────────────────────────────────────────
   // Run at every session start, after intel gathering and primary driver
   // identification, before producing the Intelligence Briefing.
   // Produces a reproducible probability vector from binding variable scores.
   // Any session running the same data produces the same output within a
   // narrow, auditable band — eliminating unconstrained fresh-session judgment.
   // @see M05_SessionInit.SessionStartSequence Step 6
-  // @see M12_DriveProtocol.WriteBack §6 (output persisted at session end)
+  // @see M12_FileProtocol.WriteBack §8 (output persisted at session end)
   // @see M04_BriefingFormat.ScenarioProbabilities (output display format)
 
   FUNCTION DeriveScenarioProbabilities() -> ProbabilityVector {
 
-    // ─── SCORE SCALE ────────────────────────────────────────────────
+    // ─── SCORE SCALE ─────────────────────────────────────────────────────────────────────
     // Applied to every check below:
     // 0 = conditions actively diverging from this scenario
     // 1 = conditions neutral or not yet informative
@@ -245,13 +250,11 @@ MODULE ScenarioFramework {
         IF central_bank_reserve_shift documented (IMF data):            → 1  // additive
         IF DXY falling on fundamental grounds (NOT safe-haven spike):   → 1  // additive
         IF DXY stable or rising:                                        → 0
-        // dedollar_check = MIN(sum_of_sub_items, 3)
         dedollar_check = MIN(sum_of_sub_items, 3)
       check_stress: Systemic financial stress
         IF IG_TransmissionReached AND sovereign_CDS_widening_significantly: → 2
         IF interbank_funding_stress confirmed:                               → 2  // additive
         IF credit_calm:                                                      → 0
-        // stress_check = MIN(sum_of_sub_items, 2)
         stress_check = MIN(sum_of_sub_items, 2)
       check_ig: IG_OAS vs transmission threshold (@see M11_CreditAndCalibration)
         IF IG_TransmissionReached fired: → 2
@@ -276,13 +279,11 @@ MODULE ScenarioFramework {
       check_noshock: Absence of verified supply shock
         IF no_supply_shock_verified:                 → 1
         IF supply_shock_verified (T1):               → -2  // penalize
-                                                     // C or B more appropriate
       raw_F = sum(check_gdp, check_cpi, check_fed, check_noshock)  // max: 8
-      // NOTE: raw_F floored at 0 before normalization if sum is negative
       raw_F = MAX(raw_F, 0)
     }
 
-    // ─── NORMALIZATION ─────────────────────────────────────────────
+    // ─── NORMALIZATION ─────────────────────────────────────────────────────────────────────
 
     PROCEDURE Normalize {
       total_raw = sum(raw_A, raw_B, raw_C, raw_D, raw_E, raw_F)
@@ -296,7 +297,7 @@ MODULE ScenarioFramework {
       }
     }
 
-    // ─── APPLY STRUCTURAL FLOORS ────────────────────────────────────
+    // ─── APPLY STRUCTURAL FLOORS ────────────────────────────────────────────────────────────────
 
     PROCEDURE ApplyFloors {
       FLOOR_VALUE: 3%  // no scenario goes to zero — all carry non-trivial tail risk
@@ -307,8 +308,6 @@ MODULE ScenarioFramework {
       }
       IF any_floors_applied {
         total_shortfall = sum(shortfall_values)
-        // redistribute proportionally from above-floor scenarios
-        // largest-score scenarios absorb the largest share
         FOR each above-floor scenario s (descending by raw_score) {
           reduction(s) = total_shortfall × (raw_score(s) / sum_of_above_floor_raw_scores)
           base_probability(s) -= reduction(s)
@@ -320,7 +319,6 @@ MODULE ScenarioFramework {
         IF base_probability(D) < 25% {
           excess = 25% - base_probability(D)
           SET base_probability(D) = 25%
-          // redistribute excess proportionally from remaining scenarios
           FOR each scenario s WHERE s != D {
             base_probability(s) -= excess × (base_probability(s) /
                                    sum_of_non_D_probabilities)
@@ -331,10 +329,10 @@ MODULE ScenarioFramework {
       VERIFY: sum(all_base_probabilities) == 100%
     }
 
-    // ─── APPLY SESSION CAP ──────────────────────────────────────────
+    // ─── APPLY SESSION CAP ───────────────────────────────────────────────────────────────────
 
     PROCEDURE ApplySessionCap {
-      prior = load_from §6_Session_State_Log  // @see M12_DriveProtocol.WriteBack
+      prior = load_from §8_Session_State_Log  // @see M12_FileProtocol.WriteBack
 
       IF prior EXISTS AND prior.date >= current_session_date - 7_calendar_days {
         FOR each scenario s {
@@ -342,7 +340,6 @@ MODULE ScenarioFramework {
           IF delta > 25pp {
             CHECK: @see M03_ScenarioFramework.SignalConvergence
             IF SignalConvergence_documented {
-              // 3+ independent T1 signals within 72h pointing same direction
               ALLOW: full derived shift
               REQUIRE: log_each_signal_and_source in briefing
             } ELSE {
@@ -354,7 +351,6 @@ MODULE ScenarioFramework {
             }
           }
         }
-        // renormalize after any caps applied
         IF any_caps_applied {
           normalize_remaining_to_sum_100()
         }
@@ -362,27 +358,21 @@ MODULE ScenarioFramework {
       }
 
       IF prior DOES_NOT_EXIST OR prior.date < current_session_date - 7_calendar_days {
-        // Initial derivation or stale prior — cap does not apply
         LOG: derivation_method = "initial_derivation"
-             reason = "No recent session state found in §6 (or > 7 days old).
+             reason = "No recent session state found in §8 (or > 7 days old).
                        25pp cap not applicable this session."
       }
     }
 
-    // ─── B vs C CHECK ───────────────────────────────────────────────
+    // ─── B vs C CHECK ──────────────────────────────────────────────────────────────────────
 
     PROCEDURE CheckBvsC {
-      // @see M03_ScenarioFramework.BvsCRule
       IF base_probability(B) > 30% AND base_probability(C) > 30% {
         REQUIRE: explicit_documented_justification in session briefing
-        // Justification must address:
-        //   (a) why both can be simultaneously elevated
-        //   (b) what T1 evidence distinguishes them
-        //   (c) what would cause one to decrease at the other's expense
       }
     }
 
-    // ─── EXECUTION ORDER ────────────────────────────────────────────
+    // ─── EXECUTION ORDER ───────────────────────────────────────────────────────────────────
 
     SEQUENCE {
       1: score_all_six_scenarios  // using data from completed GatherIntel
@@ -391,15 +381,12 @@ MODULE ScenarioFramework {
       4: ApplySessionCap()
       5: CheckBvsC()
       6: output_to_briefing       // @see M04_BriefingFormat.ScenarioProbabilities
-      7: write_to_session_state   // at session end @see M12_DriveProtocol.WriteBack §6
+      7: write_to_session_state   // at session end @see M12_FileProtocol.WriteBack §8
     }
 
     GUARD ScoringIntegrity {
       NEVER:  use_market_prices as primary_evidence for scenario probability
-              // equity levels and credit spreads are consistency checks, not drivers
-              // they reflect weighted expectations across ALL scenarios — circular if used as input
       NEVER:  embed trajectory_arguments inside binding_variable_scores
-              // "could become B in 3 months" → surface as challenger_driver, not score
       ALWAYS: score_only_current_T1_confirmed_binding_variable_status
       ALWAYS: surface_trajectory_risk in M02_IntelGathering.identifyPrimaryDriver
               challenger_drivers field — not inside probability scores

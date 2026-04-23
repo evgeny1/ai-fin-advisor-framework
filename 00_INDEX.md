@@ -1,12 +1,12 @@
 # 00 — Index & Module Map
 <!-- Personal Financial Advisor Framework — Pseudo-Code Edition -->
-<!-- Source documents: Framework_Main_v1, Framework_Extension_v1, Calibration_State, Amendment 1 -->
-<!-- Last converted: April 20, 2026 -->
+<!-- Source documents: Framework_Main_v1, Framework_Extension_v1, Calibration_State, Amendment 1, Amendment 2 -->
+<!-- Last updated: April 23, 2026 (M13 added; M12 amended to hybrid GitHub+Drive; §4 added to Calibration_State) -->
 
 ```
 FRAMEWORK PersonalFinancialAdvisor {
 
-  // ─── MODULE REGISTRY ─────────────────────────────────────────────────────
+  // ─── MODULE REGISTRY ───────────────────────────────────────────────────────────
 
   MODULES {
     M01_SourceIntegrity        // Source tiers, propaganda checklist, symmetric skepticism
@@ -20,38 +20,42 @@ FRAMEWORK PersonalFinancialAdvisor {
     M09_ScenariosABC           // Execution protocols: Scenario A, B, C
     M10_ScenariosDEF           // Execution protocols: Scenario D, E, F
     M11_CreditAndCalibration   // Extension v1: credit signal protocol §1.5a, calibration discipline §1.10
-    M12_DriveProtocol          // Amendment 1: Google Drive fetch procedure
-    CALIBRATION_STATE          // Live threshold values — load every session
+    M12_DriveProtocol          // Amendment 2: hybrid GitHub+Drive file access protocol
+    M13_GrowthObjectives       // Growth objectives, ideal allocation, feasibility check, recalibration sequence
+    CALIBRATION_STATE          // Live threshold values — load every session (GitHub)
   }
 
-  // ─── LOAD ORDER (every session) ──────────────────────────────────────────
+  // ─── LOAD ORDER (every session) ────────────────────────────────────────────────────
 
   SESSION_START_SEQUENCE {
     // @see M05_SessionInit.SessionStartSequence for full detail
-    1:  M12_DriveProtocol.fetchFile("Allocation")
+    1:  M12_FileProtocol.fetchAllocation()        // Google Drive — hard gate
     2:  confirm_pending_decisions
-    3:  M12_DriveProtocol.fetchFile("Framework_Extension_v1_Credit_And_Calibration.md")
-        M12_DriveProtocol.fetchFile("Calibration_State.md")
+    3:  M12_FileProtocol.fetchCalibrationState()  // GitHub — includes §4 return table, §8 session state
         → apply CALIBRATION_STATE thresholds (not remembered values)
+        → apply M13 return table and multipliers (§4.1–4.4)
+        → load account objective profiles from Allocation "Objectives" tab
     4:  M02_IntelGathering.FETCH_LIST  (includes M11.CreditSignal.FetchList)
     5:  M02_IntelGathering.identifyPrimaryDriver()
     6:  M03_ScenarioFramework.RecalibrationRule  +  M11.CalibrationDiscipline.SessionLoad
     7:  M02_IntelGathering.GatherIntel STEPS 2–5
     8:  M04_BriefingFormat.IntelligenceBriefing
     9:  portfolio discussion
+    10: M12_FileProtocol.WriteBack  // GitHub — §7 credit + §8 scenario state
   }
 
-  // ─── PRECEDENCE RULES ────────────────────────────────────────────────────
+  // ─── PRECEDENCE RULES ──────────────────────────────────────────────────────────────
 
   PRECEDENCE [highest → lowest] {
     1: M11_CreditAndCalibration   // Extension v1 overrides main framework where they conflict
-    2: M12_DriveProtocol          // Amendment 1 supersedes any prior fetch instructions
-    3: CALIBRATION_STATE          // live threshold values override any remembered values
-    4: M09_ScenariosABC, M10_ScenariosDEF   // execution protocols
-    5: M01–M08                    // core framework
+    2: M12_DriveProtocol          // Amendment 2 supersedes any prior fetch/write instructions
+    3: M13_GrowthObjectives       // Growth objective logic supersedes M03 idealAllocation and minimumConvictionWeight
+    4: CALIBRATION_STATE          // live threshold values override any remembered values
+    5: M09_ScenariosABC, M10_ScenariosDEF   // execution protocols
+    6: M01–M08                    // core framework
   }
 
-  // ─── KEY CROSS-REFERENCE MAP ─────────────────────────────────────────────
+  // ─── KEY CROSS-REFERENCE MAP ────────────────────────────────────────────────────────
 
   CROSS_REFERENCES {
 
@@ -78,6 +82,20 @@ FRAMEWORK PersonalFinancialAdvisor {
       → [HY_StressBeginning | HY_RecessionPricing | IG_TransmissionReached | CCC_TailFirstWidening]
       → CALIBRATION_STATE §1 (threshold deltas)
 
+    // Allocation and growth objective flow (M13)
+    allocation_recommendation
+      → M13_GrowthObjectives.RecommendationFlow
+        1: load account profiles (Allocation sheet "Objectives" tab)
+        2: load return table (CALIBRATION_STATE §4.1–4.4)
+        3: M08_FunctionalRoles.classifyRole()
+        4: M03_ScenarioFramework.DeriveScenarioProbabilities()
+        5: M13_GrowthObjectives.idealAllocation() per scenario
+        6: M03_ScenarioFramework.scenarioWeightedAllocation()
+        7: M13_GrowthObjectives.FeasibilityCheck()
+        8: M13_GrowthObjectives.RecalibrationSequence() if infeasible
+        9: M06.SimplicityTest, M07.AutoDisqualify, M06.TaxPlacement
+        10: M06.HoldJustification (EV math if hold)
+
     // Position action flow
     execution_trigger
       → M08_FunctionalRoles.classifyRole(holding)
@@ -85,7 +103,7 @@ FRAMEWORK PersonalFinancialAdvisor {
       → M08_FunctionalRoles.ExecutionGuards  (graduated response)
       → [M09_ScenariosABC | M10_ScenariosDEF].RESPONSES[role]
       → M08_FunctionalRoles.ExecutionTaxPlacement
-      → M03_ScenarioFramework.minimumConvictionWeight()?
+      → M13_GrowthObjectives.minimumConvictionWeight()?  // replaces M03 version
 
     // Recommendation validation chain
     recommendation
@@ -93,6 +111,7 @@ FRAMEWORK PersonalFinancialAdvisor {
       → M06_ClientAndAdvisory.StructuralThesis
       → M06_ClientAndAdvisory.ClientBias (GUARD)
       → M06_ClientAndAdvisory.HoldJustification?  (if hold recommended)
+      → M13_GrowthObjectives.FeasibilityCheck()
       → M03_ScenarioFramework.scenarioWeightedAllocation()
       → M07_InstrumentEval.AutoDisqualify?
       → M06_ClientAndAdvisory.TaxPlacement()
@@ -105,7 +124,7 @@ FRAMEWORK PersonalFinancialAdvisor {
       → CALIBRATION_STATE §3 (log entry)
   }
 
-  // ─── CALIBRATION-DATED THRESHOLDS AT A GLANCE ────────────────────────────
+  // ─── CALIBRATION-DATED THRESHOLDS AT A GLANCE ──────────────────────────────────
   // Full values in CALIBRATION_STATE. Marked ⚑ throughout modules.
 
   CALIBRATION_DATED_THRESHOLDS {
@@ -122,10 +141,18 @@ FRAMEWORK PersonalFinancialAdvisor {
     GDP_trigger_F:               3% annualized x2  // §2.3
     GDP_invalidation_F:          2% BEA advance  // §2.3
     unemployment_trigger_D:      +0.5% over 3m   // §2.3
+    // Growth objectives (M13) — all in CALIBRATION_STATE §4
+    return_table:                9 roles × 6 scenarios [conservative, upside]  // §4.1
+    IRA_scenario_multipliers:    A:2.0 B:1.5 C:1.5 D:1.3 E:1.2 F:2.0  // §4.2 — provisional
+    Roth_scenario_multipliers:   A:3.1 B:2.0 C:2.0 D:1.6 E:1.4 F:3.1  // §4.3 — provisional
+    floor_fraction:              0.25× current allocation  // §4.4
+    floor_minimum_pct:           2% of account value       // §4.4
+    concentration_cap:           40%                        // §4.4
+    floor_loss_probability_threshold: 15%                  // §4.4
     next_full_audit:             June 30, 2026
   }
 
-  // ─── FIXED STRUCTURAL RULES (never calibration-dated) ────────────────────
+  // ─── FIXED STRUCTURAL RULES (never calibration-dated) ─────────────────────────
 
   PERMANENT_RULES {
     source_tier_definitions:          M01_SourceIntegrity
@@ -141,8 +168,10 @@ FRAMEWORK PersonalFinancialAdvisor {
     max_single_session_prob_shift:    25 percentage_points
     signal_convergence_window:        72 hours, >= 3 independent T1 signals
     extraordinary_price_movement:     >40% over 90d → requires 2x T1 verification
-    drive_fetch_rule:                 search-first, never hardcode IDs
+    github_fetch_rule:                owner=evgeny1, repo=ai-fin-advisor-framework, branch=master
+    drive_fetch_rule:                 search-first for Allocation, never hardcode ID
     calibration_prospective_only:     M11_CreditAndCalibration.ProspectiveOnly
+    anchor_positions_in_recalib:      high-conviction positions not touched in M13.RecalibrationSequence
   }
 
 }

@@ -1,196 +1,196 @@
-# M12 — Google Drive File Fetch Protocol
-<!-- Source: Instructions Amendment 1 — April 20, 2026 -->
-<!-- Supersedes: any prior hardcoded Drive file IDs or web_fetch usage for Drive files -->
-<!-- Applies to: M05_SessionInit INPUT_1 and INPUT_3 -->
-<!-- NOTE: Framework Extension is Project Knowledge — no Drive fetch needed -->
+# M12 — File Access Protocol
+<!-- Amendment 2 — April 23, 2026 -->
+<!-- Replaces: M12_DriveProtocol (Amendment 1, April 20, 2026) -->
+<!-- GitHub: all framework .md files including Calibration_State.md (read + write) -->
+<!-- Google Drive: Allocation sheet only (read only) -->
+<!-- Applies to: M05_SessionInit INPUT_1 (Drive), INPUT_3 (GitHub) -->
 
 ```
-MODULE DriveProtocol {
+MODULE FileProtocol {
 
-  // ─── THE RULE ─────────────────────────────────────────────────────────────
+  // ─── SOURCE MAP ───────────────────────────────────────────────────────────────────
 
-  GUARD FetchRule {
-    ALWAYS: fetch_required_files via Google_Drive_search_tool
-    NEVER:  hardcode_file_IDs
-    NEVER:  store_file_IDs in memory or reuse across_sessions
-    NEVER:  use_web_fetch for any_Google_Drive_file
-            // web_fetch of Sheets URL returns stale/incorrect data
-    // File names are stable. File IDs are NOT.
-    // Name match = correct file, regardless of ID.
-  }
-
-  // ─── REQUIRED SESSION FILES ───────────────────────────────────────────────
-  // Allocation and Calibration State live in Drive — fetched and written each session.
-  // Framework Extension (M11) is Project Knowledge — always in context, no fetch needed.
-
-  FILES {
-    allocation_sheet: {
-      exact_title:  "Allocation"
-      type:         Google_Sheets
-      purpose:      live_holdings_and_prices
-      read_method:  read_file_content  // NOT download_file_content (returns binary for Sheets)
-      write_back:   false              // read-only
-      // Prices are live via GOOGLEFINANCE formula — updated every ~20 minutes.
-      // Treat prices as current at time of fetch. No separate price lookup needed.
+  SOURCE_MAP {
+    github: {
+      owner:  "evgeny1"
+      repo:   "ai-fin-advisor-framework"
+      branch: "master"
+      files:  [all .md files including Calibration_State.md]
+      access: read + write
+      write_method: create_or_update_file  // clean overwrite; no duplicate issue
+      // SHA required for updates — always use SHA from session-start fetch
     }
-    calibration_state: {
-      exact_title:  "Calibration_State.md"
-      type:         Google_Doc
-      purpose:      persistent_threshold_configuration
-                    + session_observations_log (§5 credit readings)
-                    + session_state_log (§6 scenario probabilities + open items)
-      read_method:  download_file_content
-      write_back:   true   // append §5 and §6 at session end — see WriteBack
+    drive: {
+      file:   "Allocation"
+      type:   Google_Sheets
+      access: read_only
+      // Prices live via GOOGLEFINANCE — treat as current at time of fetch
+      // Framework never writes to Allocation sheet
     }
   }
 
-  // ─── FETCH PROCEDURE (execute for each required file) ────────────────────
+  GUARD CoreRules {
+    NEVER:  use_web_fetch for any GitHub file or Google Drive file
+    NEVER:  hardcode any file ID (Drive) or assume any SHA (GitHub)
+    ALWAYS: resolve Drive ID via search at session start
+    ALWAYS: use SHA from session-start fetch for GitHub write-back
+    NEVER:  write to GitHub without first fetching current SHA this session
+  }
 
-  FUNCTION fetchFile(exact_title: String) {
+  // ─── ALLOCATION SHEET FETCH (Google Drive) ──────────────────────────────────────
+
+  FUNCTION fetchAllocation() {
+
     STEP 1: search {
       tool:      Google_Drive:search_files
-      query:     "title = '[exact_title]' and parentId = 'root'"
+      query:     "title = 'Allocation' and parentId = 'root'"
       pageSize:  5
-      scope:     root_only  // NEVER search subfolders unless explicitly instructed
+      scope:     root_only
     }
 
     STEP 2: validate_result {
       IF result_count == 0 {
         HARD_STOP
-        NOTIFY: "I cannot find [exact_title] in the root of your Drive.
-                 Please confirm the file exists and its exact name."
-        NEVER:  proceed
+        NOTIFY: "Cannot find 'Allocation' in Drive root.
+                 Confirm file exists and its exact name."
       }
       IF result_count > 1 {
         HARD_STOP
-        NOTIFY: "I found [N] files named [exact_title] in the root of your Drive.
-                 Please confirm which is canonical and delete the duplicate(s)."
-        NEVER:  proceed_until_resolved
+        NOTIFY: "Found [N] files named 'Allocation' in Drive root.
+                 Delete duplicates and retry."
       }
     }
 
     STEP 3: read {
-      IF exact_title == "Allocation" {
-        tool:   Google_Drive:read_file_content
-        fileId: [id from search result]
-      } ELSE {
-        tool:   Google_Drive:download_file_content
-        fileId: [id from search result]
-      }
+      tool:   Google_Drive:read_file_content
+      fileId: [id from search result]
+      // read_file_content (NOT download_file_content) — Drive returns binary for Sheets via download
     }
 
+    RETURN allocation_sheet_contents
+    // Includes: Schwab Accounts, Relative's Schwab Accounts, Objectives tabs
+  }
+
+  // ─── CALIBRATION STATE FETCH (GitHub) ────────────────────────────────────────
+
+  FUNCTION fetchCalibrationState() {
+
+    STEP 1: fetch {
+      tool:   github:get_file_contents
+      owner:  SOURCE_MAP.github.owner
+      repo:   SOURCE_MAP.github.repo
+      path:   "Calibration_State.md"
+      branch: SOURCE_MAP.github.branch
+    }
+
+    STEP 2: store_sha {
+      calibration_state_sha = result.sha
+      // Required for write-back at session end — do not discard
+    }
+
+    STEP 3: apply {
+      parse content and apply:
+        CALIBRATION_STATE §1   // credit thresholds
+        CALIBRATION_STATE §2   // energy, currency, macro thresholds
+        CALIBRATION_STATE §4   // growth objectives return table + multipliers
+        CALIBRATION_STATE §8   // session state log (prior probabilities)
+    }
+
+    RETURN calibration_state_contents
+  }
+
+  // ─── FRAMEWORK FILE FETCH (GitHub) ───────────────────────────────────────────
+  // For any framework module file other than Calibration_State.md.
+  // Framework modules are Project Knowledge (always in context) —
+  // this function is for explicit re-fetch or inspection when needed.
+
+  FUNCTION fetchFrameworkFile(path: String) {
+    tool:   github:get_file_contents
+    owner:  SOURCE_MAP.github.owner
+    repo:   SOURCE_MAP.github.repo
+    path:   path
+    branch: SOURCE_MAP.github.branch
     RETURN file_contents
   }
 
-  // ─── HARD RULES ───────────────────────────────────────────────────────────
-
-  GUARD HardRules {
-    NEVER:  use web_fetch for any_Drive_file
-    NEVER:  hardcode a file_ID
-    NEVER:  search inside subfolders UNLESS explicitly_instructed for specific_task
-    ALWAYS: resolve current_ID via search at start_of_each_session
-    IF zero_results      → HARD_STOP and notify user  // do not proceed
-    IF multiple_results  → HARD_STOP and notify user  // do not proceed until resolved
-  }
-
-  // ─── WRITE-BACK PROCEDURE (session end) ──────────────────────────────────
+  // ─── WRITE-BACK PROCEDURE (session end) ────────────────────────────────────────
   // Executed automatically at session end — do not wait for client instruction.
-  // Appends BOTH §5 (credit readings) and §6 (scenario state) in one operation.
+  // Appends BOTH §7 (credit readings) and §8 (scenario state) in one operation.
+  // GitHub write: clean overwrite using SHA from session-start fetch.
+  // No duplicate file problem — create_or_update_file updates in place.
   // @see M05_SessionInit.SessionStartSequence Step 10
 
   PROCEDURE WriteBack {
-    WHEN: portfolio_discussion_concluded  // session end
+    WHEN: portfolio_discussion_concluded
     ALWAYS: execute_without_client_instruction
-            // do not wait for prompt — session end triggers this automatically
 
-    STEP 1: re_fetch Calibration_State.md from Drive
-            // same search + download_file_content as session-start read
-            // use fileId from session-start search — do NOT re-search
-            // (file ID is stable within a session; re-search only at session start)
+    STEP 1: use calibration_state_sha from session-start fetchCalibrationState()
+            // SHA captured at Step 2 of fetchCalibrationState() — reuse; do not re-fetch
+            // SHA is stable within a session
 
-    STEP 2: append to §5 Session Observations Log {
-      // Credit readings — enables velocity checks once 60+ trading days accumulate
-      date:     [today's date]
-      HY_OAS:   [value fetched this session from FRED BAMLH0A0HYM2]
-      IG_OAS:   [value fetched this session from FRED BAMLC0A0CM]
-      CCC_OAS:  [value fetched this session from FRED BAMLH0A3HYC]
-      source:   FRED | Trading_Economics | other
-      T1_flag:  confirmed | composite_only | stale
-    }
-
-    GUARD §5_WriteIntegrity {
-      NEVER:  overwrite existing rows — append only
-      NEVER:  write if T1_flag == stale AND no_better_source_available
-              // log the gap instead: "[date] — readings unavailable this session"
-      ALWAYS: preserve all existing content above the appended row
-    }
-
-    STEP 3: append to §6 Session State Log {
-      // Scenario state — provides prior anchor for next session's 25pp cap enforcement
-      // and pending item continuity. @see M03_ScenarioFramework.DeriveScenarioProbabilities
-      // @see M05_SessionInit.INPUT_3 (consumed at next session start)
-      date:                  [today's date]
-      scenario_probabilities {
-        A: [%]
-        B: [%]
-        C: [%]
-        D: [%]
-        E: [%]
-        F: [%]
-        // VERIFY: sum == 100% before writing
+    STEP 2: construct updated_content {
+      // Take full content loaded at session start
+      // Append new row to §7 Session Observations Log:
+      §7_new_row {
+        date:     [today's date]
+        HY_OAS:   [value fetched this session from FRED BAMLH0A0HYM2]
+        IG_OAS:   [value fetched this session from FRED BAMLC0A0CM]
+        CCC_OAS:  [value fetched this session from FRED BAMLH0A3HYC]
+        source:   FRED | Trading_Economics | other
+        T1_flag:  confirmed | composite_only | stale
       }
-      primary_driver:        [name of current dominant driver]
-      derivation_method:     scored | manual_override
-      // "scored"          = DeriveScenarioProbabilities() output used as-is
-      // "manual_override" = analyst judgment departed from scoring output
-      //                     REQUIRE: reason and specific T1 evidence documented here
-      manual_override_reason: [if manual_override — T1 evidence and rationale] | null
-      open_triggers: [
-        // list of pending triggers not yet resolved at session end
-        // FORMAT: '- [trigger description] — deadline [date] — watching_for [condition]'
-      ]
-      open_decisions: [
-        // list of unresolved portfolio questions or recommended actions not yet executed
-        // FORMAT: '- [decision description] — status [pending | awaiting_data | client_choice]'
-      ]
-      next_session_flags: [
-        // items requiring immediate attention at next session load
-        // FORMAT: '- [flag description]'
-        // Examples: "MOVE index not fetched this session — retrieve at next start"
-        //           "FRED velocity check not executable — needs 60-day log history"
-        //           "Ceasefire deadline passed — reassess C/A probabilities immediately"
-      ]
+
+      // Append new entry to §8 Session State Log:
+      §8_new_entry {
+        date:                  [today's date]
+        scenario_probabilities { A: [%], B: [%], C: [%], D: [%], E: [%], F: [%] }
+        // VERIFY: sum == 100% before writing
+        primary_driver:        [name of current dominant driver]
+        derivation_method:     scored | manual_override
+        manual_override_reason: [if manual_override — T1 evidence and rationale] | null
+        open_triggers:         [list of pending triggers]
+        open_decisions:        [list of unresolved portfolio actions]
+        next_session_flags:    [items requiring immediate attention at next session load]
+      }
     }
 
-    GUARD §6_WriteIntegrity {
-      NEVER:  overwrite existing rows — append only
-      NEVER:  write if scenario_probabilities do not sum to 100%
-              // log the error instead: "[date] — scenario state write skipped:
-              //                         probabilities did not sum to 100%"
-      ALWAYS: preserve all existing content above the appended row
-      ALWAYS: write §5 and §6 in a single file update operation
-              // fetch → modify → write — not two separate write operations
+    GUARD WriteIntegrity {
+      NEVER:  overwrite existing rows in §7 or §8 — append only within those sections
+      NEVER:  write §7 row if T1_flag == stale AND no_better_source_available
+              // log the gap: "[date] — readings unavailable this session"
+      NEVER:  write §8 entry if scenario_probabilities do not sum to 100%
+              // log the error: "[date] — scenario state write skipped:
+              //                 probabilities did not sum to 100%"
+      ALWAYS: write §7 and §8 in a single file update operation
     }
 
-    STEP 4: write updated file back to Drive {
-      tool:   Google_Drive:update_file_content
-              // NOTE: Google Drive MCP tool may be create_file with overwrite
-              // Use whatever tool updates an existing file's content in-place
-      fileId: [id from session-start search — reuse, do not re-search]
+    STEP 3: write to GitHub {
+      tool:    github:create_or_update_file
+      owner:   SOURCE_MAP.github.owner
+      repo:    SOURCE_MAP.github.repo
+      path:    "Calibration_State.md"
+      branch:  SOURCE_MAP.github.branch
+      content: updated_content
+      sha:     calibration_state_sha  // from session-start fetch
+      message: "Session write-back: [today's date] — §7 credit + §8 scenario state"
     }
 
-    // Velocity check reminder — executes automatically from §5 data:
-    // IF oldest_§5_row >= 60_trading_days_ago
+    // Velocity check reminder — executes automatically from §7 data:
+    // IF oldest_§7_row >= 60_trading_days_ago
     //   → compute velocity = current_reading - reading_60d_ago
     //   → apply to M11 thresholds at next session
   }
 
-  // ─── IMPLEMENTATION NOTE ──────────────────────────────────────────────────
-  // April 20, 2026: Allocation sheet read via web_fetch → stale/incorrect render.
-  // Seven false discrepancies flagged. Wrong portfolio display produced.
-  // Session partially invalidated before error caught.
-  // Correct data only retrieved after switching to Google Drive API (search_files).
-  // This protocol prevents recurrence.
+  // ─── IMPLEMENTATION NOTE ─────────────────────────────────────────────────────────────
+  // April 20, 2026: Allocation sheet fetched via web_fetch → stale/incorrect data.
+  // Seven false discrepancies. Session partially invalidated.
+  // Fixed by switching to Google Drive API (search_files + read_file_content).
+  //
+  // April 23, 2026: Calibration_State.md migrated from Google Drive to GitHub.
+  // Drive write-back required create_file + manual duplicate deletion each session.
+  // GitHub create_or_update_file overwrites cleanly in place using SHA.
+  // No duplicate file problem. No manual deletion required.
+  // GitHub MCP tool: github:get_file_contents (read) + github:create_or_update_file (write).
 
 }
 ```
