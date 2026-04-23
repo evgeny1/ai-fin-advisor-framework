@@ -1,14 +1,14 @@
 # Calibration State
 Persistent framework configuration — load at every session start alongside session handoff.
 
-Version: 1.2  Last updated: April 22, 2026 (§5b and §6 updated — April 22 session; no threshold changes)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
+Version: 1.3  Last updated: April 23, 2026 (M13 adopted; §4 added; §§4–6 renumbered §§5–8; GitHub migration)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
 
 _______________
 
 ## Load Verification Requirement
 At session start, the advisor must state in the briefing:
 
-"Calibration State loaded, last update: April 22, 2026"
+"Calibration State loaded, last update: April 23, 2026"
 
 Absence of this line indicates the calibration file was not loaded and the session is invalid for threshold-sensitive decisions.
 
@@ -31,9 +31,9 @@ Baseline snapshot at instantiation (April 19, 2026): ~285 bps (Trading Economics
 
 Session observation (April 19, 2026 session): HY composite remains at ~285 bps (Trading Economics). Consistent with baseline snapshot. No velocity check executed this session — full 30-day HY composite history not pulled; fetch planned for next session.
 
-Session observation (April 21, 2026 session): HY composite ~285 bps (Trading Economics; FRED last updated April 15-16 — readings stale by 4-5 days due to weekend + active geopolitical events). Unchanged from April 19 baseline. Velocity check not executable — §5b log needs 60+ trading day history. T1_flag: composite_only | stale. No threshold fires.
+Session observation (April 21, 2026 session): HY composite ~285 bps (Trading Economics; FRED last updated April 15-16 — readings stale by 4-5 days due to weekend + active geopolitical events). Unchanged from April 19 baseline. Velocity check not executable — §7 log needs 60+ trading day history. T1_flag: composite_only | stale. No threshold fires.
 
-Session observation (April 22, 2026 session): HY composite ~287 bps (Trading Economics; FRED last updated April 20). Marginal uptick from April 21 reading. No threshold fires. Velocity check not executable — §5b log needs 60+ trading day history. T1_flag: stale.
+Session observation (April 22, 2026 session): HY composite ~287 bps (Trading Economics; FRED last updated April 20). Marginal uptick from April 21 reading. No threshold fires. Velocity check not executable — §7 log needs 60+ trading day history. T1_flag: stale.
 
 ### 1.2 IG Composite — FRED: BAMLC0A0CM
 
@@ -176,7 +176,7 @@ _______________
 * Credit readings (April 21): HY ~285 bps, IG ~83 bps, CCC ~921 bps — all stale (FRED last updated April 15-16). No threshold fires.
 * Gold 90-day extraordinary movement check: Jan 20, 2026 ($4,737) to Apr 20, 2026 (~$4,800) = +1.3%. Extraordinary movement rule NOT triggered.
 * PAVE legislative mandate verification flagged as prerequisite before B trigger execution.
-* §5b Session Observations Log initialized. §6 first entry written.
+* §7 Session Observations Log initialized. §8 first entry written.
 
 2026-04-22 — Scheduled bi-weekly portfolio review session
 * No threshold changes. All calibration-dated values carried forward.
@@ -195,14 +195,126 @@ _______________
 * SGOL underweight addressed: portfolio target 24% (up from 16.1% current). All sheltered account SGOL targets raised to 47–48%.
 * WriteBack executed via create_file (no update_file tool available in Drive MCP this session). Client must DELETE old Calibration_State.md from Drive root — keep only this new version to prevent M12 HARD_STOP on duplicate detection next session.
 
+2026-04-23 — Framework update (v1.3): M13 adoption, §4 addition, GitHub migration
+* No threshold changes to §§1–2. All prior calibration-dated values carried forward.
+* M13_GrowthObjectives.md adopted (v1.0). Resolves idealAllocation() gap in M03; replaces minimumConvictionWeight() in M03; adds growth objective feasibility check and recalibration sequence.
+* §4 (Growth Objectives: Return Table and Multipliers) added to this file — see below.
+* Return table (§4.1) initialized with empirical grounding:
+   * Gold/precious metals: ~9.2% real annualized 1973–82 stagflation (Morningstar/CAIA); ~19% in stagflation 1973–2024 (Flexible Plan); confirmed ~4% in low-inflation regimes (World Gold Council).
+   * Domestic equity: −7.1% nominal / −16.6% real in stagflation (Robeco/Baltussen 146-year study); ~15–18% real in 1990s soft landing; ~-36% nominal in 2008 deflationary recession peak.
+   * Commodities: near one-for-one with unexpected inflation (GSCI/NBER); particularly poor in severe recessions.
+   * Real asset/contracted revenue (midstream): outperformed S&P 500 by 77% cumulative 2008–2011; positive in inflation periods due to contract inflation escalators (Alerian/Cohen & Steers).
+   * Long duration bonds: primary beneficiary in deflationary recession; directly impaired in stagflation and inflationary shock (Robeco; CAIA).
+   * Defense/geopolitical premium: annual returns dependent on defense spending levels (Auer 2013); abnormal returns around discrete geopolitical events.
+   * All values provisional — full empirical audit at June 30, 2026 alongside §1–2.
+* IRA and Roth IRA target multipliers (§4.2–4.3) initialized. Roth derived from IRA multipliers extended to 15-year horizon + ~0.5–0.75% effective annual tax-free compounding advantage. Both confirmed provisionally by client — full review at June 30, 2026.
+* §§4–6 renumbered → §§5–8 to accommodate new §4. Section references in M05 and M12 updated accordingly.
+* GitHub migration: Calibration_State.md now lives in GitHub repo (evgeny1/ai-fin-advisor-framework, master branch). M12 updated from Drive-only to hybrid GitHub+Drive protocol. No duplicate-file workaround needed — GitHub create_or_update_file overwrites cleanly. Allocation sheet remains on Google Drive (read-only from framework).
+* M03_ScenarioFramework.md updated: scenarioWeightedAllocation() and minimumConvictionWeight() now delegate to M13.
+* M05_SessionInit.md updated: §7 and §8 references; Calibration_State fetch now via GitHub.
+* 00_INDEX.md updated: M13 added to registry, load order, precedence, cross-references, calibration-dated thresholds.
+* Account objective profiles to be added manually to Allocation sheet "Objectives" tab (new tab). See M13 STRUCT AccountObjectiveProfile for required fields.
+
 _______________
 
-## Section 4 — Review Cadence
+## Section 4 — Growth Objectives: Return Table and Multipliers
+⚑ All values in this section are CALIBRATION_DATED.
+Review at every quarter-end audit alongside §1 and §2 thresholds.
+Interim review triggered if: return table produces systematic infeasibility across accounts despite valid allocation changes.
+@see M13_GrowthObjectives
+
+Last calibrated: April 23, 2026 (initial instantiation — provisional)
+Full empirical audit scheduled: June 30, 2026
+
+Revision triggers for §4 specifically:
+- New macro regime episode completes with sufficient data → update relevant scenario column
+- Academic consensus on historical returns revises materially (e.g., JST database update)
+- A role's structural characteristics change materially (e.g., MLPX contract structure shifts from fee-based)
+- Systematic infeasibility across accounts despite valid allocations → interim review before next recommendation
+
+### 4.1 Expected Real Annualized Return Table
+Conservative end used for ALL computations. Upside end disclosed in briefing only — never used in computation.
+Format per cell: [conservative%, upside%]
+
+| Role | Scenario A | Scenario B | Scenario C | Scenario D | Scenario E | Scenario F |
+| :-- | :-: | :-: | :-: | :-: | :-: | :-: |
+| geopolitical_premium | [-2, 3] | [2, 6] | [4, 10] | [-4, 0] | [1, 5] | [1, 4] |
+| inflation_hedge_precious_metals | [0, 4] | [6, 12] | [7, 14] | [-2, 4] | [10, 20] | [-3, 1] |
+| inflation_hedge_commodity_linked | [2, 6] | [6, 12] | [7, 13] | [-8, -2] | [2, 6] | [2, 5] |
+| real_asset_contracted_revenue | [3, 7] | [3, 7] | [3, 6] | [2, 6] | [2, 5] | [3, 7] |
+| policy_driven_thematic_equity | [4, 8] | [-3, 1] | [-1, 3] | [-5, -1] | [-6, -2] | [4, 8] |
+| rate_sensitive_income_short_duration | [0, 2] | [1, 3] | [1, 3] | [0, 3] | [-2, 2] | [1, 3] |
+| rate_sensitive_income_long_duration | [3, 7] | [-4, -1] | [-5, -2] | [5, 10] | [-10, -3] | [-4, -1] |
+| broad_market_equity_domestic | [5, 12] | [-8, -2] | [-4, -1] | [-12, -4] | [-8, -3] | [7, 14] |
+| broad_market_equity_international | [4, 9] | [-5, -1] | [-6, -2] | [-8, -3] | [-10, -4] | [3, 8] |
+
+Empirical basis (key anchors — see Calibration Log 2026-04-23 for full sourcing):
+- inflation_hedge_precious_metals B: ~9.2% real 1973–82 (conservative); ~19% annualized stagflation 1973–2024 (upside)
+- inflation_hedge_precious_metals E: Nixon shock analog; reserve erosion = maximum thesis conviction
+- inflation_hedge_precious_metals F: −1.1% real 1980–2000 with positive real rates (World Gold Council)
+- broad_market_equity_domestic B: −7.1% nominal / −16.6% real in stagflation (Robeco 146-year study)
+- broad_market_equity_domestic D: −36.5% nominal in 2008 peak year; multi-year regime −12% conservative
+- broad_market_equity_domestic A/F: ~15–18% real in 1990s soft landing / overheat
+- inflation_hedge_commodity_linked B/C: near one-for-one with unexpected inflation (GSCI/NBER)
+- inflation_hedge_commodity_linked D: "particularly poorly during severe recessions" (NBER)
+- real_asset_contracted_revenue D: 77% cumulative outperformance vs S&P 500, 2008–2011 (Alerian)
+- rate_sensitive_income_long_duration D: primary beneficiary confirmed; flight to quality 2008
+- policy_driven_thematic_equity: insufficient historical analog data — structurally derived from M09/M10 narratives
+- Scenario E: limited data — structurally reasoned; no clean modern analog for full reserve rupture
+
+### 4.2 IRA Target Multipliers (planning horizon: 10 years)
+Floor: 1.5× (enforced regardless of probability vector)
+
+| Scenario | Multiplier | Implied Real Return | Basis |
+| :-: | :-: | :-: | :-- |
+| A — Soft Landing | 2.0 | ~7.2% annualized | Historical soft landing 1990s: ~15–18% real equity returns; balanced portfolio approximately 7–8% real |
+| B — Stagflation Lock | 1.5 | ~4.1% annualized | Real growth constrained; 1973–82 mixed portfolio real returns floor; hedges partially offset equity losses |
+| C — Inflationary Shock | 1.5 | ~4.1% annualized | Energy spike limits real return; similar outcome to B over 10yr horizon |
+| D — Deflationary Recession | 1.3 | ~2.7% annualized | Preservation primary; modest growth from long bonds only; demand collapse |
+| E — Structural Rupture | 1.2 | ~1.8% annualized | Capital preservation dominates; maximum stress scenario; real asset focus |
+| F — Growth Overheat | 2.0 | ~7.2% annualized | Strong nominal growth; cyclicals and financials outperform; similar to A on 10yr horizon |
+
+Current regime probability-weighted target (A=8%, B=45%, C=38%, D=3%, E=3%, F=3%):
+= 0.08×2.0 + 0.45×1.5 + 0.38×1.5 + 0.03×1.3 + 0.03×1.2 + 0.03×2.0
+= 0.16 + 0.675 + 0.57 + 0.039 + 0.036 + 0.06 = 1.54×
+Required real return: (1.54)^(1/10) − 1 ≈ 4.4% annualized
+
+### 4.3 Roth IRA Target Multipliers (planning horizon: 15 years)
+Floor: 2.0× (enforced regardless of probability vector)
+Derivation: IRA multipliers extended to 15-year horizon at same implied annualized real return,
+plus ~0.5–0.75% effective annual advantage from tax-free compounding on a typical equity-heavy portfolio.
+
+| Scenario | IRA Rate | Roth Rate (adj) | Roth 15yr Multiplier | Notes |
+| :-: | :-: | :-: | :-: | :-- |
+| A | ~7.2% | ~7.9% | 3.1 | Full tax-free compounding; extended 15yr runway |
+| B | ~4.1% | ~4.6% | 2.0 | Constrained real growth; longer runway partially absorbs shock |
+| C | ~4.1% | ~4.6% | 2.0 | Same as B on extended horizon |
+| D | ~2.7% | ~3.0% | 1.6 | Preservation + modest bond appreciation; tax-free muted benefit |
+| E | ~1.8% | ~2.1% | 1.4 | Capital preservation; rupture scenario; limited compounding environment |
+| F | ~7.2% | ~7.9% | 3.1 | Same as A; full overheat compounding advantage |
+
+Status: confirmed provisionally by client April 23, 2026. Full review at June 30, 2026 audit.
+
+### 4.4 Structural Floor and Concentration Parameters
+
+| Parameter | Current Value | Type | Notes |
+| :-: | :-: | :-: | :-- |
+| Base floor (fraction of current allocation) | 0.25 | Calibration-dated | 75% reduction = maximum adverse directive applied |
+| Minimum floor (% of account total value) | 2% | Calibration-dated | Prevents floor from becoming a rounding artifact |
+| Concentration cap (max single position) | 40% | Calibration-dated | Consistent with M06 5–6 position monitoring constraint |
+| Floor nominal loss probability threshold | 15% | Calibration-dated | Scenarios at or above this probability checked for floor breach in FLOOR_THEN_RETURN accounts |
+
+All values provisional — full audit pending June 30, 2026.
+
+_______________
+
+## Section 5 — Review Cadence
+(Formerly §4 — renumbered April 23, 2026)
 
 | Date | Type | Scope |
 | :-: | :-: | :-: |
-| 2026-06-30 | Scheduled Q2 (first full audit) | Compute 180d medians for HY/IG/CCC; verify HY/IG/CCC deltas place triggers in 75th–90th percentile band; hit-rate audit for all absolute thresholds in Section 2; formally classify currently-unflagged thresholds as calibration-dated |
-| 2026-09-30 | Scheduled Q3 | Full audit of all calibration-dated thresholds |
+| 2026-06-30 | Scheduled Q2 (first full audit) | Compute 180d medians for HY/IG/CCC; verify HY/IG/CCC deltas place triggers in 75th–90th percentile band; hit-rate audit for all absolute thresholds in Section 2; formally classify currently-unflagged thresholds as calibration-dated; first empirical audit of §4 return table and multipliers |
+| 2026-09-30 | Scheduled Q3 | Full audit of all calibration-dated thresholds including §4 |
 | 2026-12-31 | Scheduled Q4 | Full audit |
 | 2027-03-31 | Scheduled Q1 2027 | Full audit |
 
@@ -212,10 +324,12 @@ Interim recalibration triggered per §1.10 if:
 * Any threshold fires twice without prescribed regime materializing
 * Any threshold fails to fire while prescribed regime materializes
 * Primary driver recalibration declared per §1.6
+* Return table (§4.1) produces systematic infeasibility across accounts despite valid allocation changes
 
 _______________
 
-## Section 5 — First-Audit Checklist (for June 30, 2026 session)
+## Section 6 — First-Audit Checklist (for June 30, 2026 session)
+(Formerly §5 — renumbered April 23, 2026)
 At Q2 2026 review, execute the following:
 
 1. Compute trailing 180-day median for FRED series BAMLH0A0HYM2, BAMLC0A0CM, BAMLH0A3HYC. Record in Section 1.
@@ -225,13 +339,17 @@ At Q2 2026 review, execute the following:
 5. Verify IG\_TRANSMISSION\_DELTA (+60) places trigger in 75th–90th percentile band of IG distribution. Adjust if needed.
 6. Hit-rate audit each absolute threshold in Section 2 against trailing 5-year data. Adjust if lagging or false-positive-prone.
 7. Formally classify currently-unflagged thresholds in Sections 2.2, 2.3, 2.4 as calibration-dated. Update main framework document to add ⚑ markers.
-8. Record all results in Section 3 Calibration Log with date-stamped entry.
-9. Confirm next review date (September 30, 2026).
+8. First empirical audit of §4.1 return table: verify conservative bounds against any new regime episode data; check structural coherence across roles and scenarios.
+9. First empirical audit of §4.2 and §4.3 multipliers: verify IRA implied returns are achievable given current holdings and scenario probabilities; verify Roth derivation adjustment remains appropriate.
+10. Audit §4.4 floor and concentration parameters against actual account sizes and position counts.
+11. Record all results in Section 3 Calibration Log with date-stamped entry.
+12. Confirm next review date (September 30, 2026).
 
 _______________
 
-## Section 5b — Session Observations Log (Credit Readings)
-Appended at every session end by M12_DriveProtocol.WriteBack (§5 step).
+## Section 7 — Session Observations Log (Credit Readings)
+(Formerly §5b — renumbered April 23, 2026)
+Appended at every session end by M12_FileProtocol.WriteBack.
 Enables velocity checks once 60+ trading days of entries accumulate.
 Note: Until 60+ entries exist, velocity overlays (HY: 100bps/60d; IG: 40bps/60d) cannot be computed from this log — log the gap rather than skipping the entry.
 
@@ -243,9 +361,10 @@ Note: Until 60+ entries exist, velocity overlays (HY: 100bps/60d; IG: 40bps/60d)
 
 _______________
 
-## Section 6 — Session State Log
-Appended at every session end by M12_DriveProtocol.WriteBack.
-Consumed at every session start by M05_SessionInit.INPUT_3 (§6 load).
+## Section 8 — Session State Log
+(Formerly §6 — renumbered April 23, 2026)
+Appended at every session end by M12_FileProtocol.WriteBack.
+Consumed at every session start by M05_SessionInit.INPUT_3 (§8 load).
 Provides prior scenario probability anchor for 25pp cap enforcement in
 M03_ScenarioFramework.DeriveScenarioProbabilities().
 
@@ -278,7 +397,7 @@ open_decisions:
   - XAR Acc4 rebalancing signal directionally consistent with C scenario — defer to next scheduled rebalancing or formal trigger.
 next_session_flags:
   - MOVE index not fetched this session — retrieve at next session start (priority)
-  - FRED HY/IG velocity checks not yet executable — §5b log needs 60+ trading day entries
+  - FRED HY/IG velocity checks not yet executable — §7 log needs 60+ trading day entries
   - Ceasefire expiry outcome (April 22) — reassess C probability immediately at next session
   - Warsh confirmation hearing outcome (April 21) — assess E probability direction at next session
   - Verify PAVE/IIJA spending mandate status via T1 source (White House OMB, appropriations legislation, CBO)
@@ -309,14 +428,13 @@ open_decisions:
   - NOTE: April 21 open decision re Acc3 cash redeployment was erroneous — Acc3 has no idle cash; Cash to Add = external deposit required. Decision voided. Acc3 remains 100% SGOV, no action.
 next_session_flags:
   - Natural gas price not fetched this session — priority fetch at next session start
-  - FRED HY/IG velocity checks still not executable — §5b log needs 60+ trading day entries
+  - FRED HY/IG velocity checks still not executable — §7 log needs 60+ trading day entries
   - Q1 2026 GDP advance estimate (~April 30) — reassess B/D scoring immediately upon release
   - FOMC April 29 decision — reassess A/B/D scores immediately on release
   - PAVE downgraded from watch to FLAGGED — B-protocol reduction in Acc4 now authorized per T1 verification this session; execute per open_decisions above
   - Brent ~$100; $110 clock not started; begin close monitoring if Brent approaches $105
   - Credit FRED staleness: HY Apr 20, IG/CCC Apr 16-17 — fetch fresh at next session start
   - New target allocations produced this session — pending client entry into allocation sheet target % columns; confirm execution before next session
-  - Client must DELETE old Calibration_State.md from Drive root after this upload — keep only new version to prevent M12 HARD_STOP on duplicate detection next session
   - Gold 90-day extraordinary movement check: Jan 20 ($4,737) to Apr 22 (~$4,785) = +1.0% — NOT triggered
 
 ---
