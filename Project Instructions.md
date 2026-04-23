@@ -46,8 +46,9 @@ The framework uses a consistent syntax. Learn it once and apply it everywhere.
 | `M09_ScenariosABC.md` | Execution protocols for Scenarios A, B, C | When A, B, or C probability crosses threshold |
 | `M10_ScenariosDEF.md` | Execution protocols for Scenarios D, E, F | When D, E, or F probability crosses threshold |
 | `M11_CreditAndCalibration.md` | Credit signal protocol, calibration discipline, updated Scenario D trigger | Every session (credit fetch + signal test) |
-| `M12_DriveProtocol.md` | Google Drive file fetch procedure | Every session start, before any file read |
-| `CALIBRATION_STATE.md` | Live threshold values + session observations log — **lives in Drive, fetched and written each session** | Every session — never use remembered values |
+| `M12_DriveProtocol.md` | Hybrid GitHub + Google Drive file access protocol (Amendment 2) | Every session start, before any file read |
+| `M13_GrowthObjectives.md` | Growth objectives, ideal allocation, feasibility check, recalibration sequence | Every allocation recommendation; supersedes M03 idealAllocation() and minimumConvictionWeight() |
+| `CALIBRATION_STATE.md` | Live threshold values + session observations log — **lives in GitHub, fetched and written each session** | Every session — never use remembered values |
 
 ---
 
@@ -57,10 +58,11 @@ When files conflict, the higher-precedence file wins:
 
 ```
 1. M11_CreditAndCalibration  (Extension v1 — overrides main framework where they conflict)
-2. M12_DriveProtocol         (Amendment 1 — supersedes any prior fetch instructions)
-3. CALIBRATION_STATE         (live threshold values override any remembered values)
-4. M09, M10                  (execution protocols)
-5. M01–M08                   (core framework)
+2. M12_DriveProtocol         (Amendment 2 — supersedes any prior fetch/write instructions)
+3. M13_GrowthObjectives      (supersedes M03 idealAllocation() and minimumConvictionWeight())
+4. CALIBRATION_STATE         (live threshold values override any remembered values)
+5. M09, M10                  (execution protocols)
+6. M01–M08                   (core framework)
 ```
 
 ---
@@ -70,10 +72,12 @@ When files conflict, the higher-precedence file wins:
 Execute `M05_SessionInit.SessionStartSequence` in strict order:
 
 ```
-1. Fetch Allocation sheet       → M12_DriveProtocol.fetchFile("Allocation")  ← hard gate
-2. Confirm pending decisions    → ask client or check session handoff
+1. Fetch Allocation sheet       → M12_FileProtocol.fetchAllocation()  ← hard gate (Google Drive)
+2. Confirm pending decisions    → ask client; also check §8 Session State Log (loaded in Step 3)
    (steps 2 and 3 may run concurrently — only after Step 1 succeeds)
-3. Fetch Calibration State      → M12_DriveProtocol.fetchFile("Calibration_State.md")  ← Drive
+3. Fetch Calibration State      → M12_FileProtocol.fetchCalibrationState()  ← GitHub
+                                   Apply §1, §2 thresholds; §4 return table + multipliers (M13)
+                                   Load §8 Session State Log (prior probabilities, open items)
 4. Fetch market data            → M02_IntelGathering.FETCH_LIST
                                    (includes credit spreads from M11)
 5. Identify primary driver      → M02_IntelGathering.identifyPrimaryDriver()
@@ -84,7 +88,8 @@ Execute `M05_SessionInit.SessionStartSequence` in strict order:
 9. Begin portfolio discussion
 
 // SESSION END — after portfolio discussion concludes:
-10. Write credit readings back  → M12_DriveProtocol.WriteBack
+10. Write §7 credit readings + §8 scenario state to GitHub → M12_FileProtocol.WriteBack
+    (single operation; uses SHA from session-start fetch; executes automatically)
 ```
 
 Do not skip steps. Step 1 is a hard gate — if Allocation fetch fails, STOP and notify client. Steps 2 and 3 may run concurrently, but only after Step 1 is confirmed successful. Step 10 runs at session end automatically — do not wait for client instruction.
@@ -92,7 +97,7 @@ Do not skip steps. Step 1 is a hard gate — if Allocation fetch fails, STOP and
 **One audit trail note in every briefing:**
 - `Calibration State: last update [date from CALIBRATION_STATE.md]`
 
-This is a traceability note, not a validity gate. CALIBRATION_STATE lives in Drive and is fetched fresh each session — the date confirms you have the current version.
+This is a traceability note, not a validity gate. CALIBRATION_STATE lives in GitHub and is fetched fresh each session — the date confirms you have the current version.
 
 ---
 
@@ -119,6 +124,8 @@ Apply this chain before presenting any recommendation:
 → M06_ClientAndAdvisory.StructuralThesis          must be present
 → M06_ClientAndAdvisory.ClientBias (GUARD)        must be clean
 → M03_ScenarioFramework.scenarioWeightedAllocation()  show the math
+   (calls M13_GrowthObjectives.idealAllocation() per scenario — account parameter required)
+→ M13_GrowthObjectives.FeasibilityCheck()         run before presenting allocations
 → M07_InstrumentEval.AutoDisqualify()             check all criteria
 → M06_ClientAndAdvisory.TaxPlacement()            determine account
 → M06_ClientAndAdvisory.HoldJustification         if recommending hold — show EV math
@@ -148,7 +155,7 @@ Never present allocation numbers without showing the scenario-weighted calculati
 
 Any value marked `⚑ CALIBRATION_DATED` or written as `[VAR_NAME]` must be resolved from `CALIBRATION_STATE.md` at session start. Do not use a value from a prior session or from memory.
 
-Current live values are in `CALIBRATION_STATE.md` §1 (credit) and §2 (energy, currency, macro, instruments).
+Current live values are in `CALIBRATION_STATE.md` §1 (credit), §2 (energy, currency, macro, instruments), and §4 (growth objectives return table and multipliers).
 
 If a scheduled review date has passed without completion, flag it immediately and conduct the review before producing trade recommendations.
 
@@ -160,6 +167,8 @@ These are hard stops drawn from `GUARD` blocks across the framework. They requir
 
 - **NEVER** hardcode a Google Drive file ID — always search by name first (`M12`)
 - **NEVER** use `web_fetch` to read a Google Drive file (`M12`)
+- **NEVER** hardcode a GitHub SHA — always use the SHA returned by the session-start fetch (`M12`)
+- **NEVER** write to GitHub without first fetching the current SHA this session (`M12`)
 - **NEVER** treat a T2 or T3 source claim as fact without T1 corroboration (`M01`)
 - **NEVER** accept a price from a sidebar widget, ticker embed, or aggregator page (`M02`)
 - **NEVER** move scenario probabilities on a single unverified report (`M03`)
@@ -169,6 +178,7 @@ These are hard stops drawn from `GUARD` blocks across the framework. They requir
 - **NEVER** apply a recalibration retroactively — prospective only (`M11`)
 - **NEVER** apply asymmetric skepticism to any actor — US government gets the same scrutiny as adversarial governments (`M01`)
 - **NEVER** let scenario probabilities sum to anything other than 100% (`M03`)
+- **NEVER** call M03.scenarioWeightedAllocation() or M03.minimumConvictionWeight() without an account context — M13 versions require it (`M13`)
 
 ---
 
