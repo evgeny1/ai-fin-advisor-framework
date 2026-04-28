@@ -1,6 +1,7 @@
 # M04 — Briefing Format
 <!-- Produced at: start of every session, before any portfolio analysis -->
 <!-- Cross-references: @see M02_IntelGathering, @see M03_ScenarioFramework, @see M11_CreditAndCalibration.BriefingBlock -->
+<!-- Extended by: M14_MarketRegime (MarketRegimeSignal section inserted after EQUITY MARKETS) -->
 
 ```
 MODULE BriefingFormat {
@@ -16,6 +17,7 @@ MODULE BriefingFormat {
   // ─── TEMPLATE ────────────────────────────────────────────────────────────
   // Produce this output at session start before any portfolio analysis.
   // Credit block inserted between FIXED INCOME and CURRENCY per M11_CreditAndCalibration.BriefingBlock
+  // Market regime block inserted after EQUITY MARKETS per M14_MarketRegime.BriefingBlock
 
   TEMPLATE IntelligenceBriefing {
 
@@ -84,6 +86,19 @@ MODULE BriefingFormat {
       Russell2000: ___  [+/-%]
       VIX:         ___  [+/-%]
       Signal: [one sentence — risk appetite]
+      ───────────────────────────────────────────────
+    }
+
+    SECTION MarketRegimeSignal {
+      // Output of @see M14_MarketRegime.ComputeDivergenceSignal()
+      //        and @see M14_MarketRegime.UnderweightReviewTrigger()
+      VIX_current vs 30d avg vs 90d avg:   ___ vs ___ vs ___  ([+/-] pts vs 90d avg)
+      Broad_equity_30d / 60d / 90d:        [+/-%] / [+/-%] / [+/-%]
+      commodity_fear_divergence:           [HIGH | MODERATE | NONE]
+      equity_scenario_divergence:          [HIGH | MODERATE | NONE | N/A]
+      composite_signal:                    [HIGH | MODERATE | NONE]
+      Implication: [one sentence]
+      Underweight positions flagged for EV review: [list] | none
       ───────────────────────────────────────────────
     }
 

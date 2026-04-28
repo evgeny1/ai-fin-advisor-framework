@@ -1,6 +1,7 @@
 # M08 — Functional Roles (Dynamic Position Classification)
 <!-- Applied at execution time by all Scenario Execution Protocols -->
 <!-- Cross-references: @see M09_ScenariosABC, @see M10_ScenariosDEF -->
+<!-- Extended by: M14_MarketRegime (EntryExtensionGuard added to ExecutionGuards) -->
 
 ```
 MODULE FunctionalRoles {
@@ -135,6 +136,13 @@ MODULE FunctionalRoles {
     NEVER:  act_on single_unverified_report
     ALWAYS: require T1_evidence_confirmation before_execution
     ALWAYS: document specific_evidence_that_triggered_execution before_acting
+
+    // Entry extension check — runs before any ADD or Add_aggressive directive
+    // @see M14_MarketRegime.EntryExtensionGuard
+    IF prescribed_action IN ["Add", "Add_aggressive"] {
+      RUN: M14_MarketRegime.EntryExtensionGuard(asset, account)
+      // HALT if guard fires — do not execute ADD until adjusted EV confirmed by client
+    }
 
     // Graduated Response Rule
     IF scenario.probability IN [30%, 39%] {
