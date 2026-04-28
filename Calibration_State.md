@@ -1,14 +1,14 @@
 # Calibration State
 Persistent framework configuration — load at every session start alongside session handoff.
 
-Version: 1.4  Last updated: April 23, 2026 (second update — M13 first application; §4.2/§4.3 B/C multipliers and floors revised for current regime)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
+Version: 1.5  Last updated: April 27, 2026 (M14 adoption; §9 Market Regime Thresholds added)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
 
 _______________
 
 ## Load Verification Requirement
 At session start, the advisor must state in the briefing:
 
-"Calibration State loaded, last update: April 23, 2026"
+"Calibration State loaded, last update: April 27, 2026"
 
 Absence of this line indicates the calibration file was not loaded and the session is invalid for threshold-sensitive decisions.
 
@@ -212,6 +212,22 @@ _______________
   post-war price reset. Re-evaluate when Brent retreats toward $65–75 post-conflict.
 * Scenario probabilities unchanged from April 22: A=8%, B=45%, C=38%, D=3%, E=3%, F=3%.
 
+2026-04-27 — Framework update (v1.5): M14 adoption; §9 Market Regime Thresholds added
+* M14_MarketRegime.md adopted (v1.0). Addresses three structural gaps: (1) no market
+  desensitization detection — market can absorb an ongoing scenario without it resolving;
+  (2) no underweight opportunity-cost review gate when scenario-underweighted positions
+  appreciate materially; (3) entry-price extension check previously limited to commodity-linked
+  instruments under discrete supply events (WAR PREMIUM ENTRY GUARD) — now generalized to
+  all roles via EntryExtensionGuard.
+* WAR PREMIUM ENTRY GUARD superseded by M14.EntryExtensionGuard. Both guards apply
+  independently when a discrete supply event is also active — position must clear both EV
+  checks before ADD executes.
+* §9 Market Regime Thresholds added (provisional initial values — full audit June 30, 2026).
+* 00_INDEX, M02, M04, M08 updated to reference M14. CALIBRATION_DATED_THRESHOLDS in
+  00_INDEX updated to reflect actual current IRA/Roth multipliers (1.3×) from prior session.
+* Architectural boundary confirmed: M14 signals route to entry-timing EV calculations only.
+  NEVER feed into M03.DeriveScenarioProbabilities — ScoringIntegrity guard applies absolutely.
+
 _______________
 
 ## Section 4 — Growth Objectives: Return Table and Multipliers
@@ -317,12 +333,12 @@ _______________
 
 | Date | Type | Scope |
 | :-: | :-: | :-: |
-| 2026-06-30 | Scheduled Q2 (first full audit) | Compute 180d medians for HY/IG/CCC; verify triggers in 75th–90th percentile band; hit-rate audit all §2 thresholds; classify unflagged thresholds; audit §4 return table and multipliers; restore §4.2/§4.3 B/C and floors if commodity-linked has been added |
-| 2026-09-30 | Scheduled Q3 | Full audit of all calibration-dated thresholds including §4 |
+| 2026-06-30 | Scheduled Q2 (first full audit) | Compute 180d medians for HY/IG/CCC; verify triggers in 75th–90th percentile band; hit-rate audit all §2 thresholds; classify unflagged thresholds; audit §4 return table and multipliers; restore §4.2/§4.3 B/C and floors if commodity-linked has been added; audit §9 M14 thresholds (first review) |
+| 2026-09-30 | Scheduled Q3 | Full audit of all calibration-dated thresholds including §4 and §9 |
 | 2026-12-31 | Scheduled Q4 | Full audit |
 | 2027-03-31 | Scheduled Q1 2027 | Full audit |
 
-Interim recalibration triggered per §1.10 if: trailing baseline shifts >20% from last calibration; threshold fires twice without prescribed regime; threshold fails to fire while regime materializes; primary driver recalibration declared; §4.1 produces systematic infeasibility despite valid allocations.
+Interim recalibration triggered per §1.10 if: trailing baseline shifts >20% from last calibration; threshold fires twice without prescribed regime; threshold fails to fire while regime materializes; primary driver recalibration declared; §4.1 produces systematic infeasibility despite valid allocations; §9 thresholds produce systematic false positives or false negatives.
 
 _______________
 
@@ -340,8 +356,9 @@ At Q2 2026 review, execute the following:
 8. First empirical audit of §4.1 return table: verify conservative bounds against any new regime episode data; check structural coherence across roles and scenarios.
 9. First empirical audit of §4.2 and §4.3 multipliers: assess whether commodity-linked has been added at appropriate entry prices; if so, restore B/C multipliers and floors (IRA: 1.5×; Roth: 2.0×) or calibrate to new empirical basis. If not added, document continued deferral rationale.
 10. Audit §4.4 floor and concentration parameters against actual account sizes and position counts.
-11. Record all results in Section 3 Calibration Log with date-stamped entry.
-12. Confirm next review date (September 30, 2026).
+11. First audit of §9 M14 thresholds: review entry_extension thresholds against actual position history this session; assess whether divergence thresholds produced actionable signals or noise; adjust if systematic false positives or missed signals documented.
+12. Record all results in Section 3 Calibration Log with date-stamped entry.
+13. Confirm next review date (September 30, 2026).
 
 _______________
 
@@ -455,3 +472,43 @@ next_session_flags:
   - Gold 90-day check: Jan 20 ($4,737) to Apr 23 (~$4,738) = +0.02% — NOT triggered
 
 ---
+
+_______________
+
+## Section 9 — Market Regime Thresholds (M14)
+⚑ All values in this section are CALIBRATION_DATED.
+Review quarterly alongside §1 and §2 thresholds.
+First audit scheduled: June 30, 2026 (provisional initial values — no prior data to calibrate against at adoption).
+@see M14_MarketRegime
+
+Last calibrated: April 27, 2026 (v1.5 initial instantiation — provisional values)
+
+### 9.1 Divergence Signal Thresholds
+
+| Parameter | Current Value | Type | Notes |
+| :-: | :-: | :-: | :-: |
+| commodity\_fear\_divergence HIGH | energy\_90d >= +15% AND VIX\_change\_90d\_pts <= 0 | Calibration-dated | Provisional — first audit June 30, 2026 |
+| commodity\_fear\_divergence MODERATE | energy\_90d >= +10% AND VIX\_change\_90d\_pts <= +5 pts | Calibration-dated | Provisional |
+| equity\_scenario\_divergence HIGH | broad\_equity\_30d >= +5% while directive reductive | Calibration-dated | Provisional |
+| equity\_scenario\_divergence MODERATE | broad\_equity\_30d >= +2% while directive reductive | Calibration-dated | Provisional |
+
+### 9.2 Underweight Review Trigger
+
+| Parameter | Current Value | Type | Notes |
+| :-: | :-: | :-: | :-: |
+| underweight\_gap\_trigger | 5 pp | Calibration-dated | Provisional |
+| appreciation\_trigger\_30d | 5% | Calibration-dated | Provisional |
+
+### 9.3 Entry Extension Guard Thresholds (appreciation above 90d trailing avg)
+
+| Role | Threshold | Type | Notes |
+| :-: | :-: | :-: | :-: |
+| broad\_market\_equity | 15% | Calibration-dated | Provisional |
+| thematic\_sector\_equity | 20% | Calibration-dated | policy\_driven\_thematic\_equity, geopolitical\_premium |
+| commodity\_linked | 20% | Calibration-dated | WAR PREMIUM ENTRY GUARD also applies independently when discrete event active |
+| inflation\_hedge\_precious\_metals | 20% | Calibration-dated | Provisional |
+| real\_asset\_contracted\_revenue | 15% | Calibration-dated | Provisional |
+| rate\_sensitive\_income\_short | N/A | — | Guard does not apply — price-stable instrument |
+| rate\_sensitive\_income\_long | N/A | — | Duration risk captured by scenario framework |
+
+Review schedule: quarterly alongside §1 and §2. Assess whether thresholds produce actionable signals vs noise based on session history since adoption.

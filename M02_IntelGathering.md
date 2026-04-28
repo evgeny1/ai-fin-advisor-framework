@@ -1,6 +1,7 @@
 # M02 — Intelligence Gathering
 <!-- Cross-references: @see M01_SourceIntegrity, @see M03_ScenarioFramework, @see M04_BriefingFormat -->
 <!-- Extended by: M11_CreditAndCalibration (adds credit spreads to fetch list) -->
+<!-- Extended by: M14_MarketRegime (adds VIX trailing averages and position trailing performance to fetch list) -->
 
 ```
 MODULE IntelGathering {
@@ -44,6 +45,10 @@ MODULE IntelGathering {
       live_prices_all_client_positions   // from allocation file @see M05_SessionInit
     ]
     credit: @see M11_CreditAndCalibration.FetchList  // added by Extension v1
+    market_regime: @see M14_MarketRegime.FetchList   // added by M14
+                   // VIX trailing averages (30d, 90d); broad equity 30/60/90d trailing performance;
+                   // position-level 30/60/90d trailing closes
+                   // runs concurrently with credit fetch in Step 4
   }
 
   // ─── PRICE DATA INTEGRITY RULE ───────────────────────────────────────────

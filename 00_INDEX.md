@@ -1,7 +1,7 @@
 # 00 — Index & Module Map
 <!-- Personal Financial Advisor Framework — Pseudo-Code Edition -->
 <!-- Source documents: Framework_Main_v1, Framework_Extension_v1, Calibration_State, Amendment 1, Amendment 2 -->
-<!-- Last updated: April 23, 2026 (M13 added; M12 amended to hybrid GitHub+Drive; §4 added to Calibration_State) -->
+<!-- Last updated: April 27, 2026 (M14 added; market desensitization signal, underweight review, entry extension guard) -->
 
 ```
 FRAMEWORK PersonalFinancialAdvisor {
@@ -22,6 +22,7 @@ FRAMEWORK PersonalFinancialAdvisor {
     M11_CreditAndCalibration   // Extension v1: credit signal protocol §1.5a, calibration discipline §1.10
     M12_DriveProtocol          // Amendment 2: hybrid GitHub+Drive file access protocol
     M13_GrowthObjectives       // Growth objectives, ideal allocation, feasibility check, recalibration sequence
+    M14_MarketRegime           // Market desensitization signal, underweight review, entry extension guard
     CALIBRATION_STATE          // Live threshold values — load every session (GitHub)
   }
 
@@ -31,16 +32,21 @@ FRAMEWORK PersonalFinancialAdvisor {
     // @see M05_SessionInit.SessionStartSequence for full detail
     1:  M12_FileProtocol.fetchAllocation()        // Google Drive — hard gate
     2:  confirm_pending_decisions
-    3:  M12_FileProtocol.fetchCalibrationState()  // GitHub — includes §4 return table, §8 session state
+    3:  M12_FileProtocol.fetchCalibrationState()  // GitHub — includes §4 return table, §8 session state, §9 M14 thresholds
         → apply CALIBRATION_STATE thresholds (not remembered values)
         → apply M13 return table and multipliers (§4.1–4.4)
+        → apply M14 market regime thresholds (§9)
         → load account objective profiles from Allocation "Objectives" tab
-    4:  M02_IntelGathering.FETCH_LIST  (includes M11.CreditSignal.FetchList)
+    4:  M02_IntelGathering.FETCH_LIST  (includes M11.CreditSignal.FetchList
+                                        and M14.FetchList — VIX trailing, position trailing performance)
     5:  M02_IntelGathering.identifyPrimaryDriver()
     6:  M03_ScenarioFramework.RecalibrationRule  +  M11.CalibrationDiscipline.SessionLoad
     7:  M02_IntelGathering.GatherIntel STEPS 2–5
-    8:  M04_BriefingFormat.IntelligenceBriefing
+        + M14.ComputeDivergenceSignal()
+        → IF composite IN [HIGH, MODERATE]: M14.UnderweightReviewTrigger(account) for each account
+    8:  M04_BriefingFormat.IntelligenceBriefing  (includes M14.MarketRegimeSignal block)
     9:  portfolio discussion
+        → before any ADD executes: M14.EntryExtensionGuard(asset, account)
     10: M12_FileProtocol.WriteBack  // GitHub — §7 credit + §8 scenario state
   }
 
@@ -51,6 +57,8 @@ FRAMEWORK PersonalFinancialAdvisor {
     2: M12_DriveProtocol          // Amendment 2 supersedes any prior fetch/write instructions
     3: M13_GrowthObjectives       // Growth objective logic supersedes M03 idealAllocation and minimumConvictionWeight
     4: CALIBRATION_STATE          // live threshold values override any remembered values
+    4.5: M14_MarketRegime         // EntryExtensionGuard gates M09/M10 ADD directives before execution
+                                  // NEVER routes signals into M03 probability derivation
     5: M09_ScenariosABC, M10_ScenariosDEF   // execution protocols
     6: M01–M08                    // core framework
   }
@@ -82,6 +90,13 @@ FRAMEWORK PersonalFinancialAdvisor {
       → [HY_StressBeginning | HY_RecessionPricing | IG_TransmissionReached | CCC_TailFirstWidening]
       → CALIBRATION_STATE §1 (threshold deltas)
 
+    // Market regime signal flow (M14)
+    market_regime_signal
+      → M14_MarketRegime.ComputeDivergenceSignal()
+      → M14_MarketRegime.UnderweightReviewTrigger()     // if composite HIGH or MODERATE
+      → M14_MarketRegime.EntryExtensionGuard()          // at execution time, before any ADD
+      // NEVER routes into M03.DeriveScenarioProbabilities — ScoringIntegrity applies absolutely
+
     // Allocation and growth objective flow (M13)
     allocation_recommendation
       → M13_GrowthObjectives.RecommendationFlow
@@ -100,6 +115,7 @@ FRAMEWORK PersonalFinancialAdvisor {
     execution_trigger
       → M08_FunctionalRoles.classifyRole(holding)
       → M08_FunctionalRoles.DualRoleConflict?
+      → M14_MarketRegime.EntryExtensionGuard()  (if ADD — before executing)
       → M08_FunctionalRoles.ExecutionGuards  (graduated response)
       → [M09_ScenariosABC | M10_ScenariosDEF].RESPONSES[role]
       → M08_FunctionalRoles.ExecutionTaxPlacement
@@ -143,12 +159,20 @@ FRAMEWORK PersonalFinancialAdvisor {
     unemployment_trigger_D:      +0.5% over 3m   // §2.3
     // Growth objectives (M13) — all in CALIBRATION_STATE §4
     return_table:                9 roles × 6 scenarios [conservative, upside]  // §4.1
-    IRA_scenario_multipliers:    A:2.0 B:1.5 C:1.5 D:1.3 E:1.2 F:2.0  // §4.2 — provisional
-    Roth_scenario_multipliers:   A:3.1 B:2.0 C:2.0 D:1.6 E:1.4 F:3.1  // §4.3 — provisional
+    IRA_scenario_multipliers:    A:2.0 B:1.3 C:1.3 D:1.3 E:1.2 F:2.0  // §4.2
+    Roth_scenario_multipliers:   A:3.1 B:1.3 C:1.3 D:1.6 E:1.4 F:3.1  // §4.3
     floor_fraction:              0.25× current allocation  // §4.4
     floor_minimum_pct:           2% of account value       // §4.4
     concentration_cap:           40%                        // §4.4
     floor_loss_probability_threshold: 15%                  // §4.4
+    // Market regime thresholds (M14) — all in CALIBRATION_STATE §9
+    entry_extension_broad_equity:        15% above 90d trailing avg  // §9.3 — provisional
+    entry_extension_thematic_sector:     20% above 90d trailing avg  // §9.3 — provisional
+    entry_extension_commodity_linked:    20% above 90d trailing avg  // §9.3 — provisional
+    entry_extension_precious_metals:     20% above 90d trailing avg  // §9.3 — provisional
+    entry_extension_real_asset:          15% above 90d trailing avg  // §9.3 — provisional
+    underweight_gap_trigger:             5 pp                         // §9.2 — provisional
+    underweight_appreciation_trigger:    5% over 30d                  // §9.2 — provisional
     next_full_audit:             June 30, 2026
   }
 
@@ -172,6 +196,7 @@ FRAMEWORK PersonalFinancialAdvisor {
     drive_fetch_rule:                 search-first for Allocation, never hardcode ID
     calibration_prospective_only:     M11_CreditAndCalibration.ProspectiveOnly
     anchor_positions_in_recalib:      high-conviction positions not touched in M13.RecalibrationSequence
+    market_regime_boundary:           M14 signals NEVER feed M03.DeriveScenarioProbabilities
   }
 
 }
