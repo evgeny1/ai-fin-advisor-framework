@@ -1,7 +1,7 @@
 # Calibration State
 Persistent framework configuration — load at every session start alongside session handoff.
 
-Version: 1.6  Last updated: April 28, 2026 (PAVE reclassification watch; M08 ThematicETF audit + MandateImpairmentPropagation added; §10 added)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
+Version: 1.7  Last updated: April 28, 2026 (M15 InstrumentClassification adopted; §11 added — extensible role registry + instrument classification table; secular_technology_growth role added; current holdings classified; GitHub write workflow codified in M12)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
 
 _______________
 
@@ -11,6 +11,8 @@ At session start, the advisor must state in the briefing:
 "Calibration State loaded, last update: April 28, 2026"
 
 Absence of this line indicates the calibration file was not loaded and the session is invalid for threshold-sensitive decisions.
+
+After loading: run M15.ValidateClassifications() — all instruments in the allocation file must have §11 entries before session proceeds to analysis.
 
 _______________
 
@@ -202,6 +204,13 @@ _______________
 * Action item: apply ThematicETF_ClassificationAudit() to XAR at next session to confirm geopolitical_premium classification holds at constituent level.
 * Scenario probabilities unchanged: A=8%, B=45%, C=38%, D=3%, E=3%, F=3%. FOMC April 29 and Q1 GDP April 30 both pending — all open decisions deferred.
 
+2026-04-28 — Framework update (v1.7): M15 adoption; §11 addition; secular_technology_growth role
+* M15_InstrumentClassification.md adopted (v1.0). Resolves: hardcoded role ENUM in M08; binary classifyRole() producing inaccurate scenario returns for composite instruments (e.g., VTI with material tech concentration having different B and C sensitivities than generic broad_market_equity_domestic).
+* Architecture: roles now in §11.ROLE_REGISTRY (extensible without module file edits); instrument decompositions in §11.INSTRUMENT_CLASSIFICATION_TABLE; M15.blendedScenarioReturn() replaces all direct §4.1[role] lookups; M15.ValidateClassifications() hard-stops session if any allocation instrument is unclassified.
+* New role added: secular_technology_growth. Binding driver: AI capex cycle, mega-cap tech multiple expansion. Scenario profile: more negative than broad_market_equity_domestic in B (multiple compression under rate constraint); less negative in C (conflict transmission to AI capex is weak — same observation that triggered this amendment). Return table row added §11.2. Provisional — empirical audit June 30, 2026.
+* Initial instrument classification (current holdings): VTI (78% broad/22% secular_tech), XAR (90% geopolitical/10% broad — pending ThematicETF_ClassificationAudit confirmation), MLPX (65% real_asset_contracted/35% commodity_linked), SGOL (100% precious_metals), SGOV (100% short_duration), PAVE (82% broad/18% policy_thematic — per April 28 constituent audit).
+* GitHub write workflow codified in M12 §CANONICAL_GITHUB_WRITE_WORKFLOW. Two patterns: PATTERN_A (framework amendments: create_branch → push_files → create_pull_request; no SHA required) and PATTERN_B (session write-back: create_or_update_file to master with SHA). Root cause of prior failures documented.
+
 _______________
 
 ## Section 4 — Growth Objectives: Return Table and Multipliers
@@ -215,6 +224,7 @@ Full empirical audit scheduled: June 30, 2026
 ### 4.1 Expected Real Annualized Return Table
 Conservative end used for ALL computations. Upside end disclosed in briefing only.
 Format per cell: [conservative%, upside%]
+All scenario return computations use M15.blendedScenarioReturn() — this table is consumed via that function, never directly.
 
 | Role | Scenario A | Scenario B | Scenario C | Scenario D | Scenario E | Scenario F |
 | :-- | :-: | :-: | :-: | :-: | :-: | :-: |
@@ -227,6 +237,10 @@ Format per cell: [conservative%, upside%]
 | rate_sensitive_income_long_duration | [3, 7] | [-4, -1] | [-5, -2] | [5, 10] | [-10, -3] | [-4, -1] |
 | broad_market_equity_domestic | [5, 12] | [-8, -2] | [-4, -1] | [-12, -4] | [-8, -3] | [7, 14] |
 | broad_market_equity_international | [4, 9] | [-5, -1] | [-6, -2] | [-8, -3] | [-10, -4] | [3, 8] |
+| secular_technology_growth | [6, 16] | [-10, -3] | [-2, 4] | [-14, -5] | [-10, -4] | [4, 11] |
+
+secular_technology_growth added April 28, 2026 (v1.7). Provisional — empirical audit June 30, 2026.
+Analogues: 2010-2021 tech multiple expansion (A/F upside); 2022 tech compression rate-tightening (B downside); 2023-2024 AI re-expansion; 2022 Ukraine invasion (C less negative than broad equity — conflict transmission to AI capex weak).
 
 ### 4.2 IRA Target Multipliers (planning horizon: 10 years)
 Floor: 1.3x REVISED April 23, 2026 (was 1.5x) — restore to 1.5x when commodity-linked added post-war.
@@ -271,7 +285,7 @@ _______________
 
 | Date | Type | Scope |
 | :-: | :-: | :-: |
-| 2026-06-30 | Scheduled Q2 (first full audit) | Compute 180d medians HY/IG/CCC; verify triggers 75th-90th percentile; hit-rate audit §2; classify unflagged thresholds; audit §4 return table and multipliers; restore §4.2/§4.3 B/C and floors if commodity-linked added; first audit §9 M14 thresholds; first audit §10 M08 ETF thresholds |
+| 2026-06-30 | Scheduled Q2 (first full audit) | Compute 180d medians HY/IG/CCC; verify triggers 75th-90th percentile; hit-rate audit §2; classify unflagged thresholds; audit §4 return table and multipliers; restore §4.2/§4.3 B/C and floors if commodity-linked added; first audit §9 M14 thresholds; first audit §10 M08 ETF thresholds; first audit §11 role registry + instrument classification weights; first empirical audit secular_technology_growth return estimates |
 | 2026-09-30 | Scheduled Q3 | Full audit all calibration-dated thresholds |
 | 2026-12-31 | Scheduled Q4 | Full audit |
 | 2027-03-31 | Scheduled Q1 2027 | Full audit |
@@ -287,13 +301,16 @@ _______________
 5. Verify IG\_TRANSMISSION\_DELTA (+60) places trigger in 75th-90th percentile band. Adjust if needed.
 6. Hit-rate audit each absolute threshold in Section 2 against trailing 5-year data.
 7. Formally classify currently-unflagged thresholds in Sections 2.2, 2.3, 2.4.
-8. First empirical audit of §4.1 return table.
+8. First empirical audit of §4.1 return table — all roles including secular_technology_growth.
 9. First empirical audit of §4.2 and §4.3 multipliers. Assess whether commodity-linked has been added; if so restore B/C multipliers and floors (IRA: 1.5x; Roth: 2.0x).
 10. Audit §4.4 floor and concentration parameters.
 11. First audit of §9 M14 thresholds: assess whether divergence and entry extension thresholds produced actionable signals or noise since adoption.
 12. First audit of §10 M08 ETF classification thresholds: review ThematicETF_ClassificationAudit() and MandateImpairmentPropagation() parameter outcomes since April 28. Adjust thresholds if systematic misclassifications observed.
 13. Apply ThematicETF_ClassificationAudit() to XAR if not completed in a prior session.
-14. Record all results in Section 3 Calibration Log.
+14. First audit of §11 instrument classification weights: re-verify component weights for all holdings using fresh fund composition data. Flag any instrument where weight drift > 5pp since last review.
+15. Empirical audit of secular_technology_growth return estimates (§11.2 + §4.1 row): validate against 2022 tech compression and 2023-2024 re-expansion data. Adjust conservative/upside ranges if distribution evidence warrants.
+16. Review §11.ROLE_REGISTRY: assess whether any new structural return drivers have emerged warranting a new role. Review whether any existing roles should be merged or retired.
+17. Record all results in Section 3 Calibration Log.
 
 _______________
 
@@ -399,6 +416,7 @@ next_session_flags:
   - XAR: apply ThematicETF_ClassificationAudit() next session
   - Proceed with all open decisions after FOMC + GDP clarity
   - FRED credit spreads stale (HY Apr 21; IG/CCC Apr 16-17) — fetch fresh next session
+  - M15 PR open — review and merge before next full session init
 
 ---
 
@@ -435,6 +453,7 @@ Last calibrated: April 27, 2026 (v1.5 initial instantiation)
 | commodity\_linked | 20% | WAR PREMIUM ENTRY GUARD also applies independently |
 | inflation\_hedge\_precious\_metals | 20% | Provisional |
 | real\_asset\_contracted\_revenue | 15% | Provisional |
+| secular\_technology\_growth | 20% | Added April 28, 2026 (v1.7) — same threshold as thematic sector |
 | rate\_sensitive\_income\_short | N/A | Guard does not apply |
 | rate\_sensitive\_income\_long | N/A | Duration risk captured by scenario framework |
 
@@ -468,3 +487,96 @@ Added: April 28, 2026 (v1.6). Rationale: PAVE reclassification session revealed 
 | 2026-04-28 | PAVE | MandateImpairmentPropagation | NEVI rescission (~$879M) maps to Quanta Services EV segment. Highways/bridges/rail formula programs intact. ETF NAV at risk: ~10-15%. Below 20% materiality threshold. | watch (not FLAGGED) |
 | 2026-04-28 | PAVE | ThematicETF_ClassificationAudit | Retrospective: top 32% NAV covered. Mandate-dependent NAV ~15-18%. Below 30% threshold. Dominant actual driver: industrial/capital goods broadly. | Revised to watch; monitor |
 | Next session | XAR | ThematicETF_ClassificationAudit | Pending — flagged in §8. Confirm geopolitical_premium holds at constituent level. | TBD |
+
+_______________
+
+## Section 11 — Instrument Classification Registry (M15)
+All values CALIBRATION_DATED. First audit: June 30, 2026.
+@see M15_InstrumentClassification
+
+Added: April 28, 2026 (v1.7).
+
+Design: roles are defined here, not in module files. Instruments are classified here with fractional component weights. To add a role: add to §11.1 and §4.1. To add an instrument: add to §11.3. No module file edits required for either operation.
+
+### 11.1 Role Registry
+
+All registered roles must have a corresponding §4.1 return table row. Adding a role without a §4.1 row causes HARD_STOP at session start (M15.ValidateClassifications).
+
+| Role | Binding Driver | Added | Status |
+| :-- | :-- | :-: | :-: |
+| geopolitical_premium | elevated_conflict, defense_procurement, geopolitical_tension | v1.0 (original) | Active |
+| inflation_hedge_precious_metals | real_yield_compression, monetary_base_expansion, dollar_reserve_status_erosion | v1.0 (original) | Active |
+| inflation_hedge_commodity_linked | broad_commodity_prices, energy, materials | v1.0 (original) | Active |
+| real_asset_contracted_revenue | physical_throughput, contracted_fees, real_infrastructure | v1.0 (original) | Active |
+| policy_driven_thematic_equity | legislated_government_spending, regulatory_mandates, domestic_policy_cycle | v1.0 (original) | Active |
+| rate_sensitive_income_short_duration | short_term_interest_rates, duration <= 1y | v1.0 (original) | Active |
+| rate_sensitive_income_long_duration | long_term_interest_rates, duration > 1y | v1.0 (original) | Active |
+| broad_market_equity_domestic | domestic_aggregate_economic_growth | v1.0 (original) | Active |
+| broad_market_equity_international | ex_US_aggregate_economic_growth | v1.0 (original) | Active |
+| secular_technology_growth | AI_capex_cycle, mega-cap_tech_multiple_expansion, software_adoption, semiconductor_demand | v1.7 (April 28, 2026) | Active — provisional, empirical audit June 30, 2026 |
+
+### 11.2 secular_technology_growth — Return Estimates
+Provisional. Added April 28, 2026. Full empirical audit: June 30, 2026.
+Analogues used: 2010-2021 tech multiple expansion (A/F); 2022 compression under rate tightening (B); 2022 Ukraine invasion equity impact vs tech (C — less negative than broad market); 2022 demand-driven drawdown (D); 2023-2024 AI re-expansion (A/F upside).
+Note: these values are also reflected in the §4.1 table as the secular_technology_growth row.
+
+| Scenario | Conservative | Upside | Key rationale |
+| :-: | :-: | :-: | :-- |
+| A (Soft Landing) | 6% | 16% | Fed cuts compress discount rate on long-duration growth; AI capex cycle expands |
+| B (Stagflation) | -10% | -3% | High multiples compress harder under rate constraint than broad equity |
+| C (Inflationary Shock) | -2% | 4% | Conflict transmission to AI capex cycle is weak; less negative than broad_market_equity_domestic |
+| D (Deflationary Recession) | -14% | -5% | Capex cycles compress in demand collapse; multiple contraction severe |
+| E (Structural Rupture) | -10% | -4% | Growth multiples collapse in systemic stress; reserve stress impairs long-duration assets |
+| F (Growth Overheat) | 4% | 11% | Strong nominal demand supports AI capex; rising rates partially compress multiples |
+
+### 11.3 Instrument Classification Table
+
+All instruments appearing in the allocation file must have an entry here. New instruments without entries trigger HARD_STOP at session start (M15.ValidateClassifications). Weights must sum to 1.0 per instrument. Review staleness threshold: 90 calendar days.
+
+**Initial population: April 28, 2026 — current holdings**
+
+#### VTI
+- Components: broad_market_equity_domestic (0.78) + secular_technology_growth (0.22)
+- Basis: CRSP US Total Market, ~3,600 holdings. Technology sector ~30% of fund; ~22% estimated as AI/mega-cap tech multiple driver (Microsoft, Apple, Nvidia, Alphabet, Amazon, Meta — these six names represent disproportionate return attribution via AI capex cycle narrative). Residual tech and all other sectors mapped to broad_market_equity_domestic.
+- Source: Vanguard fund page sector weights; top holdings analysis
+- Methodology: sector_weight_analysis + judgment
+- Last reviewed: 2026-04-28
+- Notes: secular_technology_growth weight re-verify at Q2 audit. The 22% weight reflects estimated AI/mega-cap tech multiple attribution, not raw technology sector weight. The critical implication: VTI is less negative than generic broad_market_equity_domestic in Scenario C; more negative in Scenario B.
+
+#### XAR
+- Components: geopolitical_premium (0.90) + broad_market_equity_domestic (0.10)
+- Basis: SPDR S&P Aerospace & Defense ETF. Dominant return driver is defense procurement tied to geopolitical tension. ThematicETF_ClassificationAudit pending next session (queued §8 April 28). Preliminary: top holdings (Heico, TransDigm, L3Harris, Northrop, RTX) are primarily defense procurement dependent. 10% broad_market reflects commercial aviation and diversified industrial revenue in the portfolio.
+- Source: SPDR fund page; top holdings review
+- Methodology: holdings_analysis (preliminary — full audit pending)
+- Last reviewed: 2026-04-28 (preliminary)
+- Notes: Confirm geopolitical_premium classification via ThematicETF_ClassificationAudit() before Q2 audit. If full audit confirms, update weights accordingly.
+
+#### MLPX
+- Components: real_asset_contracted_revenue (0.65) + inflation_hedge_commodity_linked (0.35)
+- Basis: Global X MLP & Energy Infrastructure ETF. Primary return driver is contracted fee revenue (throughput, capacity, gathering contracts — pipeline and midstream structure). Secondary driver is commodity price linkage through volume sensitivity to energy prices, gathering and processing margins.
+- Source: Global X fund page; MLP business model analysis; midstream industry structure
+- Methodology: holdings_analysis + judgment
+- Last reviewed: 2026-04-28
+- Notes: The 65/35 split reflects typical midstream fee-to-commodity exposure. Re-verify at Q2 audit against current fund composition.
+
+#### SGOL
+- Components: inflation_hedge_precious_metals (1.00)
+- Basis: Aberdeen Standard Physical Gold ETF — physical gold grantor trust. Single-driver. Pure.
+- Source: Aberdeen Standard fund page
+- Methodology: direct
+- Last reviewed: 2026-04-28
+
+#### SGOV
+- Components: rate_sensitive_income_short_duration (1.00)
+- Basis: iShares 0-3 Month Treasury Bill ETF — 0-3 month Treasury bills. Single-driver. Pure.
+- Source: iShares fund page
+- Methodology: direct
+- Last reviewed: 2026-04-28
+
+#### PAVE
+- Components: broad_market_equity_domestic (0.82) + policy_driven_thematic_equity (0.18)
+- Basis: Global X U.S. Infrastructure Development ETF. ThematicETF_ClassificationAudit conducted April 28, 2026 (top ~32% NAV): Howmet (~3.3%), Trane (~3.4%), Eaton (~3.4%), CSX (~3.3%), Parker-Hannifin (~3.5%) — returns not primarily mandate-dependent. Mandate-dependent NAV: ~15-18%. policy_driven_thematic_equity weight (0.18) reflects infrastructure-mandate exposure across audited and extrapolated unaudited holdings. Dominant actual driver: industrial/capital goods broadly.
+- Source: Global X fund page; April 28 constituent analysis; Transportation for America, GAO, FHWA
+- Methodology: ThematicETF_ClassificationAudit() + MandateImpairmentPropagation()
+- Last reviewed: 2026-04-28
+- Notes: Status: watch (not FLAGGED). Monitor IIJA reauthorization (September 30, 2026 expiration). Re-run audit if: reauthorization fails AND formula highway programs cut in successor bill.
