@@ -2,7 +2,9 @@
 <!-- Applied at execution time by all Scenario Execution Protocols -->
 <!-- Cross-references: @see M09_ScenariosABC, @see M10_ScenariosDEF -->
 <!-- Extended by: M14_MarketRegime (EntryExtensionGuard added to ExecutionGuards) -->
+<!-- Extended by: M15_InstrumentClassification (composite decomposition; blendedScenarioReturn replaces direct §4.1 lookups for all allocation computations) -->
 <!-- Updated April 28, 2026: ThematicETF_ClassificationAudit() and MandateImpairmentPropagation() added -->
+<!-- Updated April 28, 2026 (v1.7): M15 integration — classifyRole() remains for constituent analysis; M15.classifyInstrument() + blendedScenarioReturn() used for all allocation computations -->
 <!-- Resolves: PAVE misclassification (April 22–28, 2026) — ETF label applied without constituent analysis -->
 
 ```
@@ -11,8 +13,18 @@ MODULE FunctionalRoles {
   // ─── CORE RULE ───────────────────────────────────────────────────────────
   // Classify holdings at EXECUTION TIME from the current allocation file.
   // Do not carry forward prior classification — re-evaluate each session.
+  //
+  // COMPOSITE INSTRUMENT RULE (M15):
+  // For all scenario return computations and allocation recommendations:
+  //   → use M15_InstrumentClassification.classifyInstrument() — reads §11 decomposition table
+  //   → use M15_InstrumentClassification.blendedScenarioReturn() — weighted blend across roles
+  // classifyRole() below is used for: ThematicETF_ClassificationAudit() constituent analysis
+  // and §11 gap detection only. @see M15_InstrumentClassification
 
   ENUM Role {
+    // ⚑ This enum is the reference list for backward compatibility and constituent analysis.
+    // The AUTHORITATIVE extensible registry lives in CALIBRATION_STATE §11.ROLE_REGISTRY.
+    // Add new roles to §11.ROLE_REGISTRY (and §4.1 return table) — not here.
     geopolitical_premium
     inflation_hedge_precious_metals
     inflation_hedge_commodity_linked
@@ -22,9 +34,14 @@ MODULE FunctionalRoles {
     rate_sensitive_income_long_duration
     broad_market_equity_domestic
     broad_market_equity_international
+    // Newer roles (added via §11): secular_technology_growth (April 28, 2026)
+    // @see CALIBRATION_STATE §11.ROLE_REGISTRY for complete current list
   }
 
   // ─── CLASSIFICATION TESTS ────────────────────────────────────────────────
+  // Used for: ThematicETF_ClassificationAudit() constituent-level analysis
+  //           §11 gap detection (identifying likely role for unclassified instrument)
+  // NOT used for: scenario return computations — use M15.blendedScenarioReturn()
 
   FUNCTION classifyRole(holding) -> Role {
 
@@ -90,6 +107,11 @@ MODULE FunctionalRoles {
     IF holding IS passive_or_broad_based
        AND tracking: domestic_aggregate_economic_growth
       → RETURN broad_market_equity_domestic
+        // NOTE: broad-market ETFs with material tech concentration (e.g., VTI)
+        // may have a secondary secular_technology_growth component.
+        // For allocation computations, use M15.classifyInstrument() + blendedScenarioReturn()
+        // rather than this single-role classification.
+        // @see CALIBRATION_STATE §11.INSTRUMENT_CLASSIFICATION_TABLE
 
     IF holding IS passive_or_broad_based
        AND tracking: ex_US_aggregate_economic_growth
@@ -215,7 +237,6 @@ MODULE FunctionalRoles {
     audited_pct = audit.audited_coverage_pct
     IF audited_pct < 1.0 {
       extrapolated_at_risk = at_risk_weight / audited_pct
-      // Caps at 1.0 (cannot exceed 100% of ETF)
       extrapolated_at_risk = MIN(extrapolated_at_risk, 1.0)
     } ELSE {
       extrapolated_at_risk = at_risk_weight
