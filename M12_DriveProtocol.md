@@ -4,6 +4,7 @@
 <!-- GitHub: all framework .md files including Calibration_State.md (read + write) -->
 <!-- Google Drive: Allocation sheet only (read only) -->
 <!-- Applies to: M05_SessionInit INPUT_1 (Drive), INPUT_3 (GitHub) -->
+<!-- Updated April 28, 2026: FrameworkAmendmentPR() added — push_files pattern for multi-file PRs -->
 
 ```
 MODULE FileProtocol {
@@ -17,8 +18,9 @@ MODULE FileProtocol {
       branch: "master"
       files:  [all .md files including Calibration_State.md]
       access: read + write
-      write_method: create_or_update_file  // clean overwrite; no duplicate issue
-      // SHA required for updates — always use SHA from session-start fetch
+      // TWO write patterns — use correct one for context:
+      write_method_writeback:   create_or_update_file  // single file session write; requires file SHA
+      write_method_amendment:   push_files              // multi-file PR; NO SHA required at any step
     }
     drive: {
       file:   "Allocation"
@@ -31,10 +33,17 @@ MODULE FileProtocol {
 
   GUARD CoreRules {
     NEVER:  use_web_fetch for any GitHub file or Google Drive file
-    NEVER:  hardcode any file ID (Drive) or assume any SHA (GitHub)
+    NEVER:  hardcode any file ID (Drive) or assume any file SHA (GitHub)
     ALWAYS: resolve Drive ID via search at session start
-    ALWAYS: use SHA from session-start fetch for GitHub write-back
-    NEVER:  write to GitHub without first fetching current SHA this session
+
+    // Session write-back (WriteBack — single file, create_or_update_file):
+    ALWAYS: use file SHA from session-start fetchCalibrationState() for WriteBack
+    NEVER:  call create_or_update_file on existing file without its file SHA
+
+    // Framework amendment PR (FrameworkAmendmentPR — push_files):
+    NEVER:  provide SHA to push_files — it does not accept or require SHA
+    NEVER:  use create_or_update_file for multi-file amendments — use push_files
+    ALWAYS: run tool_search("github create branch") before FrameworkAmendmentPR steps
   }
 
   // ─── ALLOCATION SHEET FETCH (Google Drive) ──────────────────────────────────────
@@ -85,7 +94,9 @@ MODULE FileProtocol {
 
     STEP 2: store_sha {
       calibration_state_sha = result.sha
-      // Required for write-back at session end — do not discard
+      // FILE SHA — required for WriteBack via create_or_update_file at session end
+      // Do NOT discard — reuse at session end without re-fetching
+      // This is the file blob SHA, NOT the commit/tree SHA
     }
 
     STEP 3: apply {
@@ -94,6 +105,7 @@ MODULE FileProtocol {
         CALIBRATION_STATE §2   // energy, currency, macro thresholds
         CALIBRATION_STATE §4   // growth objectives return table + multipliers
         CALIBRATION_STATE §8   // session state log (prior probabilities)
+        CALIBRATION_STATE §11  // instrument classification registry (M15)
     }
 
     RETURN calibration_state_contents
@@ -116,8 +128,7 @@ MODULE FileProtocol {
   // ─── WRITE-BACK PROCEDURE (session end) ────────────────────────────────────────
   // Executed automatically at session end — do not wait for client instruction.
   // Appends BOTH §7 (credit readings) and §8 (scenario state) in one operation.
-  // GitHub write: clean overwrite using SHA from session-start fetch.
-  // No duplicate file problem — create_or_update_file updates in place.
+  // Uses create_or_update_file (single file) — requires FILE SHA from session-start fetch.
   // @see M05_SessionInit.SessionStartSequence Step 10
 
   PROCEDURE WriteBack {
@@ -125,8 +136,8 @@ MODULE FileProtocol {
     ALWAYS: execute_without_client_instruction
 
     STEP 1: use calibration_state_sha from session-start fetchCalibrationState()
-            // SHA captured at Step 2 of fetchCalibrationState() — reuse; do not re-fetch
-            // SHA is stable within a session
+            // FILE SHA captured at Step 2 of fetchCalibrationState() — reuse; do not re-fetch
+            // SHA is stable within a session (no concurrent writes)
 
     STEP 2: construct updated_content {
       // Take full content loaded at session start
@@ -171,7 +182,7 @@ MODULE FileProtocol {
       path:    "Calibration_State.md"
       branch:  SOURCE_MAP.github.branch
       content: updated_content
-      sha:     calibration_state_sha  // from session-start fetch
+      sha:     calibration_state_sha  // FILE SHA from session-start fetch — NOT commit SHA
       message: "Session write-back: [today's date] — §7 credit + §8 scenario state"
     }
 
@@ -181,16 +192,93 @@ MODULE FileProtocol {
     //   → apply to M11 thresholds at next session
   }
 
-  // ─── IMPLEMENTATION NOTE ─────────────────────────────────────────────────────────────
+  // ─── FRAMEWORK AMENDMENT PR PROCEDURE ────────────────────────────────────────
+  // Use for ALL framework amendments: any commit with new or modified .md file(s).
+  // RELIABLE PATTERN: NO SHA required at any step.
+  // Creates branch → pushes all files in single commit → opens PR.
+  // This is NOT for session write-back (use WriteBack above for Calibration_State only).
+
+  PROCEDURE FrameworkAmendmentPR(branch_name, files_list, pr_title, pr_body) {
+
+    PREREQUISITE: tool_search {
+      query: "github create branch"
+      // This query reliably loads: create_branch + push_files + create_pull_request
+      // NEVER skip — tools are not pre-loaded and may not be available without search
+      // Run this BEFORE Step 1 in every session that uses this procedure
+    }
+
+    STEP 1: read_existing_files_if_needed {
+      // For files being MODIFIED: read current content to preserve it
+      // tool: github:get_file_contents
+      // Capture: file text content ONLY — SHA from this call is NOT needed
+      // For NEW files: skip this step
+    }
+
+    STEP 2: create_branch {
+      tool:        github:create_branch
+      owner:       SOURCE_MAP.github.owner
+      repo:        SOURCE_MAP.github.repo
+      branch:      branch_name  // convention: "framework-[short-topic]-YYYY-MM-DD"
+      from_branch: "master"
+      // No SHA parameter — create_branch resolves HEAD of master automatically
+    }
+
+    STEP 3: push_all_files {
+      tool:    github:push_files
+      owner:   SOURCE_MAP.github.owner
+      repo:    SOURCE_MAP.github.repo
+      branch:  branch_name  // must match Step 2
+      files:   files_list   // Array[{path: String, content: String}]
+                            // content = PLAIN TEXT (NOT base64)
+                            // include ALL changed files (new + modified) in one call
+                            // push_files handles new creation and existing update identically
+      message: "Framework amendment: [pr_title]"
+      // NO sha field — push_files does not require or accept file SHA
+    }
+
+    STEP 4: create_pull_request {
+      tool:  github:create_pull_request
+      owner: SOURCE_MAP.github.owner
+      repo:  SOURCE_MAP.github.repo
+      title: pr_title
+      body:  pr_body     // Markdown formatted — use headers, bullets, code blocks
+      head:  branch_name // branch from Step 2
+      base:  "master"
+    }
+
+    GUARD AmendmentPRRules {
+      NEVER:  use create_or_update_file for multi-file amendments — fragile, error-prone
+      NEVER:  provide sha to push_files — it does not accept SHA
+      NEVER:  create branch from anything other than master
+      NEVER:  skip PREREQUISITE tool_search
+      ALWAYS: include ALL modified files in single push_files call — single clean commit
+      ALWAYS: write PR body in Markdown with headers, bullets, and code references
+      ALWAYS: use date-stamped branch name convention
+      IF push_files fails: diagnose first — do NOT fall back to create_or_update_file
+                           most likely cause: branch from Step 2 not created successfully
+    }
+  }
+
+  // ─── IMPLEMENTATION NOTES ─────────────────────────────────────────────────────────────
   // April 20, 2026: Allocation sheet fetched via web_fetch → stale/incorrect data.
   // Seven false discrepancies. Session partially invalidated.
   // Fixed by switching to Google Drive API (search_files + read_file_content).
   //
   // April 23, 2026: Calibration_State.md migrated from Google Drive to GitHub.
   // Drive write-back required create_file + manual duplicate deletion each session.
-  // GitHub create_or_update_file overwrites cleanly in place using SHA.
+  // GitHub create_or_update_file overwrites cleanly in place using file SHA.
   // No duplicate file problem. No manual deletion required.
-  // GitHub MCP tool: github:get_file_contents (read) + github:create_or_update_file (write).
+  // GitHub MCP tools: github:get_file_contents (read) + github:create_or_update_file (single-file write).
+  //
+  // April 28, 2026: FrameworkAmendmentPR() procedure formalized.
+  // Root cause of repeated session failures on multi-file amendments:
+  //   create_or_update_file requires the correct FILE SHA (blob SHA) for each file being updated.
+  //   Confusion between commit SHA (from create_branch result) and file blob SHA
+  //   (from get_file_contents result.sha) caused consistent failures.
+  //   push_files eliminates this entirely — NO SHA required for any file, new or existing.
+  // Reliable 3-step pattern: create_branch → push_files (all files) → create_pull_request.
+  // push_files content is PLAIN TEXT, not base64.
+  // tool_search("github create branch") must run before each use — tools not pre-loaded.
 
 }
 ```
