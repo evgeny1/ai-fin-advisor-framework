@@ -41,6 +41,8 @@ Session observation (April 23, 2026 session): HY composite ~287 bps (FRED last u
 
 Session observation (April 28, 2026 session): HY composite ~285-287 bps (FRED last updated April 21 — stale 7 days; Trading Economics proxy). Unchanged. No threshold fires. HY_StressBeginning threshold ~435 bps (285+150); gap ~148 bps. T1_flag: stale.
 
+Session observation (April 29, 2026 session): HY composite ~284 bps (Trading Economics; FRED last updated April 28). Marginal tightening from prior sessions. No threshold fires. HY_StressBeginning threshold ~434-435 bps; gap ~151 bps. T1_flag: stale (FRED last April 28 — 1 day lag, lowest staleness since series began). No velocity check executable — insufficient §7 history depth.
+
 ### 1.2 IG Composite — FRED: BAMLC0A0CM
 
 | Parameter | Current Value | Type | Notes |
@@ -60,6 +62,8 @@ Session observation (April 22, 2026 session): IG composite ~83 bps (FRED last up
 Session observation (April 23, 2026 session): IG composite ~83 bps (FRED last updated April 16-17 — stale 6-7 days). No change. IG_TransmissionReached NOT fired. T1_flag: stale.
 
 Session observation (April 28, 2026 session): IG composite ~83 bps (carry from April 23; FRED stale ~12 days). IG_TransmissionReached NOT fired (threshold ~143 bps; gap ~60 bps). T1_flag: stale.
+
+Session observation (April 29, 2026 session): IG composite ~80 bps (cross-referenced: T2 source article confirms IG OAS ~80 bps as of early April 2026 near 25-year tights; FRED data last April 28). IG_TransmissionReached NOT fired (threshold ~143 bps; gap ~63 bps). T1_flag: composite_only (primary FRED series not independently confirmed at this tick).
 
 ### 1.3 CCC Tail — FRED: BAMLH0A3HYC
 
@@ -91,6 +95,8 @@ Session observation (April 23, 2026 session): CCC OAS ~921 bps (FRED stale; carr
 
 Session observation (April 28, 2026 session): CCC OAS ~921 bps (carry forward; FRED stale ~12 days). CCC_TailFirstWidening NOT fired. T1_flag: stale. Priority: fetch fresh FRED data at next session.
 
+Session observation (April 29, 2026 session): CCC OAS ~921 bps (carry forward; FRED last updated April 24 per search result metadata). CCC_TailFirstWidening NOT fired. No divergence relative to HY (both stable/tightening). T1_flag: stale. No change.
+
 _______________
 
 ## Section 2 — Other Calibration-Dated Thresholds (Pending Initial Audit)
@@ -114,6 +120,8 @@ Session observation (April 23, 2026 session): Brent ~$103.50 (+3% today; IRGC gu
 
 Session observation (April 28, 2026 session): Brent peaked at $108.11 on April 27; easing to ~$106 intraday April 28 on Iran diplomatic proposal news. WTI ~$95-96. C trigger ($110 nominal) NOT fired — gap ~$2-4/bbl. $110 clock NOT started. SGOL WTI floor ($55) comfortably clear. WARNING: gap narrowed to ~$2-4/bbl — close monitoring required every session. EIA STEO (T1, April 2026): expects Brent to peak ~$115/b in Q2 2026 before easing.
 
+Session observation (April 29, 2026 session): Brent ~$106 (day range $98.43-$107.65 for WTI; Brent proximate). WTI ~$103-107 (handoff data, 3rd straight session gaining). C trigger ($110 nominal) NOT fired — gap ~$2-4/bbl. $110 clock NOT started. EIA STEO Q2 2026 peak ~$115 projection remains T1 reference. SGOL WTI floor ($55) comfortably clear. ⚠ CRITICAL: gap to $110 remains at minimum level recorded — monitor daily. Scenario C check_brent will upgrade to 3 if clock starts (10 trading days sustained ≥$110).
+
 ### 2.2 Currency
 
 | Threshold | Current Value | Source | Audit Status |
@@ -129,6 +137,8 @@ Session observation (April 22, 2026): DXY ~98.30 — flat. Well below 105 invali
 Session observation (April 23, 2026): DXY ~98.73. Well below 105 SGOL invalidation threshold. Stable.
 
 Session observation (April 28, 2026): DXY ~98.5 (range 98.5-99.3 intraday; slight firming on Iran safe-haven demand and FOMC hold expectations). Well below 105 invalidation threshold.
+
+Session observation (April 29, 2026): DXY ~98.5. Unchanged from April 28. Well below 105 threshold. No SGOL invalidation risk from currency channel.
 
 ### 2.3 Macro
 
@@ -149,6 +159,8 @@ Session observation (April 22, 2026): No new macro data. CPI March 3.3% YoY rema
 Session observation (April 23, 2026): No new macro data. CPI March 3.3% most recent (1 of 3 for B trigger; 1 of 2 for C reacceleration). Q4 2025 GDP 0.5% confirmed. Q1 2026 advance estimate due ~April 30 — critical for B/D scoring. FOMC April 28-29 expected hold. 10Y breakeven ~2.38% (4.30% nominal minus 1.92% TIPS real yield) — above Fed target, consistent with B/C dominance.
 
 Session observation (April 28, 2026): No new macro data. CPI March 3.3% still most recent print. Q1 2026 GDP advance estimate due ~April 30 — BINARY for B/D scoring. FOMC April 28-29 meeting active; decision tomorrow. 10Y breakeven ~2.43% (4.32% nominal minus 1.89% TIPS real yield April 24). Consumer sentiment record low 49.8 (U. Michigan April).
+
+Session observation (April 29, 2026): No new macro data. CPI March 3.3% still most recent print. Q1 2026 GDP advance estimate due April 30 — BINARY for B/D. FOMC decision April 30 — 94% hold probability. 10Y breakeven ~2.43% unchanged. Sahm Rule 0.20 (well below 0.5% trigger). Initial claims ~214K (healthy labor market). Mag7 earnings all in: MSFT +18% YoY, Azure +40% (supply-constrained), GOOGL beat, META +33% (capex raised $125-145B), AMZN AWS +28% (fastest 15 quarters), EPS $2.78 vs $1.64 est. Zero guidance withdrawals. T1-confirmed (public quarterly filings). Earnings signal documented in calibration proposals — see §3.
 
 ### 2.4 Instrument Evaluation
 
@@ -211,6 +223,30 @@ _______________
 * Initial instrument classification (current holdings): VTI (78% broad/22% secular_tech), XAR (90% geopolitical/10% broad — pending ThematicETF_ClassificationAudit confirmation), MLPX (65% real_asset_contracted/35% commodity_linked), SGOL (100% precious_metals), SGOV (100% short_duration), PAVE (82% broad/18% policy_thematic — per April 28 constituent audit).
 * GitHub write workflow codified in M12 §CANONICAL_GITHUB_WRITE_WORKFLOW. Two patterns: PATTERN_A (framework amendments: create_branch → push_files → create_pull_request; no SHA required) and PATTERN_B (session write-back: create_or_update_file to master with SHA). Root cause of prior failures documented.
 
+2026-04-29 — Session write-back: full audit, XAR ThematicETF_ClassificationAudit completed, calibration proposals documented
+* Scenario probabilities: A=8%, B=45%, C=38%, D=3%, E=3%, F=3% — UNCHANGED from April 28. All scoring inputs unchanged (FOMC + Q1 GDP both pending April 30). 25pp cap not triggered. derivation_method: scored.
+* Primary driver: Strait of Hormuz Crisis / US-Iran War (Day 60). Diplomatic track stalled. No ceasefire. Trump rejected Iran proposal. Brent gap to $110 C-trigger ~$2-4/bbl — closest recorded this series.
+* XAR ThematicETF_ClassificationAudit() COMPLETED: geopolitical_premium classification CONFIRMED at constituent level. Top holdings (Heico, TransDigm, L3Harris, Northrop, RTX, General Dynamics, Huntington Ingalls, Curtiss-Wright) are defense procurement dependent. NAV coverage ~65% (exceeds 60% minimum). Mandate-dependent NAV ~75-80% (exceeds 30% threshold). XAR §11 entry confirmed: 90% geopolitical_premium / 10% broad_market_equity_domestic. §10.3 updated.
+* M14 composite divergence signal: HIGH. commodity_fear_divergence HIGH (energy 90d >+35%, VIX flat/declining). equity_scenario_divergence MODERATE (broad equity 30d est. +3-5% while directive reductive). UnderweightReviewTrigger fired: MLPX underweight in Relative IRA (-8.76pp) and Relative Roth (-17.04pp) with 30d appreciation ~10%. EntryExtensionGuard passed (MLPX ~13% above 90d avg; threshold 20%). WAR PREMIUM ENTRY GUARD: both guards pass for MLPX at current price.
+* M15 blended scenario returns computed for all holdings. EV ranking: SGOL +5.51% > MLPX +3.80% > XAR +1.47% > SGOV +0.80% > PAVE -4.48% > VTI -5.17%.
+* Per-account EV at current vs target weights:
+  - Primary IRA: current 2.23% → target 3.11% (required 3.2%; gap closes to 0.09pp at target)
+  - Primary Roth: current 2.25% → target 3.09% (required 2.8%; FEASIBLE at target)
+  - Taxable Acc3: 0.80% preservation — meets objective
+  - Taxable Acc4: current 1.46% → target 1.60%
+  - Relative IRA: current 2.95% → target 3.33% (floor objective met)
+  - Relative Roth: current 1.85% → target 2.51% (required 2.8%; gap persists 0.29pp)
+* All rebalancing trades remain deferred pending FOMC (April 30) + Q1 GDP (April 30).
+* CALIBRATION PROPOSALS — for formal adoption at May 5-6 session (T1 evidence logged):
+  1. secular_technology_growth Scenario C return: revise [−2%, +4%] → [+2%, +8%]. Evidence: Q1 2026 quarterly filings (T1) — MSFT Azure +40% (supply-constrained not demand-constrained), AMZN AWS +28% (fastest 15 quarters), META +33% revenue, GOOGL beat $2.9B vs consensus — all accelerating DURING active Scenario C. AI enterprise contracts multi-year; not correlated to Hormuz supply shock. 2022 Ukraine analog understates AI capex cycle independence.
+  2. secular_technology_growth Scenario B return: revise [−10%, −3%] → [−6%, −1%]. Evidence: Q1 2026 EPS growth rate (AMZN $2.78 vs $1.64 est.; MSFT $4.27 vs $4.07 est.) materially higher than 2022 tech which had zero AI revenue during multiple compression. Earnings growth partially offsets multiple compression under rate constraint — less severe than 2022 pure multiple compression playbook.
+  3. inflation_hedge_precious_metals Scenario C return: revise [+7%, +14%] → [−2%, +6%]. Evidence: Gold spot $4,554 — down 18% from $5,595 January ATH during active Scenario C. Mechanism: high oil → sticky inflation → Fed holds hawkish → real yields 1.89% elevated → gold (non-yielding) underperforms. Framework Scenario C was calibrated for C-dove (Fed eventually accommodates); current regime is C-hawk (Fed holding rates persistently). Conservative floor reflects C-hawk empirical data. Upside retains C-dove optionality if Fed eventually pivots.
+  4. Framework design proposal (for Q2 June 30 audit): add Fed response function sub-variable to Scenario C scoring. Current framework does not distinguish C-hawk vs C-dove; gold and real yield asset returns are materially different across these sub-states. Not a calibration-dated threshold — proposed as module architecture enhancement.
+* CRITICAL IMPLICATION of Proposal 3: If adopted, SGOL EV revises from +5.51% to +2.09%. SGOL rank drops from #1 to #3 (below MLPX). This would materially change M13.idealAllocation() output for all accounts — SGOL targets would decrease, MLPX/XAR targets would increase. Full reallocation recomputation required at May 5-6 session IF calibration proposals are adopted.
+* AI ETF evaluation: CHAT (100% secular_tech) EV = -5.38% current / -2.06% revised. AIPO (~50% secular_tech / 30% real_asset / 20% broad) EV = -1.77% current / -1.17% revised. Neither positive EV under current scenario weights. AIPO preferred over CHAT (power infrastructure component provides B-scenario partial hedge). Decision deferred. If calibration proposals adopted AND SGOL targets reduced, freed allocation weight could partially fund AIPO position. AIPO requires §11 entry before any allocation. Tax placement: taxable accounts only.
+* Taxable Acc4 sheet target discrepancy noted: sheet shows PAVE 12% / XAR 30% / MLPX 38% / SGOV 20% vs calibration state PAVE 11% / XAR 32% / MLPX 39% / SGOV 18%. Calibration state is authoritative. Sheet update required next session.
+* Wash sale: VTI window clears April 30. VTI purchase (~$32K, ~91 shares) timing and account to be determined at May 5-6 session after FOMC + GDP clarity.
+
 _______________
 
 ## Section 4 — Growth Objectives: Return Table and Multipliers
@@ -220,6 +256,12 @@ Review at every quarter-end audit alongside §1 and §2 thresholds.
 
 Last calibrated: April 23, 2026 (v1.3 initial instantiation; v1.4 B/C multipliers and floors revised)
 Full empirical audit scheduled: June 30, 2026
+
+⚠ PENDING CALIBRATION PROPOSALS (April 29, 2026 — not yet adopted; decision at May 5-6 session):
+* secular_technology_growth Scenario C: proposed revision [−2%, +4%] → [+2%, +8%]
+* secular_technology_growth Scenario B: proposed revision [−10%, −3%] → [−6%, −1%]
+* inflation_hedge_precious_metals Scenario C: proposed revision [+7%, +14%] → [−2%, +6%]
+These values in §4.1 remain at current figures until formally adopted. Do NOT use proposed values for computation until adopted.
 
 ### 4.1 Expected Real Annualized Return Table
 Conservative end used for ALL computations. Upside end disclosed in briefing only.
@@ -240,7 +282,8 @@ All scenario return computations use M15.blendedScenarioReturn() — this table 
 | secular_technology_growth | [6, 16] | [-10, -3] | [-2, 4] | [-14, -5] | [-10, -4] | [4, 11] |
 
 secular_technology_growth added April 28, 2026 (v1.7). Provisional — empirical audit June 30, 2026.
-Analogues: 2010-2021 tech multiple expansion (A/F upside); 2022 tech compression rate-tightening (B downside); 2023-2024 AI re-expansion; 2022 Ukraine invasion (C less negative than broad equity — conflict transmission to AI capex weak).
+Analogues: 2010-2021 tech multiple expansion (A/F upside); 2022 compression under rate tightening (B downside); 2022 Ukraine invasion equity impact vs tech (C — less negative than broad market); 2022 demand-driven drawdown (D); 2023-2024 AI re-expansion (A/F upside).
+Note: these values are also reflected in the §4.1 table as the secular_technology_growth row.
 
 ### 4.2 IRA Target Multipliers (planning horizon: 10 years)
 Floor: 1.3x REVISED April 23, 2026 (was 1.5x) — restore to 1.5x when commodity-linked added post-war.
@@ -302,15 +345,18 @@ _______________
 6. Hit-rate audit each absolute threshold in Section 2 against trailing 5-year data.
 7. Formally classify currently-unflagged thresholds in Sections 2.2, 2.3, 2.4.
 8. First empirical audit of §4.1 return table — all roles including secular_technology_growth.
+   Additional item (added April 29, 2026): evaluate calibration proposals for secular_tech B/C and precious_metals C using Q1 2026 actual data as empirical anchors. Decision on adoption should incorporate FOMC and GDP outcomes from April 30.
 9. First empirical audit of §4.2 and §4.3 multipliers. Assess whether commodity-linked has been added; if so restore B/C multipliers and floors (IRA: 1.5x; Roth: 2.0x).
 10. Audit §4.4 floor and concentration parameters.
 11. First audit of §9 M14 thresholds: assess whether divergence and entry extension thresholds produced actionable signals or noise since adoption.
 12. First audit of §10 M08 ETF classification thresholds: review ThematicETF_ClassificationAudit() and MandateImpairmentPropagation() parameter outcomes since April 28. Adjust thresholds if systematic misclassifications observed.
-13. Apply ThematicETF_ClassificationAudit() to XAR if not completed in a prior session.
+13. XAR ThematicETF_ClassificationAudit() COMPLETED April 29 — no further audit required at Q2 for XAR unless fund composition changes materially.
 14. First audit of §11 instrument classification weights: re-verify component weights for all holdings using fresh fund composition data. Flag any instrument where weight drift > 5pp since last review.
-15. Empirical audit of secular_technology_growth return estimates (§11.2 + §4.1 row): validate against 2022 tech compression and 2023-2024 re-expansion data. Adjust conservative/upside ranges if distribution evidence warrants.
-16. Review §11.ROLE_REGISTRY: assess whether any new structural return drivers have emerged warranting a new role. Review whether any existing roles should be merged or retired.
-17. Record all results in Section 3 Calibration Log.
+15. Empirical audit of secular_technology_growth return estimates (§11.2 + §4.1 row): validate against 2022 tech compression and 2023-2024 re-expansion data. Incorporate Q1 2026 actual data from Mag7 quarterly filings. Adjust conservative/upside ranges if distribution evidence warrants.
+16. Review §11.ROLE_REGISTRY: assess whether any new structural return drivers have emerged warranting a new role. Specifically: assess whether AI capex cycle warrants a sub-role split (infrastructure AI vs software AI).
+17. Assess AIPO (Defiance AI & Power Infrastructure ETF) for §11 classification if portfolio decision made. Proposed classification: ~50% secular_technology_growth / 30% real_asset_contracted_revenue / 20% broad_market_equity_domestic — requires empirical verification against fund holdings.
+18. Add Fed response function sub-variable to Scenario C scoring (design proposal, April 29 session).
+19. Record all results in Section 3 Calibration Log.
 
 _______________
 
@@ -323,6 +369,7 @@ _______________
 | 2026-04-22 | 287 | 83 | 921 | Trading Economics / FRED (HY last updated Apr 20; IG/CCC Apr 16-17) | stale |
 | 2026-04-23 | 287 | 83 | 921 | Trading Economics / FRED (HY Apr 20; IG/CCC Apr 16-17 — stale 3-7 days) | stale |
 | 2026-04-28 | 285 | 83 | 921 | Trading Economics / FRED (HY Apr 21; IG/CCC Apr 16-17 — stale 7-12 days) | stale |
+| 2026-04-29 | 284 | 80 | 921 | Trading Economics proxy; FRED HY Apr 28 (1 day lag); IG cross-referenced T2 source article confirming ~80 bps near 25yr tights; CCC carry forward | stale (IG: composite_only) |
 
 _______________
 
@@ -420,6 +467,40 @@ next_session_flags:
 
 ---
 
+date: 2026-04-29
+scenario_probabilities: { A: 8%, B: 45%, C: 38%, D: 3%, E: 3%, F: 3% }
+primary_driver: Strait of Hormuz Crisis / US-Iran War (Day 60) — no ceasefire; diplomatic track stalled; Trump rejected Iranian proposal; IEA largest supply shock on record
+derivation_method: scored
+manual_override_reason: null
+open_triggers:
+  - FOMC April 30 — REASSESS A/B scoring on release (language determines: 'patient' = B maintained; 'concerned' = C confirmation; cut odds for 2026 direction material)
+  - Q1 2026 GDP April 30 — BINARY: negative → B check_gdp to 3; D watch begins. Positive >1.5% → B check_gdp drops to 1; significant probability shift
+  - Brent $110 C-trigger — clock NOT started; gap ~$2-4/bbl; EIA STEO Q2 2026 peak ~$115 projection; monitor daily without exception
+  - CPI May 10-12 — second print. If >=3.5% YoY: C check_cpi upgrades to 2; C probability rises
+  - IIJA reauthorization September 30, 2026
+  - Warsh confirmation expected
+open_decisions:
+  - Primary IRA: sell VTI -49, XAR -30; buy MLPX +8, SGOL +541. Deferred pending FOMC + GDP. NOTE: if calibration proposals adopted at May 5-6, rerun idealAllocation() before executing — targets may change materially
+  - Primary Roth: sell VTI -8, XAR -4; buy MLPX +3, SGOL +88. Same deferral + same note
+  - Taxable Acc4: buy XAR +20, MLPX +76, SGOV +149. PAVE hold ~11%. Same deferral
+  - Relative IRA: sell VTI -20, SGOL -152, SGOV -21; buy MLPX +222. Same deferral
+  - Relative Roth: sell VTI -2, SGOL -19; buy MLPX +23. Same deferral
+  - Taxable Acc3: SGOV 100% — no action
+  - VTI purchase ~$32K (~91sh): wash sale clears April 30; timing and account to be resolved at May 5-6
+  - Calibration proposals (3): formal adoption decision at May 5-6 session. If adopted: rerun M13.idealAllocation() before executing ANY rebalancing trades — SGOL targets will change
+  - Taxable Acc4 sheet targets: update to match calibration state (PAVE 11%, XAR 32%, MLPX 39%, SGOV 18%)
+  - AIPO §11 classification: pending portfolio decision
+next_session_flags:
+  - FOMC language AND Q1 GDP: both due April 30 — CRITICAL inputs for May 5-6 session
+  - If calibration proposals adopted: M13.idealAllocation() must be rerun for all accounts BEFORE executing deferred trades
+  - If Q1 GDP negative: B check_gdp upgrades to 3; B probability rises ~5pp; reassess allocation targets
+  - If Q1 GDP >1.5%: B check_gdp drops to 1; B probability falls ~5pp; reassess allocation targets
+  - Brent daily monitoring — $110 clock could start any session
+  - M14 composite divergence remains HIGH — underweight review active for MLPX in Relative accounts
+  - MOVE index: still not fetched — low priority but log absence
+
+---
+
 _______________
 
 ## Section 9 — Market Regime Thresholds (M14)
@@ -486,7 +567,7 @@ Added: April 28, 2026 (v1.6). Rationale: PAVE reclassification session revealed 
 | :-: | :-: | :-: | :-: | :-: |
 | 2026-04-28 | PAVE | MandateImpairmentPropagation | NEVI rescission (~$879M) maps to Quanta Services EV segment. Highways/bridges/rail formula programs intact. ETF NAV at risk: ~10-15%. Below 20% materiality threshold. | watch (not FLAGGED) |
 | 2026-04-28 | PAVE | ThematicETF_ClassificationAudit | Retrospective: top 32% NAV covered. Mandate-dependent NAV ~15-18%. Below 30% threshold. Dominant actual driver: industrial/capital goods broadly. | Revised to watch; monitor |
-| Next session | XAR | ThematicETF_ClassificationAudit | Pending — flagged in §8. Confirm geopolitical_premium holds at constituent level. | TBD |
+| 2026-04-29 | XAR | ThematicETF_ClassificationAudit | Top 8 holdings analyzed: Heico, TransDigm, L3Harris, Northrop, RTX, General Dynamics, Huntington Ingalls, Curtiss-Wright (~65% NAV coverage estimated; exceeds 60% minimum). All holdings defense procurement dependent (DoD + allied government contracts). Mandate-dependent NAV: ~75-80% (exceeds 30% threshold). geopolitical_premium binding driver (elevated_conflict, defense_procurement, geopolitical_tension) confirmed at constituent level. 10% broad_market residual retained for commercial aerospace/diversified industrial. | CONFIRMED: XAR = 90% geopolitical_premium / 10% broad_market_equity_domestic. Status: thesis_intact. Monitor for fund composition drift at Q2 audit. |
 
 _______________
 
@@ -519,6 +600,7 @@ All registered roles must have a corresponding §4.1 return table row. Adding a 
 Provisional. Added April 28, 2026. Full empirical audit: June 30, 2026.
 Analogues used: 2010-2021 tech multiple expansion (A/F); 2022 compression under rate tightening (B); 2022 Ukraine invasion equity impact vs tech (C — less negative than broad market); 2022 demand-driven drawdown (D); 2023-2024 AI re-expansion (A/F upside).
 Note: these values are also reflected in the §4.1 table as the secular_technology_growth row.
+⚠ CALIBRATION PROPOSALS PENDING (April 29, 2026): B revision [−10%,−3%]→[−6%,−1%]; C revision [−2%,+4%]→[+2%,+8%]. Current values remain until formally adopted at May 5-6 session.
 
 | Scenario | Conservative | Upside | Key rationale |
 | :-: | :-: | :-: | :-- |
@@ -545,11 +627,11 @@ All instruments appearing in the allocation file must have an entry here. New in
 
 #### XAR
 - Components: geopolitical_premium (0.90) + broad_market_equity_domestic (0.10)
-- Basis: SPDR S&P Aerospace & Defense ETF. Dominant return driver is defense procurement tied to geopolitical tension. ThematicETF_ClassificationAudit pending next session (queued §8 April 28). Preliminary: top holdings (Heico, TransDigm, L3Harris, Northrop, RTX) are primarily defense procurement dependent. 10% broad_market reflects commercial aviation and diversified industrial revenue in the portfolio.
-- Source: SPDR fund page; top holdings review
-- Methodology: holdings_analysis (preliminary — full audit pending)
-- Last reviewed: 2026-04-28 (preliminary)
-- Notes: Confirm geopolitical_premium classification via ThematicETF_ClassificationAudit() before Q2 audit. If full audit confirms, update weights accordingly.
+- Basis: SPDR S&P Aerospace & Defense ETF. Dominant return driver is defense procurement tied to geopolitical tension. ThematicETF_ClassificationAudit COMPLETED April 29, 2026. Top holdings (Heico, TransDigm, L3Harris, Northrop, RTX, General Dynamics, Huntington Ingalls, Curtiss-Wright) confirmed defense procurement dependent. ~65% NAV coverage; mandate-dependent NAV ~75-80%. 10% broad_market reflects commercial aerospace and diversified industrial revenue in lower holdings.
+- Source: SPDR fund page; April 29 constituent audit (top ~65% NAV)
+- Methodology: ThematicETF_ClassificationAudit() — CONFIRMED
+- Last reviewed: 2026-04-29
+- Notes: Classification confirmed. No further audit required until fund composition changes materially (>5pp weight drift in top holdings, or rebalance toward non-defense sectors). Re-verify at Q2 audit as standard staleness check.
 
 #### MLPX
 - Components: real_asset_contracted_revenue (0.65) + inflation_hedge_commodity_linked (0.35)
@@ -565,6 +647,7 @@ All instruments appearing in the allocation file must have an entry here. New in
 - Source: Aberdeen Standard fund page
 - Methodology: direct
 - Last reviewed: 2026-04-28
+- Notes: ⚠ CALIBRATION ANOMALY (April 29, 2026): SGOL producing negative real returns during active Scenario C (down 18% from ATH) due to elevated real yields (10Y TIPS +1.89%). Framework §4.1 Scenario C return [+7%, +14%] may overstate gold's C-scenario performance in C-hawk regime (Fed holding rates). Calibration proposal pending for May 5-6 session. Do not use §4.1 Scenario C = 7% as confirmed return estimate — treat as potentially stale pending formal revision.
 
 #### SGOV
 - Components: rate_sensitive_income_short_duration (1.00)
