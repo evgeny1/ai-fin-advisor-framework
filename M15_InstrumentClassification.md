@@ -1,227 +1,254 @@
-# M15 — Instrument Classification & Decomposition
+# M15 — Instrument Classification
 <!-- Version: 1.0 | Adopted: April 28, 2026 -->
-<!-- Supersedes: M08_FunctionalRoles.classifyRole() -->
-<!-- Supersedes: M08_FunctionalRoles.DualRoleConflict() -->
-<!-- Supersedes: M08_FunctionalRoles.ENUM Role (hardcoded) -->
-<!-- Motivation: roles were hardcoded in M08; classifyRole() returned single value forcing binary -->
-<!--   DualRoleConflict; composite instruments (e.g. VTI = broad_market + secular_tech) lost -->
-<!--   return attribution accuracy; adding a new role required a framework amendment -->
-<!-- Solution: roles live in CALIBRATION_STATE §11 (add/remove without amendment); instruments -->
-<!--   decompose into weighted components; scenario return is a weighted blend -->
-<!-- Cross-references: @see CALIBRATION_STATE §11, @see M03_ScenarioFramework, @see M13_GrowthObjectives -->
-<!-- Consumed by: M03, M06, M08, M09, M10, M13 — anywhere classifyRole() or DualRoleConflict() was called -->
-<!-- Companion: @see CALIBRATION_STATE §11 (role registry + instrument table, must load every session) -->
+<!-- Extends: M08_FunctionalRoles — composite decomposition; blendedScenarioReturn replaces direct §4.1 lookups -->
+<!-- Provides: extensible role registry, composite decomposition, blended scenario returns, session-start validation -->
+<!-- Companion: @see CALIBRATION_STATE §11 (role registry + instrument classification table) -->
+<!-- Consumed by: M03_ScenarioFramework, M08_FunctionalRoles, M13_GrowthObjectives, M09_ScenariosABC, M10_ScenariosDEF -->
 
 ```
 MODULE InstrumentClassification {
 
   // ─── DESIGN PRINCIPLES ───────────────────────────────────────────────────
-  // 1. Roles are NOT hardcoded — they live in CALIBRATION_STATE §11.ROLE_REGISTRY.
-  //    Add or remove a role by editing §11 only. No M15 amendment required.
-  // 2. Instruments are NOT hardcoded — classification lives in §11.INSTRUMENT_TABLE.
-  //    Any instrument in the allocation file must have a §11 entry.
-  // 3. Instruments decompose into weighted role components (weights must sum to 1.0).
-  //    Pure instruments: one component at weight 1.0.
-  // 4. Scenario return = weighted blend across components.
-  //    Replaces every direct §4.1[role][scenario] lookup throughout the framework.
-  // 5. Execution directive resolved from dominant component when conflict exists.
+  // 1. No instrument ticker or role name is hardcoded in any framework module.
+  //    Roles live in CALIBRATION_STATE §11.ROLE_REGISTRY.
+  //    Instrument decompositions live in CALIBRATION_STATE §11.INSTRUMENT_CLASSIFICATION_TABLE.
+  // 2. Any instrument may have multiple role components with fractional weights summing to 1.0.
+  //    Single-driver instruments have one component at weight 1.0 — identical to prior behavior.
+  // 3. ALL scenario return computations route through blendedScenarioReturn() —
+  //    never direct §4.1[role][scenario] lookups.
+  // 4. New instruments found in allocation file but absent from §11 → HARD_STOP at session start.
+  // 5. New roles are added via CALIBRATION_STATE §11 only — no module file edits required.
+  // 6. Backward compatible: pure single-role instruments produce identical results to prior sessions.
 
-  // ─── SESSION LOAD REQUIREMENT ─────────────────────────────────────────────
+  // ─── SESSION-START VALIDATION ────────────────────────────────────────────
+  // Runs as part of M05_SessionInit Step 3 — after both allocation file and
+  // Calibration State are confirmed loaded.
 
-  REQUIRE at_session_start {
-    CALIBRATION_STATE §11.ROLE_REGISTRY        // all registered roles
-    CALIBRATION_STATE §11.INSTRUMENT_TABLE     // all instrument decompositions
-    // Loaded as part of Calibration_State.md via M12_FileProtocol.fetchCalibrationState()
-    // VALIDATE: every instrument in allocation file has a §11 entry
-    // IF any instrument missing → HARD_STOP with classification instructions
-  }
+  PROCEDURE ValidateClassifications() {
 
-  // ─── CLASSIFY INSTRUMENT ──────────────────────────────────────────────────
-  // Replaces: M08_FunctionalRoles.classifyRole()
-  // Returns: ComponentVector (array of {role, weight} pairs), NOT a single role
+    instruments_in_file = AllocationSheet.all_tickers()
+    classified          = CALIBRATION_STATE.§11.INSTRUMENT_CLASSIFICATION_TABLE.keys()
+    registered_roles    = CALIBRATION_STATE.§11.ROLE_REGISTRY.registered_roles
 
-  FUNCTION classifyInstrument(ticker) -> ComponentVector {
-
-    IF ticker NOT IN CALIBRATION_STATE §11.INSTRUMENT_TABLE {
+    // Check 1: Every instrument in allocation file must have a §11 entry
+    unclassified = instruments_in_file EXCLUDING classified
+    IF unclassified NOT EMPTY {
       HARD_STOP
-      FLAG: "[ticker] not found in §11 INSTRUMENT_TABLE.
-             Session cannot proceed for this instrument.
-             Required steps:
-               1. Identify binding return drivers
-               2. Map to roles in §11.ROLE_REGISTRY
-               3. Assign weights using ClassifyMethodology() — must sum to 1.0
-               4. Add entry to §11.INSTRUMENT_TABLE with methodology documented
-               5. Confirm each assigned role has a §4.1 return table row
-             @see ClassifyMethodology() below"
+      FLAG: "Unclassified instruments in allocation file: [list]
+             Add entries to CALIBRATION_STATE §11.INSTRUMENT_CLASSIFICATION_TABLE.
+             Required: components[] with {role, weight}, weights summing to 1.0,
+             last_reviewed date, methodology note.
+             Session is invalid for allocation computations until resolved."
     }
 
-    components = §11.INSTRUMENT_TABLE[ticker].components
-
-    // Validate weights sum to 1.0
-    weight_sum = SUM(c.weight for c in components)
-    IF ABS(weight_sum - 1.0) > 0.01 {
-      HARD_STOP
-      FLAG: "[ticker] component weights sum to [weight_sum] — must be 1.0.
-             Correct §11.INSTRUMENT_TABLE before proceeding."
-    }
-
-    // Validate all roles exist in registry
-    FOR each component c IN components {
-      IF c.role NOT IN CALIBRATION_STATE §11.ROLE_REGISTRY {
-        HARD_STOP
-        FLAG: "[ticker] references unregistered role [c.role].
-               Add to §11.ROLE_REGISTRY or correct the classification."
+    // Check 2: Every component role must exist in §11.ROLE_REGISTRY
+    FOR each instrument IN classified {
+      FOR each component IN §11.classification(instrument).components {
+        IF component.role NOT IN registered_roles {
+          HARD_STOP
+          FLAG: "[instrument]: component references unregistered role '[component.role]'.
+                 Register role in §11.ROLE_REGISTRY before proceeding."
+        }
       }
     }
 
-    RETURN components
+    // Check 3: Every registered role must have a row in §4.1 return table
+    FOR each role IN registered_roles {
+      IF role NOT IN CALIBRATION_STATE.§4_1 {
+        HARD_STOP
+        FLAG: "Role '[role]' registered in §11 has no §4.1 return table row.
+               Add conservative/upside estimates for all six scenarios before proceeding."
+      }
+    }
+
+    // Check 4: Component weights must sum to 1.0 per instrument (tolerance 0.001)
+    FOR each instrument IN classified {
+      total_weight = SUM(c.weight for c IN §11.classification(instrument).components)
+      IF abs(total_weight - 1.0) > 0.001 {
+        HARD_STOP
+        FLAG: "[instrument] component weights sum to [total_weight] (expected 1.0).
+               Correct §11.INSTRUMENT_CLASSIFICATION_TABLE."
+      }
+    }
+
+    // Check 5: Staleness warning (non-blocking)
+    FOR each instrument IN classified {
+      last_reviewed = §11.classification(instrument).last_reviewed
+      IF last_reviewed < current_date - 90_calendar_days {
+        FLAG: "[instrument] classification last reviewed [last_reviewed] — over 90 days ago.
+               Queue for next scheduled calibration review."
+        // Warning only — does not block session
+      }
+    }
+
+    RETURN validation_passed
   }
 
-  // ─── BLENDED SCENARIO RETURN ──────────────────────────────────────────────
-  // Replaces: direct §4.1[M08.classifyRole(a)][s] lookup throughout the framework
-  // conservative used in ALL computations; upside in briefing disclosure only
+  // ─── INSTRUMENT CLASSIFICATION LOOKUP ────────────────────────────────────
+  // Replaces M08_FunctionalRoles.classifyRole() for all scenario return computations.
+  // Returns a vector of {role, weight} pairs summing to 1.0.
+
+  FUNCTION classifyInstrument(ticker) -> ComponentVector {
+    IF ticker NOT IN CALIBRATION_STATE.§11.INSTRUMENT_CLASSIFICATION_TABLE {
+      HARD_STOP
+      FLAG: "[ticker] missing from §11 — ValidateClassifications() should have caught this at session start."
+    }
+    RETURN CALIBRATION_STATE.§11.INSTRUMENT_CLASSIFICATION_TABLE[ticker].components
+  }
+
+  // ─── BLENDED SCENARIO RETURN ─────────────────────────────────────────────
+  // REPLACES all direct §4.1[role][scenario] lookups throughout the framework.
+  // All scenario return computations MUST route through this function.
+  // For pure single-role instruments: result equals §4.1[role][scenario] exactly.
+  // For composite instruments: weighted blend across components.
 
   FUNCTION blendedScenarioReturn(ticker, scenario, return_type) -> Float {
     // return_type: "conservative" | "upside"
+    // Default for ALL feasibility math, idealAllocation(), FeasibilityCheck(): "conservative"
+    // Upside: disclosed in briefing only — NEVER used in any computation
+
     components = classifyInstrument(ticker)
-    result     = 0.0
+    result = 0
     FOR each component c IN components {
-      row    = CALIBRATION_STATE §4.1[c.role][scenario]
-      value  = IF return_type == "conservative" THEN row.conservative ELSE row.upside
-      result += c.weight * value
+      result += c.weight × CALIBRATION_STATE.§4_1[c.role][scenario][return_type]
     }
     RETURN result
   }
 
-  // ─── RESOLVE EXECUTION DIRECTIVE ──────────────────────────────────────────
-  // Replaces: M08_FunctionalRoles.DualRoleConflict()
-  // Used by M09/M10 execution protocols to get a single directive per instrument
+  // ─── DOMINANT DIRECTIVE (for M09/M10 execution protocols) ────────────────
+  // Scenario execution protocols prescribe directives by role.
+  // For composite instruments: apply directive of highest-weight material component
+  // unless directives conflict — in which case surface for resolution.
+  // Material component threshold: weight >= 0.15
 
-  FUNCTION resolveDirective(ticker, scenario) -> DirectiveResult {
+  FUNCTION dominantDirective(ticker, scenario) -> Directive {
+    components        = classifyInstrument(ticker)
+    sorted            = sort_descending(components by weight)
+    primary_role      = sorted[0].role
+    primary_directive = lookup_directive(primary_role, scenario)  // from M09 or M10
 
-    components = classifyInstrument(ticker)
+    // Single-component: trivial
+    IF sorted.length == 1 { RETURN primary_directive }
 
-    // Pure instrument — single directive, no conflict possible
-    IF components.length == 1 {
-      RETURN DirectiveResult {
-        directive:       lookup_directive(components[0].role, scenario)
-        dominant_role:   components[0].role
-        dominant_weight: 1.0
-        blend_method:    "pure"
-      }
+    // Material components only (weight >= 0.15)
+    material   = [c for c IN components WHERE c.weight >= 0.15]
+    directives = [lookup_directive(c.role, scenario) for c IN material]
+
+    IF all_same_direction(directives) {
+      RETURN most_conservative(directives)
+      // Same-direction conflict: apply more conservative — @see M08.DualRoleConflict
     }
 
-    // Composite — collect all directives
-    component_directives = [
-      { role: c.role, weight: c.weight, directive: lookup_directive(c.role, scenario) }
-      FOR c IN components
-    ]
-
-    // Case 1: all components agree on directive
-    unique_directives = SET(cd.directive for cd in component_directives)
-    IF unique_directives.length == 1 {
-      RETURN DirectiveResult {
-        directive:     unique_directives[0]
-        dominant_role: "consensus"
-        blend_method:  "consensus"
-      }
-    }
-
-    // Case 2: conflict — resolve by dominant weight
-    dominant = MAX(component_directives, key=weight)
-
-    IF dominant.weight >= 0.50 {
-      FLAG: "Composite [ticker]: directive conflict resolved by dominant driver
-             [dominant.role] at [dominant.weight*100]% weight.
-             Minority directives: [list remaining]. Surface in session briefing."
-      RETURN DirectiveResult {
-        directive:       dominant.directive
-        dominant_role:   dominant.role
-        dominant_weight: dominant.weight
-        blend_method:    "dominant_driver"
-      }
-    }
-
-    // Case 3: no component >= 50% — cannot resolve automatically
-    FLAG: "[ticker]: no dominant role (max weight [dominant.weight*100]%).
-           Directive conflict cannot be resolved automatically.
-           Manual review required before any execution action on this instrument.
-           Surface in briefing as MANUAL_REVIEW_REQUIRED."
-    RETURN DirectiveResult {
-      directive:    "MANUAL_REVIEW_REQUIRED"
-      blend_method: "unresolved"
+    IF conflicting_directions(directives) {
+      FLAG: "[ticker] has conflicting directives in [scenario]:
+             [list c.role: directive for material components].
+             Applying dominant role [primary_role]: [primary_directive].
+             Surface in briefing — may require manual review."
+      RETURN primary_directive
     }
   }
 
   // ─── CLASSIFICATION METHODOLOGY ──────────────────────────────────────────
-  // Use when adding a new instrument to §11 INSTRUMENT_TABLE,
-  // or reviewing an existing classification at quarterly audit.
+  // Reference procedure for deriving component weights at initial classification
+  // and at each periodic review. Human judgment required — not automated.
+  // Document methodology and sources in §11 table entry.
 
-  PROCEDURE ClassifyMethodology(ticker) {
+  PROCEDURE DetermineComponentWeights(ticker) {
 
-    STEP 1: obtain_holdings_or_sector_breakdown {
-      source: fund_sponsor_website | ETF_provider_data | SEC_13F | Bloomberg
-      require: >= 60% NAV coverage; data no older than 30 calendar days
-      FLAG if stale: "Holdings data > 30 calendar days — classification is provisional"
-    }
+    // STEP 1: Obtain fund composition data from T1 source
+    // Sources: fund provider fact sheet, ETF.com holdings tab, SEC 13F filing
+    // Required: sector weights OR top holdings with approximate portfolio weights
+    // Preferred: holdings covering >= 60% of fund NAV
 
-    STEP 2: map_sectors_to_roles {
-      // Map each sector/sub-sector to a role in §11.ROLE_REGISTRY
-      // This requires judgment — document rationale in methodology field
-      // Guidance:
-      //   Technology (AI / semiconductor / software dominant) → secular_technology_growth
-      //   Technology (diversified / not AI-dominated)         → broad_market_equity_domestic
-      //   Energy (E&P / commodity-price-linked)               → inflation_hedge_commodity_linked
-      //   Energy (pipeline / midstream / fee-based)           → real_asset_contracted_revenue
-      //   Industrials (defense / aerospace)                   → geopolitical_premium
-      //   Industrials (infrastructure, mandate-confirmed)     → policy_driven_thematic_equity
-      //     NOTE: requires ThematicETF_ClassificationAudit() @see M08_FunctionalRoles
-      //   All other sectors                                   → broad_market_equity_domestic (residual)
-    }
+    // STEP 2: Map each material holding/sector to a registered role in §11
+    // Mapping requires binding-driver judgment — sector labels ≠ functional roles.
+    //
+    // Reference mappings (illustrative, not exhaustive):
+    //   "Technology"  → secular_technology_growth if AI/software-driven
+    //               → broad_market_equity_domestic if legacy hardware/services
+    //   "Energy"      → inflation_hedge_commodity_linked if E&P/refining
+    //               → real_asset_contracted_revenue if pipeline/MLP structure
+    //   "Industrials" → policy_driven_thematic_equity if defense/infrastructure mandate
+    //               → broad_market_equity_domestic if cyclical without mandate dependence
+    //
+    // REQUIRE per component: state the binding driver explicitly, not just sector label
 
-    STEP 3: validate_and_document {
-      VERIFY: SUM(component.weight) == 1.0
-      DOCUMENT in §11 INSTRUMENT_TABLE:
-        ticker:         [ticker]
-        components:     [{ role: String, weight: Float } list]
-        last_reviewed:  [today's date]
-        methodology:    [brief description of sector mapping and key decisions]
-        review_trigger: [what would prompt re-review before quarterly schedule]
-    }
+    // STEP 3: Aggregate to role-level weights
+    // Residual weight → assign to dominant role (largest component)
+    // Verify sum == 1.0
+
+    // STEP 4: Document in §11.INSTRUMENT_CLASSIFICATION_TABLE:
+    //   components: [{role, weight, basis, source}]
+    //   last_reviewed: current_session_date
+    //   methodology: "sector_weight_analysis | holdings_analysis | judgment"
+    //   notes: any caveats, limitations, pending verifications
+
+    // STEP 5: If a new role was created for this instrument:
+    //   → Run AddRole() procedure before session can proceed
+    //   → §4.1 return table row required — ValidateClassifications() will HARD_STOP without it
   }
 
-  // ─── CLASSIFICATION REVIEW TRIGGERS ──────────────────────────────────────
+  // ─── ROLE REGISTRY MANAGEMENT ────────────────────────────────────────────
+  // Add/remove roles via CALIBRATION_STATE §11 only.
+  // No framework module file edits required to add a role.
 
-  RULE ClassificationReviewTrigger(ticker) {
-    IF §11.INSTRUMENT_TABLE[ticker].last_reviewed > 90_calendar_days_ago {
-      FLAG: "[ticker] classification overdue for quarterly review."
-    }
-    IF dominant_component_weight_has_shifted > 10pp_since_last_review {
-      FLAG: "[ticker] dominant role weight may have shifted. Re-classify."
-    }
-    IF primary_driver_recalibration_declared {
-      // @see M02_IntelGathering.identifyPrimaryDriver()
-      REVIEW: all instruments whose dominant role is affected by the driver shift
-    }
-    IF new_role_added_to_§11_ROLE_REGISTRY {
-      REVIEW: all existing classifications for potential re-decomposition
-              // Some instruments may now have a cleaner fit to the new role
-    }
+  PROCEDURE AddRole(role_name, binding_driver, scenario_sensitivity_notes) {
+    // 1: Verify role_name not already in §11.ROLE_REGISTRY
+    // 2: Add to §11.ROLE_REGISTRY.registered_roles with binding_driver and notes
+    // 3: Add row to §4.1 return table — conservative + upside per scenario (A–F)
+    //    Methodology: historical analogue analysis per M11.CalibrationDiscipline
+    //    REQUIRE: at least 2 historical analogue periods identified and cited
+    //    Document in §3 Calibration Log: role name, rationale, analogues, return estimates
+    // 4: Reclassify any instruments where new role improves accuracy
+    //    Update §11.INSTRUMENT_CLASSIFICATION_TABLE entries accordingly
+    // 5: Write-back to GitHub — framework amendment PR if module files also change;
+    //    direct session write-back if §11 + §4.1 only
+    NEVER: add role without §4.1 row — ValidateClassifications() will HARD_STOP
   }
 
-  // ─── INTEGRATION SUMMARY ──────────────────────────────────────────────────
+  PROCEDURE RemoveRole(role_name) {
+    // 1: Verify no instrument in §11 table references this role
+    //    IF any instrument uses it → reclassify instrument first
+    // 2: Remove from §11.ROLE_REGISTRY.registered_roles
+    // 3: Archive §4.1 row in §3 Calibration Log (do not delete — audit trail)
+    // 4: Log rationale in §3
+    NEVER: remove role while any §11 classification entry references it
+  }
+
+  // ─── INTEGRATION WITH EXISTING FRAMEWORK ─────────────────────────────────
   //
-  // REPLACE everywhere in framework:
-  //   M08.classifyRole(a)              → M15.classifyInstrument(a.ticker)
-  //   M08.DualRoleConflict()           → M15.resolveDirective(a.ticker, scenario)
-  //   §4.1[M08.classifyRole(a)][s]     → M15.blendedScenarioReturn(a.ticker, s, "conservative")
+  // M08.classifyRole() remains in use for:
+  //   (a) ThematicETF_ClassificationAudit() constituent-level analysis
+  //       where individual stocks (not ETFs) are assessed
+  //   (b) §11 gap detection context — identifying what a new instrument likely is
+  //       before formal classification entry is created
   //
-  // UNCHANGED in M08 (still call directly):
-  //   M08.ThematicETF_ClassificationAudit()   // constituent-level audit for thematic ETFs
-  //   M08.MandateImpairmentPropagation()      // impairment propagation for policy_driven ETFs
-  //   M08.ExecutionGuards                     // graduated response, EntryExtensionGuard gate
-  //   M08.ExecutionTaxPlacement               // tax placement at execution
-  //   M08.DeEscalation                        // unwinding rule
+  // For ALL allocation computations (M13.idealAllocation, M13.FeasibilityCheck,
+  // M09/M10 scenario directives, M03.scenarioWeightedAllocation):
+  //   → use M15.classifyInstrument() + M15.blendedScenarioReturn()
+  //   → NOT M08.classifyRole() + direct §4.1 lookup
+  //
+  // M13.RecommendationFlow step 3 updated:
+  //   OLD: M08_FunctionalRoles.classifyRole(asset)
+  //   NEW: M15_InstrumentClassification.classifyInstrument(asset)
+  //        → M15_InstrumentClassification.blendedScenarioReturn(asset, scenario, "conservative")
+  //
+  // M13.idealAllocation() step 1 updated:
+  //   OLD: role = M08.classifyRole(asset)
+  //   NEW: components = M15.classifyInstrument(asset)
+  //        directive = M15.dominantDirective(asset, scenario)
+  //
+  // §4.1 return table: structure unchanged (roles × scenarios).
+  //   Now consumed via blendedScenarioReturn() — never directly.
+
+  // ─── SESSION LOAD REQUIREMENT ────────────────────────────────────────────
+
+  REQUIRE at_session_start {
+    CALIBRATION_STATE.§11.ROLE_REGISTRY                    // loaded with Calibration_State.md
+    CALIBRATION_STATE.§11.INSTRUMENT_CLASSIFICATION_TABLE  // loaded with Calibration_State.md
+    M15.ValidateClassifications()                          // run after M05 Steps 1 + 3
+    // Absence or validation failure = session invalid for allocation computations
+  }
 
 }
 ```
