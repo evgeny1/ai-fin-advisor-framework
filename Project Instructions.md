@@ -42,12 +42,14 @@ The framework uses a consistent syntax. Learn it once and apply it everywhere.
 | `M05_SessionInit.md` | Session initialization sequence — the entry point | First thing every session |
 | `M06_ClientAndAdvisory.md` | Client profile, tax placement rules, advisory principles, hold EV rule | Every recommendation |
 | `M07_InstrumentEval.md` | Instrument metrics, foreign exposure rule, auto-disqualification | When evaluating any instrument |
-| `M08_FunctionalRoles.md` | Dynamic position classification, dual-role conflict resolution, execution guards, tax placement at execution | Before any position action |
+| `M08_FunctionalRoles.md` | Dynamic position classification, dual-role conflict resolution, execution guards, tax placement at execution | Before any position action; classifyRole() used for constituent-level analysis only — see M15 for allocation computations |
 | `M09_ScenariosABC.md` | Execution protocols for Scenarios A, B, C | When A, B, or C probability crosses threshold |
 | `M10_ScenariosDEF.md` | Execution protocols for Scenarios D, E, F | When D, E, or F probability crosses threshold |
 | `M11_CreditAndCalibration.md` | Credit signal protocol, calibration discipline, updated Scenario D trigger | Every session (credit fetch + signal test) |
 | `M12_DriveProtocol.md` | Hybrid GitHub + Google Drive file access protocol (Amendment 2) | Every session start, before any file read |
 | `M13_GrowthObjectives.md` | Growth objectives, ideal allocation, feasibility check, recalibration sequence | Every allocation recommendation; supersedes M03 idealAllocation() and minimumConvictionWeight() |
+| `M14_MarketRegime.md` | Market desensitization detection, underweight opportunity-cost review, entry price extension guard | Every session (divergence signal + briefing block); before any ADD executes (EntryExtensionGuard) |
+| `M15_InstrumentClassification.md` | Extensible role registry, composite decomposition, blended scenario returns, session-start validation | Session start (ValidateClassifications); every allocation computation (blendedScenarioReturn); every position action (classifyInstrument + dominantDirective) |
 | `CALIBRATION_STATE.md` | Live threshold values + session observations log — **lives in GitHub, fetched and written each session** | Every session — never use remembered values |
 
 ---
@@ -57,12 +59,16 @@ The framework uses a consistent syntax. Learn it once and apply it everywhere.
 When files conflict, the higher-precedence file wins:
 
 ```
-1. M11_CreditAndCalibration  (Extension v1 — overrides main framework where they conflict)
-2. M12_DriveProtocol         (Amendment 2 — supersedes any prior fetch/write instructions)
-3. M13_GrowthObjectives      (supersedes M03 idealAllocation() and minimumConvictionWeight())
-4. CALIBRATION_STATE         (live threshold values override any remembered values)
-5. M09, M10                  (execution protocols)
-6. M01–M08                   (core framework)
+1. M11_CreditAndCalibration      (Extension v1 — overrides main framework where they conflict)
+2. M12_DriveProtocol             (Amendment 2 — supersedes any prior fetch/write instructions)
+3. M13_GrowthObjectives          (supersedes M03 idealAllocation() and minimumConvictionWeight())
+4. CALIBRATION_STATE             (live threshold values override any remembered values)
+4.5. M14_MarketRegime            (EntryExtensionGuard gates M09/M10 ADD directives before execution;
+                                   NEVER routes signals into M03 probability derivation)
+4.7. M15_InstrumentClassification (blendedScenarioReturn() supersedes direct §4.1 role lookups;
+                                    classifyInstrument() supersedes classifyRole() for all allocation computations)
+5. M09_ScenariosABC, M10_ScenariosDEF  (execution protocols)
+6. M01–M08                       (core framework)
 ```
 
 ---
@@ -77,15 +83,25 @@ Execute `M05_SessionInit.SessionStartSequence` in strict order:
    (steps 2 and 3 may run concurrently — only after Step 1 succeeds)
 3. Fetch Calibration State      → M12_FileProtocol.fetchCalibrationState()  ← GitHub
                                    Apply §1, §2 thresholds; §4 return table + multipliers (M13)
+                                   Apply §9 M14 market regime thresholds
+                                   Load §11 role registry and instrument classification table
+                                   Run M15.ValidateClassifications() — HARD_STOP if any allocation
+                                     instrument is absent from §11
                                    Load §8 Session State Log (prior probabilities, open items)
 4. Fetch market data            → M02_IntelGathering.FETCH_LIST
-                                   (includes credit spreads from M11)
+                                   (includes M11 credit spreads and M14.FetchList:
+                                    VIX trailing averages; broad equity 30/60/90d trailing performance)
 5. Identify primary driver      → M02_IntelGathering.identifyPrimaryDriver()
 6. Check recalibration trigger  → M03_ScenarioFramework.RecalibrationRule
                                    M11_CreditAndCalibration.CalibrationDiscipline.SessionLoad
 7. Complete intel gathering     → M02_IntelGathering.GatherIntel STEPS 2–5
+                                   + M14.ComputeDivergenceSignal()
+                                   IF composite IN [HIGH, MODERATE]:
+                                     M14.UnderweightReviewTrigger(account) for each account
 8. Produce briefing             → M04_BriefingFormat.IntelligenceBriefing
+                                   (includes M14.MarketRegimeSignal block after EQUITY MARKETS section)
 9. Begin portfolio discussion
+   → before any ADD executes:  M14.EntryExtensionGuard(asset, account)
 
 // SESSION END — after portfolio discussion concludes:
 10. Write §7 credit readings + §8 scenario state to GitHub → M12_FileProtocol.WriteBack
@@ -123,6 +139,10 @@ Apply this chain before presenting any recommendation:
 → M06_ClientAndAdvisory.SimplicityTest()          must pass
 → M06_ClientAndAdvisory.StructuralThesis          must be present
 → M06_ClientAndAdvisory.ClientBias (GUARD)        must be clean
+→ M15_InstrumentClassification.classifyInstrument(asset)
+                                                   returns ComponentVector (role + weight per component)
+→ M15_InstrumentClassification.blendedScenarioReturn(asset, scenario)
+                                                   weighted blend across components → replaces direct §4.1 lookup
 → M03_ScenarioFramework.scenarioWeightedAllocation()  show the math
    (calls M13_GrowthObjectives.idealAllocation() per scenario — account parameter required)
 → M13_GrowthObjectives.FeasibilityCheck()         run before presenting allocations
@@ -139,14 +159,19 @@ Never present allocation numbers without showing the scenario-weighted calculati
 
 ```
 1. Confirm trigger evidence meets threshold          → M08_FunctionalRoles.ExecutionGuards
-2. Classify each affected holding by functional role → M08_FunctionalRoles.classifyRole()
+2. Classify each affected holding by functional role → M15_InstrumentClassification.classifyInstrument()
+                                                       (M08.classifyRole() for constituent-level analysis only)
 3. Resolve any dual-role conflicts                   → M08_FunctionalRoles.DualRoleConflict()
 4. Apply graduated response rule                     → M08_FunctionalRoles.ExecutionGuards
    (30–39% probability = 50% of prescribed change, high urgency only)
    (≥40% probability = full rotation)
-5. Execute per-role actions                          → M09 or M10 RESPONSES table
-6. Apply tax placement to every entry and exit       → M08_FunctionalRoles.ExecutionTaxPlacement
-7. Document evidence that triggered execution
+5. Before any ADD: run entry extension guard         → M14_MarketRegime.EntryExtensionGuard(asset, account)
+   (also apply WAR PREMIUM ENTRY GUARD independently if discrete supply event is active
+    and role is commodity-linked, geopolitical_premium, or inflation_hedge_precious_metals)
+6. Get scenario directive                            → M15_InstrumentClassification.dominantDirective(asset, scenario)
+7. Execute per-role actions                          → M09 or M10 RESPONSES table
+8. Apply tax placement to every entry and exit       → M08_FunctionalRoles.ExecutionTaxPlacement
+9. Document evidence that triggered execution
 ```
 
 ---
@@ -155,7 +180,12 @@ Never present allocation numbers without showing the scenario-weighted calculati
 
 Any value marked `⚑ CALIBRATION_DATED` or written as `[VAR_NAME]` must be resolved from `CALIBRATION_STATE.md` at session start. Do not use a value from a prior session or from memory.
 
-Current live values are in `CALIBRATION_STATE.md` §1 (credit), §2 (energy, currency, macro, instruments), and §4 (growth objectives return table and multipliers).
+Current live values are in `CALIBRATION_STATE.md`:
+- §1 — credit thresholds
+- §2 — energy, currency, macro, instrument thresholds
+- §4 — growth objectives return table and multipliers (M13)
+- §9 — market regime thresholds (M14)
+- §11 — role registry and instrument classification table (M15)
 
 If a scheduled review date has passed without completion, flag it immediately and conduct the review before producing trade recommendations.
 
@@ -179,6 +209,11 @@ These are hard stops drawn from `GUARD` blocks across the framework. They requir
 - **NEVER** apply asymmetric skepticism to any actor — US government gets the same scrutiny as adversarial governments (`M01`)
 - **NEVER** let scenario probabilities sum to anything other than 100% (`M03`)
 - **NEVER** call M03.scenarioWeightedAllocation() or M03.minimumConvictionWeight() without an account context — M13 versions require it (`M13`)
+- **NEVER** feed M14 market regime signals into M03.DeriveScenarioProbabilities() — M14 signals route to entry-timing EV only (`M14`)
+- **NEVER** use direct §4.1 role lookups for scenario return computations — always route through M15.blendedScenarioReturn() (`M15`)
+- **NEVER** use M08.classifyRole() for allocation computations — use M15.classifyInstrument() (`M15`)
+- **NEVER** proceed with allocation computations if any instrument in the allocation file is absent from CALIBRATION_STATE §11 — M15.ValidateClassifications() is a HARD_STOP (`M15`)
+- **NEVER** hardcode instrument tickers or role names in module files — tickers and roles live in CALIBRATION_STATE §11 only (`M15`)
 
 ---
 
