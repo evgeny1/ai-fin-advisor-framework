@@ -2,7 +2,7 @@
 
 Persistent framework configuration - load at every session start alongside session handoff.
 
-Version: 1.9  Last updated: April 30, 2026 (Full M05 session: M13 rerun with updated section 4.1 v1.8 and new scenario probabilities A=7/B=42/C=42; VTI eliminated from all target allocations; AIPO + MAGS adopted and added to section 11; workflow established; MOVE index first logged; Brent C-trigger clock Day 2 active)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
+Version: 1.10  Last updated: May 6, 2026 (Full M05 session: C-trigger clock broken Day 5; scenario probabilities updated A=15/B=36/C=36/D=3/E=3/F=7; AIPO §11 updated AUM/sector weights/top-10; MLPX EntryExtensionGuard blocking ADD at current price; XAR reduction pending; PAVE watch confirmed)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
 
 ---
 
@@ -10,7 +10,7 @@ Version: 1.9  Last updated: April 30, 2026 (Full M05 session: M13 rerun with upd
 
 At session start, the advisor must state in the briefing:
 
-"Calibration State loaded, last update: April 30, 2026"
+"Calibration State loaded, last update: May 6, 2026"
 
 Absence of this line indicates the calibration file was not loaded and the session is invalid for threshold-sensitive decisions.
 
@@ -41,6 +41,7 @@ Session observation (April 23): HY ~287 bps. Stale. No threshold fires.
 Session observation (April 28): HY ~285-287 bps. Stale. HY_StressBeginning ~435 bps; gap ~148 bps.
 Session observation (April 29): HY ~284 bps. FRED last Apr 28 (1 day lag). No threshold fires.
 Session observation (April 30 full session): HY ~284 bps (carry forward). No threshold fires. T1_flag: stale.
+Session observation (May 6 full session): HY ~284 bps (carry forward). FRED fetch attempted — metadata only; no live values. No threshold fires. T1_flag: stale.
 
 ### 1.2 IG Composite - FRED: BAMLC0A0CM
 
@@ -53,6 +54,7 @@ Session observation (April 30 full session): HY ~284 bps (carry forward). No thr
 Session observation (April 19): IG ~83 bps. Baseline reference.
 Session observation (April 21-29): IG ~80-83 bps. Carry forward. IG_TransmissionReached NOT fired (threshold ~143 bps; gap ~60-63 bps). Stale.
 Session observation (April 30 full session): IG ~80 bps (carry). NOT fired. T1_flag: stale.
+Session observation (May 6 full session): IG ~80 bps (carry). NOT fired. T1_flag: stale.
 
 ### 1.3 CCC Tail - FRED: BAMLH0A3HYC
 
@@ -63,6 +65,7 @@ Session observation (April 30 full session): IG ~80 bps (carry). NOT fired. T1_f
 
 First divergence computation (April 19): CCC Apr 16 = 921 bps vs Mar 16 = 973 bps = -52 bps tightening. Neither threshold fired.
 Session observations (April 21-30): CCC ~921 bps (carry forward; FRED stale). CCC_TailFirstWidening NOT fired. T1_flag: stale.
+Session observation (May 6 full session): CCC ~921 bps (carry). NOT fired. T1_flag: stale.
 
 ---
 
@@ -84,6 +87,9 @@ Session observations:
 - April 28: Brent peaked $108.11 Apr 27; ~$106 Apr 28. C trigger NOT fired. Gap ~$2-4/bbl. EIA STEO Q2 2026 peak ~$115 projection (T1).
 - April 29: Brent ~$106. C trigger NOT fired. Gap ~$2-4/bbl.
 - April 30: BRENT C-TRIGGER CLOCK ACTIVE. Day 1 = April 29 close $110.44. Day 2 = April 30 intraday $110.73. Clock fires if Brent sustains >=110 through ~May 13, 2026. Monitor every session without exception. SGOL WTI floor ($55) comfortably clear.
+- May 1 (ad-hoc bridge): Day 3 = May 1 $116.10. Clock active. Fujairah oil hub fire; IRGC declared Hormuz zones under Iranian military control. Escalation confirmed T1.
+- May 4 (ad-hoc bridge): Day 4 = May 4 $114.06-$115.01. Clock active. US-Iran direct naval exchange confirmed. UAE attacked.
+- May 6 full session: BRENT C-TRIGGER CLOCK BROKEN. Day 5 = May 5 close ~$109.87 (CNBC T1 — international benchmark Brent futures fell ~4% to close at $109.87). Below $110 nominal threshold. Clock resets to Day 0. 4 consecutive days achieved (Apr 29-May 4); 10 required; not met. New 10-day clock requires fresh initiation above $110. May 6: Brent declining further on US-Iran deal reports (Fortune: $106.52 at 8:30am ET; WTI down 12%+). SGOL WTI floor: WTI ~$89-93, comfortably above $55 floor. SGOL invalidation NOT triggered.
 
 ### 2.2 Currency
 
@@ -91,7 +97,7 @@ Session observations:
 | --- | --- | --- |
 | DXY sustained above - SGOL invalidation | 105 nominal | Pending June 30 |
 
-DXY ~98.5-98.6 across all sessions through April 30. Well below 105. No SGOL invalidation risk.
+DXY ~98.42-98.46 (StreetStats T2, May 4-5). Well below 105. No SGOL invalidation risk.
 
 ### 2.3 Macro
 
@@ -104,6 +110,8 @@ DXY ~98.5-98.6 across all sessions through April 30. Well below 105. No SGOL inv
 | Unemployment trigger - Scenario D | +0.5% over any 3-month window | Pending June 30 |
 
 April 30 full session: Q1 2026 GDP advance estimate = +2.0% annualized (BEA T1). Above 1.5% threshold - B check_gdp drops to 1. D watch NOT triggered. Core PCE 3.2% YoY (BEA T1). FOMC: hold at 3.5-3.75%. Language upgraded: inflation is elevated. 4 dissents (3 hawkish, 1 dovish/Miran). C-hawk regime confirmed. Next CPI May 10-12 (second print - watch for >=3.5% -> C check_cpi to 2).
+
+May 6 full session: No new macro data releases. CPI print expected May 10-12. US-Iran deal framework reported (Axios/CBS/NPR T1) but not confirmed. Trump paused "Project Freedom"; Iran reviewing latest US proposal. Deal unconfirmed as of session close. Sahm Rule 0.20 (stable). No new unemployment or GDP data.
 
 Prior context: CPI March 3.3% YoY (1 of 3 for B trigger). Q4 2025 GDP 0.5%. Consumer sentiment 49.8 (record low). 10Y breakeven ~2.43%. Sahm Rule 0.20. Mag7 Q1 earnings all beat; zero guidance withdrawals. Azure +40%, AWS +28%, META +33%, GOOGL beat, AMZN EPS $2.78 vs $1.64 est. MSFT +18% YoY.
 
@@ -140,22 +148,9 @@ Prior context: CPI March 3.3% YoY (1 of 3 for B trigger). Q4 2025 GDP 0.5%. Cons
 
 2026-04-30 - Calibration proposals adopted (v1.8). secular_technology_growth B: [-10%,-3%]->[-6%,-1%]. secular_technology_growth C: [-2%,+4%]->[+2%,+8%]. inflation_hedge_precious_metals C: [+7%,+14%]->[-2%,+6%]. XAR HoldJustification: break-even peace prob <5.6%; opportunity cost vs MLPX -2.33%/year. M13 structural gap: Primary IRA max achievable EV ~2.65% vs required 3.2%.
 
-2026-04-30 - Full M05 session: M13 rerun, AIPO+MAGS adopted, VTI eliminated (v1.9)
+2026-04-30 - Full M05 session: M13 rerun, AIPO+MAGS adopted, VTI eliminated (v1.9). Session type: full M05. Allocation sheet fetched (Google Drive MCP). Calibration State fetched (GitHub MCP). MOVE index first logged. Credit carry-forward. FOMC hold 3.5-3.75%. Q1 GDP +2.0%. Brent C-trigger clock Day 2. Scenario probabilities: A=7/B=42/C=42/D=3/E=3/F=3.
 
-- Session type: full M05. Allocation sheet fetched (Google Drive MCP). Calibration State fetched (GitHub MCP). MOVE index first logged. Credit carry-forward.
-- FOMC (T1 federalreserve.gov): hold 3.5-3.75%, 11-1 vote. Miran dissented for cut; 3 others against easing bias (hawkish). Language: inflation is elevated. 4 dissents - most since 1992. C-hawk confirmed.
-- Q1 2026 GDP: +2.0% (BEA T1). B check_gdp drops to 1. D watch NOT triggered. Core PCE 3.2% YoY.
-- Brent C-trigger clock: Day 1 = April 29 close $110.44. Day 2 = April 30 $110.73. ACTIVE - 8 trading days to fire. Monitor every session.
-- MOVE index: 68.68 (Investing.com, T2). First logged. 52-week range 55.77-115.02. Bond market calm. No fixed income stress.
-- Scenario probabilities UPDATED: A=7% (-1pp), B=42% (-3pp), C=42% (+4pp), D=3%, E=3%, F=3%. GDP +2.0% weakens B stagnation thesis. FOMC hawkish + Brent clock Day 2 strengthen C. B and C co-equal at 42% - first occurrence this series. Justified: moderate growth + persistent inflation + acute supply shock. Max shift 4pp - within 25pp cap. derivation_method: scored.
-- VTI ELIMINATED from all target allocations. Rationale: (1) all VTI in retirement accounts - zero tax friction; (2) 78% broad_market_equity_domestic returns -8% in B (42%) - structural drag; (3) AI ETF captures secular_tech function at higher conviction; (4) remaining positions cover all structural roles. VTI $32K wash-sale purchase (cleared April 30) CANCELLED - redirected to AIPO/MAGS.
-- AIPO adopted as primary AI sector position. Classification: real_asset_contracted_revenue (0.55) + secular_technology_growth (0.20) + broad_market_equity_domestic (0.15) + inflation_hedge_commodity_linked (0.10). EV: +1.03%. EntryExtensionGuard: ~+9.8% above 90d avg vs 15% threshold - PASSES. Tax placement: all accounts including taxable. Added to section 11.
-- MAGS adopted as secondary AI/secular-tech position. Classification: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15). EV: -2.34% (negative EV; documented client judgment override - accepted for AI earnings momentum thesis and optionality on scenario shift toward A/F). EntryExtensionGuard: fund down 12.2% over 3 months; below 90d avg (~$75) - PASSES. RETIREMENT ACCOUNTS ONLY - swap structure generates phantom taxable gains. Added to section 11.
-- AIPO/PAVE overlap: Eaton Corp (ETN) in both AIPO (~8.1% NAV) and PAVE (~3.4% NAV). Monitor combined concentration at Q2 audit.
-- XAR staged sell: 180 shares limit at $265 in Taxable Acc4. XAR closed $266.59 Apr 30 - order likely executed. Client to verify at broker.
-- M13 rerun completed with updated section 4.1 (v1.8) and new probabilities (A=7/B=42/C=42). New target allocations - see section 8 April 30 entry.
-- Updated EV ranking (A=7/B=42/C=42): MLPX +3.83% > SGOL +1.83% > XAR +1.58% > AIPO +1.03% > SGOV +0.81% > MAGS -2.34% > PAVE -4.46%.
-- Workflow established (permanent): client updates allocation file with target % -> allocation file computes share counts -> client executes trades. Advisor outputs target % only - never pre-computes share counts. Allocation file is authoritative source for share calculations.
+2026-05-06 - Full M05 session (v1.10). C-trigger clock broken Day 5 (May 5 close ~$109.87, CNBC T1). Scenario probabilities updated: A=15%(+8pp), B=36%(-6pp), C=36%(-6pp), D=3%(unch), E=3%(unch), F=7%(+4pp). Shift driven by: clock breakage (check_brent drops from on-track-3 to 2); deal reports raising A/F probability; GDP confirms B check_gdp stays at 1. AIPO §11 updated: AUM $457M (corrected from stale $249.5M Dec 2025 Schwab snapshot); sector weights updated to Apr 30, 2026 data; top-10 updated. PAVE watch status confirmed — userMemory stale FLAGGED label corrected; no new legislation. MLPX EntryExtensionGuard: blocking ADD at $73.91 (preliminary; precise 90d trailing avg not computed this session — required before any ADD). Relative IRA/Roth MLPX underweight substantially resolved (IRA -0.96pp, Roth -1.17pp) — client executed trades. XAR reduction to 12% target pending — staged $265 sell in Taxable Acc4 unconfirmed. M14 composite divergence: MODERATE. Credit stale carry-forward.
 
 ---
 
@@ -203,7 +198,7 @@ Floor: 1.3x (revised Apr 23 from 1.5x). Restore to 1.5x when commodity-linked ad
 | E | 1.2 | ~1.8% |
 | F | 2.0 | ~7.2% |
 
-Weighted target (A=7%/B=42%/C=42%/D=3%/E=3%/F=3%) = 1.366x. Required ~3.2%. STRUCTURAL GAP: max achievable EV ~2.65% - unfeasible without commodity-linked. Accepted and documented.
+Weighted target (A=15%/B=36%/C=36%/D=3%/E=3%/F=7%) = 1.454x. Required ~3.2%. STRUCTURAL GAP: max achievable EV ~2.65% - unfeasible without commodity-linked. Accepted and documented. NOTE: weighted multiplier updated from 1.366x (A=7 probs) to 1.454x (A=15 probs) — structural gap slightly narrowed but still present.
 
 ### 4.3 Roth IRA Target Multipliers (15-year horizon)
 
@@ -218,7 +213,7 @@ Floor: 1.3x (revised Apr 23 from 2.0x). Restore to 2.0x when commodity-linked ad
 | E | 1.4 |
 | F | 3.1 |
 
-Weighted multiplier = 1.496x. Required ~2.8%.
+Weighted multiplier (A=15/B=36/C=36/D=3/E=3/F=7) = 1.599x. Required ~2.8%.
 
 ### 4.4 Structural Floor and Concentration Parameters
 
@@ -264,6 +259,8 @@ Weighted multiplier = 1.496x. Required ~2.8%.
 18. MOVE index: assess formal integration into M11/M14 as supplementary credit/volatility signal.
 19. Add Fed response function sub-variable to Scenario C scoring (design proposal Apr 29).
 20. Record all results in section 3 calibration log.
+21. AIPO Financial Services weight (3.60% as of Apr 30): assess materiality for classification. Flag if above 5% by Q2 audit.
+22. MLPX target allocation: reassess if client formally requests reduction from 40% due to volatility profile — document any revision here.
 
 ---
 
@@ -279,6 +276,7 @@ Weighted multiplier = 1.496x. Required ~2.8%.
 | 2026-04-29 | 284 | 80 | 921 | Trading Economics proxy; FRED HY Apr 28; IG T2 cross-ref (~80 bps near 25yr tights); CCC carry | stale (IG: composite_only) |
 | 2026-04-30 (ad-hoc) | - | - | - | No credit fetch - ad-hoc session | n/a |
 | 2026-04-30 (full) | 284 (carry) | 80 (carry) | 921 (carry) | Carry from Apr 29. MOVE FIRST LOGGED: 68.68 (Investing.com T2; 52-wk range 55.77-115.02; bond market calm; no fixed income stress) | stale; MOVE T2 |
+| 2026-05-06 (full) | 284 (carry) | 80 (carry) | 921 (carry) | Carry from Apr 30. FRED fetch attempted — search returned series metadata only; no live values retrieved. govspending.org confirms HY 2.83% (283 bps) as of Apr 30 — consistent with carry. No material divergence expected given equity rally and energy de-escalation, but unconfirmed. MOVE: not fetched — persistent data gap. | stale |
 
 ---
 
@@ -368,6 +366,66 @@ next_session_flags:
 
 ---
 
+date: 2026-05-06
+scenario_probabilities: { A: 15%, B: 36%, C: 36%, D: 3%, E: 3%, F: 7% }
+primary_driver: Strait of Hormuz Crisis / US-Iran War (Day 68) — deal framework reported (Axios/CBS/NPR) but unconfirmed as of session close; Hormuz still operationally restricted
+derivation_method: scored
+manual_override_reason: null
+session_type: full M05 (Allocation sheet fetched via Google Drive MCP; Calibration State fetched via GitHub MCP; credit carry-forward)
+
+scoring_basis:
+- A: check_fed=0 (hold 3.5-3.75%, 4 hawkish dissents) | check_energy=1 (declining 3 days, not >=5) | check_credit=1 (calm) → raw=2
+- B: check_cpi=2 (3.3% YoY, 3-4% trending) | check_gdp=1 (GDP +2.0%, >1.5%) | check_fed=2 (holding + constraint language) → raw=5
+- C: check_brent=2 (clock broken; active supply event T1; Brent within 15% band ~$93.50-$110) | check_cpi=1 (1 print confirmed) | check_chokepoint=2 (Hormuz active, T1) → raw=5
+- D: raw=0 (all checks zero; Sahm 0.20, Fed not cutting, credit calm) → floor 3%
+- E: raw=0 (DXY ~98, no sovereign stress) → floor 3%
+- F: raw=1 (GDP growth signal; supply shock + Fed constraint suppress) → derived 7%
+
+probability_shifts_vs_prior:
+- A: 7% → 15% (+8pp): C-trigger clock broken; deal reports activating soft-landing challenger driver
+- B: 42% → 36% (-6pp): energy de-escalation at margin; GDP confirms check_gdp=1 not 2
+- C: 42% → 36% (-6pp): clock broken; check_brent drops from on-track to 2 (within-band); deal reduces chokepoint severity
+- D: 3% → 3% (0pp): unchanged
+- E: 3% → 3% (0pp): unchanged
+- F: 3% → 7% (+4pp): GDP +2.0%; equities near record; deal trajectory improves nominal growth outlook
+
+open_triggers:
+- Brent C-trigger clock: RESET to Day 0 (May 5 close $109.87 broke 10-day sequence). New clock requires fresh initiation above $110 for 10 consecutive trading days. Monitor each session — currently declining on deal reports; new clock initiation unlikely near-term unless deal collapses.
+- CPI May 10-12: second print. IF >=3.5% YoY → C check_cpi to 2 → C probability rises. IF <=3.0% → B check_cpi drops to 0 → B probability declines materially. BINARY EVENT — highest near-term priority.
+- US-Iran deal confirmation (timing unknown): IF T1-confirmed → primary driver shifts to normalization → recalibrate probabilities (A/F rise materially; B/C decline). IF deal collapses → Brent resumes climb; new C-trigger clock restarts.
+- IIJA reauthorization September 30, 2026 (PAVE watch status trigger — unchanged).
+- XAR: reduction to 12% target pending across all accounts. Preferred exit level ~$265 at/near market as of session. M14 divergence MODERATE — entry extension guard applies to any XAR ADD (not relevant; XAR is a reduce not add).
+
+open_decisions:
+- XAR: 12% structural target. Reduction needed across Primary IRA (238 shares, 25.09% vs 12% target), Primary Roth (40 shares, 24.56% vs 12%), Taxable Acc4 (294 shares, 29.76% vs 12%). Preferred exit ~$265 — at market near session time. Taxable Acc4 180-share $265 staged sell (placed Apr 30) status UNCONFIRMED — client to verify at broker. Proceed with full reduction plan to 12% targets once execution confirmed.
+- MLPX ADD: EntryExtensionGuard BLOCKING at $73.91 (preliminary — precise 90d trailing avg not computed; required before any ADD). No ADD until guard clears with dedicated source price data. Underweight persists: Primary IRA -9.71pp, Primary Roth -10.16pp. Accept underweight; revisit if price corrects post-deal.
+- MLPX target: 40% maintained per M13 rerun. Client raised volatility concern (historical MLP ETF 50%+ drawdowns in risk-off events). EV case intact at +3.64% blended. Potential to revise target if client formally requests — deferred pending further discussion.
+- PAVE: watch status confirmed (userMemory stale FLAGGED label corrected). Hold at 11% target in Taxable Acc4 (currently 13.04% — slight overweight; no action required until rebalance).
+- AIPO: targets in allocation file. EntryExtensionGuard: ~+11.6% above 90d avg per May 4 bridge — below 15% threshold — PASSES. Recompute with live trailing avg at next session before executing any ADD.
+- GitHub write-back: deferred this session per client instruction. Execute at next session (Pattern B: create_or_update_file to master with SHA from next session's fetchCalibrationState()).
+
+M13 target allocations (unchanged from April 30):
+- Primary IRA:   MLPX 40% | SGOL 33% | XAR 12% | AIPO 8% | MAGS 7%
+- Primary Roth:  MLPX 40% | SGOL 33% | XAR 12% | AIPO 8% | MAGS 7%
+- Taxable Acc3:  SGOV 100%
+- Taxable Acc4:  MLPX 40% | SGOV 29% | XAR 12% | AIPO 8% | PAVE 11%
+- Relative IRA:  MLPX 35% | SGOL 37% | SGOV 20% | AIPO 5% | MAGS 3%
+- Relative Roth: MLPX 40% | SGOL 40% | AIPO 12% | MAGS 8%
+
+next_session_flags:
+- LOAD: "Calibration State loaded, last update: May 6, 2026"
+- CPI May 10-12: HIGHEST PRIORITY. Binary for C and B check_cpi. Run DeriveScenarioProbabilities() immediately after release.
+- XAR: confirm Apr 30 staged sell execution at broker. If confirmed, plan remaining reduction to 12% targets across all accounts. If not confirmed, place fresh limit order — XAR at/near $265 as of May 6.
+- MLPX EntryExtensionGuard: fetch MLPX 90d trailing close (~Feb 5, 2026 price) from approved source before any ADD decision. Current $73.91 likely fails guard.
+- MLPX target: ask client to formally confirm whether 40% target stands or should be revised given volatility concern.
+- US-Iran deal: monitor for T1 confirmation. If confirmed, recalibrate probabilities — A likely rises above 25%, C falls below 25%.
+- GitHub write-back: execute this session (Pattern B). SHA must come from session-start fetchCalibrationState().
+- MAGS vs AGIX: monitor Anthropic IPO news.
+- Credit spreads: stale 6+ days. Attempt fresh FRED fetch at session start.
+- MOVE index: attempt fresh fetch at session start (persistent data gap).
+
+---
+
 ## Section 9 - Market Regime Thresholds (M14)
 
 All values CALIBRATION_DATED. First audit: June 30, 2026.
@@ -428,14 +486,15 @@ All values CALIBRATION_DATED. First audit: June 30, 2026.
 | 2026-04-28 | PAVE | MandateImpairmentPropagation | NEVI rescission maps to Quanta EV segment. NAV at risk ~10-15%. Below 20% threshold. | watch (not FLAGGED) |
 | 2026-04-28 | PAVE | ThematicETF_ClassificationAudit | Mandate-dependent NAV ~15-18%. Below 30% threshold. Dominant driver: industrial/capital goods. | watch; monitor |
 | 2026-04-29 | XAR | ThematicETF_ClassificationAudit | ~65% NAV covered. Mandate-dependent ~75-80%. geopolitical_premium confirmed. | CONFIRMED: 90% geopolitical_premium / 10% broad_market |
-| 2026-06-30 | AIPO | ThematicETF_ClassificationAudit | PENDING - provisional Apr 30. Full audit required Q2. Check ETN/Eaton concentration vs PAVE. | PROVISIONAL: see section 11 |
+| 2026-05-06 | PAVE | Status confirmation | No new legislation since Apr 28. IIJA core programs intact. NEVI cuts already reflected. userMemory FLAGGED label confirmed stale. | watch (unchanged) |
+| 2026-06-30 | AIPO | ThematicETF_ClassificationAudit | PENDING - provisional Apr 30. Full audit required Q2. Check ETN/Eaton concentration vs PAVE. Financial Services weight (3.60% Apr 30) — assess if above 5% by audit. | PROVISIONAL: see section 11 |
 
 ---
 
 ## Section 11 - Instrument Classification Registry (M15)
 
 All values CALIBRATION_DATED. First audit: June 30, 2026.
-VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v1.9).
+VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v1.9). AIPO §11 data updated May 6 (v1.10).
 
 ### 11.1 Role Registry
 
@@ -476,14 +535,19 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - Components: geopolitical_premium (0.90) + broad_market_equity_domestic (0.10)
 - ThematicETF_ClassificationAudit COMPLETED April 29. Confirmed.
 - Last reviewed: 2026-04-29
-- EV: +1.58%. Target: 12% structural across applicable accounts (Primary IRA, Primary Roth, Taxable Acc4).
-- Client preference: exit excess XAR at ~$265 spike. 180-share staged sell in Taxable Acc4 at $265 limit - may have executed Apr 30 (XAR closed $266.59). Verify at broker.
-- HoldJustification: break-even peace probability <5.6%; opportunity cost vs MLPX -2.33%/year.
+- EV (A=15/B=36/C=36/D=3/E=3/F=7): +1.29% (revised from +1.58% at A=7 probs — A=15% adds weight to -1.3% conservative A return, reducing blended EV).
+- Target: 12% structural across applicable accounts (Primary IRA, Primary Roth, Taxable Acc4).
+- Client preference: exit excess XAR at ~$265 spike. Currently overweight in all accounts. Reduction in progress — staged sell in Taxable Acc4 unconfirmed.
+- HoldJustification: break-even peace probability <5.6%; opportunity cost vs MLPX -2.33%/year (computed at A=7 probs; remains directionally valid at A=15).
 
 #### MLPX
 - Components: real_asset_contracted_revenue (0.65) + inflation_hedge_commodity_linked (0.35)
 - Last reviewed: 2026-04-28
-- EV: +3.83% (#1 ranked instrument). Target allocation increased across all accounts in M13 rerun.
+- EV (A=15/B=36/C=36/D=3/E=3/F=7): +3.64% (#1 ranked instrument; revised from +3.83% at A=7 probs).
+- Target allocation: 40% across retirement accounts (Primary IRA, Primary Roth, Relative IRA, Relative Roth).
+- EntryExtensionGuard: BLOCKING at $73.91 (preliminary — precise 90d trailing avg not computed; real_asset_contracted_revenue threshold 15%, commodity_linked threshold 20%, WAR PREMIUM GUARD independent). Do not ADD until guard clears with dedicated source 90d trailing close.
+- Underweight: Primary IRA -9.71pp, Primary Roth -10.16pp. Accept underweight pending guard clearance.
+- Note: client raised historical MLP volatility concern (50%+ drawdowns in risk-off events). EV case intact; target 40% maintained. Potential revision to be discussed; log any change here.
 
 #### SGOL
 - Components: inflation_hedge_precious_metals (1.00)
@@ -493,27 +557,33 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 #### SGOV
 - Components: rate_sensitive_income_short_duration (1.00)
 - Last reviewed: 2026-04-28
-- EV: +0.81%. Preservation account (Taxable Acc3) = 100% SGOV. Taxable Acc4 SGOV target increased to 29% in M13 rerun (XAR reduction proceeds).
+- EV: +0.81%. Preservation account (Taxable Acc3) = 100% SGOV. Taxable Acc4 SGOV target increased to 29% in M13 rerun (XAR reduction proceeds flow here).
 
 #### PAVE
 - Components: broad_market_equity_domestic (0.82) + policy_driven_thematic_equity (0.18)
 - ThematicETF_ClassificationAudit conducted Apr 28. Status: watch (not FLAGGED).
-- Last reviewed: 2026-04-28
-- Cost basis: $54.09/share (~$1,286 embedded gain on 590 shares). Target: ~11% in Taxable Acc4.
+- Last reviewed: 2026-05-06 (status reconfirmed — no new legislation; IIJA core programs intact)
+- Cost basis: $54.09/share (~$1,286 embedded gain on 590 shares). Target: ~11% in Taxable Acc4. Currently 13.04% (slight overweight).
 - Monitor IIJA reauthorization September 30, 2026.
-- OVERLAP: Eaton Corp (ETN) in both PAVE (~3.4% NAV) and AIPO (~8.1% NAV). Monitor combined concentration at Q2 audit.
+- OVERLAP: Eaton Corp (ETN) in both PAVE (~3.4% NAV) and AIPO (~8.1% NAV as of Dec 2025; ~8.04% as of Apr 30 2026). Monitor combined concentration at Q2 audit.
 
 #### AIPO
 - Components: real_asset_contracted_revenue (0.55) + secular_technology_growth (0.20) + broad_market_equity_domestic (0.15) + inflation_hedge_commodity_linked (0.10)
-- Basis: Defiance AI & Power Infrastructure ETF. Tracks MarketVector U.S. Listed AI and Power Infrastructure Index. Sector weights (12/23/2025): Industrials 56.4%, IT 18.5%, Utilities 15.9%, Energy 7.6%. Top holdings (03/31/2026): GEV 8.9%, ETN 8.1%, PWR 7.7%, VRT 7.7%, Cameco 4.3%, BE 4.2%, AVGO 4.1%, NVDA 4.0%. Dominant driver: power and grid infrastructure for AI data centers, not AI companies directly.
-- Source: Schwab report card 04/30/2026; sector weights as of 12/23/2025
-- Methodology: sector_weight_analysis + judgment. ThematicETF_ClassificationAudit() REQUIRED at Q2 June 30 - PROVISIONAL classification.
-- Last reviewed: 2026-04-30
-- Price at adoption: $31.28. EntryExtensionGuard: ~+9.8% above 90d avg vs 15% threshold for real_asset_contracted_revenue - PASSES.
-- AUM: $249.5M. Expense ratio: 0.69%. Inception: 07/24/2025 (thin track record - flag at Q2).
-- EV (A=7/B=42/C=42): +1.03%. Only AI-sector instrument with positive EV under current regime.
-- TAX PLACEMENT: ALL ACCOUNTS including taxable (standard ETF structure - no swap, no phantom gains).
-- PAVE overlap: ETN in both AIPO (~8.1%) and PAVE (~3.4%). Audit at Q2 June 30.
+- Basis: Defiance AI & Power Infrastructure ETF. Tracks MarketVector U.S. Listed AI and Power Infrastructure Index. Dominant driver: power and grid infrastructure for AI data centers, not AI companies directly.
+- UPDATED May 6, 2026 (v1.10):
+  - AUM: ~$457M (as of Apr 30, 2026). Prior entry ($249.5M) was stale Dec 2025 Schwab snapshot — corrected.
+  - Sector weights (Apr 30, 2026): Industrials 57.09%, Technology 16.46%, Utilities 14.42%, Energy 6.91%, Financial Services 3.60%, Real Estate 1.04%, Communications 0.48%.
+  - Top 10 holdings (Apr 30, 2026): PWR 8.47%, GEV 8.42%, ETN 8.04%, VRT 7.88%, BE 4.95%, CCO 4.33%, AVGO 4.03%, NVDA 3.54%, CEG 3.51%, MTZ 2.33%.
+  - Technology weight change: -2.04pp vs Dec 2025 snapshot — within 5pp classification drift threshold; no reclassification.
+  - Financial Services 3.60%: new category not present in prior snapshot. Below 5% materiality threshold for classification impact; log for June 30 formal ThematicETF_ClassificationAudit().
+- Source: Session bridge May 4, 2026 (audit complete); sector weights and top-10 as of Apr 30, 2026.
+- Methodology: sector_weight_analysis + judgment. ThematicETF_ClassificationAudit() REQUIRED at Q2 June 30 — PROVISIONAL classification.
+- Last reviewed: 2026-05-06
+- Price at adoption: $31.28. Current price (May 6): $32.75. EntryExtensionGuard: ~+11.6% above approx 90d avg per May 4 bridge — below 15% threshold for real_asset_contracted_revenue — PASSES. Recompute with live trailing avg before executing any ADD.
+- AUM: ~$457M. Expense ratio: 0.69%. Inception: 07/24/2025 (thin track record — flag at Q2).
+- EV (A=15/B=36/C=36/D=3/E=3/F=7): ~+1.00% (marginally revised from +1.03% at A=7 probs).
+- TAX PLACEMENT: ALL ACCOUNTS including taxable (standard ETF structure — no swap, no phantom gains).
+- PAVE overlap: ETN in both AIPO (~8.04% Apr 30) and PAVE (~3.4% NAV). Audit at Q2 June 30.
 
 #### MAGS
 - Components: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15)
@@ -521,10 +591,10 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - Source: Schwab report card 04/30/2026; holdings as of 03/31/2026
 - Methodology: holdings_analysis + judgment
 - Last reviewed: 2026-04-30
-- Price at adoption: $66.24. EntryExtensionGuard: fund down 12.2% over 3 months; current price well below 90d trailing avg (~$75) - PASSES easily.
+- Price at adoption: $66.24. EntryExtensionGuard: fund down 12.2% over 3 months; current price well below 90d trailing avg (~$75) — PASSES easily.
 - AUM: $3.5B. Expense ratio: 0.29% (lowest of all AI-sector candidates). Inception: 04/10/2023.
-- EV (A=7/B=42/C=42): -2.34%. NEGATIVE EV - documented client judgment override. Rationale accepted: AI/Mag7 earnings momentum thesis (Q1 2026: MSFT +18%, Azure +40%, META +33%, AMZN AWS +28%); optionality on future scenario probability shift toward A/F; cheapest and most liquid pure secular-tech instrument available.
-- TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY (IRA and Roth accounts). Swap structure generates phantom taxable gains in losing years - confirmed by Schwab prospectus tax analysis page (Load Adjusted YTD +37.1% vs market return -12.2% in same period). Do NOT hold in Taxable Acc4 or any taxable account.
-- COUNTERPARTY RISK: does not directly hold Mag7 shares - uses total return swaps. Counterparty default risk exists. Does not vote underlying shares.
+- EV (A=15/B=36/C=36/D=3/E=3/F=7): approximately -2.10% (revised from -2.34% at A=7 probs — A=15% adds weight to +4.1% conservative A return, slightly improving blended EV; still negative). NEGATIVE EV — documented client judgment override. Rationale accepted: AI/Mag7 earnings momentum thesis; optionality on future scenario shift toward A/F; cheapest and most liquid pure secular-tech instrument.
+- TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY (IRA and Roth accounts). Swap structure generates phantom taxable gains in losing years. Do NOT hold in Taxable Acc4 or any taxable account.
+- COUNTERPARTY RISK: does not directly hold Mag7 shares — uses total return swaps. Counterparty default risk exists. Does not vote underlying shares.
 - No Anthropic or SpaceX exposure. Pure public-market Mag7 bet.
-- MAGS vs AGIX upgrade evaluation: AGIX (AUM $171.5M, expense 0.99%) holds Anthropic ~2.98% direct (cap-table position, confirmed in top 10 holdings). Anthropic targeting IPO Oct 2026 at ~$60B valuation. If IPO announced/imminent, evaluate MAGS->AGIX upgrade. Assess at Q3 2026 audit or earlier on announcement. AGIX EntryExtensionGuard would need to be rechecked at time of evaluation (currently near 52-week high $40.01).
+- MAGS vs AGIX upgrade evaluation: AGIX (AUM $171.5M, expense 0.99%) holds Anthropic ~2.98% direct. Anthropic targeting IPO Oct 2026 at ~$60B valuation. If IPO announced/imminent, evaluate MAGS->AGIX upgrade. Assess at Q3 2026 audit or earlier on announcement.
