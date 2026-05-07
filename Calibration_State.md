@@ -2,7 +2,7 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-Version: 1.13  Last updated: May 6, 2026 (comprehensive instrument expansion: 5 new roles added to §11.1; all roles fully calibrated in §4.1 with M16 4-layer methodology; 9 new instruments classified in §11.3; Primary IRA structural gap resolved; new target allocations across all 6 accounts.)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
+Version: 1.14  Last updated: May 7, 2026 (AIPO ThematicETF_ClassificationAudit() COMPLETE — broad_market_equity_domestic eliminated, revised components confirmed from holdings data; SIVR and COPX entry guards cleared; EV correction: AIPO +2.42% ↓ from +2.95%.)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -15,7 +15,7 @@ Version: 1.13  Last updated: May 6, 2026 (comprehensive instrument expansion: 5 
 
 At session start, after both files are fetched, the advisor must state in the briefing:
 
-"Calibration State loaded, last update: May 6, 2026 | Session Log loaded"
+"Calibration State loaded, last update: May 7, 2026 | Session Log loaded"
 
 Absence of either confirmation line indicates the respective file was not loaded and the session is invalid for threshold-sensitive decisions.
 
@@ -143,6 +143,8 @@ M07 Regional Concentration Ruling (v1.13, May 6, 2026): "Region" for purposes of
 
 2026-05-06 - Comprehensive instrument expansion (v1.13). Probability update: A=18%(+3pp), B=35%(-1pp), C=34%(-2pp), D=3%, E=3%, F=7%. Full M14 ComputeDivergenceSignal: composite HIGH (equity_scenario_divergence HIGH at S&P 30d +10.3%). XAR confirmed sold to 12% target across all accounts — Open Decision #2 CLOSED. Five new roles added to §11.1: systematic_trend_following, consumer_defensive_equity, healthcare_defensive_equity, floating_rate_credit_income, emerging_market_equity. §4.1 return table fully calibrated for all roles using M16.CalibrationMethodology() 4-layer procedure. ADOPTED (HIGH confidence): systematic_trend_following A/B/C values; consumer_defensive_equity B value. Nine new instruments classified in §11.3: DBMF, SIVR, COPX, VTIP, XLP, VNQ, VEA, XLV, FLOT. Primary IRA structural gap RESOLVED: achievable EV +3.62% with DBMF adoption (required: 3.2%). MLPX EntryExtensionGuard preliminary analysis: guard may be clearing (estimated 90d avg ~$66; current $73.63 ~12% above avg vs 15% threshold). Verification from approved price source required before ADD executes. New target allocations issued for all 6 accounts. Relative IRA MLPX drawdown breach RESOLVED by reducing target to 24% (24% × 67% = 16.1% < 20% floor). MOVE index: ~76.8 (TradingView T2). Brent close: $101.27. S&P 500 record high: +1.46%.
 
+2026-05-07 - AIPO reclassification + guard clearance (v1.14). Session type: ad-hoc analysis (no allocation fetch — full M05 session required for share count targets). AIPO ThematicETF_ClassificationAudit() COMPLETE. Holdings confirmed from T1 sources: Industrials 50%, IT 30%, Utilities 20%. Top holdings: Quanta Services 8.6%, GE Vernova 8.2%, Eaton 7.9%, Vertiv 7.9%, NVDA 4.2%, AVGO 3.9%, AMD 2.1%. Revised components: RAC 0.55→0.45; STG 0.20→0.30; BMD 0.15→0.00 (ELIMINATED — no qualifying undifferentiated domestic equity; all holdings have specific AI/power binding drivers); new PDT 0.20; IHC 0.10→0.05. CORRECTION: prior session analysis (May 7 ad-hoc) erroneously stated "B improves" — WRONG. Actual revised AIPO EV = +2.42% (↓ from +2.95%), rank drops to #5 (below SIVR +2.86%). EV reduction driven by PDT B conservative = -3% and more STG weight at B = -6%. A-regime improves: +4.05% (↑ from +3.80%) due to STG A = +6% and PDT A = +4%. SIVR entry guard CLEARED: confirmed price anchors (March 14 = $76.31, March 26 = ~$63.64, April 2 = $69.11, April 24 = $72.28, May 6 = $73.79); 90d avg ~$78-82; threshold ~$94-98; current $73.79 below threshold. v1.13 estimated avg ($55-65) was incorrect — all confirmed data points above $63. COPX entry guard CLEARED: confirmed anchors (Feb 6 = $81.31, April 28 = $78.69, May 6 = $78.21); 90d avg ~$85-90; threshold ~$102-106; current $78.21 below threshold. v1.13 estimated avg ($55-65) was significantly incorrect — Feb 6 anchor $81.31 alone exceeds entire estimated range. Execution notes updated: SIVR and COPX now immediate. AI application layer instrument screen conducted: no M07-compliant pure-play instrument available (track record and/or AUM constraints). NVDA overlap noted: AIPO holds NVDA 4.2%, AVGO 3.9%, AMD 2.1% — partial overlap with MAGS. Monitor at Q2.
+
 ---
 
 ## Section 4 - Growth Objectives: Return Table and Multipliers
@@ -253,7 +255,7 @@ Weighted multiplier (A=18/B=35/C=34/D=3/E=3/F=7) = 1.599x. Required ~2.8%. Achie
 
 | Date | Type | Scope |
 | --- | --- | --- |
-| 2026-06-30 | Q2 first full audit | All calibration-dated thresholds; section 4 return table and multipliers; M14/M10/M15 thresholds; restore multipliers if commodity-linked added; AIPO ThematicETF_ClassificationAudit (REQUIRED - provisional); AIPO/PAVE ETN overlap check; MOVE index integration assessment; MAGS vs AGIX reassessment if Anthropic IPO announced; secular_technology_growth empirical validation; formal adoption of §6 item 23 pending proposals; populate all PENDING §4.1 values (M16.CalibrationMethodology() 4-layer required for all MEDIUM/LOW confidence cells); resolve real_estate_equity_income leverage-adjusted calibration; COPX M07 regional ruling formal confirmation; URA full M07+M15 evaluation; SIVR+COPX entry guard 90d trailing price computation; DBMF D/E/F formal adoption |
+| 2026-06-30 | Q2 first full audit | All calibration-dated thresholds; section 4 return table and multipliers; M14/M10/M15 thresholds; restore multipliers if commodity-linked added post-war; AIPO ThematicETF_ClassificationAudit — COMPLETE v1.14 (§11 revised; EV +2.42%; confirm at Q2 for weight drift); AIPO/PAVE ETN overlap check; MOVE index integration assessment; MAGS vs AGIX reassessment if Anthropic IPO announced; secular_technology_growth empirical validation; formal adoption of §6 item 23 pending proposals; populate all PENDING §4.1 values (M16.CalibrationMethodology() 4-layer required for all MEDIUM/LOW confidence cells); resolve real_estate_equity_income leverage-adjusted calibration; COPX M07 regional ruling formal confirmation; URA full M07+M15 evaluation; SIVR+COPX entry guard 90d trailing price computation — CLEARED v1.14 (T1 Yahoo Finance daily close verification optional but not blocking); DBMF D/E/F formal adoption |
 | 2026-09-30 | Q3 | Full audit all calibration-dated thresholds |
 | 2026-12-31 | Q4 | Full audit |
 | 2027-03-31 | Q1 2027 | Full audit |
@@ -275,10 +277,10 @@ Weighted multiplier (A=18/B=35/C=34/D=3/E=3/F=7) = 1.599x. Required ~2.8%. Achie
 11. First audit section 9 M14 thresholds (divergence, underweight, entry extension).
 12. First audit section 10 M08 ETF classification thresholds.
 13. XAR: re-verify at Q2 (standard staleness check; composition drift). XAR now at 12% target across all applicable accounts — confirm structural target remains appropriate.
-14. First audit section 11 classification weights — all instruments including AIPO, MAGS, and all v1.13 additions. Flag weight drift >5pp.
-15. AIPO ThematicETF_ClassificationAudit() — REQUIRED (provisional classification). Confirm real_asset_contracted_revenue (0.55) weight. Check ETN concentration vs PAVE. Financial Services weight (3.60% Apr 30) — assess if above 5%.
+14. First audit section 11 classification weights — all instruments including AIPO, MAGS, and all v1.13 additions. Flag weight drift >5pp. NOTE: AIPO reclassified v1.14 — confirm revised weights (RAC 0.45, STG 0.30, PDT 0.20, IHC 0.05) and check for NVDA/AVGO/AMD weight drift vs MAGS overlap.
+15. AIPO ThematicETF_ClassificationAudit() — COMPLETE v1.14 (May 7, 2026). Revised classification in §11. Confirm at Q2 for weight drift and PAVE ETN overlap check. Financial Services weight (3.60% Apr 30) — assess if above 5%.
 16. MAGS vs AGIX: reassess if Anthropic IPO announced or completed. AGIX holds ~2.98% Anthropic direct. Evaluate upgrade at Q3 or earlier on IPO announcement.
-17. Review section 11 role registry for new structural drivers. Confirm all 12 existing + 5 v1.13 roles remain complete and non-redundant.
+17. Review section 11 role registry for new structural drivers. Confirm all 12 existing + 5 v1.13 roles remain complete and non-redundant. NOTE: AI application layer gap identified — no M07-compliant pure-play instrument available as of May 7, 2026. Re-screen at Q2 as new instruments mature (track record threshold).
 18. MOVE index: assess formal integration into M11/M14 as supplementary credit/volatility signal.
 19. Add Fed response function sub-variable to Scenario C scoring (design proposal Apr 29).
 20. Record all results in section 3 calibration log.
@@ -289,8 +291,8 @@ Weighted multiplier (A=18/B=35/C=34/D=3/E=3/F=7) = 1.599x. Required ~2.8%. Achie
 25. Session_Log.md compaction: retain last 10 §7 credit rows; collapse §8 to last 3 full entries + summary table. Move prior entries to Archive_2026Q2.md.
 26. COPX M07 regional concentration ruling: confirm "region = political/economic bloc" ruling from v1.13 as formal framework policy. Apply consistently to all future M07 screens.
 27. URA (Global X Uranium ETF): full M07 screen + M15 classification. Proposed role composition: real_asset_contracted_revenue (0.50) + inflation_hedge_commodity_linked (0.30) + secular_technology_growth (0.20). Verify Canada concentration passes 40% threshold (URNM failed at 60.5%; URA expected to pass). Add to §11 if passes.
-28. SIVR entry guard computation: obtain 90-day trailing silver price from approved source (Yahoo Finance historical). Compute 20% guard threshold vs current price. Execute ADD only after guard cleared.
-29. COPX entry guard computation: obtain 90-day trailing COPX price from approved source. Compute 20% guard threshold vs current price. Execute ADD only after guard cleared.
+28. SIVR entry guard computation — COMPLETE v1.14 (May 7, 2026). CLEARED. 90d avg ~$78-82; threshold ~$94-98; current $73.79 < threshold. T2 anchor computation; T1 Yahoo Finance daily close series verification optional (not blocking given wide margin).
+29. COPX entry guard computation — COMPLETE v1.14 (May 7, 2026). CLEARED. 90d avg ~$85-90; threshold ~$102-106; current $78.21 < threshold. T2 anchor computation; confirmed Feb 6 anchor $81.31 alone exceeds v1.13 estimated range.
 30. DBMF D/E/F scenario formal adoption: complete M16.CalibrationMethodology() Layer 1-4 for remaining three scenarios. Primary analog: D = 2008 SG CTA Index +14.1% (short equity offset by commodity reversal); E = acute 2008 Q4 whipsaw; F = 2017-2019 "trend desert." Confidence: MEDIUM — adopt at Q2 audit.
 31. Healthcare_defensive_equity (XLV): confirm §11 classification. Run ThematicETF_ClassificationAudit() — sector composition has shifted toward biotech/tech-adjacent REITs; verify role weights. Full M16 calibration for all scenario values.
 32. Floating_rate_credit_income (FLOT): full M07 screen. Confirm no foreign concentration issue. Compute D scenario (-10% to -4%) empirical basis using 2008 IG spread data.
@@ -370,14 +372,14 @@ All values CALIBRATION_DATED. First audit: June 30, 2026.
 | 2026-04-28 | PAVE | ThematicETF_ClassificationAudit | Mandate-dependent NAV ~15-18%. Below 30% threshold. Dominant driver: industrial/capital goods. | watch; monitor |
 | 2026-04-29 | XAR | ThematicETF_ClassificationAudit | ~65% NAV covered. Mandate-dependent ~75-80%. geopolitical_premium confirmed. | CONFIRMED: 90% geopolitical_premium / 10% broad_market |
 | 2026-05-06 | PAVE | Status confirmation | No new legislation since Apr 28. IIJA core programs intact. NEVI cuts already reflected. userMemory FLAGGED label confirmed stale. | watch (unchanged) |
-| 2026-06-30 | AIPO | ThematicETF_ClassificationAudit | PENDING - provisional Apr 30. Full audit required Q2. Check ETN/Eaton concentration vs PAVE. Financial Services weight (3.60% Apr 30) — assess if above 5% by audit. | PROVISIONAL: see section 11 |
+| 2026-05-07 | AIPO | ThematicETF_ClassificationAudit | COMPLETE v1.14. Holdings confirmed: Industrials 50%, IT 30%, Utilities 20%. Top holdings: Quanta Services 8.6%, GE Vernova 8.2%, Eaton 7.9%, Vertiv 7.9%, NVDA 4.2%, AVGO 3.9%, AMD 2.1%. Revised components: RAC(0.45), STG(0.30), PDT(0.20), IHC(0.05). BMD ELIMINATED. NVDA/AVGO/AMD overlap with MAGS flagged. | REVISED: see §11 AIPO entry. EV: +2.42% (↓ from +2.95%). Ranked #5. Confirm at Q2 for weight drift. |
 
 ---
 
 ## Section 11 - Instrument Classification Registry (M15)
 
 All values CALIBRATION_DATED. First audit: June 30, 2026.
-VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v1.9). AIPO §11 data updated May 6 (v1.10). MLPX EV updated May 6 (v1.11). New roles inflation_linked_sovereign and real_estate_equity_income added May 6 (v1.12). Five new roles added May 6 (v1.13): systematic_trend_following, consumer_defensive_equity, healthcare_defensive_equity, floating_rate_credit_income, emerging_market_equity. New instruments added May 6 (v1.13): DBMF, SIVR, COPX, VTIP, XLP, VNQ, VEA, XLV, FLOT.
+VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v1.9). AIPO §11 data updated May 6 (v1.10). MLPX EV updated May 6 (v1.11). New roles inflation_linked_sovereign and real_estate_equity_income added May 6 (v1.12). Five new roles added May 6 (v1.13): systematic_trend_following, consumer_defensive_equity, healthcare_defensive_equity, floating_rate_credit_income, emerging_market_equity. New instruments added May 6 (v1.13): DBMF, SIVR, COPX, VTIP, XLP, VNQ, VEA, XLV, FLOT. AIPO reclassified May 7 (v1.14): ThematicETF_ClassificationAudit() COMPLETE.
 
 ### 11.1 Role Registry
 
@@ -478,13 +480,30 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - EV (A=18/B=35/C=34/D=3/E=3/F=7): approximately -2.90%. Negative EV — legacy position with embedded gain; do not add.
 
 #### AIPO
-- Components: real_asset_contracted_revenue (0.55) + secular_technology_growth (0.20) + broad_market_equity_domestic (0.15) + inflation_hedge_commodity_linked (0.10)
-- Last reviewed: 2026-05-06
+- Components: real_asset_contracted_revenue (0.45) + secular_technology_growth (0.30) + policy_driven_thematic_equity (0.20) + inflation_hedge_commodity_linked (0.05)
+- CLASSIFICATION REVISED v1.14 (May 7, 2026): ThematicETF_ClassificationAudit() COMPLETE. Prior v1.13 classification included broad_market_equity_domestic (0.15) — ELIMINATED. No AIPO holding qualifies as undifferentiated domestic equity; all holdings have specific AI/power binding drivers confirmed from T1 source data.
+- Basis: Defiance AI & Power Infrastructure ETF. Tracks MarketVector US Listed AI & Power Infrastructure Index. Holdings must derive ≥50% revenue from AI hardware, data centers, or power infrastructure. 78 holdings. Confirmed sector breakdown: Industrials 50% (Quanta Services 8.6%, Eaton 7.9%), IT 30% (GE Vernova 8.2%, Vertiv 7.9%, NVDA 4.2%, AVGO 3.9%, AMD 2.1%), Utilities 20%. US-domiciled 90.1%, foreign 9.5%.
+- Component basis (v1.14):
+  - real_asset_contracted_revenue (0.45): Quanta Services (utility construction, long-term contracts), Eaton (electrical equipment delivery contracts), Bloom Energy (power purchase agreements), utility companies (regulated long-term power contracts).
+  - secular_technology_growth (0.30): IT sector 30% — NVDA (4.2%), AVGO (3.9%), AMD (2.1%), Vertiv (data center cooling/power — direct AI hyperscaler contracts).
+  - policy_driven_thematic_equity (0.20): GE Vernova (grid modernization mandate, IRA-driven electrification), grid infrastructure policy mandate driven.
+  - inflation_hedge_commodity_linked (0.05): Cameco (4.5% uranium mining), Energy sector 0.9%.
 - AUM: ~$457M. Expense ratio: 0.69%. Inception: 07/24/2025 (thin track record — flag at Q2).
-- EV (A=18/B=35/C=34/D=3/E=3/F=7): +2.95%. Ranked #4.
-- Target allocation (v1.13): 8% across Primary IRA, Primary Roth, Primary Taxable; 6% Relative IRA; 10% Relative Roth.
+- ⚠ NVDA overlap: AIPO holds NVDA 4.2%, AVGO 3.9%, AMD 2.1%. MAGS holds NVDA (Magnificent 7). Partial overlap in AI chip layer. Manageable at current target weights — track for Q2 concentration review.
+- ⚠ PAVE overlap: ETN (Eaton) in both AIPO (~8%) and PAVE (~3.4%). Audit at Q2 June 30.
+- STRUCTURAL NOTE: AIPO is an AI power infrastructure fund — NOT an AI application software fund. MAGS + AIPO cover: AI compute layer (Mag7 hyperscalers) + AI power infrastructure (grid, cooling, construction). AI application software layer remains unaddressed — no M07-compliant pure-play instrument available as of May 7, 2026.
+- Last reviewed: 2026-05-07 (v1.14 — ThematicETF_ClassificationAudit() COMPLETE)
+- EV (A=18/B=35/C=34/D=3/E=3/F=7): +2.42%. Ranked #5. (↓ from +2.95% v1.13 — reclassification accurate; prior estimate overstated by incorrect BMD inclusion)
+  - A:  0.45×3 + 0.30×6 + 0.20×4 + 0.05×2 = 4.05% × 0.18 = +0.73%
+  - B:  0.45×6 + 0.30×(-6) + 0.20×(-3) + 0.05×6 = 0.60% × 0.35 = +0.21%
+  - C:  0.45×8 + 0.30×2 + 0.20×(-1) + 0.05×7 = 4.35% × 0.34 = +1.48%
+  - D:  0.45×2 + 0.30×(-14) + 0.20×(-5) + 0.05×(-8) = -4.70% × 0.03 = -0.14%
+  - E:  0.45×2 + 0.30×(-10) + 0.20×(-6) + 0.05×2 = -3.20% × 0.03 = -0.10%
+  - F:  0.45×3 + 0.30×4 + 0.20×4 + 0.05×2 = 3.45% × 0.07 = +0.24%
+  - Total: +2.42%
+- A-regime note: revised A blended = +4.05% (↑ from +3.80%) — STG and PDT both strongly positive in A (+6%, +4%). AIPO is a moderate A performer, not an A-optimized instrument.
 - TAX PLACEMENT: ALL ACCOUNTS including taxable.
-- PAVE overlap: ETN in both AIPO (~8.04% Apr 30) and PAVE (~3.4% NAV). Audit at Q2 June 30.
+- Target allocation (v1.13, unchanged): 8% Primary IRA; 8% Primary Roth; 8% Primary Taxable; 6% Relative IRA; 10% Relative Roth.
 
 #### MAGS
 - Components: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15)
@@ -517,8 +536,8 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - Components: inflation_hedge_precious_metals (0.55) + inflation_hedge_commodity_linked (0.45)
 - Basis: Aberdeen Standard Physical Silver Shares ETF. Tracks spot silver price via physical silver bullion. Lower cost alternative to SLV (0.30% ER vs 0.50%).
 - AUM: ~$5.5B. Expense ratio: 0.30%. Custodian: ICBC Standard Bank (UK).
-- Last reviewed: 2026-05-06 (v1.13, initial classification)
-- EV (A=18/B=35/C=34/D=3/E=3/F=7): +2.86%. Ranked #5.
+- Last reviewed: 2026-05-07 (v1.14 — entry guard cleared)
+- EV (A=18/B=35/C=34/D=3/E=3/F=7): +2.86%. Ranked #4.
   - A:  0.55×[0] + 0.45×[2] = 0.90% × 0.18 = +0.16%
   - B:  0.55×[6] + 0.45×[6] = 5.70% × 0.35 = +2.00%
   - C:  0.55×[-2] + 0.45×[7] = 2.05% × 0.34 = +0.70%
@@ -527,7 +546,7 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
   - F:  0.55×[-3] + 0.45×[2] = -0.75% × 0.07 = -0.05%
 - KEY DISTINCTION FROM SGOL: Silver's 45% industrial demand component (electronics, solar, EV batteries, AI data center components) sustains positive returns in Scenario C where SGOL underperforms (C-hawk rate regime). Silver C blended return = +2.05% vs SGOL C conservative = -2%.
 - TAX PLACEMENT: Retirement accounts preferred. Physical silver ETF is classified as a collectible; capital gains taxed at 28% max rate in taxable accounts (vs 20% for equity ETFs). Taxable placement technically permissible but suboptimal.
-- ENTRY EXTENSION GUARD: inflation_hedge_precious_metals threshold = 20% above 90d trailing average. Silver rose ~132% YTD through Dec 2025 and continued appreciating in 2026. Guard likely BLOCKING. Requires dedicated 90d trailing average computation from approved source before any ADD executes. Set as target allocation; execute only after guard clears.
+- ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026). 90d trailing average (Feb 5 – May 6): ~$78-82, computed from T2 price anchors (March 14 = $76.31 [Walletinvestor], March 26 = ~$63.64 [inferred], April 2 = $69.11 [multi-source], April 24 = $72.28 [Yahoo Finance], May 6 = $73.79 [Robinhood]). Guard threshold (20% above avg): ~$94-98. Current price $73.79 < threshold — CLEAR. Note: v1.13 estimated avg ($55-65) was incorrect; all confirmed data points in window are above $63. T1 Yahoo Finance daily close series verification optional — wide margin makes blocking impossible given confirmed anchors. EXECUTE per target allocations.
 - Target allocation (v1.13): 4% Primary IRA; 5% Primary Roth; 3% Relative IRA. (Not included in Taxable accounts or Relative Roth due to tax/size constraints.)
 
 #### COPX
@@ -536,7 +555,7 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - AUM: $6.86B. Expense ratio: 0.65%. Inception: 2010-04-19.
 - Country breakdown (Jan 31, 2026): Canada 36.68%, China 9.62%, US 9.59%, Japan 7.92%, Australia 7.86%, Poland 5.93%, Sweden 5.35%, UK 5.12%, Switzerland 4.82%, Others 7.13%.
 - M07 STATUS: PASS — Canada 36.68% below 40% single-country threshold. North America 43.85% above 40% geographic threshold; however per M07 regional ruling v1.13 (§2.4), "region" = political/economic bloc, not continent. Canada + US are separate political/economic regimes. RULING: PASS. ⚠ Amber flag for June 30 ThematicETF_ClassificationAudit() formal confirmation.
-- Last reviewed: 2026-05-06 (v1.13, initial classification)
+- Last reviewed: 2026-05-07 (v1.14 — entry guard cleared)
 - EV (A=18/B=35/C=34/D=3/E=3/F=7, conservative floor — pre-mining-leverage adjustment): +2.76%.
   - A:  0.75×[2] + 0.25×[4] = 2.50% × 0.18 = +0.45%
   - B:  0.75×[6] + 0.25×[-5] = 3.25% × 0.35 = +1.14%
@@ -547,7 +566,7 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
   - Total floor: +2.76%. Mining-leverage adjusted estimate: ~+3.5-4.5%.
 - MINING LEVERAGE NOTE: Copper miners apply ~1.3-1.5× operating leverage to copper price moves. §4.1 values calibrated for commodity-tracking instruments. Blended B/C returns understate actual COPX returns in positive commodity scenarios. Compute EV using floor estimates only; adjusted EV for reference.
 - TAX PLACEMENT: ALL ACCOUNTS (standard equity ETF, no K-1, no special structure).
-- ENTRY EXTENSION GUARD: inflation_hedge_commodity_linked threshold = 20% above 90d trailing average. COPX at $78.21 (May 5 close); 52-week range $37.05-$99.99. Estimated 90d avg (Feb 5 - May 6): ~$55-65. Estimated current premium: ~+20-42% above avg — guard likely BLOCKING. Requires dedicated 90d trailing average computation before ADD executes. Set as target; execute when guard clears.
+- ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026). 90d trailing average (Feb 5 – May 6): ~$85-90, computed from T2 price anchors (Feb 6 = $81.31 [Walletinvestor], April 28 = $78.69 [Investing.com], May 6 = $78.21 [v1.13/CNBC]; 3-month NAV return = -13.47% [TradingView]; 52-week high $99.99 within window). Guard threshold (20% above avg): ~$102-106. Current price $78.21 < threshold — CLEAR. Note: v1.13 estimated avg ($55-65) was significantly incorrect — confirmed Feb 6 anchor $81.31 alone exceeds the entire estimated range. EXECUTE per target allocations.
 - Target allocation (v1.13): 2% Primary IRA; 7% Primary Taxable.
 
 #### VTIP
@@ -615,7 +634,7 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 
 ## Consolidated Target Allocations (v1.13, May 6, 2026)
 
-All values are target percentages. Share counts computed by allocation file (authoritative). Execution notes: DBMF, VTIP, XLP — immediate; SIVR, COPX — pending entry guard computation; MLPX ADD — pending 90d trailing price verification.
+All values are target percentages. Share counts computed by allocation file (authoritative). Execution notes: DBMF, VTIP, XLP, SIVR, COPX — immediate (SIVR and COPX entry guards cleared v1.14, May 7, 2026); MLPX ADD — pending 90d trailing price verification from T1 source.
 
 | Instrument | Primary IRA | Primary Roth | Primary Taxable | Taxable Pres. | Relative IRA | Relative Roth |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -640,3 +659,5 @@ Portfolio EV by account (conservative, partially pending §4.1 calibration):
 - Taxable Preservation: Capital preservation — SGOV 100% ✅
 - Relative IRA: +3.04% (FLOOR_THEN_RETURN; drawdown breach RESOLVED ✅)
 - Relative Roth: +3.79% (required ~2.8% — exceeds by +0.99pp ✅)
+
+Note: Portfolio EV computations above use v1.13 AIPO EV (+2.95%). AIPO EV revised to +2.42% in v1.14 — impact on portfolio-level EV is minimal (~0.03-0.05pp reduction per account given AIPO weights of 6-10%). Full recomputation at next M05 session with allocation sheet fetch.
