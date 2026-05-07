@@ -29,6 +29,7 @@
 | 2026-04-30 (full) | 284 (carry) | 80 (carry) | 921 (carry) | Carry from Apr 29. MOVE FIRST LOGGED: 68.68 (Investing.com T2; 52-wk range 55.77-115.02; bond market calm; no fixed income stress) | stale; MOVE T2 |
 | 2026-05-06 (full AM) | 284 (carry) | 80 (carry) | 921 (carry) | Carry from Apr 30. FRED fetch attempted — search returned series metadata only; no live values retrieved. govspending.org confirms HY 2.83% (283 bps) as of Apr 30 — consistent with carry. No material divergence expected given equity rally and energy de-escalation, but unconfirmed. MOVE: not fetched — persistent data gap. | stale |
 | 2026-05-06 (instrument expansion) | 277 (ycharts T2, May 1) | 80 (carry) | 921 (carry) | ycharts May 1 reading consistent with tightening on deal optimism. HY declining from 284 baseline — directionally confirms equity rally / credit risk-on. MOVE: ~76.8 (TradingView T2, recent) — rising from 68.68 Apr 30 baseline but below 80 (calm threshold). No thresholds fired. | stale (T1_flag: FRED unavailable) |
+| 2026-05-07 (full) | 277 (carry) | 80 (carry) | 921 (carry) | Carry from May 6. FRED still returning metadata only — persistent data gap. Directional signal: HY tightening expected given deal optimism + VIX 17.39 (Cboe T1). MOVE: not fetched — persistent data gap. JNK index ~306 bps (24/7 Wall St T2, ~May 5) — note: different series from BAMLH0A0HYM2; not substitutable. No thresholds fired. | stale (T1_flag: FRED unavailable) |
 
 ---
 
@@ -167,10 +168,10 @@ probability_shifts_vs_prior:
 - F: 7% → 7% (0pp): GDP +2.0% + equity record highs priced in from prior session
 
 M14_divergence:
-- commodity_fear_divergence: MODERATE (energy_90d +63% >= +10%; VIX_change_90d +3.4 pts <= +5)
-- equity_scenario_divergence: HIGH (S&P 30d +10.3% >= +5%; B/C directive reductive)
+- commodity_fear_divergence: MODERATE (energy_90d ~+63% >= +10%; VIX_change_90d ~+3.4 pts — above 0, within +5)
+- equity_scenario_divergence: HIGH (S&P 30d +10.3% >= +5%; B/C directive for broad_market_equity is reductive)
 - composite: HIGH (upgraded from MODERATE)
-- UnderweightReviewTrigger: fired for Primary IRA MLPX -9.82pp; Primary Roth MLPX -10.28pp
+- UnderweightReviewTrigger: fired for Primary IRA MLPX (-9.82pp) and Primary Roth MLPX (-10.28pp)
 
 framework_updates_this_session:
 - 5 new roles added to §11.1: systematic_trend_following, consumer_defensive_equity, healthcare_defensive_equity, floating_rate_credit_income, emerging_market_equity
@@ -216,18 +217,115 @@ portfolio_ev_by_account (v1.13, A=18/B=35/C=34/D=3/E=3/F=7):
 - Relative IRA: +3.04% (FLOOR_THEN_RETURN; drawdown breach resolved)
 - Relative Roth: +3.79% (required ~2.8% — exceeds +0.99pp)
 
+next_session_flags: [SUPERSEDED by May 7 full session]
+
+---
+
+date: 2026-05-07 (full M05 session — v1.15)
+scenario_probabilities: { A: 15%, B: 36%, C: 36%, D: 3%, E: 3%, F: 7% }
+primary_driver: US-Iran peace deal framework — Axios/WSJ/CBS/NBC (T1) reporting one-page MOU under development; talks potentially beginning next week in Islamabad via Pakistani mediators. Trump: "too soon to sign." Iran: "evaluating US proposal." Major disagreements remain on enrichment limits, inspections, sequencing. Hormuz operationally restricted. Brent ~$97 intraday (CNBC T1, -3%). Deal UNCONFIRMED. VIX 17.39 (Cboe T1).
+derivation_method: scored
+manual_override_reason: null
+session_type: full M05 (Allocation sheet fetched ×2 — second fetch captured post-trade state; Calibration State v1.14 fetched GitHub MCP; Session Log fetched GitHub MCP)
+
+scoring_basis:
+- A: check_fed=0 (FOMC hold 3.5-3.75%; 4 hawkish dissents) | check_energy=1 (Brent declining 4 consecutive days May 4-7; threshold ≥5 not met) | check_credit=1 (HY ~277 carry, calm) → raw=2
+  NOTE: day 5 threshold (May 8): if Brent remains below ~$101, check_energy upgrades to 2 → A returns to ~18%. Monitor immediately next session.
+- B: check_cpi=2 (CPI 3.3% YoY, 3-4% trending; no new print) | check_gdp=1 (GDP +2.0%, >1.5%) | check_fed=2 (holding + constraint language) → raw=5 (unchanged)
+- C: check_brent=2 (active supply event T1; Brent $97 within $93.50-$110 band) | check_cpi=1 (1 print confirmed) | check_chokepoint=2 (Hormuz T1-verified active; ACLED/ISW) → raw=5 (unchanged)
+- D: raw=0 → floor 3%
+- E: raw=0 → floor 3%
+- F: check_gdp=1 (GDP 2-3% range) | check_cpi=2 (3.3%, 2-4% rising) | check_fed=0 (holding not tightening with strong demand) | check_noshock=-2 (Hormuz T1-verified) → raw=MAX(1,0)=1
+
+probability_shifts_vs_prior (prior: A=18, B=35, C=34, D=3, E=3, F=7 from May 6 v1.13):
+- A: 18% → 15% (-3pp): check_energy=1 this session (4 consecutive days declining, not yet 5-day threshold). No other scoring input changed. Cap: -3pp well within 25pp.
+- B: 35% → 36% (+1pp): rounding artifact; structural score raw=5 unchanged.
+- C: 34% → 36% (+2pp): rounding artifact; structural score raw=5 unchanged. Hormuz active and scored; Brent within band.
+- D: 3% → 3% (0pp)
+- E: 3% → 3% (0pp)
+- F: 7% → 7% (0pp)
+B/C justification (both >30%): Both scenarios fully scored at raw=5. Primary driver (Hormuz + CPI) simultaneously feeds B (rate constraint + CPI persistence) and C (chokepoint severity + supply shock). Equal scoring mechanically correct.
+
+M14_divergence (updated):
+- commodity_fear_divergence: MODERATE (energy_90d ~+29-38% ≥ +10%; VIX_change_90d ~+2.4 pts ≤ +5 but >0 → not HIGH)
+- equity_scenario_divergence: HIGH (S&P 30d ~+10% ≥ +5%; B/C directive for broad equity reductive)
+- composite: HIGH (unchanged from May 6 v1.13)
+- UnderweightReviewTrigger: NOT fired at v1.13 target levels (Primary IRA MLPX 29.69% vs 30% target = -0.31pp gap, below 5pp threshold). Relative IRA MLPX OVERWEIGHT +9.4pp (33.92% vs 24% target) — pending reduction.
+
+M16_analysis_this_session:
+- secular_technology_growth Scenario B: full 4-layer CalibrationMethodology() run.
+  Layer 1: unconditional anchor ~0-2% real (VCMM, RA, GMO).
+  Layer 2: 1973-82 (weak proxy, negative); 2022 direct (B analog, secular tech -28-33% despite 20-25% revenue growth — multiple compression dominated); Q1 2026 (1 quarter, contaminated by A-scenario re-pricing).
+  Layer 3: AI contract lock-in (+2-4% structural adjustment upward); sustained multiple compression under elevated rates (-5-10% downward); net: mildly supports current [-6,-1] rather than dramatic upward revision.
+  Layer 4 (neutral A=35/B=15/C=15/D=10/E=5/F=20): proposed [-2,+4] conservative=-2% → weighted avg +1.0% vs anchor ~1%. PASS within ±3pp tolerance.
+  Confidence: MEDIUM (2 analogues; structural adjustment material; 1 contaminated data point).
+  OUTCOME: intra-session adoption BLOCKED (MEDIUM confidence). Logged as pending proposal — see §6 item 35.
+  Competing proposal ([-12,-3]) from May 6 remains on table. Both for June 30 adjudication.
+  Upgrade path: if Q2 Mag7 earnings (reporting May-July) confirm >25% revenue growth in sustained B environment with no guidance withdrawals → 2nd and 3rd data points → HIGH confidence eligible.
+
+framework_updates_this_session:
+- v1.15 version bump.
+- AIPO reclassification v1.14 (earlier ad-hoc session today): confirmed in §11. EV revised to +2.42% (↓ from +2.95%). Portfolio-level EV impact: ~0.03-0.05pp reduction per account — immaterial; recomputed at next M05 allocation fetch.
+- Primary Taxable deployment COMPLETE: DBMF 854sh ($26,090, 10%), XLP 196sh ($16,460, 6.36%), COPX 212sh ($17,513, 6.76%) executed. SGOV 85sh sold (proceeds). $51,950 cash fully deployed. Open Decision #4 CLOSED.
+- v1.13 targets confirmed live in allocation file across all 6 accounts.
+
+current_positions (allocation sheet, second fetch, May 7, 2026):
+- Primary IRA (3080-6469): MLPX 1029sh/$75,446 (30.28%), SGOL 1850sh/$82,825 (33.24%), XAR 114sh/$29,955 (12.02%), AIPO 605sh/$19,293 (7.74%), MAGS 257sh/$17,705 (7.11%), VTIP 188sh/$9,455 (3.79%), SIVR 129sh/$9,707 (3.90%), COPX 58sh/$4,791 (1.92%), DBMF 0sh. Cash $4.08. Total ~$249,181.
+- Primary Roth (3534-9838): MAGS 44sh/$3,031 (7.07%), AIPO 105sh/$3,348 (7.81%), XAR 20sh/$5,255 (12.26%), MLPX 174sh/$12,758 (29.77%), SGOL 300sh/$13,431 (31.34%), DBMF 0sh, VTIP 0sh, SIVR 0sh. Cash $5,033. Total ~$42,857.
+- Primary Taxable (6668-9768): MLPX 1317sh/$96,562 (37.28%), AIPO 663sh/$21,143 (8.16%), XLP 196sh/$16,460 (6.36%), DBMF 854sh/$26,090 (10.07%), PAVE 494sh/$28,064 (10.84%), XAR 119sh/$31,268 (12.07%), COPX 212sh/$17,513 (6.76%), SGOV 218sh/$21,898 (8.45%). Cash $6.30. Total ~$259,006.
+- Taxable Preservation (3459-4443): SGOV 369sh/$37,066. Cash $9.19. Total $37,075.
+- Relative IRA (...469): MLPX 762sh/$55,870 (33.92%), SGOL 1398sh/$62,588 (38.00%), SGOV 328sh/$32,948 (20.00%), MAGS 73sh/$5,029 (3.05%), AIPO 255sh/$8,132 (4.94%), VTIP 0sh, DBMF 0sh, SIVR 0sh. Cash $141. Total ~$164,708.
+- Relative Roth (...466): MAGS 11sh/$758 (8.17%), AIPO 34sh/$1,084 (11.70%), MLPX 49sh/$3,593 (38.76%), SGOL 85sh/$3,805 (41.05%), VTIP 0sh, DBMF 0sh. Cash $30. Total ~$9,270.
+- Portfolio total (all accounts): ~$762,097.
+
+open_triggers:
+- CPI May 12: BINARY — HIGHEST PRIORITY. If ≥3.5% YoY → C check_cpi=2 → C rises materially, likely to 40%+. If ≤3.0% → B check_cpi=0 → B falls sharply, likely to 25-27%. Run DeriveScenarioProbabilities() immediately on release — do not wait for next scheduled session.
+- check_energy day 5 (May 8): if Brent remains below ~$101 at close → check_energy=2 → A rises from 15% to ~18%. Verify at next session open.
+- US-Iran deal: T1-confirmed deal → A→25%+, C→<25%. Unlocks: VNQ/VEA adoption conditional, MLPX war premium guard retirement, XAR structural target review.
+- Brent C-trigger clock: Day 0. Clock inactive. New initiation requires fresh 10-day sequence above $110. Unlikely near-term given deal trajectory.
+- IIJA reauthorization September 30, 2026 (PAVE watch trigger).
+- MLPX 90d trailing price: Yahoo Finance Feb 5, 2026 historical close — still unverified. Less urgent (MLPX at target in Primary IRA/Taxable) but required before any ADD in Primary IRA/Roth.
+
+open_decisions:
+1. CPI May 12 [BINARY — TIME-SENSITIVE]: run DeriveScenarioProbabilities() on release date. Do not wait.
+2. XAR at 12% target: CONFIRMED ALL ACCOUNTS. CLOSED.
+3. MLPX Relative IRA reduction: PENDING. -222.86sh (-$16,340). Partially funds new instrument additions.
+4. Primary Taxable cash deployment: CLOSED (DBMF, XLP, COPX executed).
+5. Remaining trades (tomorrow): 
+   - Primary IRA: sell MAGS 76sh, sell SGOL 959sh, buy DBMF 1223sh, buy VTIP 208sh, buy AIPO 20sh, buy SIVR 3sh, buy COPX 2sh.
+   - Primary Roth: sell MAGS 7sh, sell SGOL 166sh, buy DBMF 238sh, buy VTIP 85sh, buy SIVR 28sh.
+   - Primary Taxable: sell MLPX 257sh, buy SGOV 169sh (minor trims/adds to other positions).
+   - Relative IRA: sell MLPX 223sh, sell SGOL 441sh, sell SGOV 98sh, buy VTIP 393sh, buy DBMF 647sh, buy SIVR 66sh, buy AIPO 55sh.
+   - Relative Roth: sell MLPX 9sh, sell SGOL 39sh, sell AIPO 5sh, buy VTIP 18sh, buy DBMF 55sh.
+6. MLPX 90d trailing price verification: Yahoo Finance Feb 5, 2026 close. Less urgent (at target) but log before any ADD decision.
+7. secular_technology_growth B calibration: PENDING June 30 (MEDIUM confidence). Monitor Q2 Mag7 earnings.
+8. MAGS override confirmations: client managing to v1.13 targets (5% Primary IRA, 6% Primary Roth, 3% Rel IRA, 8% Rel Roth) — trades in progress.
+
+consolidated_target_allocations (v1.13 — CONFIRMED IN ALLOCATION FILE):
+- Primary IRA:     MLPX 30% | DBMF 15% | SGOL 16% | XAR 12% | AIPO 8% | VTIP 8% | SIVR 4% | MAGS 5% | COPX 2%
+- Primary Roth:    MLPX 28% | DBMF 17% | SGOL 14% | XAR 12% | VTIP 10% | AIPO 8% | SIVR 5% | MAGS 6%
+- Primary Taxable: MLPX 30% | SGOV 15% | XAR 12% | AIPO 8% | PAVE 11% | DBMF 10% | COPX 7% | XLP 7%
+- Taxable Pres.:   SGOV 100%
+- Relative IRA:    SGOL 26% | MLPX 24% | DBMF 12% | VTIP 12% | SGOV 14% | AIPO 6% | SIVR 3% | MAGS 3%
+- Relative Roth:   MLPX 32% | DBMF 18% | SGOL 22% | VTIP 10% | AIPO 10% | MAGS 8%
+
+portfolio_ev_by_account (v1.13, A=15/B=36/C=36/D=3/E=3/F=7 — updated probs):
+NOTE: EV computations below use v1.13 instrument EVs (recalculated at updated probabilities). AIPO EV at new probs = +2.40% (minimal change from +2.42% at A=18 probs). Full recompute deferred to next M05 session.
+- Primary IRA: ~+3.55% (required 3.2% — still above threshold ✓; DBMF B/C weight slightly higher at B=36/C=36 improves DBMF EV marginally)
+- Primary Roth: ~+3.55% (required ~2.8% — exceeds ✓)
+- Primary Taxable: ~+2.95% (RETURN_THEN_TARGET 5yr ✓)
+- Taxable Preservation: capital preservation ✓
+- Relative IRA: ~+3.00% (FLOOR_THEN_RETURN ✓)
+- Relative Roth: ~+3.75% (required ~2.8% — exceeds ✓)
+
 next_session_flags:
-- LOAD: "Calibration State loaded, last update: May 6, 2026" AND "Session Log loaded"
-- CRITICAL: CPI May 10-12. If window has passed, fetch immediately and run DeriveScenarioProbabilities().
-- MLPX EntryExtensionGuard: verify Feb 5, 2026 MLPX price from approved source.
-- SIVR/COPX entry guard computations: run before any ADD in those positions.
-- Update allocation file with v1.13 consolidated targets.
-- Deploy Primary Taxable $51,949.87 cash per new targets: SGOV, DBMF, XLP immediate; COPX pending guard.
-- Deploy Primary IRA/Roth cash (XAR proceeds) to DBMF and VTIP immediately.
-- US-Iran deal: monitor for T1 confirmation. If confirmed → A→25%+, C→<25%, VNQ/VEA triggers activated.
-- Credit spreads: still stale 7+ days. Attempt fresh FRED fetch at session start.
-- MOVE index: ~76.8 (rising trend — monitor).
-- URA (Global X Uranium ETF): run full M07 + M15 evaluation. Proposed role: real_asset_contracted_revenue (0.50) + inflation_hedge_commodity_linked (0.30) + secular_technology_growth (0.20).
-- §4.1 PENDING cells: 14 proposals + all new role cells — log for June 30. No intra-session adoption of MEDIUM/LOW confidence values.
-- MAGS vs AGIX: monitor Anthropic IPO news.
-- GitHub PR merge: confirm v1.13 PR merged to master before next session load.
+- LOAD: confirm "Calibration State loaded, last update: May 7, 2026 | Session Log loaded"
+- CRITICAL: CPI May 12. If window has passed, fetch immediately and run DeriveScenarioProbabilities() before any portfolio analysis.
+- check_energy day 5: verify Brent May 8 close. If below ~$101 → check_energy=2 → A rises to ~18%. Note in §8 shift.
+- Verify remaining trades from open decision #5 are complete. Pull allocation sheet to confirm.
+- secular_technology_growth B pending proposal (§6 item 35): no action until June 30 unless Q2 Mag7 earnings create HIGH confidence path.
+- MLPX 90d trailing price: Yahoo Finance Feb 5, 2026 MLPX close — fetch and document before any ADD.
+- US-Iran deal: monitor for T1 confirmation. Any confirmed deal → immediate DeriveScenarioProbabilities() run.
+- Credit spreads: FRED still returning metadata only. Attempt fresh fetch. Flag if still stale.
+- MOVE index: persistent data gap. Attempt fetch.
+- URA (Global X Uranium ETF): full M07 + M15 evaluation pending (§6 item 27).
