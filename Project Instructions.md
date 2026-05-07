@@ -50,7 +50,10 @@ The framework uses a consistent syntax. Learn it once and apply it everywhere.
 | `M13_GrowthObjectives.md` | Growth objectives, ideal allocation, feasibility check, recalibration sequence | Every allocation recommendation; supersedes M03 idealAllocation() and minimumConvictionWeight() |
 | `M14_MarketRegime.md` | Market desensitization detection, underweight opportunity-cost review, entry price extension guard | Every session (divergence signal + briefing block); before any ADD executes (EntryExtensionGuard) |
 | `M15_InstrumentClassification.md` | Extensible role registry, composite decomposition, blended scenario returns, session-start validation | Session start (ValidateClassifications); every allocation computation (blendedScenarioReturn); every position action (classifyInstrument + dominantDirective) |
-| `CALIBRATION_STATE.md` | Live threshold values + session observations log — **lives in GitHub, fetched and written each session** | Every session — never use remembered values |
+| `M16_ReturnTableCalibration.md` | §4.1 return table revision methodology: 4-layer framework, confidence levels, adoption rules, living update triggers, audit cadence | When revising any §4.1 return table value; check LivingUpdateTriggers at session start if scenario probabilities have shifted materially |
+| `CALIBRATION_STATE.md` | Live threshold values + calibration log — **lives in GitHub, fetched every session** | Every session — never use remembered values |
+| `Session_Log.md` | Session credit readings (§7) + scenario state (§8) — **AUTHORITATIVE source for prior scenario probabilities and open items** — lives in GitHub, fetched every session | Every session — fetched concurrently with Calibration_State.md |
+| `Calibration_Log.md` | §3 calibration history archive — lives in GitHub | Read-only during sessions; updated only on calibration events (version bumps) |
 
 ---
 
@@ -61,8 +64,14 @@ When files conflict, the higher-precedence file wins:
 ```
 1. M11_CreditAndCalibration      (Extension v1 — overrides main framework where they conflict)
 2. M12_DriveProtocol             (Amendment 2 — supersedes any prior fetch/write instructions)
+2.5. M16_ReturnTableCalibration  (governs §4.1 revision methodology only;
+                                   M13 and M15 consumption rules are NOT overridden;
+                                   M16 rules on HOW the table is revised take precedence
+                                   over any ad-hoc session judgment)
 3. M13_GrowthObjectives          (supersedes M03 idealAllocation() and minimumConvictionWeight())
 4. CALIBRATION_STATE             (live threshold values override any remembered values)
+   SESSION_LOG                   (§8 in Session_Log is AUTHORITATIVE for prior scenario
+                                   probabilities — supersedes any remembered or inferred values)
 4.5. M14_MarketRegime            (EntryExtensionGuard gates M09/M10 ADD directives before execution;
                                    NEVER routes signals into M03 probability derivation)
 4.7. M15_InstrumentClassification (blendedScenarioReturn() supersedes direct §4.1 role lookups;
@@ -82,12 +91,16 @@ Execute `M05_SessionInit.SessionStartSequence` in strict order:
 2. Confirm pending decisions    → ask client; also check §8 Session State Log (loaded in Step 3)
    (steps 2 and 3 may run concurrently — only after Step 1 succeeds)
 3. Fetch Calibration State      → M12_FileProtocol.fetchCalibrationState()  ← GitHub
-                                   Apply §1, §2 thresholds; §4 return table + multipliers (M13)
-                                   Apply §9 M14 market regime thresholds
-                                   Load §11 role registry and instrument classification table
-                                   Run M15.ValidateClassifications() — HARD_STOP if any allocation
-                                     instrument is absent from §11
-                                   Load §8 Session State Log (prior probabilities, open items)
+   AND Session Log              → M12_FileProtocol.fetchSessionLog()  ← GitHub (concurrent)
+                                   Both fetches run concurrently after Step 1 is confirmed.
+                                   From Calibration_State.md: apply §1, §2 thresholds;
+                                     §4 return table + multipliers (M13); §9 M14 market regime
+                                     thresholds; §11 role registry and instrument classification.
+                                   From Session_Log.md §8: load prior scenario probabilities
+                                     and open items — Session_Log §8 is AUTHORITATIVE;
+                                     never use Calibration_State or memory for prior probs.
+                                   Run M15.ValidateClassifications() — HARD_STOP if any
+                                     allocation instrument is absent from §11.
 4. Fetch market data            → M02_IntelGathering.FETCH_LIST
                                    (includes M11 credit spreads and M14.FetchList:
                                     VIX trailing averages; broad equity 30/60/90d trailing performance)
@@ -105,15 +118,18 @@ Execute `M05_SessionInit.SessionStartSequence` in strict order:
 
 // SESSION END — after portfolio discussion concludes:
 10. Write §7 credit readings + §8 scenario state to GitHub → M12_FileProtocol.WriteBack
-    (single operation; uses SHA from session-start fetch; executes automatically)
+    push_files([Calibration_State.md, Session_Log.md]) — single atomic operation to master
+    §7 and §8 written to Session_Log.md; Calibration_State.md updated if any calibration
+    values changed this session. Executes automatically — do not wait for client instruction.
 ```
 
 Do not skip steps. Step 1 is a hard gate — if Allocation fetch fails, STOP and notify client. Steps 2 and 3 may run concurrently, but only after Step 1 is confirmed successful. Step 10 runs at session end automatically — do not wait for client instruction.
 
-**One audit trail note in every briefing:**
+**Two audit trail notes in every briefing:**
 - `Calibration State: last update [date from CALIBRATION_STATE.md]`
+- `Session Log: loaded`
 
-This is a traceability note, not a validity gate. CALIBRATION_STATE lives in GitHub and is fetched fresh each session — the date confirms you have the current version.
+These are traceability notes, not validity gates. Both files live in GitHub and are fetched fresh each session — the date confirms you have the current version.
 
 ---
 
@@ -187,6 +203,9 @@ Current live values are in `CALIBRATION_STATE.md`:
 - §9 — market regime thresholds (M14)
 - §11 — role registry and instrument classification table (M15)
 
+Prior scenario probabilities and open items are in `Session_Log.md`:
+- §8 — session state log (prior probabilities, open triggers, open decisions, next-session flags)
+
 If a scheduled review date has passed without completion, flag it immediately and conduct the review before producing trade recommendations.
 
 ---
@@ -197,8 +216,8 @@ These are hard stops drawn from `GUARD` blocks across the framework. They requir
 
 - **NEVER** hardcode a Google Drive file ID — always search by name first (`M12`)
 - **NEVER** use `web_fetch` to read a Google Drive file (`M12`)
-- **NEVER** hardcode a GitHub SHA — always use the SHA returned by the session-start fetch (`M12`)
-- **NEVER** write to GitHub without first fetching the current SHA this session (`M12`)
+- **NEVER** hardcode a GitHub SHA — push_files does not require SHA; create_or_update_file SHA must come from the session-start fetch (`M12`)
+- **NEVER** write to GitHub without confirming the session-start fetch succeeded (`M12`)
 - **NEVER** treat a T2 or T3 source claim as fact without T1 corroboration (`M01`)
 - **NEVER** accept a price from a sidebar widget, ticker embed, or aggregator page (`M02`)
 - **NEVER** move scenario probabilities on a single unverified report (`M03`)
@@ -214,6 +233,10 @@ These are hard stops drawn from `GUARD` blocks across the framework. They requir
 - **NEVER** use M08.classifyRole() for allocation computations — use M15.classifyInstrument() (`M15`)
 - **NEVER** proceed with allocation computations if any instrument in the allocation file is absent from CALIBRATION_STATE §11 — M15.ValidateClassifications() is a HARD_STOP (`M15`)
 - **NEVER** hardcode instrument tickers or role names in module files — tickers and roles live in CALIBRATION_STATE §11 only (`M15`)
+- **NEVER** revise any §4.1 return table value without completing all 4 layers of M16.CalibrationMethodology() (`M16`)
+- **NEVER** adopt a MEDIUM or LOW confidence return table revision intra-session — log as pending and defer to Q-end audit (`M16`)
+- **NEVER** run the Layer 4 consistency check using the current operating scenario distribution — always use neutral distribution A=35/B=15/C=15/D=10/E=5/F=20 (`M16`)
+- **NEVER** load prior scenario probabilities from memory or from Calibration_State.md — always load from Session_Log.md §8 (`M12`)
 
 ---
 

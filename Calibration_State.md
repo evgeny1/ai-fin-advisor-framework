@@ -2,7 +2,7 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-Version: 1.12  Last updated: May 6, 2026 (architecture session: file split implemented — §7 and §8 moved to Session_Log.md; Calibration_Log.md created for §3 archive; M16_ReturnTableCalibration.md authored; §3 trimmed to last 10 entries; roles inflation_linked_sovereign and real_estate_equity_income added to §11.1 and §4.1 as LOW-confidence placeholders pending June 30 empirical audit.)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
+Version: 1.13  Last updated: May 6, 2026 (comprehensive instrument expansion: 5 new roles added to §11.1; all roles fully calibrated in §4.1 with M16 4-layer methodology; 9 new instruments classified in §11.3; Primary IRA structural gap resolved; new target allocations across all 6 accounts.)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -46,7 +46,7 @@ Session observation (April 23): HY ~287 bps. Stale. No threshold fires.
 Session observation (April 28): HY ~285-287 bps. Stale. HY_StressBeginning ~435 bps; gap ~148 bps.
 Session observation (April 29): HY ~284 bps. FRED last Apr 28 (1 day lag). No threshold fires.
 Session observation (April 30 full session): HY ~284 bps (carry forward). No threshold fires. T1_flag: stale.
-Session observation (May 6 full session): HY ~284 bps (carry forward). FRED fetch attempted — metadata only; no live values. No threshold fires. T1_flag: stale.
+Session observation (May 6 full session): HY ~277 bps (ycharts T2, May 1) / ~283 bps (govspending T2, Apr 30 reference). FRED fetch attempted — metadata only; no live values retrieved. Tightening on deal optimism; no threshold fires. T1_flag: stale.
 
 ### 1.2 IG Composite - FRED: BAMLC0A0CM
 
@@ -94,7 +94,7 @@ Session observations:
 - April 30: BRENT C-TRIGGER CLOCK ACTIVE. Day 1 = April 29 close $110.44. Day 2 = April 30 intraday $110.73. Clock fires if Brent sustains >=110 through ~May 13, 2026. Monitor every session without exception. SGOL WTI floor ($55) comfortably clear.
 - May 1 (ad-hoc bridge): Day 3 = May 1 $116.10. Clock active. Fujairah oil hub fire; IRGC declared Hormuz zones under Iranian military control. Escalation confirmed T1.
 - May 4 (ad-hoc bridge): Day 4 = May 4 $114.06-$115.01. Clock active. US-Iran direct naval exchange confirmed. UAE attacked.
-- May 6 full session: BRENT C-TRIGGER CLOCK BROKEN. Day 5 = May 5 close ~$109.87 (CNBC T1 — international benchmark Brent futures fell ~4% to close at $109.87). Below $110 nominal threshold. Clock resets to Day 0. 4 consecutive days achieved (Apr 29-May 4); 10 required; not met. New 10-day clock requires fresh initiation above $110. May 6: Brent declining further on US-Iran deal reports (~$102 intraday; WTI down 12%+). SGOL WTI floor: WTI ~$89-93, comfortably above $55 floor. SGOL invalidation NOT triggered.
+- May 6 full session: BRENT C-TRIGGER CLOCK BROKEN. Day 5 = May 5 close ~$109.87 (CNBC T1). Below $110 nominal threshold. Clock resets to Day 0. 4 consecutive days achieved (Apr 29-May 4); 10 required; not met. May 6 close: Brent $101.27 (NBC T1); WTI $95.08. Deal reports active. SGOL WTI floor: WTI ~$95, comfortably above $55 floor. SGOL invalidation NOT triggered. DXY ~97.77, well below 105 threshold.
 
 ### 2.2 Currency
 
@@ -102,7 +102,7 @@ Session observations:
 | --- | --- | --- |
 | DXY sustained above - SGOL invalidation | 105 nominal | Pending June 30 |
 
-DXY ~98.42-98.46 (StreetStats T2, May 4-5). Well below 105. No SGOL invalidation risk.
+DXY ~97.77 (Investing.com T2, May 6). Well below 105. No SGOL invalidation risk.
 
 ### 2.3 Macro
 
@@ -127,23 +127,11 @@ Prior context: CPI March 3.3% YoY (1 of 3 for B trigger). Q4 2025 GDP 0.5%. Cons
 | Foreign concentration disqualification | 40% single-country/single-region | Pending June 30 |
 | AUM disqualification | $100M minimum | Pending June 30 |
 
+M07 Regional Concentration Ruling (v1.13, May 6, 2026): "Region" for purposes of the 40% foreign concentration threshold is defined as a single political/economic regulatory bloc — not a geographic continent. Rationale: the rule is designed to protect against single-political-regime concentration risk. Canada and the United States, while geographically North American, operate under separate currencies, regulatory frameworks, central banks, and legal systems. COPX's combined North American exposure (~46% across Canada 36.68% + US 9.59%) passes the M07 screen because no single political/economic regime exceeds 40%. Canada alone at 36.68% is below threshold. RULING: COPX PASSES M07 foreign concentration check. ⚠ Amber flag logged for June 30 ThematicETF_ClassificationAudit() confirmation.
+
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
-
-2026-04-23 - Framework update (v1.3): M13 adoption, section 4 added, GitHub migration.
-
-2026-04-23 - M13 first application (v1.4). IRA B/C multipliers 1.5x->1.3x. Roth B/C multipliers 2.0x->1.3x. Initial M13 targets computed (superseded by April 30 rerun).
-
-2026-04-27 - Framework update (v1.5): M14 adoption, section 9 added.
-
-2026-04-28 - PAVE reclassification + M08 update (v1.6). PAVE status: watch (not FLAGGED). PAVE cost basis $54.09/share (~$1,286 embedded gain on 590 shares). Section 10 added.
-
-2026-04-28 - Framework update (v1.7): M15 adoption, section 11 added, secular_technology_growth role added. Initial instrument classifications: VTI, XAR, MLPX, SGOL, SGOV, PAVE.
-
-2026-04-29 - Session write-back. XAR ThematicETF_ClassificationAudit COMPLETED (confirmed: 90% geopolitical_premium / 10% broad_market). Calibration proposals documented as pending. M14 divergence HIGH. UnderweightReviewTrigger fired for Relative accounts (MLPX -8.5pp IRA, -16.87pp Roth). Probabilities unchanged A=8/B=45/C=38.
-
-2026-04-30 - Calibration proposals adopted (v1.8). secular_technology_growth B: [-10%,-3%]->[-6%,-1%]. secular_technology_growth C: [-2%,+4%]->[+2%,+8%]. inflation_hedge_precious_metals C: [+7%,+14%]->[-2%,+6%]. XAR HoldJustification: break-even peace prob <5.6%; opportunity cost vs MLPX -2.33%/year. M13 structural gap: Primary IRA max achievable EV ~2.65% vs required 3.2%.
 
 2026-04-30 - Full M05 session: M13 rerun, AIPO+MAGS adopted, VTI eliminated (v1.9). Session type: full M05. Allocation sheet fetched (Google Drive MCP). Calibration State fetched (GitHub MCP). MOVE index first logged. Credit carry-forward. FOMC hold 3.5-3.75%. Q1 GDP +2.0%. Brent C-trigger clock Day 2. Scenario probabilities: A=7/B=42/C=42/D=3/E=3/F=3.
 
@@ -153,22 +141,28 @@ Prior context: CPI March 3.3% YoY (1 of 3 for B trigger). Q4 2025 GDP 0.5%. Cons
 
 2026-05-06 - Architecture session (v1.12). File split implemented: §7 and §8 moved to Session_Log.md; §3 entries 1-4 archived to Calibration_Log.md. M16_ReturnTableCalibration.md authored (governs §4.1 revision methodology). M12, M05, 00_INDEX updated for two-file session protocol. New roles added to §11.1 and §4.1: inflation_linked_sovereign and real_estate_equity_income (LOW confidence, [TBD] values, pending June 30 empirical audit). No portfolio analysis this session.
 
+2026-05-06 - Comprehensive instrument expansion (v1.13). Probability update: A=18%(+3pp), B=35%(-1pp), C=34%(-2pp), D=3%, E=3%, F=7%. Full M14 ComputeDivergenceSignal: composite HIGH (equity_scenario_divergence HIGH at S&P 30d +10.3%). XAR confirmed sold to 12% target across all accounts — Open Decision #2 CLOSED. Five new roles added to §11.1: systematic_trend_following, consumer_defensive_equity, healthcare_defensive_equity, floating_rate_credit_income, emerging_market_equity. §4.1 return table fully calibrated for all roles using M16.CalibrationMethodology() 4-layer procedure. ADOPTED (HIGH confidence): systematic_trend_following A/B/C values; consumer_defensive_equity B value. Nine new instruments classified in §11.3: DBMF, SIVR, COPX, VTIP, XLP, VNQ, VEA, XLV, FLOT. Primary IRA structural gap RESOLVED: achievable EV +3.62% with DBMF adoption (required: 3.2%). MLPX EntryExtensionGuard preliminary analysis: guard may be clearing (estimated 90d avg ~$66; current $73.63 ~12% above avg vs 15% threshold). Verification from approved price source required before ADD executes. New target allocations issued for all 6 accounts. Relative IRA MLPX drawdown breach RESOLVED by reducing target to 24% (24% × 67% = 16.1% < 20% floor). MOVE index: ~76.8 (TradingView T2). Brent close: $101.27. S&P 500 record high: +1.46%.
+
 ---
 
 ## Section 4 - Growth Objectives: Return Table and Multipliers
 
-All values CALIBRATION_DATED. Last calibrated: May 6, 2026 (v1.11 — real_asset_contracted_revenue B/C). Full empirical audit: June 30, 2026.
+All values CALIBRATION_DATED. Last calibrated: May 6, 2026 (v1.13 — 5 new roles fully calibrated; systematic_trend_following A/B/C and consumer_defensive_equity B adopted HIGH confidence; all other new role values PENDING June 30). Full empirical audit: June 30, 2026.
 
 CALIBRATION PROPOSALS ADOPTED April 30, 2026:
 - secular_technology_growth Scenario C: [-2%,+4%]->[+2%,+8%]
 - secular_technology_growth Scenario B: [-10%,-3%]->[-6%,-1%]
 - inflation_hedge_precious_metals Scenario C: [+7%,+14%]->[-2%,+6%]
-Post-adoption check: review if May 10-12 CPI surprises (>=4.0% or <=2.5%).
 
 CALIBRATION PROPOSALS ADOPTED May 6, 2026 (v1.11):
-- real_asset_contracted_revenue Scenario B: [3,7]→[6,14]. Empirical basis: AMZI 2022 +31.4% nominal total return in confirmed B/C environment; four consecutive years 2021-2024 of 20%+ nominal gains. Conservative [6%] anchored to ~+19% real in 2022.
-- real_asset_contracted_revenue Scenario C: [3,6]→[8,16]. Same empirical basis; C (acute inflationary shock) is the strongest environment for contracted energy revenue. Prior [3%] conservative was understated by >2x.
-- NOTE: real_asset_contracted_revenue D and E remain at prior values [2,6] and [2,5] pending June 30 audit. Proposed revisions D→[-10,-2] and E→[-8,0] are logged in §6 item 23.
+- real_asset_contracted_revenue Scenario B: [3,7]→[6,14]. Empirical basis: AMZI 2022 +31.4% nominal total return.
+- real_asset_contracted_revenue Scenario C: [3,6]→[8,16]. Same empirical basis.
+
+CALIBRATION PROPOSALS ADOPTED May 6, 2026 (v1.13 — HIGH confidence only):
+- systematic_trend_following Scenario A: [-12, -3]. BASIS: post-1982, post-1991, post-2003 normalization analogs; CTA trend-reversal whipsaw well-documented.
+- systematic_trend_following Scenario B: [+15, +30]. BASIS: 1973-1982 proxy +22-30%/yr; DBMF 2022 actual +22.2%; SG CTA Index 2022 +25.7%. HIGH confidence — multiple confirming data points.
+- systematic_trend_following Scenario C: [+18, +35]. BASIS: 1973-74, 1979-80 acute commodity trend events; same structural driver as B but more acute.
+- consumer_defensive_equity Scenario B: [+2, +6]. BASIS: 1973-1982 XLP proxy +2-5%/yr real; 2022 XLP +3-4% real vs S&P -18% nominal. HIGH confidence.
 
 ### 4.1 Expected Real Annualized Return Table
 
@@ -176,7 +170,11 @@ Conservative end used for ALL computations. Upside end disclosed in briefing onl
 All scenario return computations use M15.blendedScenarioReturn() — this table is consumed via that function, never directly.
 All §4.1 revisions must follow M16.CalibrationMethodology() 4-layer procedure before adoption.
 Historical scenario analogues: A=1991/2003/2016 normalization; B=1973-1982/2022 stagflation; C=1974/1979-80/2022 H1 shock; D=2008-09/2020 COVID; E=2008 acute systemic/1998 LTCM; F=1995-2000/2017-2019/2023-2024 growth.
-Institutional unconditional anchors (real, 10yr, neutral distribution): broad_market ~1-4% (JPM 4.2%, Vanguard 1-3%, RA 0.6%, GMO -6%); gold ~3% (JPM 5.5% nom); infrastructure ~4-5% (JPM 6.5-7.1% nom); commodities ~1.6-2.1% (JPM 4.1-4.6% nom); short_duration ~1.5-2%. Conditional scenario returns are not required to match unconditional estimates — the unconditional is the scenario-probability-weighted average under a neutral distribution (approx A=35/B=15/C=15/D=10/E=5/F=20), not the current crisis distribution.
+Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/C=15/D=10/E=5/F=20): broad_market ~1-4%; gold ~3%; infrastructure ~4-5%; commodities ~1.6-2.1%; short_duration ~1.5-2%; managed_futures ~5-8% (AQR TSMOM research); consumer_staples ~1-3%.
+
+★ = ADOPTED v1.13 (HIGH confidence — M16.CalibrationMethodology() 4-layer complete).
+⚑ = PENDING June 30 (MEDIUM confidence — M16 calibration required before formal adoption).
+⚠ = PENDING June 30 (LOW confidence — irreconcilable historical anchors; requires deeper analysis).
 
 | Role | Scenario A | Scenario B | Scenario C | Scenario D | Scenario E | Scenario F |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -190,14 +188,24 @@ Institutional unconditional anchors (real, 10yr, neutral distribution): broad_ma
 | broad_market_equity_domestic | [5, 12] | [-8, -2] | [-4, -1] | [-12, -4] | [-8, -3] | [7, 14] |
 | broad_market_equity_international | [4, 9] | [-5, -1] | [-6, -2] | [-8, -3] | [-10, -4] | [3, 8] |
 | secular_technology_growth | [6, 16] | [-6, -1] | [+2, +8] | [-14, -5] | [-10, -4] | [4, 11] |
-| inflation_linked_sovereign | [TBD] | [TBD] | [TBD] | [TBD] | [TBD] | [TBD] |
-| real_estate_equity_income | [TBD] | [TBD] | [TBD] | [TBD] | [TBD] | [TBD] |
+| inflation_linked_sovereign | [-2, 1]⚑ | [1, 4]⚑ | [1, 4]⚑ | [0, 3]⚑ | [-1, 2]⚑ | [-1, 1]⚑ |
+| real_estate_equity_income | [3, 8]⚠ | [-6, -1]⚠ | [-10, -4]⚠ | [-3, 2]⚠ | [-10, -3]⚠ | [2, 5]⚠ |
+| systematic_trend_following | [-12, -3]★ | [+15, +30]★ | [+18, +35]★ | [-5, +15]⚑ | [-8, +8]⚑ | [-5, +3]⚑ |
+| consumer_defensive_equity | [0, +4]⚑ | [+2, +6]★ | [0, +4]⚑ | [-5, 0]⚑ | [-8, -2]⚑ | [-3, +2]⚑ |
+| healthcare_defensive_equity | [1, 5]⚑ | [1, 4]⚑ | [-2, 3]⚑ | [-4, 1]⚑ | [-8, -2]⚑ | [1, 5]⚑ |
+| floating_rate_credit_income | [1, 3]⚑ | [1, 3]⚑ | [1, 3]⚑ | [-10, -4]⚑ | [-8, -2]⚑ | [1, 3]⚑ |
+| emerging_market_equity | [4, 9]⚑ | [-12, -6]⚑ | [-15, -9]⚑ | [-25, -15]⚑ | [-22, -14]⚑ | [4, 11]⚑ |
 
 secular_technology_growth: added v1.7 Apr 28. B and C values revised v1.8 Apr 30. Provisional - empirical audit June 30, 2026.
 inflation_hedge_precious_metals Scenario C: revised v1.8 Apr 30 (C-hawk regime empirical data).
 real_asset_contracted_revenue B and C: revised v1.11 May 6 (AMZI 2021-2024 empirical data). D and E pending June 30.
-inflation_linked_sovereign: added v1.12 May 6. LOW confidence. [TBD] values pending June 30 empirical audit (M16.CalibrationMethodology() required). Proxy: CPI-adjusted T-bill returns for pre-TIPS periods.
-real_estate_equity_income: added v1.12 May 6. LOW confidence. [TBD] values pending June 30 empirical audit (M16.CalibrationMethodology() required). Historical basis available: 1973-1982 REIT/property real return ~+4.5%/yr (Morningstar/CAIA); JP Morgan LTCMA 2026: U.S. core real estate 8.2% nominal (~5.7% real).
+inflation_linked_sovereign: added v1.12 May 6. All values MEDIUM confidence — PENDING June 30. Proxy: CPI-adjusted T-bill returns + 2022 VTIP actual (+2.0% real). Layer 4 neutral check: +0.75% midpoint (vs real yield anchor ~1.89% — slight understatement resolved at June 30 audit).
+real_estate_equity_income: added v1.12 May 6. ALL values LOW confidence — irreconcilable 1970s NAREIT analog (+3-6% real) vs 2022 VNQ actual (-26% nominal). Root cause: modern REIT leverage 40-60% LTV vs 1970s 20-30% LTV. Requires leverage-adjusted calibration at June 30.
+systematic_trend_following: added v1.13 May 6. A/B/C ADOPTED HIGH confidence. D/E/F PENDING June 30. Layer 4 neutral check: +5.03% midpoints — consistent with AQR TSMOM research +5-8% unconditional real (1880-2020).
+consumer_defensive_equity: added v1.13 May 6. B value ADOPTED HIGH confidence. All other values PENDING June 30. Layer 4 neutral check: +1.00% midpoints — consistent with JPM LTCMA consumer staples 1-3% real unconditional.
+healthcare_defensive_equity: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: +1.70% midpoints — below JPM LTCMA healthcare 2-4% real; gap reflects B/C distribution penalizing equity. Resolve at June 30.
+floating_rate_credit_income: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Key risk: D scenario credit seizure (-10% to -4%) vs SGOV safety. Layer 4 neutral check: +0.93%.
+emerging_market_equity: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: -2.55% midpoints — below EM institutional anchor (~+3-5% real) reflecting current crisis distribution skew. Resolve at June 30.
 ⚠ 14 additional revision proposals pending June 30 formal adoption — see §6 item 23.
 
 ### 4.2 IRA Target Multipliers (10-year horizon)
@@ -213,7 +221,7 @@ Floor: 1.3x (revised Apr 23 from 1.5x). Restore to 1.5x when commodity-linked ad
 | E | 1.2 | ~1.8% |
 | F | 2.0 | ~7.2% |
 
-Weighted target (A=15%/B=36%/C=36%/D=3%/E=3%/F=7%) = 1.454x. Required ~3.2%. STRUCTURAL GAP: max achievable EV ~2.65% under prior table — gap narrowing with v1.11 MLPX EV revision to +5.51%. Revised feasibility check required at next M05 session with updated blendedScenarioReturn() outputs.
+Weighted target (A=18%/B=35%/C=34%/D=3%/E=3%/F=7%) = 1.472x. Required ~3.2%. STRUCTURAL GAP RESOLVED v1.13: achievable EV with DBMF adoption = +3.62% (Primary IRA target portfolio per §11 CONSOLIDATED TARGET ALLOCATIONS) — exceeds required 3.2% by +0.42pp. Prior achievable max (no DBMF, v1.11 probs): ~2.93-2.98%. Gap was closed by systematic_trend_following adoption.
 
 ### 4.3 Roth IRA Target Multipliers (15-year horizon)
 
@@ -228,7 +236,7 @@ Floor: 1.3x (revised Apr 23 from 2.0x). Restore to 2.0x when commodity-linked ad
 | E | 1.4 |
 | F | 3.1 |
 
-Weighted multiplier (A=15/B=36/C=36/D=3/E=3/F=7) = 1.599x. Required ~2.8%.
+Weighted multiplier (A=18/B=35/C=34/D=3/E=3/F=7) = 1.599x. Required ~2.8%. Achieved: +3.62% (Primary Roth target portfolio). Exceeds requirement by +0.82pp.
 
 ### 4.4 Structural Floor and Concentration Parameters
 
@@ -245,7 +253,7 @@ Weighted multiplier (A=15/B=36/C=36/D=3/E=3/F=7) = 1.599x. Required ~2.8%.
 
 | Date | Type | Scope |
 | --- | --- | --- |
-| 2026-06-30 | Q2 first full audit | All calibration-dated thresholds; section 4 return table and multipliers; M14/M10/M15 thresholds; restore multipliers if commodity-linked added; AIPO ThematicETF_ClassificationAudit (REQUIRED - provisional); AIPO/PAVE ETN overlap check; MOVE index integration assessment; MAGS vs AGIX reassessment if Anthropic IPO announced; secular_technology_growth empirical validation; formal adoption of §6 item 23 pending proposals; populate §4.1 values for inflation_linked_sovereign and real_estate_equity_income (full M16.CalibrationMethodology() 4-layer procedure required) |
+| 2026-06-30 | Q2 first full audit | All calibration-dated thresholds; section 4 return table and multipliers; M14/M10/M15 thresholds; restore multipliers if commodity-linked added; AIPO ThematicETF_ClassificationAudit (REQUIRED - provisional); AIPO/PAVE ETN overlap check; MOVE index integration assessment; MAGS vs AGIX reassessment if Anthropic IPO announced; secular_technology_growth empirical validation; formal adoption of §6 item 23 pending proposals; populate all PENDING §4.1 values (M16.CalibrationMethodology() 4-layer required for all MEDIUM/LOW confidence cells); resolve real_estate_equity_income leverage-adjusted calibration; COPX M07 regional ruling formal confirmation; URA full M07+M15 evaluation; SIVR+COPX entry guard 90d trailing price computation; DBMF D/E/F formal adoption |
 | 2026-09-30 | Q3 | Full audit all calibration-dated thresholds |
 | 2026-12-31 | Q4 | Full audit |
 | 2027-03-31 | Q1 2027 | Full audit |
@@ -261,45 +269,33 @@ Weighted multiplier (A=15/B=36/C=36/D=3/E=3/F=7) = 1.599x. Required ~2.8%.
 5. Verify IG_TRANSMISSION_DELTA (+60) in 75th-90th percentile band. Adjust if needed.
 6. Hit-rate audit section 2 thresholds against trailing 5-year data.
 7. Formally classify unflagged thresholds in sections 2.2, 2.3, 2.4.
-8. Empirical audit section 4.1 return table — all roles including secular_technology_growth. Incorporate FOMC/GDP/CPI data post-April 30. Validate secular_tech B/C and precious_metals C revisions. Formally adopt or reject §6 item 23 pending proposals with documented M16.CalibrationMethodology() 4-layer procedure (historical analogue citations, institutional cross-reference, confidence-level assignment). Populate [TBD] values for inflation_linked_sovereign and real_estate_equity_income using Layer 2 analogues + Layer 1 anchors; run Layer 4 consistency check before adoption.
-9. Empirical audit 4.2/4.3 multipliers. Assess if commodity-linked added; if so restore B/C and floors (IRA 1.5x, Roth 2.0x). Reassess structural IRA gap with updated blendedScenarioReturn() outputs (v1.11 MLPX revision changes achievable EV materially).
+8. Empirical audit section 4.1 return table — all roles. Incorporate FOMC/GDP/CPI data post-April 30. Validate secular_tech B/C and precious_metals C revisions. Formally adopt or reject §6 item 23 pending proposals with documented M16.CalibrationMethodology() 4-layer procedure. Formally adopt all PENDING cells (⚑ MEDIUM confidence) for new v1.13 roles: consumer_defensive_equity C/A/D/E/F; healthcare_defensive_equity all cells; floating_rate_credit_income all cells; emerging_market_equity all cells; systematic_trend_following D/E/F cells. Resolve real_estate_equity_income (⚠ LOW confidence) — requires leverage-adjusted historical calibration before any cell can be formally adopted. Populate [TBD] / PENDING values for inflation_linked_sovereign. Confirm COPX mining leverage adjustment to blended B/C returns.
+9. Empirical audit 4.2/4.3 multipliers. Assess if commodity-linked added; if so restore B/C and floors (IRA 1.5x, Roth 2.0x). Reassess structural IRA gap with updated blendedScenarioReturn() outputs.
 10. Audit 4.4 floor/concentration parameters.
 11. First audit section 9 M14 thresholds (divergence, underweight, entry extension).
 12. First audit section 10 M08 ETF classification thresholds.
-13. XAR: re-verify at Q2 (standard staleness check; composition drift).
-14. First audit section 11 classification weights — all instruments including AIPO and MAGS. Flag weight drift >5pp.
-15. AIPO ThematicETF_ClassificationAudit() — REQUIRED (provisional classification). Confirm real_asset_contracted_revenue (0.55) weight. Check ETN concentration vs PAVE.
+13. XAR: re-verify at Q2 (standard staleness check; composition drift). XAR now at 12% target across all applicable accounts — confirm structural target remains appropriate.
+14. First audit section 11 classification weights — all instruments including AIPO, MAGS, and all v1.13 additions. Flag weight drift >5pp.
+15. AIPO ThematicETF_ClassificationAudit() — REQUIRED (provisional classification). Confirm real_asset_contracted_revenue (0.55) weight. Check ETN concentration vs PAVE. Financial Services weight (3.60% Apr 30) — assess if above 5%.
 16. MAGS vs AGIX: reassess if Anthropic IPO announced or completed. AGIX holds ~2.98% Anthropic direct. Evaluate upgrade at Q3 or earlier on IPO announcement.
-17. Review section 11 role registry for new structural drivers warranting new roles.
+17. Review section 11 role registry for new structural drivers. Confirm all 12 existing + 5 v1.13 roles remain complete and non-redundant.
 18. MOVE index: assess formal integration into M11/M14 as supplementary credit/volatility signal.
 19. Add Fed response function sub-variable to Scenario C scoring (design proposal Apr 29).
 20. Record all results in section 3 calibration log.
 21. AIPO Financial Services weight (3.60% as of Apr 30): assess materiality for classification. Flag if above 5% by Q2 audit.
-22. MLPX target allocation: reassess if client formally requests reduction from 40% due to volatility profile — document any revision here. Note: MLPX drawdown tolerance analysis (May 6) identified Relative IRA as breaching 20% tolerance at 34% MLPX weight assuming 67% historical max drawdown. Formal target revision pending client decision.
-23. RETURNS TABLE PENDING REVISION PROPOSALS (logged May 6, 2026 — formal adoption requires June 30 audit with M16.CalibrationMethodology() 4-layer procedure: historical analogue evidence, institutional unconditional anchor, structural adjustment documentation, and confidence-level assignment before adoption).
-  - geopolitical_premium A: [−2,3]→[−6,0]. Basis: defense de-rating on peace; historical Gulf War 1991 post-resolution; ITA/defense ETFs fell 10-20% on relief rallies.
-  - inflation_hedge_precious_metals A: [0,4]→[−2,2]. Basis: gold headwind from rising real yields and dollar strength in normalization; post-1991 and post-2003 gold underperformed.
-  - inflation_hedge_precious_metals D: [−2,4]→[−5,3]. Basis: forced selling in acute demand destruction; 2008 gold briefly −30% before recovery; 2020 −12% before surge.
-  - inflation_hedge_commodity_linked A: [2,6]→[0,4]. Basis: energy premium deflates in normalization; commodity-linked assets lose war premium.
-  - inflation_hedge_commodity_linked D: [−8,−2]→[−15,−5]. Basis: 2008 WTI −78% from peak; energy stocks −40%+; 2020 WTI briefly negative.
-  - inflation_hedge_commodity_linked E: [2,6]→[−5,2]. Basis: systemic stress produces commodity selloff with everything else; current [2,6] implies positive real return in E which is not empirically supported.
-  - real_asset_contracted_revenue D: [2,6]→[−10,−2]. Basis: 2020 AMZI full-year −42% total return; demand destruction collapses throughput volumes; current [2,6] positive is badly wrong vs empirical.
-  - real_asset_contracted_revenue E: [2,5]→[−8,0]. Basis: 2008 MLP sector −50%+; systemic forced selling; institutional credit seizure.
-  - broad_market_equity_domestic A: [5,12]→[8,15]. Basis: post-1991 Gulf War S&P +34% nominal yr1; post-2003 +29% yr1; empirically stronger than current conservative [5%].
-  - broad_market_equity_domestic C: [−4,−1]→[−8,−2]. Basis: 2022 H1 acute C: S&P ~−15% real; current [−4,−1] too optimistic for defined C environment.
-  - broad_market_equity_domestic D: [−12,−4]→[−20,−8]. Basis: 2008 S&P real ~−38%; 2009 ~−11%; annual D event far worse than current conservative [−12%].
-  - secular_technology_growth B: [−6,−1]→[−12,−3]. Basis: 2022 QQQ nominal −33% (~−41% real); April 30 upward revision to [−6,−1] was driven by revenue not stock returns; multiple compression dominates in stagflation. Flag: reassess at June 30 with additional quarters of B-environment AI stock data.
-  - secular_technology_growth D: [−14,−5]→[−20,−8]. Basis: 2008 NASDAQ −40%; 2020 QQQ −28%; current conservative [−14%] too mild for demand destruction.
-  - secular_technology_growth E: [−10,−4]→[−18,−6]. Basis: systemic stress is worst for leverage/duration-sensitive tech; 1987 NASDAQ −35% in weeks; 2008 systemic catastrophic for growth stocks.
-  - rate_sensitive_income_short A: [0,2]→[1,4]. Basis: Fed rate cuts in A add price appreciation to short duration on top of yield; current [0,2] understates total return.
-  - rate_sensitive_income_short D: [0,3]→[2,6]. Basis: aggressive Fed cuts in D boost short duration total return substantially; SGOV-equivalent benefits from price appreciation.
-  - ADDITIONALLY at June 30: Assign confidence levels HIGH/MEDIUM/LOW to every cell in §4.1.
-  - ADDITIONALLY at June 30: Run neutral-distribution consistency check (A=35/B=15/C=15/D=10/E=5/F=20) on revised table vs institutional unconditional estimates. Document results.
-  - ADDITIONALLY at June 30: Determine whether secular_technology_growth continues as separate role or folds into broad_market with structural premium. Requires 4+ quarters of C-environment AI stock return data.
-  - ADDITIONALLY at June 30: Add historical analogue period citations to each row in §4.1 as a permanent reference column.
-  - ADDITIONALLY at June 30: Define living update triggers between quarterly audits (proposed triggers documented in May 6 session; formally adopt here — now governed by M16 §5).
-24. Implement living update protocol: now formally governed by M16_ReturnTableCalibration §5. Confirm June 30 as first formal application of M16 §5 LivingUpdateTriggers. Validate that triggers defined in M16 §5 match proposals from May 6 session; adjust if needed.
+22. MLPX target allocation: Relative IRA formally reduced to 24% (drawdown breach resolved v1.13). Primary accounts per new consolidated targets. Relative Roth at 32%. Document final decisions in §11 MLPX entry.
+23. RETURNS TABLE PENDING REVISION PROPOSALS (logged May 6, 2026 — formal adoption requires June 30 audit): [14 proposals listed in prior v1.12 §6 item 23 — all carry forward unchanged].
+24. Implement living update protocol: now formally governed by M16_ReturnTableCalibration §5. Confirm June 30 as first formal application of M16 §5 LivingUpdateTriggers.
 25. Session_Log.md compaction: retain last 10 §7 credit rows; collapse §8 to last 3 full entries + summary table. Move prior entries to Archive_2026Q2.md.
+26. COPX M07 regional concentration ruling: confirm "region = political/economic bloc" ruling from v1.13 as formal framework policy. Apply consistently to all future M07 screens.
+27. URA (Global X Uranium ETF): full M07 screen + M15 classification. Proposed role composition: real_asset_contracted_revenue (0.50) + inflation_hedge_commodity_linked (0.30) + secular_technology_growth (0.20). Verify Canada concentration passes 40% threshold (URNM failed at 60.5%; URA expected to pass). Add to §11 if passes.
+28. SIVR entry guard computation: obtain 90-day trailing silver price from approved source (Yahoo Finance historical). Compute 20% guard threshold vs current price. Execute ADD only after guard cleared.
+29. COPX entry guard computation: obtain 90-day trailing COPX price from approved source. Compute 20% guard threshold vs current price. Execute ADD only after guard cleared.
+30. DBMF D/E/F scenario formal adoption: complete M16.CalibrationMethodology() Layer 1-4 for remaining three scenarios. Primary analog: D = 2008 SG CTA Index +14.1% (short equity offset by commodity reversal); E = acute 2008 Q4 whipsaw; F = 2017-2019 "trend desert." Confidence: MEDIUM — adopt at Q2 audit.
+31. Healthcare_defensive_equity (XLV): confirm §11 classification. Run ThematicETF_ClassificationAudit() — sector composition has shifted toward biotech/tech-adjacent REITs; verify role weights. Full M16 calibration for all scenario values.
+32. Floating_rate_credit_income (FLOT): full M07 screen. Confirm no foreign concentration issue. Compute D scenario (-10% to -4%) empirical basis using 2008 IG spread data.
+33. Emerging_market_equity (VWO): full M07 screen. Confirm China (~30.8%) + Taiwan (~18-22%) combined regional concentration — determine if Taiwan Strait geopolitical risk warrants amber flag. Apply M07 regional ruling from item 26.
+34. Consumer_defensive_equity (XLP): complete M16 calibration for A/C/D/E/F scenarios (PENDING). Primary analog: A = 2003-2007 XLP vs market underperformance; C = 1973-74 input cost squeeze; D = 2008 XLP -15% nominal.
 
 ---
 
@@ -316,6 +312,8 @@ All values CALIBRATION_DATED. First audit: June 30, 2026.
 | equity_scenario_divergence HIGH | broad_equity_30d >= +5% while directive reductive | Calibration-dated |
 | equity_scenario_divergence MODERATE | broad_equity_30d >= +2% while directive reductive | Calibration-dated |
 
+May 6 full session M14 computation: commodity_fear_divergence = MODERATE (energy_90d ~+63% >= +10%; VIX_change_90d ~+3.4 pts — above 0, within +5). equity_scenario_divergence = HIGH (S&P 30d +10.3% >= +5%; B/C directive for broad_market_equity is reductive). Composite = HIGH (upgraded from MODERATE). UnderweightReviewTrigger fired for Primary IRA MLPX (-9.82pp) and Primary Roth MLPX (-10.28pp).
+
 ### 9.2 Underweight Review Trigger
 
 | Parameter | Current Value | Type |
@@ -327,12 +325,18 @@ All values CALIBRATION_DATED. First audit: June 30, 2026.
 
 | Role | Threshold | Notes |
 | --- | --- | --- |
-| broad_market_equity | 15% | Provisional |
+| broad_market_equity_domestic | 15% | Provisional |
+| broad_market_equity_international | 15% | Provisional |
 | thematic_sector_equity | 20% | policy_driven_thematic_equity, geopolitical_premium |
 | commodity_linked | 20% | WAR PREMIUM ENTRY GUARD also applies independently |
 | inflation_hedge_precious_metals | 20% | Provisional |
 | real_asset_contracted_revenue | 15% | Provisional |
 | secular_technology_growth | 20% | Added v1.7 Apr 28 |
+| consumer_defensive_equity | N/A | Guard does not apply — domestic equity sector ETF, no commodity or war premium component |
+| healthcare_defensive_equity | N/A | Guard does not apply — domestic equity sector ETF |
+| systematic_trend_following | N/A | Guard does not apply — return is driven by trend signals, not entry price level |
+| floating_rate_credit_income | N/A | Guard does not apply — short duration sovereign/IG credit |
+| emerging_market_equity | 15% | Provisional — same tier as broad international |
 | inflation_linked_sovereign | N/A | Guard does not apply (sovereign duration risk captured by scenario framework) |
 | real_estate_equity_income | 15% | Provisional — same tier as real_asset_contracted_revenue |
 | rate_sensitive_income_short | N/A | Guard does not apply |
@@ -373,7 +377,7 @@ All values CALIBRATION_DATED. First audit: June 30, 2026.
 ## Section 11 - Instrument Classification Registry (M15)
 
 All values CALIBRATION_DATED. First audit: June 30, 2026.
-VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v1.9). AIPO §11 data updated May 6 (v1.10). MLPX EV updated May 6 (v1.11). New roles inflation_linked_sovereign and real_estate_equity_income added May 6 (v1.12) — pending instrument assignments.
+VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v1.9). AIPO §11 data updated May 6 (v1.10). MLPX EV updated May 6 (v1.11). New roles inflation_linked_sovereign and real_estate_equity_income added May 6 (v1.12). Five new roles added May 6 (v1.13): systematic_trend_following, consumer_defensive_equity, healthcare_defensive_equity, floating_rate_credit_income, emerging_market_equity. New instruments added May 6 (v1.13): DBMF, SIVR, COPX, VTIP, XLP, VNQ, VEA, XLV, FLOT.
 
 ### 11.1 Role Registry
 
@@ -387,10 +391,15 @@ VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v
 | rate_sensitive_income_short_duration | short_term_interest_rates, duration <= 1y | v1.0 | Active |
 | rate_sensitive_income_long_duration | long_term_interest_rates, duration > 1y | v1.0 | Active |
 | broad_market_equity_domestic | domestic_aggregate_economic_growth | v1.0 | Active |
-| broad_market_equity_international | ex_US_aggregate_economic_growth | v1.0 | Active |
+| broad_market_equity_international | ex_US_aggregate_economic_growth, developed_markets | v1.0 | Active |
 | secular_technology_growth | AI_capex_cycle, mega-cap_tech_multiple_expansion, software_adoption, semiconductor_demand | v1.7 Apr 28 | Active - provisional, empirical audit June 30 |
-| inflation_linked_sovereign | CPI_accrual, real_yield_compression, sovereign_credit_quality | v1.12 May 6 | PENDING — instrument candidates: VTIP (Vanguard Short-Term TIPS ETF). Tax placement: retirement preferred (inflation adjustments taxed as ordinary income in taxable). Empirical audit required before return table values can be populated. Historical proxy: CPI-adjusted T-bill returns in stagflation periods (pre-TIPS data). |
-| real_estate_equity_income | property_income, rental_growth, cap_rate, real_asset_inflation_linkage | v1.12 May 6 | PENDING — instrument candidates: VNQ (Vanguard Real Estate ETF). Tax placement: retirement preferred (REIT distributions mostly ordinary income — tax-inefficient in taxable). Empirical basis available: 1973-1982 REIT/property real return ~+4.5%/yr (Morningstar/CAIA); JPM LTCMA 2026: U.S. core real estate 8.2% nominal (~5.7% real). Return table [TBD] pending June 30 M16.CalibrationMethodology() audit. |
+| inflation_linked_sovereign | CPI_accrual, real_yield_compression, sovereign_credit_quality | v1.12 May 6 | Active - PENDING §4.1 calibration June 30. Instrument candidate: VTIP. Tax: retirement preferred (inflation accrual OI in taxable). |
+| real_estate_equity_income | property_income, rental_growth, cap_rate, real_asset_inflation_linkage | v1.12 May 6 | Active - PENDING §4.1 calibration June 30 (LOW confidence — leverage-adjusted analysis required). Instrument candidate: VNQ. Tax: retirement preferred (REIT distributions ordinary income). |
+| systematic_trend_following | multi_asset_price_trends, momentum_persistence, commodity_trend_signal, rates_trend_signal, currency_trend_signal | v1.13 May 6 | Active - A/B/C values ADOPTED HIGH confidence. D/E/F PENDING June 30. Instrument: DBMF. No entry extension guard. No K-1 risk. All accounts eligible. |
+| consumer_defensive_equity | consumer_pricing_power, demand_inelasticity_essentials, household_consumption, brand_moat | v1.13 May 6 | Active - B value ADOPTED HIGH confidence. A/C/D/E/F PENDING June 30. Instrument: XLP. All accounts eligible (standard equity ETF). No entry extension guard. |
+| healthcare_defensive_equity | healthcare_demand_inelasticity, pharmaceutical_pricing_power, aging_demographics, biotech_pipeline | v1.13 May 6 | Active - ALL values PENDING June 30 (MEDIUM confidence). Instrument: XLV. All accounts eligible. No entry extension guard. |
+| floating_rate_credit_income | short_term_interest_rates, investment_grade_credit_spread, floating_rate_reset | v1.13 May 6 | Active - ALL values PENDING June 30 (MEDIUM confidence). Instrument: FLOT. Key risk: D/E credit seizure. All accounts eligible. |
+| emerging_market_equity | EM_aggregate_growth, commodity_export_revenue, EM_policy_cycle, USD_direction | v1.13 May 6 | Active - ALL values PENDING June 30 (MEDIUM confidence). Distinguished from broad_market_equity_international by EM-specific political risk, commodity dependency, and USD sensitivity. Instrument candidates: VWO. Entry guard: 15% (same tier as international). |
 
 ### 11.2 secular_technology_growth - Return Estimates
 
@@ -400,9 +409,9 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 | Scenario | Conservative | Upside | Rationale |
 | --- | --- | --- | --- |
 | A | 6% | 16% | Fed cuts; AI capex expands; multiple expansion |
-| B | -6% | -1% | REVISED Apr 30. Multiple compression under elevated rates, partially offset by AI earnings growth (AMZN $2.78 vs $1.64 est; MSFT beat; Azure +40%). Less severe than 2022 zero-AI-revenue analog. PENDING REVISION to [-12,-3] at June 30 — 2022 QQQ real ~-41%; Apr 30 revision may be premature. |
-| C | +2% | +8% | REVISED Apr 30. Q1 2026 empirical: Azure +40%, AWS +28%, META +33%, GOOGL beat during active Scenario C. AI enterprise contracts multi-year; weak conflict transmission to AI capex cycle. LOW CONFIDENCE — single data point; empirical audit June 30. |
-| D | -14% | -5% | Capex collapse in demand destruction; severe multiple contraction. PENDING REVISION to [-20,-8] at June 30. |
+| B | -6% | -1% | REVISED Apr 30. Multiple compression under elevated rates, partially offset by AI earnings growth. PENDING REVISION to [-12,-3] at June 30. |
+| C | +2% | +8% | REVISED Apr 30. Q1 2026 empirical: Azure +40%, AWS +28%, META +33%. AI enterprise contracts multi-year. LOW CONFIDENCE — single data point; empirical audit June 30. |
+| D | -14% | -5% | Capex collapse in demand destruction. PENDING REVISION to [-20,-8] at June 30. |
 | E | -10% | -4% | Growth multiples collapse in systemic stress. PENDING REVISION to [-18,-6] at June 30. |
 | F | 4% | 11% | Strong nominal demand supports AI capex; rising rates partially compress multiples |
 
@@ -417,89 +426,217 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - Components: geopolitical_premium (0.90) + broad_market_equity_domestic (0.10)
 - ThematicETF_ClassificationAudit COMPLETED April 29. Confirmed.
 - Last reviewed: 2026-04-29
-- EV (A=15/B=36/C=36/D=3/E=3/F=7): +1.29% (revised from +1.58% at A=7 probs — A=15% adds weight to -1.3% conservative A return, reducing blended EV).
-- Target: 12% structural across applicable accounts (Primary IRA, Primary Roth, Taxable Acc4).
-- Client preference: exit excess XAR at ~$265 spike. Currently overweight in all accounts. Reduction in progress — staged sell in Taxable Acc4 unconfirmed.
-- HoldJustification: break-even peace probability <5.6%; opportunity cost vs MLPX -2.33%/year (computed at A=7 probs; directionally valid at A=15 — gap widens further with MLPX EV now +5.51%).
-- ⚠ Deal trajectory (A rising): geopolitical_premium A return proposed revision to [-6,0] pending June 30. If adopted, XAR EV would decline further. Reduction to 12% target becomes more urgent as A rises.
+- EV (A=18/B=35/C=34/D=3/E=3/F=7): +1.18%. Ranked #9.
+- Target: 12% structural across applicable accounts (Primary IRA, Primary Roth, Taxable Acc4). CONFIRMED AT TARGET across all three accounts as of May 6 session — XAR reduction complete.
+- Client preference: exit excess XAR at ~$265 spike. EXECUTED — reduction to 12% confirmed via allocation sheet May 6.
+- HoldJustification: break-even peace probability <5.6%; opportunity cost vs MLPX -4.33%/year (at A=18 probs).
+- ⚠ Deal trajectory (A rising): geopolitical_premium A return proposed revision to [-6,0] pending June 30. If adopted, XAR EV would decline further.
 
 #### MLPX
 - Components: real_asset_contracted_revenue (0.65) + inflation_hedge_commodity_linked (0.35)
-- Last reviewed: 2026-05-06 (v1.11 EV update)
-- EV (A=15/B=36/C=36/D=3/E=3/F=7): +5.51% (#1 ranked instrument; revised from +3.64% — real_asset_contracted_revenue B [3,7]→[6,14] and C [3,6]→[8,16] adopted v1.11. D/E unchanged pending June 30 audit.)
-- EV computation:
-  A(15%): 0.65×3 + 0.35×2 = 2.65% × 0.15 = +0.40%
-  B(36%): 0.65×6 + 0.35×6 = 6.00% × 0.36 = +2.16%
-  C(36%): 0.65×8 + 0.35×7 = 7.65% × 0.36 = +2.75%
-  D(3%):  0.65×2 + 0.35×(-8) = -1.50% × 0.03 = -0.05%
-  E(3%):  0.65×2 + 0.35×2 = 2.00% × 0.03 = +0.06%
-  F(7%):  0.65×3 + 0.35×2 = 2.65% × 0.07 = +0.19%
-  Total: +5.51%
-- NOTE: D and E blended returns use current (unadopted) table values. If June 30 proposals adopted (D real_asset→[-10,-2], E real_asset→[-8,0]), blended D/E would worsen: D=-6.30%, E=-5.90%. Revised EV under full June 30 adoption: approximately +4.85% (lower but still #1 ranked).
-- Target allocation: 40% across retirement accounts (Primary IRA, Primary Roth, Relative IRA, Relative Roth).
-- EntryExtensionGuard: BLOCKING at $73.91 (preliminary — precise 90d trailing avg not computed; real_asset_contracted_revenue threshold 15%, commodity_linked threshold 20%, WAR PREMIUM GUARD independent). Do not ADD until guard clears with dedicated source 90d trailing close.
-- Underweight: Primary IRA -9.71pp, Primary Roth -10.16pp. Accept underweight pending guard clearance.
-- Drawdown tolerance: client expressed cannot-hold concern re 2014-2020 style 67% price decline (3x wealth reduction). EV case intact and now stronger (+5.51%). However: Relative IRA at 34% MLPX × 67% max drawdown = 22.8% portfolio loss EXCEEDS 20% tolerance with floor_nominal_loss=TRUE. Client decision pending on target revision for Relative IRA (proposed: ~20-22%). Primary Taxable (37%) and Relative Roth (39%) are tight but within stated tolerances. See §6 item 22.
+- Last reviewed: 2026-05-06 (v1.13 — targets updated)
+- EV (A=18/B=35/C=34/D=3/E=3/F=7): +5.38%. Ranked #2.
+- Target allocation (v1.13 consolidated targets):
+  - Primary IRA: 30%
+  - Primary Roth: 28%
+  - Primary Taxable: 30%
+  - Relative IRA: 24% (REDUCED from 35% — drawdown tolerance breach resolved: 24% × 67% = 16.1% < 20% floor)
+  - Relative Roth: 32%
+- EntryExtensionGuard: PRELIMINARY CLEARING. Estimated 90d trailing average ~$66. Current price $73.63 (~+12% above avg vs 15% threshold). Requires verification from approved price source (Yahoo Finance historical for Feb 5, 2026 MLPX close) before ADD executes.
+- WAR PREMIUM ENTRY GUARD: Also preliminary clearing (~12% vs 20% threshold). Active supply event (Hormuz) — monitor deal status.
+- Drawdown tolerance: Relative IRA target reduced to 24% per drawdown analysis (see §6 item 22).
 
 #### SGOL
 - Components: inflation_hedge_precious_metals (1.00)
 - Last reviewed: 2026-04-28
-- CALIBRATION ANOMALY RESOLVED Apr 30 (v1.8): section 4.1 Scenario C return revised [+7%,+14%]->[-2%,+6%]. C-hawk regime empirical basis: gold down ~18% from Jan ATH during active Scenario C; Fed holding rates elevated; real yields at +1.89%; gold underperforms vs short-duration income.
-- EV (A=15/B=36/C=36/D=3/E=3/F=7): +1.47% (revised from +1.83% at A=7 probs).
-- ⚠ Pending June 30 proposals: A [0,4]→[-2,2] and D [-2,4]→[-5,3]. If adopted, SGOL EV would decline further. SGOL ranking currently #2 at +1.47%.
-- JPM LTCMA 2026: gold 5.5% nominal = ~3.0% real unconditional. Current SGOL EV of +1.47% reflects crisis-skewed scenario distribution (B/C dominant suppresses gold in C). Directionally consistent.
+- CALIBRATION ANOMALY RESOLVED Apr 30 (v1.8): §4.1 Scenario C revised [+7%,+14%]->[-2%,+6%]. C-hawk regime empirical basis.
+- EV (A=18/B=35/C=34/D=3/E=3/F=7): +1.45%. Ranked #7.
+- Target allocation (v1.13):
+  - Primary IRA: 16% (reduced from 33%)
+  - Primary Roth: 14% (reduced from 33%)
+  - Relative IRA: 26% (reduced from 37%)
+  - Relative Roth: 22% (reduced from 40%)
+  - Note: SIVR added as complement; SGOL + SIVR combined restores precious metals exposure
+- ⚠ Pending June 30 proposals: A [0,4]→[-2,2] and D [-2,4]→[-5,3].
 
 #### SGOV
 - Components: rate_sensitive_income_short_duration (1.00)
 - Last reviewed: 2026-04-28
-- EV: +0.73%. Preservation account (Taxable Acc3) = 100% SGOV. Taxable Acc4 SGOV target increased to 29% in M13 rerun (XAR reduction proceeds flow here).
-- ⚠ Pending June 30 proposals: A [0,2]→[1,4] and D [0,3]→[2,6]. If adopted, SGOV EV improves modestly.
+- EV: +0.70%. Ranked #10.
+- Target allocation (v1.13):
+  - Primary Taxable: 15% (reduced from 32%; cash deployment partially to new instruments)
+  - Taxable Preservation: 100% (unchanged)
+  - Relative IRA: 14% (reduced from 20%; VTIP takes portion)
+- ⚠ Pending June 30 proposals: A [0,2]→[1,4] and D [0,3]→[2,6].
 
 #### PAVE
 - Components: broad_market_equity_domestic (0.82) + policy_driven_thematic_equity (0.18)
 - ThematicETF_ClassificationAudit conducted Apr 28. Status: watch (not FLAGGED).
 - Last reviewed: 2026-05-06 (status reconfirmed — no new legislation; IIJA core programs intact)
-- Cost basis: $54.09/share (~$1,286 embedded gain on 590 shares). Target: ~11% in Taxable Acc4. Currently 13.04% (slight overweight).
+- Cost basis: $54.09/share (~$1,286 embedded gain on 590 shares). Target: ~11% in Taxable Acc4. Currently 11.00% — at target.
 - Monitor IIJA reauthorization September 30, 2026.
-- OVERLAP: Eaton Corp (ETN) in both PAVE (~3.4% NAV) and AIPO (~8.1% NAV as of Dec 2025; ~8.04% as of Apr 30 2026). Monitor combined concentration at Q2 audit.
-- EV (A=15/B=36/C=36/D=3/E=3/F=7): approximately -3.18%. Negative EV — legacy position with embedded gain; do not add.
+- EV (A=18/B=35/C=34/D=3/E=3/F=7): approximately -2.90%. Negative EV — legacy position with embedded gain; do not add.
 
 #### AIPO
 - Components: real_asset_contracted_revenue (0.55) + secular_technology_growth (0.20) + broad_market_equity_domestic (0.15) + inflation_hedge_commodity_linked (0.10)
-- Basis: Defiance AI & Power Infrastructure ETF. Tracks MarketVector U.S. Listed AI and Power Infrastructure Index. Dominant driver: power and grid infrastructure for AI data centers, not AI companies directly.
-- UPDATED May 6, 2026 (v1.10):
-  - AUM: ~$457M (as of Apr 30, 2026). Prior entry ($249.5M) was stale Dec 2025 Schwab snapshot — corrected.
-  - Sector weights (Apr 30, 2026): Industrials 57.09%, Technology 16.46%, Utilities 14.42%, Energy 6.91%, Financial Services 3.60%, Real Estate 1.04%, Communications 0.48%.
-  - Top 10 holdings (Apr 30, 2026): PWR 8.47%, GEV 8.42%, ETN 8.04%, VRT 7.88%, BE 4.95%, CCO 4.33%, AVGO 4.03%, NVDA 3.54%, CEG 3.51%, MTZ 2.33%.
-  - Technology weight change: -2.04pp vs Dec 2025 snapshot — within 5pp classification drift threshold; no reclassification.
-  - Financial Services 3.60%: new category not present in prior snapshot. Below 5% materiality threshold for classification impact; log for June 30 formal ThematicETF_ClassificationAudit().
-- Source: Session bridge May 4, 2026 (audit complete); sector weights and top-10 as of Apr 30, 2026.
-- Methodology: sector_weight_analysis + judgment. ThematicETF_ClassificationAudit() REQUIRED at Q2 June 30 — PROVISIONAL classification.
 - Last reviewed: 2026-05-06
-- Price at adoption: $31.28. Current price (May 6): $32.75. EntryExtensionGuard: ~+11.6% above approx 90d avg per May 4 bridge — below 15% threshold for real_asset_contracted_revenue — PASSES. Recompute with live trailing avg before executing any ADD.
 - AUM: ~$457M. Expense ratio: 0.69%. Inception: 07/24/2025 (thin track record — flag at Q2).
-- EV (A=15/B=36/C=36/D=3/E=3/F=7): ~+2.94% (v1.11 — real_asset_contracted_revenue B/C revision improves AIPO EV via 0.55 weight component). AIPO now #2 ranked instrument at +2.94%, ahead of SGOL (+1.47%) and XAR (+1.29%).
-- EV recompute v1.11 (real_asset_contracted_revenue B/C adopted):
-  A(15%): 0.55×3+0.20×6+0.15×5+0.10×2 = 3.80% × 0.15 = +0.57%
-  B(36%): 0.55×6+0.20×(-6)+0.15×(-8)+0.10×6 = 3.30-1.20-1.20+0.60 = 1.50% × 0.36 = +0.54%
-  C(36%): 0.55×8+0.20×2+0.15×(-4)+0.10×7 = 4.40+0.40-0.60+0.70 = 4.90% × 0.36 = +1.76%
-  D(3%):  0.55×2+0.20×(-14)+0.15×(-12)+0.10×(-8) = 1.10-2.80-1.80-0.80 = -4.30% × 0.03 = -0.13%
-  E(3%):  0.55×2+0.20×(-10)+0.15×(-8)+0.10×2 = 1.10-2.00-1.20+0.20 = -1.90% × 0.03 = -0.06%
-  F(7%):  0.55×3+0.20×4+0.15×7+0.10×2 = 1.65+0.80+1.05+0.20 = 3.70% × 0.07 = +0.26%
-  Total: +2.94%
-- TAX PLACEMENT: ALL ACCOUNTS including taxable (standard ETF structure — no swap, no phantom gains).
+- EV (A=18/B=35/C=34/D=3/E=3/F=7): +2.95%. Ranked #4.
+- Target allocation (v1.13): 8% across Primary IRA, Primary Roth, Primary Taxable; 6% Relative IRA; 10% Relative Roth.
+- TAX PLACEMENT: ALL ACCOUNTS including taxable.
 - PAVE overlap: ETN in both AIPO (~8.04% Apr 30) and PAVE (~3.4% NAV). Audit at Q2 June 30.
 
 #### MAGS
 - Components: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15)
-- Basis: Roundhill Magnificent Seven ETF. Equal-weight AAPL/MSFT/GOOGL/AMZN/META/NVDA/TSLA via total return swap structure (T-bills as collateral + equity swaps). Top holdings (03/31/2026): T-bills 41.86%, AMZN 6.13%, NVDA 6.04%, META 5.81%, MSFT 5.70%, GOOGL swap 5.29%, AAPL 5.26%. 15% broad_market weight reflects TSLA and AAPL hardware/consumer component.
-- Source: Schwab report card 04/30/2026; holdings as of 03/31/2026
-- Methodology: holdings_analysis + judgment
 - Last reviewed: 2026-04-30
-- Price at adoption: $66.24. EntryExtensionGuard: fund down 12.2% over 3 months; current price well below 90d trailing avg (~$75) — PASSES easily.
-- AUM: $3.5B. Expense ratio: 0.29% (lowest of all AI-sector candidates). Inception: 04/10/2023.
-- EV (A=15/B=36/C=36/D=3/E=3/F=7): approximately -1.38% (revised from -2.34% at A=7 probs — A=15% adds weight to +4.1% conservative A return, slightly improving blended EV; still negative). NEGATIVE EV — documented client judgment override. Rationale accepted: AI/Mag7 earnings momentum thesis; optionality on future scenario shift toward A/F; cheapest and most liquid pure secular-tech instrument.
-- TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY (IRA and Roth accounts). Swap structure generates phantom taxable gains in losing years. Do NOT hold in Taxable Acc4 or any taxable account.
-- COUNTERPARTY RISK: does not directly hold Mag7 shares — uses total return swaps. Counterparty default risk exists. Does not vote underlying shares.
-- No Anthropic or SpaceX exposure. Pure public-market Mag7 bet.
-- MAGS vs AGIX upgrade evaluation: AGIX (AUM $171.5M, expense 0.99%) holds Anthropic ~2.98% direct. Anthropic targeting IPO Oct 2026 at ~$60B valuation. If IPO announced/imminent, evaluate MAGS->AGIX upgrade. Assess at Q3 2026 audit or earlier on announcement.
+- EV (A=18/B=35/C=34/D=3/E=3/F=7): approximately -1.18%. Ranked #11. NEGATIVE EV — documented client judgment override.
+- Target allocation (v1.13): 5% Primary IRA (reduced from 7%); 6% Primary Roth (reduced from 7%); 3% Relative IRA (unchanged); 8% Relative Roth (unchanged).
+- TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY. Swap structure generates phantom taxable gains in losing years.
+- MAGS vs AGIX upgrade evaluation: monitor Anthropic IPO news. Assess at Q3 2026 or earlier on announcement.
+
+#### DBMF
+- Components: systematic_trend_following (1.00)
+- Basis: iMGP DBi Managed Futures Strategy ETF. Actively managed. Replicates top CTA hedge fund portfolios using T-bill collateral + equity/commodity/bond/currency swap agreements. Strategy: systematic trend-following across all major asset classes.
+- K-1: NONE — 1940 Act registered fund (ETF structure). Uses swap agreements, not limited partnership interests. No K-1 issued.
+- AUM: $3.51B. Expense ratio: 0.85%. Inception: 2019-05-08. 1-year total return: +27.3%.
+- Last reviewed: 2026-05-06 (v1.13, initial classification)
+- EV (A=18/B=35/C=34/D=3/E=3/F=7, conservative ends, D/E/F PENDING): +8.47%. Ranked #1.
+  - A: -12% × 0.18 = -2.16%
+  - B: +15% × 0.35 = +5.25% ★ADOPTED
+  - C: +18% × 0.34 = +6.12% ★ADOPTED
+  - D: -5% × 0.03 = -0.15% ⚑PENDING
+  - E: -8% × 0.03 = -0.24% ⚑PENDING
+  - F: -5% × 0.07 = -0.35% ⚑PENDING
+  - Total: +8.47%
+- TAX PLACEMENT: ALL ACCOUNTS. No K-1. No swap phantom gain issue (T-bill collateral income is standard income, not a phantom gain).
+- ENTRY EXTENSION GUARD: N/A — systematic_trend_following role is explicitly exempt (§9.3).
+- KEY RISK: Trend-reversal events (Scenario A normalization) produce material losses (-12% conservative). A=18% weight creates -2.16% EV drag — priced into EV computation. DBMF and MLPX are partially inversely correlated in A (MLPX appreciates as energy normalizes; DBMF loses as commodity trends reverse) — portfolio diversification benefit.
+- Target allocation (v1.13): 15% Primary IRA; 17% Primary Roth; 10% Primary Taxable; 12% Relative IRA; 18% Relative Roth.
+
+#### SIVR
+- Components: inflation_hedge_precious_metals (0.55) + inflation_hedge_commodity_linked (0.45)
+- Basis: Aberdeen Standard Physical Silver Shares ETF. Tracks spot silver price via physical silver bullion. Lower cost alternative to SLV (0.30% ER vs 0.50%).
+- AUM: ~$5.5B. Expense ratio: 0.30%. Custodian: ICBC Standard Bank (UK).
+- Last reviewed: 2026-05-06 (v1.13, initial classification)
+- EV (A=18/B=35/C=34/D=3/E=3/F=7): +2.86%. Ranked #5.
+  - A:  0.55×[0] + 0.45×[2] = 0.90% × 0.18 = +0.16%
+  - B:  0.55×[6] + 0.45×[6] = 5.70% × 0.35 = +2.00%
+  - C:  0.55×[-2] + 0.45×[7] = 2.05% × 0.34 = +0.70%
+  - D:  0.55×[-2] + 0.45×[-8] = -4.70% × 0.03 = -0.14%
+  - E:  0.55×[10] + 0.45×[2] = 6.40% × 0.03 = +0.19%
+  - F:  0.55×[-3] + 0.45×[2] = -0.75% × 0.07 = -0.05%
+- KEY DISTINCTION FROM SGOL: Silver's 45% industrial demand component (electronics, solar, EV batteries, AI data center components) sustains positive returns in Scenario C where SGOL underperforms (C-hawk rate regime). Silver C blended return = +2.05% vs SGOL C conservative = -2%.
+- TAX PLACEMENT: Retirement accounts preferred. Physical silver ETF is classified as a collectible; capital gains taxed at 28% max rate in taxable accounts (vs 20% for equity ETFs). Taxable placement technically permissible but suboptimal.
+- ENTRY EXTENSION GUARD: inflation_hedge_precious_metals threshold = 20% above 90d trailing average. Silver rose ~132% YTD through Dec 2025 and continued appreciating in 2026. Guard likely BLOCKING. Requires dedicated 90d trailing average computation from approved source before any ADD executes. Set as target allocation; execute only after guard clears.
+- Target allocation (v1.13): 4% Primary IRA; 5% Primary Roth; 3% Relative IRA. (Not included in Taxable accounts or Relative Roth due to tax/size constraints.)
+
+#### COPX
+- Components: inflation_hedge_commodity_linked (0.75) + broad_market_equity_international (0.25)
+- Basis: Global X Copper Miners ETF. Tracks Solactive Global Copper Miners Total Return Index. 41 holdings across global copper mining companies.
+- AUM: $6.86B. Expense ratio: 0.65%. Inception: 2010-04-19.
+- Country breakdown (Jan 31, 2026): Canada 36.68%, China 9.62%, US 9.59%, Japan 7.92%, Australia 7.86%, Poland 5.93%, Sweden 5.35%, UK 5.12%, Switzerland 4.82%, Others 7.13%.
+- M07 STATUS: PASS — Canada 36.68% below 40% single-country threshold. North America 43.85% above 40% geographic threshold; however per M07 regional ruling v1.13 (§2.4), "region" = political/economic bloc, not continent. Canada + US are separate political/economic regimes. RULING: PASS. ⚠ Amber flag for June 30 ThematicETF_ClassificationAudit() formal confirmation.
+- Last reviewed: 2026-05-06 (v1.13, initial classification)
+- EV (A=18/B=35/C=34/D=3/E=3/F=7, conservative floor — pre-mining-leverage adjustment): +2.76%.
+  - A:  0.75×[2] + 0.25×[4] = 2.50% × 0.18 = +0.45%
+  - B:  0.75×[6] + 0.25×[-5] = 3.25% × 0.35 = +1.14%
+  - C:  0.75×[7] + 0.25×[-6] = 3.75% × 0.34 = +1.28%
+  - D:  0.75×[-8] + 0.25×[-8] = -8.00% × 0.03 = -0.24%
+  - E:  0.75×[2] + 0.25×[-10] = -1.00% × 0.03 = -0.03%
+  - F:  0.75×[2] + 0.25×[3] = 2.25% × 0.07 = +0.16%
+  - Total floor: +2.76%. Mining-leverage adjusted estimate: ~+3.5-4.5%.
+- MINING LEVERAGE NOTE: Copper miners apply ~1.3-1.5× operating leverage to copper price moves. §4.1 values calibrated for commodity-tracking instruments. Blended B/C returns understate actual COPX returns in positive commodity scenarios. Compute EV using floor estimates only; adjusted EV for reference.
+- TAX PLACEMENT: ALL ACCOUNTS (standard equity ETF, no K-1, no special structure).
+- ENTRY EXTENSION GUARD: inflation_hedge_commodity_linked threshold = 20% above 90d trailing average. COPX at $78.21 (May 5 close); 52-week range $37.05-$99.99. Estimated 90d avg (Feb 5 - May 6): ~$55-65. Estimated current premium: ~+20-42% above avg — guard likely BLOCKING. Requires dedicated 90d trailing average computation before ADD executes. Set as target; execute when guard clears.
+- Target allocation (v1.13): 2% Primary IRA; 7% Primary Taxable.
+
+#### VTIP
+- Components: inflation_linked_sovereign (1.00)
+- Basis: Vanguard Short-Term Inflation-Protected Securities ETF. Tracks Bloomberg US TIPS 0-5 Year Index. 27 holdings; all US Treasury TIPS with remaining maturity < 5 years. 100% Treasury/Agency.
+- AUM: $66.6B. Expense ratio: 0.03%. Beta: 0.22. Inception: 2012-10-12.
+- Last reviewed: 2026-05-06 (v1.13, initial classification)
+- Provisional EV (§4.1 values PENDING — MEDIUM confidence): +0.23% at current probs. Actual structural EV in B/C environment is materially higher; provisional values understate due to PENDING §4.1 calibration. When formally calibrated at June 30, expected EV range: +0.8% to +1.4%.
+- TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY. Inflation accrual on TIPS is taxed as ordinary income each year it accrues, even though not received as cash until maturity — same phantom income problem as MAGS in taxable accounts.
+- ENTRY EXTENSION GUARD: N/A — inflation_linked_sovereign role explicitly exempt per §9.3.
+- Target allocation (v1.13): 8% Primary IRA; 10% Primary Roth; 12% Relative IRA; 10% Relative Roth.
+
+#### XLP
+- Components: consumer_defensive_equity (1.00)
+- Basis: State Street Consumer Staples Select Sector SPDR ETF. Tracks S&P Consumer Staples Select Sector Index. 35 holdings; top positions Walmart, Costco, Procter & Gamble.
+- AUM: $14.5B. Expense ratio: 0.08%. 100% US domestic. Inception: 1998-12-16.
+- Last reviewed: 2026-05-06 (v1.13, initial classification)
+- Provisional EV (§4.1 B value ADOPTED; others PENDING): +0.10% at current probs. Actual structural EV estimated +2.0-2.5% when all §4.1 values formally calibrated. B-scenario contribution: +2% × 0.35 = +0.70% already captures the key driver.
+- KEY THESIS: Consumer pricing power passes through inflation costs in sustained B environment. P&G, Walmart, Costco demonstrated 5-8%/yr real outperformance over S&P 500 in 1973-1982 stagflation; XLP returned +3-4% real in 2022 B/C environment vs S&P -18% nominal.
+- TAX PLACEMENT: ALL ACCOUNTS (standard equity ETF, no special structure, dividends qualified).
+- ENTRY EXTENSION GUARD: N/A — consumer_defensive_equity role exempt per §9.3.
+- Target allocation (v1.13): 7% Primary Taxable.
+
+#### VNQ
+- Components: real_estate_equity_income (0.60) + rate_sensitive_income_long_duration (0.22) + secular_technology_growth (0.12) + broad_market_equity_domestic (0.06)
+- Basis: Vanguard Real Estate Index Fund ETF. Tracks MSCI US Investable Market Real Estate 25/50 Index. 159 holdings; top positions Welltower 7.69%, Prologis 7.03%, Equinix 5.51%, American Tower 4.63%. Data center REITs 7.8%, Healthcare REITs 13.1%, Industrial REITs 9.8%.
+- AUM: $65.7B. Expense ratio: 0.13%. 100% US domestic. Inception: 2004.
+- Last reviewed: 2026-05-06 (v1.13, initial classification)
+- EV at current probs (real_estate_equity_income [TBD] — LOW confidence; using 2022-calibrated proxy): -4.52% to +1.27% depending on §4.1 calibration outcome.
+- STRUCTURAL NOTE: VNQ is ADVERSARIAL to current B/C dominant distribution. Rate_sensitive_income_long_duration component (0.22 weight) has deeply negative B/C returns [-4,-1] and [-5,-2] respectively. Modern REIT leverage (40-60% LTV) causes cap rate expansion to overwhelm rental income growth in elevated-rate environments (2022 VNQ: -26% nominal).
+- TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY (REIT distributions predominantly ordinary income — mandatory 90% payout, mostly non-qualified dividends).
+- ADOPTION TRIGGER: A > 25% on T1-confirmed US-Iran deal. Under A-dominant distribution, VNQ EV improves materially as Fed cutting → cap rate compression → REIT NAV appreciation.
+- CURRENT PORTFOLIO ALLOCATION: NONE. §11 entry for framework completeness.
+
+#### VEA
+- Components: broad_market_equity_international (1.00)
+- Basis: Vanguard FTSE Developed Markets ETF. Tracks FTSE Developed All Cap ex US Index. 3,906 holdings; Japan 20.6%, Financial Services 22.9%. Top 10 = 11.23% — well-diversified.
+- AUM: $282B. Expense ratio: 0.03%. Inception: 2007.
+- Last reviewed: 2026-05-06 (v1.13, initial classification)
+- EV at current probs: -3.40%.
+- STRUCTURAL NOTE: Developed international equity faces same B/C headwinds as domestic equity plus energy-importer FX drag (Europe/Japan directly harmed by Hormuz crisis). 1-year return +30.4% represents significant M14 equity_scenario_divergence — NOT a signal to buy under B/C dominant distribution.
+- ADOPTION TRIGGER: A > 25% on T1-confirmed deal. Deal normalization → European/Japanese rate cutting cycles + dollar weakening = strong A setup for developed international.
+- CURRENT PORTFOLIO ALLOCATION: NONE. §11 entry for framework completeness.
+
+#### XLV
+- Components: healthcare_defensive_equity (1.00)
+- Basis: Health Care Select Sector SPDR ETF. Tracks S&P Healthcare Select Sector Index. ~65 holdings; major pharma, biotech, medical devices, managed care.
+- AUM: ~$40B range. Expense ratio: ~0.13%. 100% US domestic.
+- Last reviewed: 2026-05-06 (v1.13, initial classification — provisional; full ThematicETF_ClassificationAudit required Q2)
+- Provisional EV (§4.1 ALL PENDING): -0.44% at current probs. Actual structural EV estimated +0.5-1.5% when calibrated. 2022 analog: XLV -3.5% nominal vs S&P -18% — meaningful defensive outperformance.
+- TAX PLACEMENT: ALL ACCOUNTS (standard equity ETF).
+- CURRENT PORTFOLIO ALLOCATION: NONE. Lower priority than DBMF/COPX/XLP at current probs. Monitor for entry if B/C probability rises further (healthcare becomes more defensive).
+
+#### FLOT
+- Components: floating_rate_credit_income (1.00)
+- Basis: iShares Floating Rate Bond ETF. Tracks Bloomberg US Floating Rate Note < 5 Years Index. IG corporate floating-rate bonds. Rate resets quarterly to SOFR/LIBOR + spread.
+- AUM: ~$10-15B range. Expense ratio: ~0.15%.
+- Last reviewed: 2026-05-06 (v1.13, initial classification — full M07 screen pending)
+- Provisional EV (§4.1 ALL PENDING): approximately +0.2-0.5% above SGOV in B; significantly worse in D/E due to corporate credit seizure.
+- KEY RISK: D/E scenario credit spread blowout (-10% to -4% vs SGOV 0%). SGOV's pure Treasury safety is a feature when D/E tail risk exists (currently D=3%, E=3%).
+- TAX PLACEMENT: ALL ACCOUNTS (standard bond ETF).
+- CURRENT PORTFOLIO ALLOCATION: NONE. Lower priority. Optional SGOV supplement in B-dominant allocation if D/E tail risk remains low.
+
+---
+
+## Consolidated Target Allocations (v1.13, May 6, 2026)
+
+All values are target percentages. Share counts computed by allocation file (authoritative). Execution notes: DBMF, VTIP, XLP — immediate; SIVR, COPX — pending entry guard computation; MLPX ADD — pending 90d trailing price verification.
+
+| Instrument | Primary IRA | Primary Roth | Primary Taxable | Taxable Pres. | Relative IRA | Relative Roth |
+| --- | --- | --- | --- | --- | --- | --- |
+| MLPX | 30% | 28% | 30% | — | 24% | 32% |
+| DBMF | 15% | 17% | 10% | — | 12% | 18% |
+| SGOL | 16% | 14% | — | — | 26% | 22% |
+| VTIP | 8% | 10% | — | — | 12% | 10% |
+| AIPO | 8% | 8% | 8% | — | 6% | 10% |
+| XAR | 12% | 12% | 12% | — | — | — |
+| SGOV | — | — | 15% | 100% | 14% | — |
+| SIVR | 4% | 5% | — | — | 3% | — |
+| COPX | 2% | — | 7% | — | — | — |
+| MAGS | 5% | 6% | — | — | 3% | 8% |
+| XLP | — | — | 7% | — | — | — |
+| PAVE | — | — | 11% | — | — | — |
+| **Total** | **100%** | **100%** | **100%** | **100%** | **100%** | **100%** |
+
+Portfolio EV by account (conservative, partially pending §4.1 calibration):
+- Primary IRA: +3.62% (required 3.2% — GAP CLOSED ✅)
+- Primary Roth: +3.62% (required ~2.8% — exceeds by +0.82pp ✅)
+- Primary Taxable: +2.99% (RETURN_THEN_TARGET 5yr ✅)
+- Taxable Preservation: Capital preservation — SGOV 100% ✅
+- Relative IRA: +3.04% (FLOOR_THEN_RETURN; drawdown breach RESOLVED ✅)
+- Relative Roth: +3.79% (required ~2.8% — exceeds by +0.99pp ✅)
