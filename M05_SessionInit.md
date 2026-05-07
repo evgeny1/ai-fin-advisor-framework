@@ -1,6 +1,10 @@
 # M05 — Session Initialization
 <!-- Supersedes: any prior hardcoded file ID references (Amendment 1) -->
 <!-- Updated April 23, 2026: Calibration_State.md now fetched from GitHub; §7/§8 references updated -->
+<!-- Updated May 6, 2026 (v1.12 framework-v2-architecture-split): Step 3 now fetches BOTH -->
+<!--   Calibration_State.md AND Session_Log.md concurrently. Session_Log §8 is the authoritative -->
+<!--   source for prior scenario probabilities and open items. Step 10 WriteBack updated to -->
+<!--   push_files([Calibration_State.md, Session_Log.md]) — single atomic operation. -->
 <!-- Cross-references: @see M12_FileProtocol, @see M04_BriefingFormat, @see M03_ScenarioFramework -->
 
 ```
@@ -22,24 +26,33 @@ MODULE SessionInit {
 
   INPUT_2: PendingDecisions {
     ASK_CLIENT: "Are there any pending decisions, conditional triggers, or time-sensitive items from our last session?"
-    ALSO_CHECK: §8_Session_State_Log  // loaded in INPUT_3 — open_decisions and open_triggers fields
+    ALSO_CHECK: §8_Session_State_Log  // loaded from Session_Log.md in INPUT_3
+                                       // open_decisions and open_triggers fields
   }
 
   INPUT_3: FrameworkFiles {
-    // Framework modules (M01–M13) are Project Knowledge — always in context, no fetch needed.
+    // Framework modules (M01–M16) are Project Knowledge — always in context, no fetch needed.
     // CALIBRATION_STATE lives in GitHub — fetch at session start, write back at session end.
-    // §8 Session State Log lives inside CALIBRATION_STATE — loaded here.
+    // Session_Log.md lives in GitHub — fetch concurrently with Calibration_State.md.
+    // §8 Session State Log lives inside Session_Log.md (NOT Calibration_State.md as of v1.12).
 
-    fetch_via:  @see M12_FileProtocol.fetchCalibrationState()
-    // Fetches Calibration_State.md from GitHub repo (evgeny1/ai-fin-advisor-framework, master)
+    fetch_via:        @see M12_FileProtocol.fetchCalibrationState()
+                      @see M12_FileProtocol.fetchSessionLog()
+    // Both fetches run CONCURRENTLY — only after Step 1 is confirmed successful.
+    // fetchCalibrationState() → Calibration_State.md from GitHub (evgeny1/ai-fin-advisor-framework, master)
+    // fetchSessionLog()       → Session_Log.md from GitHub (same repo, master)
 
     APPLY current_threshold_values_from CALIBRATION_STATE §1, §2  // NOT remembered values
     APPLY M13_GrowthObjectives session load requirements
     // @see M13_GrowthObjectives.REQUIRE at_session_start (§4.1–4.4)
 
-    LOAD §8_Session_State_Log {
+    APPLY M15_InstrumentClassification session load requirements
+    // @see M15.ValidateClassifications() — HARD_STOP if any allocation instrument absent from §11
+
+    LOAD §8_Session_State_Log FROM Session_Log.md {
       // §8 contains the prior session's scenario probabilities, primary driver,
       // open triggers, and open decisions — written at prior session end.
+      // SOURCE: Session_Log.md §8 (NOT Calibration_State.md — moved in v1.12)
       IF §8 EXISTS AND §8.latest_entry.date >= current_date - 7_calendar_days {
         prior_scenario_probabilities = §8.latest_entry.scenario_probabilities
         prior_primary_driver         = §8.latest_entry.primary_driver
@@ -52,7 +65,7 @@ MODULE SessionInit {
         //   Step 8 (briefing — CHANGES block, prior anchor)
       }
       IF §8 DOES_NOT_EXIST OR §8.latest_entry.date < current_date - 7_calendar_days {
-        FLAG: "No recent session state found in §8 (missing or > 7 days old).
+        FLAG: "No recent session state found in Session_Log §8 (missing or > 7 days old).
                Scenario probabilities will be derived without 25pp cap this session.
                Logged as initial derivation."
         prior_scenario_probabilities = null
@@ -62,7 +75,7 @@ MODULE SessionInit {
     WHEN M11 contradicts_main_framework → M11 takes_precedence
 
     // Audit trail — include in briefing for traceability
-    NOTE_IN_BRIEFING: "Calibration State: last update [date from CALIBRATION_STATE.md]"
+    NOTE_IN_BRIEFING: "Calibration State: last update [date from CALIBRATION_STATE.md] | Session Log: loaded"
   }
 
   // ─── EXECUTION ORDER ──────────────────────────────────────────────────────────
@@ -80,15 +93,20 @@ MODULE SessionInit {
 
     2: confirm_pending_decisions
        // INPUT_2
-       // Cross-check against prior_open_decisions loaded from §8 in Step 3
+       // Cross-check against prior_open_decisions loaded from Session_Log §8 in Step 3
        // Steps 2 and 3 may run concurrently — only after Step 1 confirmed successful
 
-    3: fetch_calibration_state_from_github
-       // INPUT_3 — GitHub fetch @see M12_FileProtocol.fetchCalibrationState()
-       // Apply threshold values from §1 and §2
-       // Apply M13 return table and multipliers from §4.1–4.4
-       // Load §8 Session State Log — prior scenario probabilities, open items
-       // Steps 2 and 3 may run concurrently — only after Step 1 confirmed successful
+    3: fetch_calibration_state_AND_session_log_from_github
+       // INPUT_3 — TWO concurrent GitHub fetches (only after Step 1 confirmed)
+       // fetchCalibrationState()  → @see M12_FileProtocol.fetchCalibrationState()
+       // fetchSessionLog()        → @see M12_FileProtocol.fetchSessionLog()
+       //
+       // From Calibration_State.md: apply §1, §2 thresholds; §4 return table + multipliers (M13);
+       //   §9 M14 market regime thresholds; §11 role registry + instrument classification (M15).
+       // From Session_Log.md: load §8 Session State Log (prior scenario probabilities, open items).
+       //   §8 in Session_Log is AUTHORITATIVE for prior probabilities — not Calibration_State.
+       //
+       // Run M15.ValidateClassifications() — HARD_STOP if any allocation instrument absent from §11.
 
     4: fetch_current_market_data
        // @see M02_IntelGathering.FETCH_LIST
@@ -99,7 +117,7 @@ MODULE SessionInit {
 
     6: derive_scenario_probabilities
        // @see M03_ScenarioFramework.DeriveScenarioProbabilities()
-       // Uses: intel from Steps 4–5; prior probabilities from §8 (Step 3)
+       // Uses: intel from Steps 4–5; prior probabilities from Session_Log §8 (Step 3)
        // Applies: 25pp cap against prior (if prior exists); floors; B/C check
        AND check_recalibration_trigger
        // @see M03_ScenarioFramework.RecalibrationRule
@@ -120,8 +138,9 @@ MODULE SessionInit {
 
     10: write_session_state_and_credit_readings_to_github
         // @see M12_FileProtocol.WriteBack
-        // Writes both §7 (credit readings) and §8 (scenario state) in one operation
-        // GitHub — clean overwrite using SHA from session-start fetch
+        // Writes §7 (credit readings) and §8 (scenario state) to Session_Log.md
+        // AND updates Calibration_State.md if any calibration values changed this session
+        // Uses push_files([Calibration_State.md, Session_Log.md]) — single atomic operation
         // ALWAYS execute at session end — do not wait for client instruction
         // If conversation winds down without explicit session-end — execute anyway
   }
