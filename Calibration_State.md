@@ -2,7 +2,7 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-Version: 1.15  Last updated: May 7, 2026 (Full M05 session — scenario probabilities updated A=15/B=36/C=36/D=3/E=3/F=7; secular_technology_growth Scenario B pending upward revision logged §6 item 35 (MEDIUM confidence); Primary Taxable deployment complete; v1.13 targets confirmed live in allocation file.)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
+Version: 1.16  Last updated: May 11, 2026 (Full M05 session — scenario probabilities updated A=12/B=37/C=38/D=3/E=3/F=7; FRED data gap resolved — HY=281 bps, IG=79 bps, CCC=920 bps T1 confirmed; check_energy=0 on Brent reversal; Aramco T1 normalization timeline 2027+; all v1.13 trades confirmed executed; portfolio total ~$769k)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -15,7 +15,7 @@ Version: 1.15  Last updated: May 7, 2026 (Full M05 session — scenario probabil
 
 At session start, after both files are fetched, the advisor must state in the briefing:
 
-"Calibration State loaded, last update: May 7, 2026 | Session Log loaded"
+"Calibration State loaded, last update: May 11, 2026 | Session Log loaded"
 
 Absence of either confirmation line indicates the respective file was not loaded and the session is invalid for threshold-sensitive decisions.
 
@@ -26,6 +26,14 @@ After loading: run M15.ValidateClassifications() — all instruments in the allo
 ## Section 1 - Credit Signal Thresholds (relative, 1.5a)
 
 All HY/CCC/IG thresholds are relative to the trailing 180-day median of the underlying FRED series, computed at session start.
+
+**Approved source URLs (confirmed May 11, 2026):**
+- HY: https://fred.stlouisfed.org/data/BAMLH0A0HYM2
+- IG: https://fred.stlouisfed.org/data/BAMLC0A0CM
+- CCC: https://fred.stlouisfed.org/data/BAMLH0A3HYC
+- MOVE: https://www.investing.com/indices/ice-bofaml-move | https://finance.yahoo.com/quote/%5EMOVE/
+
+Note: FRED /data/ endpoint may return HTML wrapper in some fetch contexts. If web_fetch returns HTML rather than raw data, request screenshots from client as backup. Screenshots are acceptable T1 source for FRED data.
 
 ### 1.1 HY Composite - FRED: BAMLH0A0HYM2
 
@@ -47,6 +55,8 @@ Session observation (April 28): HY ~285-287 bps. Stale. HY_StressBeginning ~435 
 Session observation (April 29): HY ~284 bps. FRED last Apr 28 (1 day lag). No threshold fires.
 Session observation (April 30 full session): HY ~284 bps (carry forward). No threshold fires. T1_flag: stale.
 Session observation (May 6 full session): HY ~277 bps (ycharts T2, May 1) / ~283 bps (govspending T2, Apr 30 reference). FRED fetch attempted — metadata only; no live values retrieved. Tightening on deal optimism; no threshold fires. T1_flag: stale.
+Session observation (May 7 full session): HY ~277 bps (carry). No threshold fires. T1_flag: stale. FRED still metadata only.
+Session observation (May 11 full session): HY **281 bps** (FRED T1 — BAMLH0A0HYM2, May 8 close; confirmed via client screenshots). **FRED DATA GAP RESOLVED.** HY tightening from March-April peak (~345 bps); well below HY_StressBeginning ~435 bps (gap: 154 bps). 60d velocity: ~−25 bps (tightening — far from +100 bps threshold). No threshold fires.
 
 ### 1.2 IG Composite - FRED: BAMLC0A0CM
 
@@ -59,7 +69,8 @@ Session observation (May 6 full session): HY ~277 bps (ycharts T2, May 1) / ~283
 Session observation (April 19): IG ~83 bps. Baseline reference.
 Session observation (April 21-29): IG ~80-83 bps. Carry forward. IG_TransmissionReached NOT fired (threshold ~143 bps; gap ~60-63 bps). Stale.
 Session observation (April 30 full session): IG ~80 bps (carry). NOT fired. T1_flag: stale.
-Session observation (May 6 full session): IG ~80 bps (carry). NOT fired. T1_flag: stale.
+Session observation (May 6-7): IG ~80 bps (carry). NOT fired. T1_flag: stale. FRED metadata only.
+Session observation (May 11 full session): IG **79 bps** (FRED T1 — BAMLC0A0CM, May 8 close; confirmed via client screenshots). **FRED DATA GAP RESOLVED.** Below baseline (83 bps Apr 19). IG_TransmissionReached threshold ~143 bps; gap 64 bps. NOT fired.
 
 ### 1.3 CCC Tail - FRED: BAMLH0A3HYC
 
@@ -70,7 +81,8 @@ Session observation (May 6 full session): IG ~80 bps (carry). NOT fired. T1_flag
 
 First divergence computation (April 19): CCC Apr 16 = 921 bps vs Mar 16 = 973 bps = -52 bps tightening. Neither threshold fired.
 Session observations (April 21-30): CCC ~921 bps (carry forward; FRED stale). CCC_TailFirstWidening NOT fired. T1_flag: stale.
-Session observation (May 6 full session): CCC ~921 bps (carry). NOT fired. T1_flag: stale.
+Session observation (May 6-7): CCC ~921 bps (carry). NOT fired. T1_flag: stale. FRED metadata only.
+Session observation (May 11 full session): CCC **920 bps** (FRED T1 — BAMLH0A3HYC, May 8 close; confirmed via client screenshots). **FRED DATA GAP RESOLVED.** 30d divergence check (vs ~April 8 ≈950-960 bps): CCC ~−30 to −40 bps (tightening). HY 30d also tightening ~−10 to −30 bps. 3× composite rule NOT fired. Absolute divergence NOT fired. CCC_TailFirstWidening NOT triggered.
 
 ---
 
@@ -95,6 +107,9 @@ Session observations:
 - May 1 (ad-hoc bridge): Day 3 = May 1 $116.10. Clock active. Fujairah oil hub fire; IRGC declared Hormuz zones under Iranian military control. Escalation confirmed T1.
 - May 4 (ad-hoc bridge): Day 4 = May 4 $114.06-$115.01. Clock active. US-Iran direct naval exchange confirmed. UAE attacked.
 - May 6 full session: BRENT C-TRIGGER CLOCK BROKEN. Day 5 = May 5 close ~$109.87 (CNBC T1). Below $110 nominal threshold. Clock resets to Day 0. 4 consecutive days achieved (Apr 29-May 4); 10 required; not met. May 6 close: Brent $101.27 (NBC T1); WTI $95.08. Deal reports active. SGOL WTI floor: WTI ~$95, comfortably above $55 floor. SGOL invalidation NOT triggered. DXY ~97.77, well below 105 threshold.
+- May 7 full session: Brent ~$97 intraday (CNBC T1, -3%). Clock Day 0. 4-day declining streak (May 4-7) active. check_energy=1. Day 5 threshold: if Brent closes below ~$101 on May 8 → check_energy=2.
+- May 8 (day-5 check): Brent ~$100.49 (Trading Economics T2 CFD). DAY-5 CHECK FAILED — Brent reversed UP. 4-day declining streak (May 4-7) ended. check_energy = 0. C-trigger clock remains Day 0.
+- May 11 full session: Brent ~$107.67 (Fortune T2, 8:55am ET). RISING. check_energy = 0. Brent back within $93.50-$110 band; check_brent = 2 for C. C-trigger clock Day 0 — would restart if Brent closes ≥$110. Saudi Aramco CEO (T1 conference call, May 11): "If Hormuz reopening is delayed a few more weeks, normalization will last into 2027. Even if opened today, market rebalancing takes months." SGOL WTI floor: WTI ~$95-98, comfortably above $55. SGOL invalidation NOT triggered. DXY ~97.78 carry; well below 105 threshold.
 
 ### 2.2 Currency
 
@@ -102,7 +117,7 @@ Session observations:
 | --- | --- | --- |
 | DXY sustained above - SGOL invalidation | 105 nominal | Pending June 30 |
 
-DXY ~97.77 (Investing.com T2, May 6). Well below 105. No SGOL invalidation risk.
+DXY ~97.78 (Investing.com T2, carry May 7). Well below 105. No SGOL invalidation risk.
 
 ### 2.3 Macro
 
@@ -117,6 +132,8 @@ DXY ~97.77 (Investing.com T2, May 6). Well below 105. No SGOL invalidation risk.
 April 30 full session: Q1 2026 GDP advance estimate = +2.0% annualized (BEA T1). Above 1.5% threshold - B check_gdp drops to 1. D watch NOT triggered. Core PCE 3.2% YoY (BEA T1). FOMC: hold at 3.5-3.75%. Language upgraded: inflation is elevated. 4 dissents (3 hawkish, 1 dovish/Miran). C-hawk regime confirmed. Next CPI May 10-12 (second print - watch for >=3.5% -> C check_cpi to 2).
 
 May 6 full session: No new macro data releases. CPI print expected May 10-12. US-Iran deal framework reported (Axios/CBS/NPR T1) but not confirmed. Trump paused "Project Freedom"; Iran reviewing latest US proposal. Deal unconfirmed as of session close. Sahm Rule 0.20 (stable). No new unemployment or GDP data.
+
+May 11 full session: CPI April 2026 scheduled May 12, 8:30am ET (TOMORROW — not yet released). Consensus: headline +3.7% YoY (Kiplinger T2), 3.7-3.8% range (Polymarket prediction markets). Cleveland Fed nowcast: 3.56% YoY. BofA: no rate cuts in 2026; JPMorgan: inflation above 2% until early 2027 in all scenarios. BINARY EVENT — run DeriveScenarioProbabilities() immediately on release.
 
 Prior context: CPI March 3.3% YoY (1 of 3 for B trigger). Q4 2025 GDP 0.5%. Consumer sentiment 49.8 (record low). 10Y breakeven ~2.43%. Sahm Rule 0.20. Mag7 Q1 earnings all beat; zero guidance withdrawals. Azure +40%, AWS +28%, META +33%, GOOGL beat, AMZN EPS $2.78 vs $1.64 est. MSFT +18% YoY.
 
@@ -146,6 +163,8 @@ M07 Regional Concentration Ruling (v1.13, May 6, 2026): "Region" for purposes of
 2026-05-07 - AIPO reclassification + guard clearance (v1.14). Session type: ad-hoc analysis (no allocation fetch — full M05 session required for share count targets). AIPO ThematicETF_ClassificationAudit() COMPLETE. Holdings confirmed from T1 sources: Industrials 50%, IT 30%, Utilities 20%. Top holdings: Quanta Services 8.6%, GE Vernova 8.2%, Eaton 7.9%, Vertiv 7.9%, NVDA 4.2%, AVGO 3.9%, AMD 2.1%. Revised components: RAC 0.55→0.45; STG 0.20→0.30; BMD 0.15→0.00 (ELIMINATED — no qualifying undifferentiated domestic equity; all holdings have specific AI/power binding drivers); new PDT 0.20; IHC 0.10→0.05. CORRECTION: prior session analysis (May 7 ad-hoc) erroneously stated "B improves" — WRONG. Actual revised AIPO EV = +2.42% (↓ from +2.95%), rank drops to #5 (below SIVR +2.86%). EV reduction driven by PDT B conservative = -3% and more STG weight at B = -6%. A-regime improves: +4.05% (↑ from +3.80%) due to STG A = +6% and PDT A = +4%. SIVR entry guard CLEARED: confirmed price anchors (March 14 = $76.31, March 26 = ~$63.64, April 2 = $69.11, April 24 = $72.28, May 6 = $73.79); 90d avg ~$78-82; threshold ~$94-98; current $73.79 below threshold. v1.13 estimated avg ($55-65) was incorrect — all confirmed data points above $63. COPX entry guard CLEARED: confirmed anchors (Feb 6 = $81.31, April 28 = $78.69, May 6 = $78.21); 90d avg ~$85-90; threshold ~$102-106; current $78.21 below threshold. v1.13 estimated avg ($55-65) was significantly incorrect — Feb 6 anchor $81.31 alone exceeds entire estimated range. Execution notes updated: SIVR and COPX now immediate. AI application layer instrument screen conducted: no M07-compliant pure-play instrument available (track record and/or AUM constraints). NVDA overlap noted: AIPO holds NVDA 4.2%, AVGO 3.9%, AMD 2.1% — partial overlap with MAGS. Monitor at Q2.
 
 2026-05-07 - Full M05 session (v1.15). Scenario probabilities updated: A=15%(-3pp), B=36%(+1pp), C=36%(+2pp), D=3%(unch), E=3%(unch), F=7%(unch). check_energy=1 this session (Brent declining 4 consecutive days vs ≥5 threshold). CPI May 12 binary event upcoming — highest priority. M14 composite HIGH unchanged. M16 analysis: secular_technology_growth Scenario B full 4-layer run completed; MEDIUM confidence; upward pending proposal logged (§6 item 35). Primary Taxable deployment complete: DBMF 854sh, XLP 196sh, COPX 212sh executed; $51,950 cash fully deployed (Open Decision #4 CLOSED). v1.13 targets confirmed live in allocation file; remaining trades executing through May 8. Portfolio total ~$762,097.
+
+2026-05-11 - Full M05 session (v1.16). Scenario probabilities updated: A=12%(-3pp), B=37%(+1pp), C=38%(+2pp), D=3%(unch), E=3%(unch), F=7%(unch). check_energy reverted to 0 (Brent $107.67 rising; May 8 day-5 check FAILED — streak reversed up; Saudi Aramco CEO T1 conference call May 11: normalization into 2027 even if Hormuz opened today). FRED DATA GAP RESOLVED — first T1 credit readings in multiple sessions: HY=281 bps, IG=79 bps, CCC=920 bps (all May 8 close via FRED screenshots). MOVE=70.74 T1 confirmed (NYSE Global Indexes). Approved FRED+MOVE source URLs logged in §1. All v1.13 trades confirmed executed per allocation sheet (all 6 accounts at targets ±1pp). Portfolio total ~$769k (+$7k vs May 7 on price appreciation). No allocation changes this session. CPI May 12 binary event pending — run DeriveScenarioProbabilities() immediately on 8:30am ET release.
 
 ---
 
@@ -283,7 +302,7 @@ Weighted multiplier (A=18/B=35/C=34/D=3/E=3/F=7) = 1.599x. Required ~2.8%. Achie
 15. AIPO ThematicETF_ClassificationAudit() — COMPLETE v1.14 (May 7, 2026). Revised classification in §11. Confirm at Q2 for weight drift and PAVE ETN overlap check. Financial Services weight (3.60% Apr 30) — assess if above 5%.
 16. MAGS vs AGIX: reassess if Anthropic IPO announced or completed. AGIX holds ~2.98% Anthropic direct. Evaluate upgrade at Q3 or earlier on IPO announcement.
 17. Review section 11 role registry for new structural drivers. Confirm all 12 existing + 5 v1.13 roles remain complete and non-redundant. NOTE: AI application layer gap identified — no M07-compliant pure-play instrument available as of May 7, 2026. Re-screen at Q2 as new instruments mature (track record threshold).
-18. MOVE index: assess formal integration into M11/M14 as supplementary credit/volatility signal.
+18. MOVE index: assess formal integration into M11/M14 as supplementary credit/volatility signal. Approved source URLs confirmed May 11 (§1).
 19. Add Fed response function sub-variable to Scenario C scoring (design proposal Apr 29).
 20. Record all results in section 3 calibration log.
 21. AIPO Financial Services weight (3.60% as of Apr 30): assess materiality for classification. Flag if above 5% by Q2 audit.
@@ -311,7 +330,7 @@ Weighted multiplier (A=18/B=35/C=34/D=3/E=3/F=7) = 1.599x. Required ~2.8%. Achie
   - Adoption: BLOCKED intra-session (MEDIUM confidence). Adopt at June 30 audit only.
   - Upgrade path to HIGH confidence: if Q2 2026 Mag7 earnings (reporting May-July 2026) confirm >25% revenue growth in B environment with zero guidance withdrawals → provides 2nd and 3rd data points → eligible for HIGH confidence reclassification and intra-session adoption with client confirmation.
   - Current §4.1 B value [-6,-1] remains operative until June 30 adjudication.
-  
+
 ---
 
 ## Section 9 - Market Regime Thresholds (M14)
@@ -328,6 +347,8 @@ All values CALIBRATION_DATED. First audit: June 30, 2026.
 | equity_scenario_divergence MODERATE | broad_equity_30d >= +2% while directive reductive | Calibration-dated |
 
 May 6 full session M14 computation: commodity_fear_divergence = MODERATE (energy_90d ~+63% >= +10%; VIX_change_90d ~+3.4 pts — above 0, within +5). equity_scenario_divergence = HIGH (S&P 30d +10.3% >= +5%; B/C directive for broad_market_equity is reductive). Composite = HIGH (upgraded from MODERATE). UnderweightReviewTrigger fired for Primary IRA MLPX (-9.82pp) and Primary Roth MLPX (-10.28pp).
+
+May 11 full session M14 computation: commodity_fear_divergence = MODERATE (energy_90d ~+71% >= +10%; VIX_change_90d ~+1-3 pts >0, ≤+5 → not HIGH). equity_scenario_divergence = HIGH (S&P 30d ~+8-10% >= +5%; B/C directive reductive). Composite = HIGH (unchanged). UnderweightReviewTrigger: NOT fired (all accounts within ±1pp of v1.13 targets).
 
 ### 9.2 Underweight Review Trigger
 
@@ -547,7 +568,7 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 
 #### SIVR
 - Components: inflation_hedge_precious_metals (0.55) + inflation_hedge_commodity_linked (0.45)
-- Basis: Aberdeen Standard Physical Silver Shares ETF. Tracks spot silver price via physical silver bullion. Lower cost alternative to SLV (0.30% ER vs 0.50%).
+- Basis: Aberdeen Standard Physical Silver Shares ETF. Tracks spot silver price via physical silver bullion. Lower cost alternative to SLV (0.30% ER vs 0.50%)
 - AUM: ~$5.5B. Expense ratio: 0.30%. Custodian: ICBC Standard Bank (UK).
 - Last reviewed: 2026-05-07 (v1.14 — entry guard cleared)
 - EV (A=18/B=35/C=34/D=3/E=3/F=7): +2.86%. Ranked #4.
@@ -647,7 +668,7 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 
 ## Consolidated Target Allocations (v1.13, May 6, 2026)
 
-All values are target percentages. Share counts computed by allocation file (authoritative). Execution notes: DBMF, VTIP, XLP, SIVR, COPX — immediate (SIVR and COPX entry guards cleared v1.14, May 7, 2026); MLPX ADD — pending 90d trailing price verification from T1 source.
+All values are target percentages. Share counts computed by allocation file (authoritative). Execution notes: DBMF, VTIP, XLP, SIVR, COPX — immediate (SIVR and COPX entry guards cleared v1.14, May 7, 2026); MLPX ADD — pending 90d trailing price verification from T1 source. ALL TRADES CONFIRMED EXECUTED as of May 11, 2026 (v1.16 confirmation — all accounts at v1.13 targets ±1pp per allocation sheet fetch).
 
 | Instrument | Primary IRA | Primary Roth | Primary Taxable | Taxable Pres. | Relative IRA | Relative Roth |
 | --- | --- | --- | --- | --- | --- | --- |

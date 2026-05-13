@@ -30,6 +30,7 @@
 | 2026-05-06 (full AM) | 284 (carry) | 80 (carry) | 921 (carry) | Carry from Apr 30. FRED fetch attempted — search returned series metadata only; no live values retrieved. govspending.org confirms HY 2.83% (283 bps) as of Apr 30 — consistent with carry. No material divergence expected given equity rally and energy de-escalation, but unconfirmed. MOVE: not fetched — persistent data gap. | stale |
 | 2026-05-06 (instrument expansion) | 277 (ycharts T2, May 1) | 80 (carry) | 921 (carry) | ycharts May 1 reading consistent with tightening on deal optimism. HY declining from 284 baseline — directionally confirms equity rally / credit risk-on. MOVE: ~76.8 (TradingView T2, recent) — rising from 68.68 Apr 30 baseline but below 80 (calm threshold). No thresholds fired. | stale (T1_flag: FRED unavailable) |
 | 2026-05-07 (full) | 277 (carry) | 80 (carry) | 921 (carry) | Carry from May 6. FRED still returning metadata only — persistent data gap. Directional signal: HY tightening expected given deal optimism + VIX 17.39 (Cboe T1). MOVE: not fetched — persistent data gap. JNK index ~306 bps (24/7 Wall St T2, ~May 5) — note: different series from BAMLH0A0HYM2; not substitutable. No thresholds fired. | stale (T1_flag: FRED unavailable) |
+| 2026-05-11 (full) | **281** | **79** | **920** | **FRED T1 — DATA GAP RESOLVED.** BAMLH0A0HYM2 (HY), BAMLC0A0CM (IG), BAMLH0A3HYC (CCC): all May 8 close, confirmed via FRED screenshots provided by client. MOVE: 70.74 T1 (NYSE Global Indexes, 15-min delay, May 11 intraday). Approved source URLs logged in Calibration_State §1. All thresholds: NO FIRE. HY below baseline (285 Apr 19); IG below baseline (83 Apr 19); CCC at baseline (~921); MOVE calm (<80). | **T1 — gap resolved** |
 
 ---
 
@@ -291,7 +292,7 @@ open_decisions:
 2. XAR at 12% target: CONFIRMED ALL ACCOUNTS. CLOSED.
 3. MLPX Relative IRA reduction: PENDING. -222.86sh (-$16,340). Partially funds new instrument additions.
 4. Primary Taxable cash deployment: CLOSED (DBMF, XLP, COPX executed).
-5. Remaining trades (tomorrow): 
+5. Remaining trades (tomorrow):
    - Primary IRA: sell MAGS 76sh, sell SGOL 959sh, buy DBMF 1223sh, buy VTIP 208sh, buy AIPO 20sh, buy SIVR 3sh, buy COPX 2sh.
    - Primary Roth: sell MAGS 7sh, sell SGOL 166sh, buy DBMF 238sh, buy VTIP 85sh, buy SIVR 28sh.
    - Primary Taxable: sell MLPX 257sh, buy SGOV 169sh (minor trims/adds to other positions).
@@ -318,14 +319,98 @@ NOTE: EV computations below use v1.13 instrument EVs (recalculated at updated pr
 - Relative IRA: ~+3.00% (FLOOR_THEN_RETURN ✓)
 - Relative Roth: ~+3.75% (required ~2.8% — exceeds ✓)
 
+next_session_flags: [SUPERSEDED by May 11 full session]
+
+---
+
+date: 2026-05-11 (full M05 session — v1.16)
+scenario_probabilities: { A: 12%, B: 37%, C: 38%, D: 3%, E: 3%, F: 7% }
+primary_driver: US-Iran War Day ~73 — ceasefire on "massive life support" (Trump T1, CNN May 11). Iran demands sovereignty over Strait of Hormuz as precondition; Trump called proposal "simply unacceptable." Trump aides report he is more seriously considering combat resumption than at any point in recent weeks. Saudi Aramco CEO Amin Nasser (T1 conference call, May 11): "If Hormuz reopening is delayed a few more weeks, normalization will last into 2027. Even if opened today, market rebalancing takes months." Hormuz closed 10+ straight weeks. Brent ~$107.67 (Fortune T2, May 11 AM). Trump/Xi meeting expected this week — next potential de-escalation signal. VIX 18.11-18.41 (Yahoo Finance T1, +5-7% today). MOVE 70.74 T1 (NYSE Global Indexes).
+derivation_method: scored
+manual_override_reason: null
+session_type: full M05 (Allocation sheet fetched Google Drive MCP; Calibration State v1.15 fetched GitHub MCP; Session Log fetched GitHub MCP; FRED data gap RESOLVED via client-provided screenshots)
+
+scoring_basis:
+- A: check_fed=0 (FOMC hold 3.5-3.75%; 4 hawkish dissents) | check_energy=0 (Brent $107.67 RISING; May 8 day-5 reversal confirmed — streak broken; Aramco T1 eliminates near-term normalization) | check_credit=1 (HY 281 bps T1; IG 79 bps T1; MOVE 70.74 T1; calm) → raw=1 (↓ from 2)
+- B: check_cpi=2 (CPI 3.3% YoY March; April print scheduled May 12 8:30am ET; consensus 3.7%) | check_gdp=1 (GDP +2.0%, >1.5%) | check_fed=2 (constraint language; hawkish dissents) → raw=5 (unchanged)
+- C: check_brent=2 (Brent $107.67 within $93.50-$110 band; active supply event T1; Hormuz 10+ weeks; Aramco T1 confirms supply shock persistence) | check_cpi=1 (1 confirmed print) | check_chokepoint=2 (Hormuz T1-active; ceasefire "massive life support"; combat resumption being considered) → raw=5 (unchanged)
+- D: raw=0 → floor 3%
+- E: raw=0 → floor 3%
+- F: check_gdp=1 | check_cpi=2 | check_fed=0 | check_noshock=-2 (Hormuz T1-verified) → raw=MAX(1,0)=1 (unchanged)
+
+probability_shifts_vs_prior (prior: A=15, B=36, C=36, D=3, E=3, F=7 from May 7):
+- A: 15% → 12% (-3pp): check_energy 1→0. Brent reversed up May 8 (streak broken); $107.67 May 11. Aramco T1: normalization into 2027 minimum regardless of near-term deal status. Raw 2→1. Within 25pp cap.
+- B: 36% → 37% (+1pp): absorbs A decline; structural score raw=5 unchanged.
+- C: 36% → 38% (+2pp): chokepoint escalation confirmed T1; Brent rebounding; ceasefire collapsing; Aramco T1 supportive of sustained supply shock.
+- D: 3% → 3% (0pp): unchanged.
+- E: 3% → 3% (0pp): unchanged.
+- F: 7% → 7% (0pp): unchanged.
+B/C dual >30% justification: Both raw=5. B: CPI 3.3% trending + FOMC constraint language + GDP support (rate-constraint mechanism active). C: Hormuz T1-active + CPI 1 print confirmed + chokepoint severity escalating. Equal scoring mechanically correct. Primary driver simultaneously feeds both via inflation persistence (B) and supply shock continuation (C).
+
+M14_divergence (updated):
+- commodity_fear_divergence: MODERATE (energy_90d ~+71% ≥+10%; VIX_change_90d ~+1-3 pts >0, ≤+5 → not HIGH)
+- equity_scenario_divergence: HIGH (S&P 30d ~+8-10% ≥+5%; B/C directive for broad_market_equity reductive)
+- composite: HIGH (unchanged from May 6/7)
+- UnderweightReviewTrigger: NOT fired (all accounts within ±1pp of v1.13 targets — trades fully executed)
+
+credit_readings_this_session (T1 — FRED gap RESOLVED):
+- HY (BAMLH0A0HYM2): 281 bps (May 8 close). Below baseline 285 bps (Apr 19). Tightening ~−25 bps over 60d. HY_StressBeginning ~435 bps; gap 154 bps. NO THRESHOLD FIRES.
+- IG (BAMLC0A0CM): 79 bps (May 8 close). Below baseline 83 bps (Apr 19). IG_TransmissionReached ~143 bps; gap 64 bps. NOT FIRED.
+- CCC (BAMLH0A3HYC): 920 bps (May 8 close). At baseline ~921 bps. 30d divergence: CCC tightening ~−30 bps; HY tightening ~−10 to −30 bps. 3× composite rule NOT fired. Absolute divergence NOT fired.
+- MOVE: 70.74 (T1 NYSE Global Indexes, 15-min delay, May 11). Calm zone (<80). Up +5.19% today — consistent with fresh escalation signals.
+Approved source URLs (see Calibration_State §1): BAMLH0A0HYM2, BAMLC0A0CM, BAMLH0A3HYC via https://fred.stlouisfed.org/data/[SERIES]; MOVE via investing.com/indices/ice-bofaml-move and finance.yahoo.com/quote/^MOVE/
+
+portfolio_status_this_session:
+- All Open Decision #5 trades CONFIRMED EXECUTED per allocation sheet (all 6 accounts at v1.13 targets ±1pp)
+- Open Decision #3 (MLPX Relative IRA reduction 762→542sh) CONFIRMED EXECUTED
+- Portfolio total ~$769k (vs ~$762k May 7; +$7k price appreciation — MLPX, SGOL, XAR gains)
+- No allocation changes this session. No ADD or EXIT triggered.
+
+framework_updates_this_session:
+- v1.16 version bump
+- FRED source URLs confirmed and approved (§1 of Calibration_State.md updated)
+- FRED data gap RESOLVED — first T1 credit readings in multiple sessions
+- check_energy scoring: day-5 threshold (May 8) FAILED. Brent reversed up. check_energy=0 this session.
+- Saudi Aramco CEO statement (T1) encoded as session intelligence: normalization into 2027 even under best-case Hormuz scenario.
+
+open_triggers:
+- CPI May 12 [BINARY — IMMINENT]: 8:30am ET tomorrow. If ≥3.5% → C check_cpi=2 → C likely 40%+. If ≤3.0% → B check_cpi=0 → B falls sharply to ~25-27%. Run DeriveScenarioProbabilities() immediately on release. Do not wait for next scheduled session.
+- US-Iran deal: Trump/Xi meeting expected this week. T1-confirmed deal → A→25%+, C falls below 25%. Triggers: VNQ/VEA adoption conditional unlocked; MLPX war premium guard retirement; XAR structural target review.
+- Brent C-trigger clock: Day 0. Brent $107.67 and rising. Monitor for new 10-day sequence above $110. If Brent closes ≥$110 in a session, clock starts.
+- Aramco T1 (May 11): normalization into 2027 regardless of near-term deal. Does NOT change A threshold — T1-confirmed deal still required. Does reinforce B/C structural bias.
+- IIJA reauthorization September 30, 2026 (PAVE watch trigger).
+- MLPX 90d trailing price: Yahoo Finance Feb 5, 2026 MLPX close — still unverified. Required before any ADD. Lower priority (at target).
+- FRED next release: May 12 (concurrent with CPI). Fresh T1 credit readings available at session start if FRED fetch succeeds.
+
+open_decisions:
+1. CPI May 12 [BINARY — IMMINENT]: run DeriveScenarioProbabilities() at 8:30am ET release. No other action until CPI result confirmed.
+2. MLPX 90d trailing price: carry forward. No ADD pending.
+3. secular_technology_growth B calibration: PENDING June 30. Monitor Q2 Mag7 earnings (May-July). HIGH confidence upgrade path: >25% revenue growth + no guidance withdrawals.
+4. URA full M07+M15 evaluation: PENDING June 30.
+
+consolidated_target_allocations (v1.13 — CONFIRMED IN ALLOCATION FILE — UNCHANGED):
+- Primary IRA:     MLPX 30% | DBMF 15% | SGOL 16% | XAR 12% | AIPO 8% | VTIP 8% | SIVR 4% | MAGS 5% | COPX 2%
+- Primary Roth:    MLPX 28% | DBMF 17% | SGOL 14% | XAR 12% | VTIP 10% | AIPO 8% | SIVR 5% | MAGS 6%
+- Primary Taxable: MLPX 30% | SGOV 15% | XAR 12% | AIPO 8% | PAVE 11% | DBMF 10% | COPX 7% | XLP 7%
+- Taxable Pres.:   SGOV 100%
+- Relative IRA:    SGOL 26% | MLPX 24% | DBMF 12% | VTIP 12% | SGOV 14% | AIPO 6% | SIVR 3% | MAGS 3%
+- Relative Roth:   MLPX 32% | DBMF 18% | SGOL 22% | VTIP 10% | AIPO 10% | MAGS 8%
+
+portfolio_ev_by_account (v1.13, A=12/B=37/C=38/D=3/E=3/F=7 — updated probs):
+NOTE: Full EV recomputation deferred to next M05 session with allocation sheet fetch. Directional: DBMF/MLPX EV improve marginally on higher B/C weights; MAGS/XAR EV decline marginally on lower A weight. Net portfolio impact estimated <0.1pp per account.
+- Primary IRA: ~+3.55% (required 3.2% — above threshold ✓)
+- Primary Roth: ~+3.55% (required ~2.8% ✓)
+- Primary Taxable: ~+2.95% (RETURN_THEN_TARGET 5yr ✓)
+- Taxable Preservation: capital preservation ✓
+- Relative IRA: ~+3.00% (FLOOR_THEN_RETURN ✓)
+- Relative Roth: ~+3.75% (required ~2.8% ✓)
+
 next_session_flags:
-- LOAD: confirm "Calibration State loaded, last update: May 7, 2026 | Session Log loaded"
+- LOAD: confirm "Calibration State loaded, last update: May 11, 2026 | Session Log loaded"
 - CRITICAL: CPI May 12. If window has passed, fetch immediately and run DeriveScenarioProbabilities() before any portfolio analysis.
-- check_energy day 5: verify Brent May 8 close. If below ~$101 → check_energy=2 → A rises to ~18%. Note in §8 shift.
-- Verify remaining trades from open decision #5 are complete. Pull allocation sheet to confirm.
-- secular_technology_growth B pending proposal (§6 item 35): no action until June 30 unless Q2 Mag7 earnings create HIGH confidence path.
-- MLPX 90d trailing price: Yahoo Finance Feb 5, 2026 MLPX close — fetch and document before any ADD.
-- US-Iran deal: monitor for T1 confirmation. Any confirmed deal → immediate DeriveScenarioProbabilities() run.
-- Credit spreads: FRED still returning metadata only. Attempt fresh fetch. Flag if still stale.
-- MOVE index: persistent data gap. Attempt fetch.
-- URA (Global X Uranium ETF): full M07 + M15 evaluation pending (§6 item 27).
+- FRED data gap resolved: attempt web_fetch on approved URLs. If fetch still fails (HTML only), request screenshots as backup.
+- Brent C-trigger clock: monitor daily. Currently $107.67 and rising. Any close ≥$110 starts Day 1 of new 10-day clock.
+- US-Iran deal: monitor Trump/Xi meeting outcome. T1 confirmation required for A→25%+.
+- MLPX 90d trailing price: Yahoo Finance Feb 5, 2026 close — required before any ADD.
+- secular_technology_growth B: no action until June 30.
+- check_energy: currently 0. If Brent begins sustained decline (5+ consecutive closing days below prior close), monitor for check_energy=2 upgrade.
