@@ -31,6 +31,7 @@
 | 2026-05-06 (instrument expansion) | 277 (ycharts T2, May 1) | 80 (carry) | 921 (carry) | ycharts May 1 reading consistent with tightening on deal optimism. HY declining from 284 baseline — directionally confirms equity rally / credit risk-on. MOVE: ~76.8 (TradingView T2, recent) — rising from 68.68 Apr 30 baseline but below 80 (calm threshold). No thresholds fired. | stale (T1_flag: FRED unavailable) |
 | 2026-05-07 (full) | 277 (carry) | 80 (carry) | 921 (carry) | Carry from May 6. FRED still returning metadata only — persistent data gap. Directional signal: HY tightening expected given deal optimism + VIX 17.39 (Cboe T1). MOVE: not fetched — persistent data gap. JNK index ~306 bps (24/7 Wall St T2, ~May 5) — note: different series from BAMLH0A0HYM2; not substitutable. No thresholds fired. | stale (T1_flag: FRED unavailable) |
 | 2026-05-11 (full) | **281** | **79** | **920** | **FRED T1 — DATA GAP RESOLVED.** BAMLH0A0HYM2 (HY), BAMLC0A0CM (IG), BAMLH0A3HYC (CCC): all May 8 close, confirmed via FRED screenshots provided by client. MOVE: 70.74 T1 (NYSE Global Indexes, 15-min delay, May 11 intraday). Approved source URLs logged in Calibration_State §1. All thresholds: NO FIRE. HY below baseline (285 Apr 19); IG below baseline (83 Apr 19); CCC at baseline (~921); MOVE calm (<80). | **T1 — gap resolved** |
+| 2026-05-13 (full) | **282** | **77** | **937** | **FRED T1 — embedded allocation spreadsheet tab** (BAMLH0A0HYM2, BAMLC0A0CM, BAMLH0A3HYC: all May 12 close, direct FRED feed in allocation spreadsheet new tab). MOVE: 70.74 carry from May 11 T1 — new spreadsheet MOVE tab present but value not separately parsed this session; carry forward. All thresholds: NO FIRE. HY +1 bp (282 vs 281); IG −2 bps (77 vs 79 — slight tightening despite hot CPI); CCC +17 bps (937 vs 920 — minor widening; 30d divergence check: CCC +17 vs HY +1; 3× ratio technically fires (17>3×1=3) but absolute floor requires +200 bps not met → NOT triggered). VIX 17.97 pre-market (calm). | **T1 — spreadsheet tab** |
 
 ---
 
@@ -414,3 +415,108 @@ next_session_flags:
 - MLPX 90d trailing price: Yahoo Finance Feb 5, 2026 close — required before any ADD.
 - secular_technology_growth B: no action until June 30.
 - check_energy: currently 0. If Brent begins sustained decline (5+ consecutive closing days below prior close), monitor for check_energy=2 upgrade.
+
+---
+
+date: 2026-05-13 (full M05 session — v1.17)
+scenario_probabilities: { A: 7%, B: 36%, C: 44%, D: 3%, E: 3%, F: 7% }
+primary_driver: US-Iran War Day ~74 / CPI April 2026 supply-shock confirmation. CPI = 3.8% YoY (BLS T1, May 12). Energy >40% of monthly gain. Real wages −0.3% YoY. Hormuz closed, deal effectively stalled (Trump considering resuming strikes, dismissed Iran's latest proposal). IEA: market undersupplied through October even if conflict ends. BZ=F May 12 close $105.71 — C-trigger clock Day 0 confirmed.
+derivation_method: scored
+manual_override_reason: null
+session_type: full M05 (Allocation sheet fetched Google Drive MCP — pre-market, prices reflect May 12 close; Calibration State v1.16 fetched GitHub MCP; Session Log fetched GitHub MCP; FRED T1 via embedded allocation spreadsheet tab May 12 close)
+
+scoring_basis:
+- A: check_fed=0 (FOMC hold 3.5-3.75%) | check_energy=0 (BZ=F May 12 close $105.71 < $110; C-trigger clock Day 0 confirmed; Fortune T2 spot readings rejected as clock reference) | check_credit=1 (HY 282 bps, IG 77 bps — calm) → raw=1 (unchanged from May 11)
+- B: check_cpi=2 (CPI 3.8% YoY April; below 4% formal B trigger; 3-4% trending confirmed; check_cpi unchanged) | check_gdp=1 (GDP +2.0%, >1.5%) | check_fed=2 (FOMC constraint language; hawkish dissents) → raw=5 (unchanged)
+- C: check_brent=2 (BZ=F $105.71, within $93.50-$110 band; Hormuz active T1; Aramco T1 normalization 2027+) | check_cpi=2 (UPGRADED: April 3.8% ≥ 3.5% — second qualifying supply-shock print; raw 5→6) | check_chokepoint=2 (Hormuz T1-active; deal stalled; Trump considering resuming strikes per multiple T1) → raw=6 (UPGRADED from 5)
+- D: raw=0 → floor 3%
+- E: raw=0 → floor 3%
+- F: raw=1 (unchanged) → 7%
+
+probability_derivation (non-floor pool = A+B+C+F raw = 1+5+6+1 = 13; non-floor probability = 94%):
+- A: 1/13 × 94% = 7.23% → 7%
+- B: 5/13 × 94% = 36.15% → 36%
+- C: 6/13 × 94% = 43.38% → 44% (rounded up to achieve 100% sum)
+- F: 1/13 × 94% = 7.23% → 7%
+- D: 3%, E: 3%
+- Total: 7+36+44+3+3+7 = 100% ✓
+
+probability_shifts_vs_prior (prior: A=12, B=37, C=38, D=3, E=3, F=7 from May 11):
+- A: 12% → 7% (−5pp): raw unchanged at 1; pool denominator grows 12→13 as C check_cpi upgrades; A proportional share falls from 1/12 to 1/13 of non-floor pool. Within 25pp cap.
+- B: 37% → 36% (−1pp): raw unchanged at 5; proportional share falls from 5/12 to 5/13. Rounding.
+- C: 38% → 44% (+6pp): raw 5→6; proportional share rises from 5/12 to 6/13 of non-floor pool. DRIVER: second qualifying supply-shock CPI print. Within 25pp cap.
+- D: 3% → 3% (0pp): unchanged.
+- E: 3% → 3% (0pp): unchanged.
+- F: 7% → 7% (0pp): raw unchanged; proportional share 1/12→1/13; rounds to 7%.
+B/C dual >30% justification: B raw=5 (CPI 3.8% sticky + FOMC constraint + GDP support = rate-constraint stagflation mechanism active). C raw=6 (Hormuz T1-active + second supply-shock CPI print confirmed by energy's 40%+ monthly contribution + chokepoint severity). Asymmetry correct: C elevated above B for first time as second qualifying print resolves binary.
+
+M14_divergence:
+- commodity_fear_divergence: MODERATE (energy_90d ~+62% ≥+10%; VIX 17.97 pre-market, VIX_change_90d ~+4-5 pts — borderline; classified MODERATE)
+- equity_scenario_divergence: HIGH (S&P 500 futures 7,423 pre-market; S&P ≥+5% above 30d prior — B/C directive reductive)
+- composite: HIGH (unchanged)
+- UnderweightReviewTrigger: NOT fired (all accounts within ±1pp of v1.13 targets)
+
+credit_readings_this_session (T1 — embedded spreadsheet tab, May 12 close):
+- HY (BAMLH0A0HYM2): 282 bps. +1 bp from May 8. HY_StressBeginning ~435 bps; gap 153 bps. NO THRESHOLD FIRES.
+- IG (BAMLC0A0CM): 77 bps. −2 bps from May 8. IG_TransmissionReached ~143 bps; gap 66 bps. NOT FIRED.
+- CCC (BAMLH0A3HYC): 937 bps. +17 bps from May 8. 30d divergence: CCC +17 vs HY +1; absolute floor requires +200 bps — NOT FIRED.
+- MOVE: 70.74 carry from May 11 T1. MOVE tab present in spreadsheet; value not separately parsed this session.
+- VIX: 17.97 pre-market (Yahoo Finance, calm).
+All credit thresholds: NO FIRE.
+
+key_data_this_session:
+- CPI April 2026: +3.8% YoY, +0.6% MoM (BLS T1, USDL-26-0721, released May 12). Core: +2.8% YoY, +0.4% MoM. Energy: +17.9% YoY. Gasoline: +28.4% YoY. Food: +3.2% YoY. Real wages: −0.5% MoM, −0.3% YoY.
+- BZ=F May 12 close: $105.71 (client-confirmed T2). Established as canonical Brent reference replacing Fortune T2 intraday spot.
+- MLPX EntryExtensionGuard: CLEARED. 90d avg: $72.31 (Feb 5 close: $66.54, client-confirmed). Threshold: $86.77. Current: $74.40. +2.9% above avg — well below 20%. WAR PREMIUM ENTRY GUARD also CLEARED (same threshold).
+- Portfolio total: ~$775k (allocation sheet May 12 close prices; up ~$6k from May 11).
+
+framework_updates_this_session:
+- v1.17 version bump.
+- BZ=F established as canonical Brent reference (Fortune spot rejected).
+- MLPX both entry guards CLEARED — ADD eligible in all accounts (no ADD needed; at target).
+- FRED data source: allocation spreadsheet embedded tab confirmed as T1 source for credit spreads.
+- M16 LivingUpdateTrigger check (C +6pp shift): no intra-session adoption triggered. All pending items MEDIUM/LOW confidence — June 30 audit venue unchanged. Adopted values (DBMF B/C, MLPX B/C) remain valid and improving in direction.
+- GOOGLEFINANCE ticker list provided for new spreadsheet market data tab (§6 item 36 in Calibration_State).
+
+portfolio_ev_by_account (v1.13 current targets, A=7/B=36/C=44/D=3/E=3/F=7):
+- Primary IRA: +4.27% (required ~3.39% ✓ — +0.88pp above)
+- Primary Roth: +4.33% (required ~3.03% ✓ — +1.30pp above)
+- Primary Taxable: +3.25% (RETURN_THEN_TARGET 5yr ✓)
+- Taxable Preservation: +0.81% (capital preservation ✓)
+- Relative IRA: +3.53% current → +3.89% if v1.17 gold reallocation executed (FLOOR_THEN_RETURN ✓)
+- Relative Roth: +4.45% current → +4.73% if v1.17 gold reallocation executed (required ~3.03% ✓)
+
+open_triggers:
+- Brent C-trigger clock: Day 0 confirmed (BZ=F $105.71 May 12 close < $110). Monitor BZ=F close every session. New clock requires 10 consecutive BZ=F closes ≥$110.
+- US-Iran deal: Trump/Xi meeting pending. T1-confirmed deal → A→25%+, C falls below 25%. Unlocks: VNQ/VEA conditional, MLPX war premium guard retirement, XAR structural target review.
+- MLPX ADD: both guards cleared; no ADD needed (at target); unblocked for future rebalancing use.
+- FRED/MOVE tab: GOOGLEFINANCE ticker list provided this session (§6 item 36). BZ=F (NYMEX:BZ) and DXY (INDEXDXY:DXY) need environment testing. MLPX historical confirmed working.
+- IIJA reauthorization September 30, 2026 (PAVE watch trigger).
+- secular_technology_growth B calibration: PENDING June 30. Monitor Q2 Mag7 earnings (May-July). Upgrade path: >25% revenue growth + zero guidance withdrawals → HIGH confidence eligible.
+- Q2 audit: June 30, 2026.
+
+open_decisions:
+1. Gold reallocation — RECOMMENDED THIS SESSION, PENDING CLIENT EXECUTION IN ALLOCATION SHEET:
+   Relative IRA: SGOL 26%→20%, SIVR 3%→6%, DBMF 12%→15%
+   Relative Roth: SGOL 22%→16%, SIVR 0%→4% (new position), DBMF 18%→20%
+   EV impact: Relative IRA +3.53%→+3.89% (+0.36pp); Relative Roth +4.45%→+4.73% (+0.28pp)
+   E-scenario floor check (Relative IRA): new portfolio E return = +0.78% (positive; floor maintained ✓)
+   Structural basis: C=44% dominant; SGOL C = −2% (C-hawk rate regime); SIVR C blended = +2.05%; DBMF C = +18%. SGOL hold EV still positive (+1.31%) — retained at 20%/16% for B-scenario (+2.16%/+1.92% contribution) and E-scenario safe haven (+2.00%/+1.60% contribution).
+   Once executed and confirmed in allocation sheet: update Calibration_State §11 targets and Consolidated Target Allocations table; bump to v1.18.
+2. MAGS: at v1.13 target weights ±1pp. Strong recent market performance noted (M14 equity_scenario_divergence). Structural EV = −1.77% (deteriorating as A shrinks). Override remains in force. Monitor for overweight drift at next allocation fetch.
+3. secular_technology_growth B: PENDING June 30.
+4. URA full M07+M15 evaluation: PENDING June 30.
+
+consolidated_target_allocations:
+  v1.13 confirmed targets — see Calibration_State.md Consolidated Target Allocations table.
+  v1.17 revision pending execution in allocation sheet (see open_decision #1 above).
+
+next_session_flags:
+- LOAD: confirm "Calibration State loaded, last update: May 13, 2026 | Session Log loaded"
+- Fetch allocation sheet: will capture executed gold reallocation trades if client has updated targets and executed.
+- Brent C-trigger clock: monitor BZ=F close every session. Currently $105.71. Any close ≥$110 starts Day 1.
+- FRED spreadsheet tab: use as T1 source for HY/IG/CCC at each session. Also check MOVE value in spreadsheet tab (not parsed May 13 — confirm MOVE tab structure at next session).
+- US-Iran deal: monitor for T1-confirmed ceasefire or resumption of strikes.
+- MAGS: check weight vs 5%/6%/3%/8% targets — trim if materially overweight.
+- BZ=F / DXY GOOGLEFINANCE test: confirm NYMEX:BZ and INDEXDXY:DXY work in spreadsheet environment.
+- Gold reallocation: if client has executed, verify in allocation sheet and write v1.18.
