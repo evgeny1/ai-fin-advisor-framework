@@ -1,5 +1,7 @@
 # M17 — Systemic Cascade Early Warning
-<!-- Version: 1.1 | Adopted: May 25, 2026 -->
+<!-- Version: 1.2 | Adopted: May 25, 2026 -->
+<!-- Changes from v1.1: Phase 2 complete — FetchList_LEGACY comment updated; -->
+<!--   DATA_REGISTRY_ENTRIES and BRIEFING_REGISTRY_ENTRY comments updated. -->
 <!-- Changes from v1.0: Phase 0 ticker fix (§5 PrePositioningLadder now role-based, zero tickers); -->
 <!--   MODULE_MANIFEST added; DATA_REGISTRY_ENTRIES and BRIEFING_REGISTRY_ENTRY added; -->
 <!--   NEVER list updated. -->
@@ -9,7 +11,7 @@
 
 <!-- MODULE MANIFEST
   ID:              M17_SystemicCascadeWarning
-  Version:         1.1
+  Version:         1.2
   Sub-project:     ANALYSIS_ENGINE (§1–4, §6) | PORTFOLIO_ADVISOR (§5)
   Phase-2 note:    §5 spans two sub-projects. Planned split:
                      M17_CascadeAnalysis (ANALYSIS_ENGINE)
@@ -44,9 +46,10 @@ MODULE SystemicCascadeWarning {
   // AdvisoryAction.role_id is always a RoleID — NEVER a ticker symbol.
 
 
-  // ─── FETCH LIST (legacy — Phase 2 target: replace with DataRegistry entries below) ──
+  // ─── FETCH LIST (legacy — superseded by DATA_REGISTRY_ENTRIES below) ──────────────
+  // Phase 2 complete: FetchRegistry.fetchAll() in M02 replaces this list.
 
-  FetchList {
+  FetchList_LEGACY {
     yield_curve_full:    FMP_economics.treasury-rates endpoint
     KRE:                 GOOGLEFINANCE("KRE")
     KBE:                 GOOGLEFINANCE("KBE")
@@ -60,9 +63,8 @@ MODULE SystemicCascadeWarning {
   }
 
 
-  // ─── DATA REGISTRY ENTRIES (Phase 1 — declares M17’s FetchSpecs for FetchRegistry) ──
-  // Phase 2: FetchRegistry.fetchAll() in M02/M05 replaces explicit FetchList above.
-  // Until then, these declarations serve as the authoritative data dependency manifest.
+  / ─── DATA REGISTRY ENTRIES (Phase 2 complete — FetchRegistry.fetchAll() iterates these) ──
+  // FetchSpec entries registered by M17 at module load. Iterated by M02.GatherIntel STEP 1.
 
   DATA_REGISTRY_ENTRIES {
     REGISTER FetchSpec { id: "YIELD_CURVE",       source: FMP_ECONOMICS_TREASURY_RATES, update_frequency: DAILY }
@@ -483,9 +485,9 @@ MODULE SystemicCascadeWarning {
   }
 
 
-  // ─── BRIEFING REGISTRY ENTRY (Phase 1) ──────────────────────────────────────
-  // Declares M17’s briefing section for BriefingRegistry (FW_Types.md).
-  // Phase 2: BriefingRegistry.assemble() in M04/M05 replaces hardcoded section ordering.
+  // ─── BRIEFING REGISTRY ENTRY (Phase 2 complete) ─────────────────────────────
+  // BriefingRegistry.assemble() in M04 iterates this entry.
+  // position_after: "CREDIT_SIGNALS" = M11's registered section id.
 
   BRIEFING_REGISTRY_ENTRY {
     REGISTER BriefingSectionSpec {
