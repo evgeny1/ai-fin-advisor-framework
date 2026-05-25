@@ -693,101 +693,90 @@ Portfolio EV by account (v1.18 targets, A=7/B=36/C=41/D=5/E=4/F=7 — updated v1
 - Primary Roth: +4.08% (required ~3.05% ✅ +1.03pp above)
 - Primary Taxable: +3.04% (RETURN_THEN_TARGET 5yr ✅)
 - Taxable Preservation: Capital preservation — SGOV 100% ✅
-- Relative IRA: +3.72% (FLOOR_THEN_RETURN ✅)
-- Relative Roth: +4.46% (required ~3.05% ✅)
-
----
+- Relative IRA: **+3.89%** (FLOOR_THEN_RETURN ✅ — v1.18 targets confirmed)
+- Relative Roth: **+4.73%** (required ~3.03% ✅ — v1.18 targets confirmed)
 
 ## Section 12 - M17 Systemic Cascade Warning Thresholds
 
-Governing module: M17_SystemicCascadeWarning.md (v1.1, added May 25, 2026; PR #14 and #15 merged to master).
-First formal application: May 25, 2026 (research/dev session). sectorStressScore()=2 (formal), CascadeLevel=ALERT.
-All values CALIBRATION_DATED. First audit: June 30, 2026.
+All values CALIBRATION_DATED. Added v1.19 May 25, 2026. First formal audit: June 30, 2026.
+Module: M17_SystemicCascadeWarning.md (v1.1, merged PR #15 May 25, 2026)
+Purpose: Early warning system for D/E scenario cascade chains. sectorStressScore() outputs feed as D_precursor_binding into DeriveScenarioProbabilities().
+Source: Session_Log May 25 research/dev session; PR #14 and PR #15 design documentation.
 
-### 12.1 Agriculture / Fertilizer Chain
-
-| Parameter | Alert Threshold | Notes |
-| --- | --- | --- |
-| farm_filings_alert | +50% YoY farm chapter 12 bankruptcies | Current (May 25): +46% YoY (USDA quarterly). Below threshold. CHAIN_1 NOT fired. |
-| natgas_alert | $6.00/mmBtu sustained 30 days | Hormuz → LNG rerouting → natgas pressure. Monitor. |
-| fertilizer_alert | +50% above 12-month average | Hormuz → Iranian urea exports disrupted → structural food CPI floor. |
-
-### 12.2 CRE / Regional Bank Chain
+### 12.1 Agriculture/Fertilizer Chain (CHAIN_1)
 
 | Parameter | Alert Threshold | Notes |
 | --- | --- | --- |
-| KRE_alert | KRE −15% vs SPX over 90 days | Current: KRE $69.37 (May 22). Not fired. CHAIN_2 NOT fired. |
-| SOFR_DFF_alert | SOFR–DFF spread +10 bp sustained 5 days | Current: −11 bp (normal). CHAIN_2 NOT fired. |
+| farm_filings_alert | +50% YoY chapter 12 filings | USDA quarterly data. Hormuz → Iranian urea → food CPI structural floor. |
+| natgas_alert | $6.00/mmBtu sustained 30 days | Natural gas price Hormuz/Iran pricing link. |
+| fertilizer_alert | +50% above 12-month average | CRU/Bloomberg commodity data. |
 
-### 12.3 Private Credit / Margin Chain
+Current status (May 25, 2026): Farm filings +46% YoY — **BORDERLINE** (threshold +50% not formally met). CHAIN_1: NOT FIRED formally.
 
-| Parameter | Alert Threshold | Notes |
-| --- | --- | --- |
-| margin_MoM_alert | −5% MoM after all-time record | CHAIN_3 FIRES: $1.304T Apr 2026 all-time record. Watch for −5% reversal trigger. |
-| gate_count_alert | 3+ fund gate/suspension events in 90 days | CHAIN_3 FIRES (partial): BlackRock CLO OC breach; Blue Owl gate event observed. Formal count <3; qualitative signal elevated. |
-
-### 12.4 Manufacturing / Corporate Stress Chain
+### 12.2 CRE/Regional Bank Chain (CHAIN_2)
 
 | Parameter | Alert Threshold | Notes |
 | --- | --- | --- |
-| bankruptcy_quarterly_alert | 800+ large company filings per quarter | CHAIN_4 FIRES qualitatively: corporate bankruptcies at 14-year high. T1 formal quarterly count pending. |
+| KRE_alert | −15% vs SPX over 90 days | Regional bank stress signal. CRE maturity wall $930B in 2026. |
+| SOFR_DFF_alert | +10 bp SOFR–DFF spread sustained 5 days | Funding stress / liquidity squeeze indicator. |
 
-### 12.5 Sovereign Stress / Scenario E Watch
+Current status (May 25, 2026): KRE $69.37 (not meaningfully underperforming vs SPX over 90d); SOFR–DFF −11 bp (benign). **CHAIN_2: NOT FIRED.**
+
+### 12.3 Private Credit / Margin Chain (CHAIN_3)
 
 | Parameter | Alert Threshold | Notes |
 | --- | --- | --- |
-| E_term_premium_warning | THREEFYTP10 ≥ 100 bp | Warning threshold. Current: 0.8117% (May 15) — 14-yr high, rising. Below warning. |
-| E_term_premium_alert | THREEFYTP10 ≥ 150 bp | Alert threshold. Not reached. |
-| E_30Y_warning | 30Y Treasury yield ≥ 5.50% | Current: 5.07% (May 22). Below warning. Approaching. |
+| margin_MoM_alert | −5% MoM after record high | FINRA monthly margin debt data. |
+| gate_count_alert | 3+ gate/suspension events in 90 days | Private credit fund gates, PIK toggle abuse, redemption halts. |
+
+Current status (May 25, 2026): FINRA margin debt $1.304T (April 2026 — all-time record). Gate events observed: BlackRock CLO OC breach, Blue Owl gate. **CHAIN_3: FIRES** — record margin debt + gate events constitute threshold breach.
+
+### 12.4 Manufacturing/Corporate Chain (CHAIN_4)
+
+| Parameter | Alert Threshold | Notes |
+| --- | --- | --- |
+| bankruptcy_quarterly_alert | 800+ large-company filings per quarter | 14-year high observed qualitatively; T1 source pending. |
+
+Current status (May 25, 2026): Corporate bankruptcies qualitatively at 14-year high (T1 count source pending). **CHAIN_4: FIRES qualitatively** — awaiting T1 source for formal score.
+
+### 12.5 Sovereign Stress / Scenario E Chain
+
+| Parameter | Alert Threshold | Warning Level | Notes |
+| --- | --- | --- | --- |
+| E_term_premium_alert | 150 bp | Formal E escalation trigger | THREEFYTP10 series |
+| E_term_premium_warning | 100 bp | Watch flag | THREEFYTP10 series |
+| E_30Y_warning | 5.50% | Watch flag | 30Y Treasury yield |
+
+Current status (May 25, 2026): THREEFYTP10 = 0.8117% (May 15 — 14-year high, rising). E_term_premium_warning (100 bp): **NOT YET FIRED** (gap 18.83 bp — watch; trajectory rising). 30Y = 5.07% — below 5.50% warning. **E_watch_flag: FISCAL_STRESS_BUILDING.**
 
 ### 12.6 Municipal Chain
 
-Qualitative monitoring only. No formal threshold until June 30 audit.
+Qualitative only. No formal threshold at this time. Assess at June 30, 2026 audit.
 
 ### 12.7 Yield Curve Signal
 
-| Parameter | Threshold | Notes |
+| Parameter | Value | Notes |
 | --- | --- | --- |
-| inversion_threshold | −50 bp (10Y–2Y or 10Y–3M) | For valid inversion preceding re-steepening |
-| resteepening_min_inversion | 3 months sustained inversion | Minimum duration before re-steepening counts as D_timing_signal |
-| steep_threshold | +100 bp | Re-steepening above this = STEEP (recession-onset confirmed) |
+| resteepening_min_inversion | 3 months | Minimum inversion duration before re-steepening counts as D signal |
+| inversion_threshold | −50 bp | 10Y–2Y must have reached −50 bp or more negative prior to re-steepening |
+| steep_threshold | +100 bp | Re-steepening target that confirms recession-onset pattern |
 
-Current (May 25): 10Y–2Y = +43 bp; 10Y–3M = +88 bp. Post-inversion re-steepening confirmed (prior inversion sustained >3 months). D_timing_signal = RECESSION_ONSET_PATTERN. Historical precedent: recession onset 5/6 occurrences after inversion + re-steepening pattern.
+Current status (May 25, 2026): 10Y–2Y = +43 bp (re-steepened; curve NORMAL_OR_STEEP). Prior inversion confirmed (exceeded −50 bp in 2024-2025). Re-steepening post-inversion: **D_timing_signal: RECESSION_ONSET_PATTERN** (historically 5/6 occurrence rate for recession onset following this pattern).
 
-### 12.8 Composite Cascade Signal
+### 12.8 Cascade Level Computation
 
-sectorStressScore() — sum of fired CHAIN indicators:
+sectorStressScore() = count of formally fired chains (CHAIN_1 through CHAIN_4):
 
-| Chain | Status | Score |
+| Score | CascadeLevel | D_precursor_binding |
 | --- | --- | --- |
-| CHAIN_1 (Agriculture) | NOT fired (+46% vs +50% threshold) | 0 |
-| CHAIN_2 (CRE/RegBank) | NOT fired (SOFR-DFF benign; KRE stable) | 0 |
-| CHAIN_3 (Private/Margin) | FIRES — margin debt record; gate events | 1 |
-| CHAIN_4 (Manufacturing) | FIRES qualitatively — bankruptcies 14-yr high | 1 (qualitative) |
-| **Total** | | **2 (formal)** |
+| 0 | CLEAR | 0 |
+| 1 | WATCH | 1 |
+| 2 | ALERT | 2 |
+| 3 | WARNING | 3 |
+| 4 | CRITICAL | 3 (capped — M11 formal trigger required for further D escalation) |
 
-CascadeLevel mapping:
+**Current (May 25, 2026): sectorStressScore = 2** (CHAIN_3 formally + CHAIN_4 qualitatively) → **CascadeLevel: ALERT** → **D_precursor_binding = 2.**
 
-| Score | Level |
-| --- | --- |
-| 0 | NORMAL |
-| 1 | WATCH |
-| **2** | **ALERT ← current (May 25, 2026)** |
-| 3 | WARNING |
-| 4 | CRITICAL |
+Applied to DeriveScenarioProbabilities() May 25 full M05 session: D 3%→5% (+2pp), E 3%→4% (+1pp), C 44%→41% (−3pp). Client approved. Active probabilities: A=7/B=36/C=41/D=5/E=4/F=7.
 
-D_precursor_binding = sectorStressScore + D_timing_signal_active (1 if RECESSION_ONSET_PATTERN confirmed)
-D_precursor_binding (May 25) = 2 (formal) + 1 (yield curve timing) = **3 qualitative / 2 formal**
-
-Integration with M03.DeriveScenarioProbabilities():
-- D_precursor_binding is a supplementary overlay — does NOT replace M11 formal trigger thresholds
-- CascadeLevel WATCH: no adjustment
-- CascadeLevel ALERT: add +1–2 pp to D raw score (proportional to binding count)
-- CascadeLevel WARNING: add +3–4 pp
-- CascadeLevel CRITICAL: add +5+ pp
-- M11 formal D triggers (HY +300 bps, unemployment +0.5%, GDP negative) remain hard gates for large D moves
-
-Integration with M08 execution (portfolio actions):
-- CascadeLevel ALERT: activates M17 §5 exit window review for FLAGGED instruments (PAVE)
-- CascadeLevel WARNING: triggers M10 D-response pre-positioning review
-- CascadeLevel CRITICAL: invokes M10 Scenario D execution protocol
+⚠ CHAIN_4 T1 confirmation pending — if CHAIN_4 is formally confirmed via T1 source, sectorStressScore remains 2 (both CHAIN_3 and CHAIN_4 formally confirmed). Score and CascadeLevel unchanged. Confirm at Q2 or next session with T1 corporate bankruptcy data.
