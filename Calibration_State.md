@@ -2,7 +2,7 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-Version: 1.19  Last updated: May 25, 2026 (Full M05 session — §12 M17 thresholds pushed; probabilities updated A=7/B=36/C=41/D=5/E=4/F=7; D/E uplift reflects M17 CascadeLevel ALERT; C-trigger clock Day 0 confirmed; EVs updated throughout; portfolio ~$775k)  Next scheduled review: June 30, 2026 (Q2 2026 quarter-end)
+# Version: 1.19  Last updated: May 25, 2026 (Full M05 session — §12 M17 thresholds added; scenario probabilities updated A=7/B=36/C=41/D=5/E=4/F=7 via DeriveScenarioProbabilities() with D_precursor_binding=2; C-trigger clock Day 0 T2-confirmed; BZ=F overnight ~$107.60; portfolio total ~$775k)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -118,6 +118,8 @@ May 25 full session: No new CPI or GDP since May 13. **CPI B trigger status: pri
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
 
 2026-05-25 - Full M05 session (v1.19). **§12 M17 thresholds pushed** (first formal action this session). Scenario probabilities updated: A=7%(unch), B=36%(unch), C=41%(−3pp), D=5%(+2pp), E=4%(+1pp), F=7%(unch) — D/E uplift reflects M17 CascadeLevel ALERT (formal sectorStressScore=2: CHAIN_3 margin debt $1.304T all-time record + gate events; CHAIN_4 corporate bankruptcies 14-yr high qualitative; D_timing_signal=RECESSION_ONSET_PATTERN post-inversion yield curve re-steepening; THREEFYTP10=0.8117% 14-yr high). Credit T1 carry (May 21): HY=278, IG=75, CCC=939 — all thresholds clear; CCC quiet re-widening (+2 bps) vs HY tightening noted. BZ=F C-trigger clock: **Day 0 confirmed** — max ~5–6 consecutive days ≥$110 (approx. May 13–19); reset ~May 20; 10-day requirement NOT met (T2 reconstruction; BZ=F May 14–19 T1 pending). BZ=F Sunday night ~$107.60 (T2). MOVE=78.43, VIX=16.70, S&P=7,473.47 (May 22 close). Memorial Day — US markets closed; S&P futures overnight −2.7% (7,268.25) — watch Tuesday open. M14 composite: HIGH (unchanged). EVs updated throughout §11 at new probability vector. Portfolio ~$775k; all accounts within ±2pp of v1.18 targets; no rebalancing required.
+
+2026-05-25 - Full M05 session (v1.19). §12 M17 Systemic Cascade Warning thresholds formally added and pushed to Calibration_State. sectorStressScore()=2 (CHAIN_3: margin debt $1.304T record + private credit gate events; CHAIN_4: corporate bankruptcies 14-yr high qualitative). CascadeLevel: ALERT. D_precursor_binding=2 applied to DeriveScenarioProbabilities(). Probabilities updated: A=7%(unch), B=36%(unch), C=44%→41%(−3pp), D=3%→5%(+2pp), E=3%→4%(+1pp), F=7%(unch). Client approved. C-trigger clock: Day 0 confirmed T2 (BZ=F ~$107.60 overnight Memorial Day; max estimated consecutive closes ≥$110 was ~5-6 days May 13-19, not 10 required; sharp reversal ~May 20 on deal optimism + Hormuz satellite data). US markets closed Memorial Day. FRED credit (May 21 close, T1): HY=278, IG=75, CCC=939 — all clear. MOVE=78.43 (GOOGLEFINANCE). VIX=16.70. S&P 7,473.47 (May 22 close). S&P Futures overnight −2.7% (7,268 — Asia-led; confirm Tuesday). THREEFYTP10=0.8117% (14-yr high). FINRA margin debt $1.304T (record). Yield curve post-inversion re-steepening: D_timing_signal RECESSION_ONSET_PATTERN. M14 composite: HIGH unchanged. All accounts at v1.18 targets (max drift: Rel Roth MLPX +1.71pp). No rebalancing needed. Portfolio total ~$775k.
 
 2026-05-22 - Full M05 session (v1.18). Gold reallocation CONFIRMED EXECUTED — Relative IRA and Relative Roth allocation sheet targets match v1.17 recommendations exactly. Targets updated: Relative IRA SGOL 26%→20%, SIVR 3%→6%, DBMF 12%→15%; Relative Roth SGOL 22%→16%, SIVR new 4%, DBMF 18%→20%. Relative IRA EV: +3.53%→+3.89% (+0.36pp); Relative Roth EV: +4.45%→+4.73% (+0.28pp). FRED T1 credit (May 21 close via embedded spreadsheet tab): HY=278 bps (−4 from May 12), IG=75 bps (−2), CCC=939 bps (+2) — all thresholds clear. MOVE=79.72 (GOOGLEFINANCE, rising +9.0 pts from 70.74 on May 11 — approaching 80; no formal threshold yet; flag for Q2 formal integration). VIX=16.52, S&P=7,494.81. BZ=F pre-market ~$109.11 (T2, Yahoo Finance) — C-trigger clock STATUS UNRESOLVED (Brent 52-wk high $126.41 achieved between May 13 and May 22; BZ=F daily closes May 14-21 not confirmed; clock may have started and reset; requires verification at next session). Geopolitical: Iran + Oman "Persian Gulf Strait Authority" (permanent Hormuz toll system; Trump rejected — new structural C escalation); Iran uranium directive hardened (counter-deal T1 via Reuters); Rubio "encouraging signs" (soft A-signal, T1 unconfirmed); SPR ~10M barrel release (largest on record, T2). Probabilities: carry forward A=7/B=36/C=44/D=3/E=3/F=7 — no new binary events warranting re-derive. Main session: rebalancing strategy analysis — sell-winners/buy-losers thesis; conclusion: EV-optimal targets should update with scenario probabilities, not mechanically revert price drift; 1-2pp current drifts below all action thresholds. Secondary: AI capex sustainability; private credit AI; prisoner's dilemma analysis; hyperscaler knowledge asymmetry. No allocation changes.
 
@@ -693,6 +695,104 @@ Portfolio EV by account (v1.18 targets, A=7/B=36/C=41/D=5/E=4/F=7 — updated v1
 - Primary Roth: +4.08% (required ~3.05% ✅ +1.03pp above)
 - Primary Taxable: +3.04% (RETURN_THEN_TARGET 5yr ✅)
 - Taxable Preservation: Capital preservation — SGOV 100% ✅
+- Relative IRA: +3.72% (FLOOR_THEN_RETURN ✅)
+- Relative Roth: +4.46% (required ~3.05% ✅)
+
+---
+
+## Section 12 - M17 Systemic Cascade Warning Thresholds
+
+Governing module: M17_SystemicCascadeWarning.md (v1.1, added May 25, 2026; PR #14 and #15 merged to master).
+First formal application: May 25, 2026 (research/dev session). sectorStressScore()=2 (formal), CascadeLevel=ALERT.
+All values CALIBRATION_DATED. First audit: June 30, 2026.
+
+### 12.1 Agriculture / Fertilizer Chain
+
+| Parameter | Alert Threshold | Notes |
+| --- | --- | --- |
+| farm_filings_alert | +50% YoY farm chapter 12 bankruptcies | Current (May 25): +46% YoY (USDA quarterly). Below threshold. CHAIN_1 NOT fired. |
+| natgas_alert | $6.00/mmBtu sustained 30 days | Hormuz → LNG rerouting → natgas pressure. Monitor. |
+| fertilizer_alert | +50% above 12-month average | Hormuz → Iranian urea exports disrupted → structural food CPI floor. |
+
+### 12.2 CRE / Regional Bank Chain
+
+| Parameter | Alert Threshold | Notes |
+| --- | --- | --- |
+| KRE_alert | KRE −15% vs SPX over 90 days | Current: KRE $69.37 (May 22). Not fired. CHAIN_2 NOT fired. |
+| SOFR_DFF_alert | SOFR–DFF spread +10 bp sustained 5 days | Current: −11 bp (normal). CHAIN_2 NOT fired. |
+
+### 12.3 Private Credit / Margin Chain
+
+| Parameter | Alert Threshold | Notes |
+| --- | --- | --- |
+| margin_MoM_alert | −5% MoM after all-time record | CHAIN_3 FIRES: $1.304T Apr 2026 all-time record. Watch for −5% reversal trigger. |
+| gate_count_alert | 3+ fund gate/suspension events in 90 days | CHAIN_3 FIRES (partial): BlackRock CLO OC breach; Blue Owl gate event observed. Formal count <3; qualitative signal elevated. |
+
+### 12.4 Manufacturing / Corporate Stress Chain
+
+| Parameter | Alert Threshold | Notes |
+| --- | --- | --- |
+| bankruptcy_quarterly_alert | 800+ large company filings per quarter | CHAIN_4 FIRES qualitatively: corporate bankruptcies at 14-year high. T1 formal quarterly count pending. |
+
+### 12.5 Sovereign Stress / Scenario E Watch
+
+| Parameter | Alert Threshold | Notes |
+| --- | --- | --- |
+| E_term_premium_warning | THREEFYTP10 ≥ 100 bp | Warning threshold. Current: 0.8117% (May 15) — 14-yr high, rising. Below warning. |
+| E_term_premium_alert | THREEFYTP10 ≥ 150 bp | Alert threshold. Not reached. |
+| E_30Y_warning | 30Y Treasury yield ≥ 5.50% | Current: 5.07% (May 22). Below warning. Approaching. |
+
+### 12.6 Municipal Chain
+
+Qualitative monitoring only. No formal threshold until June 30 audit.
+
+### 12.7 Yield Curve Signal
+
+| Parameter | Threshold | Notes |
+| --- | --- | --- |
+| inversion_threshold | −50 bp (10Y–2Y or 10Y–3M) | For valid inversion preceding re-steepening |
+| resteepening_min_inversion | 3 months sustained inversion | Minimum duration before re-steepening counts as D_timing_signal |
+| steep_threshold | +100 bp | Re-steepening above this = STEEP (recession-onset confirmed) |
+
+Current (May 25): 10Y–2Y = +43 bp; 10Y–3M = +88 bp. Post-inversion re-steepening confirmed (prior inversion sustained >3 months). D_timing_signal = RECESSION_ONSET_PATTERN. Historical precedent: recession onset 5/6 occurrences after inversion + re-steepening pattern.
+
+### 12.8 Composite Cascade Signal
+
+sectorStressScore() — sum of fired CHAIN indicators:
+
+| Chain | Status | Score |
+| --- | --- | --- |
+| CHAIN_1 (Agriculture) | NOT fired (+46% vs +50% threshold) | 0 |
+| CHAIN_2 (CRE/RegBank) | NOT fired (SOFR-DFF benign; KRE stable) | 0 |
+| CHAIN_3 (Private/Margin) | FIRES — margin debt record; gate events | 1 |
+| CHAIN_4 (Manufacturing) | FIRES qualitatively — bankruptcies 14-yr high | 1 (qualitative) |
+| **Total** | | **2 (formal)** |
+
+CascadeLevel mapping:
+
+| Score | Level |
+| --- | --- |
+| 0 | NORMAL |
+| 1 | WATCH |
+| **2** | **ALERT ← current (May 25, 2026)** |
+| 3 | WARNING |
+| 4 | CRITICAL |
+
+D_precursor_binding = sectorStressScore + D_timing_signal_active (1 if RECESSION_ONSET_PATTERN confirmed)
+D_precursor_binding (May 25) = 2 (formal) + 1 (yield curve timing) = **3 qualitative / 2 formal**
+
+Integration with M03.DeriveScenarioProbabilities():
+- D_precursor_binding is a supplementary overlay — does NOT replace M11 formal trigger thresholds
+- CascadeLevel WATCH: no adjustment
+- CascadeLevel ALERT: add +1–2 pp to D raw score (proportional to binding count)
+- CascadeLevel WARNING: add +3–4 pp
+- CascadeLevel CRITICAL: add +5+ pp
+- M11 formal D triggers (HY +300 bps, unemployment +0.5%, GDP negative) remain hard gates for large D moves
+
+Integration with M08 execution (portfolio actions):
+- CascadeLevel ALERT: activates M17 §5 exit window review for FLAGGED instruments (PAVE)
+- CascadeLevel WARNING: triggers M10 D-response pre-positioning review
+- CascadeLevel CRITICAL: invokes M10 Scenario D execution protocol
 - Relative IRA: **+3.89%** (FLOOR_THEN_RETURN ✅ — v1.18 targets confirmed)
 - Relative Roth: **+4.73%** (required ~3.03% ✅ — v1.18 targets confirmed)
 
