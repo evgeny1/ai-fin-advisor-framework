@@ -1,9 +1,10 @@
 # 00 — Index & Module Map
 <!-- Personal Financial Advisor Framework — Pseudo-Code Edition -->
 <!-- Source documents: Framework_Main_v1, Framework_Extension_v1, Calibration_State, Amendment 1, Amendment 2 -->
-<!-- Last updated: May 6, 2026 (v1.12 framework-v2-architecture-split: M16 added; Session_Log.md and -->
-<!--   Calibration_Log.md registered; precedence updated for M16; NEVER list updated; -->
-<!--   SESSION_START_SEQUENCE Step 3 updated to fetch both Calibration_State and Session_Log) -->
+<!-- Last updated: May 25, 2026 (v1.19 M17_SystemicCascadeWarning added: cascade chain registry, -->
+<!--   sector stress scoring, yield curve protocol, supply chain indicators, pre-positioning ladder; -->
+<!--   CALIBRATION_STATE §12 added for M17 thresholds; precedence 4.8 assigned; -->
+<!--   NEVER list updated; SESSION_START_SEQUENCE Steps 4/7/8 updated) -->
 
 ```
 FRAMEWORK PersonalFinancialAdvisor {
@@ -29,6 +30,11 @@ FRAMEWORK PersonalFinancialAdvisor {
     M16_ReturnTableCalibration    // §4.1 return table revision methodology: 4-layer framework, confidence levels,
                                   //   adoption rules, living update triggers, audit cadence
                                   //   (governs HOW table is revised; M13 and M15 govern consumption — unaffected)
+    M17_SystemicCascadeWarning    // Real-economy cascade chain registry (6 chains), sector stress scoring (0–3),
+                                  //   yield curve protocol (re-steepening + E-pathway flags),
+                                  //   supply chain indicators (fertilizer/food/natgas/shipping),
+                                  //   pre-positioning ladder (3 rungs: MONITORING/ALERT/PRE_POSITION),
+                                  //   data integrity rules for sector PE and implausible metrics
     CALIBRATION_STATE             // Live threshold values — load every session (GitHub: Calibration_State.md)
     SESSION_LOG                   // Session credit readings (§7) + scenario state (§8) — load every session (GitHub: Session_Log.md)
     CALIBRATION_LOG               // §3 calibration history archive — read-only; updated on calibration events only (GitHub: Calibration_Log.md)
@@ -54,9 +60,10 @@ FRAMEWORK PersonalFinancialAdvisor {
     "M14_MarketRegime.md"              // Market regime signal and entry timing
     "M15_InstrumentClassification.md"  // Instrument classification and blended returns
     "M16_ReturnTableCalibration.md"    // Return table revision methodology (added v1.12)
+    "M17_SystemicCascadeWarning.md"    // Systemic cascade early warning (added v1.19)
 
     // GitHub-resident operational files (fetched every session)
-    "Calibration_State.md"    // LIVE CONFIG: §1-§6, §9-§11 thresholds, return table, classifications
+    "Calibration_State.md"    // LIVE CONFIG: §1-§6, §9-§12 thresholds, return table, classifications
     "Session_Log.md"          // SESSION DATA: §7 credit readings, §8 scenario state (AUTHORITATIVE for prior probs)
     "Calibration_Log.md"      // ARCHIVE: §3 calibration history; read-only; updated on calibration events only
 
@@ -74,17 +81,25 @@ FRAMEWORK PersonalFinancialAdvisor {
         M12_FileProtocol.fetchSessionLog()        // GitHub — Session_Log.md (CONCURRENT with fetchCalibrationState)
         // Both fetches run concurrently — only after Step 1 succeeds
         // From Calibration_State.md: apply §1, §2 thresholds; §4 return table + multipliers (M13);
-        //   §9 M14 market regime thresholds; §11 role registry and instrument classification
+        //   §9 M14 market regime thresholds; §11 role registry and instrument classification;
+        //   §12 M17 cascade chain thresholds
         // From Session_Log.md: load §8 (prior probabilities, open items — AUTHORITATIVE source)
         // Run M15.ValidateClassifications() — HARD_STOP if any allocation instrument absent from §11
     4:  M02_IntelGathering.FETCH_LIST  (includes M11.CreditSignal.FetchList
-                                        and M14.FetchList — VIX trailing, position trailing performance)
+                                        and M14.FetchList — VIX trailing, position trailing performance
+                                        and M17.FetchList — yield_curve_full, KRE, KBE, THREEFYTP10,
+                                          SOFR, DFF, FINRA_margin_debt, natgas_henry_hub)
     5:  M02_IntelGathering.identifyPrimaryDriver()
     6:  M03_ScenarioFramework.RecalibrationRule  +  M11.CalibrationDiscipline.SessionLoad
     7:  M02_IntelGathering.GatherIntel STEPS 2–5
         + M14.ComputeDivergenceSignal()
-        → IF composite IN [HIGH, MODERATE]: M14.UnderweightReviewTrigger(account) for each account
-    8:  M04_BriefingFormat.IntelligenceBriefing  (includes M14.MarketRegimeSignal block)
+        + M17.sectorStressScore()         // D-binding variable for next DeriveScenarioProbabilities() run
+        + M17.computeYieldCurveSignal()   // D timing estimate; E-pathway flag
+        + M17.assessCascadeLevel()        // → [MONITORING | ALERT | PRE_POSITION]
+        → IF M14.composite IN [HIGH, MODERATE]: M14.UnderweightReviewTrigger(account) for each account
+        → IF M17.cascadeLevel IN [ALERT, PRE_POSITION]: surface in briefing; prepare §5 ladder review
+    8:  M04_BriefingFormat.IntelligenceBriefing  (includes M14.MarketRegimeSignal block
+                                                   and M17.BriefingBlock after M11 CREDIT SIGNALS)
     9:  portfolio discussion
         → before any ADD executes:  M14.EntryExtensionGuard(asset, account)
     10: M12_FileProtocol.WriteBack
@@ -109,6 +124,12 @@ FRAMEWORK PersonalFinancialAdvisor {
                                     // NEVER routes signals into M03.DeriveScenarioProbabilities — ScoringIntegrity applies absolutely
     4.7: M15_InstrumentClassification  // blendedScenarioReturn() supersedes direct §4.1 role lookups
                                        // classifyInstrument() supersedes classifyRole() for allocation computations
+    4.8: M17_SystemicCascadeWarning    // sectorStressScore() feeds M03.DeriveScenarioProbabilities() as ONE
+                                       //   D-binding variable — does NOT override M11 or M14 signals
+                                       // PrePositioningLadder is advisory — requires client confirmation
+                                       //   before any execution; NEVER auto-executes
+                                       // yield curve signals NEVER route into M03 directly (timing only)
+                                       // sectorStressScore()==3 does NOT independently invoke D-probability floor
     5:   M09_ScenariosABC, M10_ScenariosDEF   // execution protocols
     6:   M01–M08                    // core framework
   }
@@ -147,6 +168,19 @@ FRAMEWORK PersonalFinancialAdvisor {
       → M14_MarketRegime.EntryExtensionGuard()          // at execution time, before any ADD
       // NEVER routes into M03.DeriveScenarioProbabilities — ScoringIntegrity applies absolutely
 
+    // Cascade early warning flow (M17) — added v1.19
+    cascade_early_warning
+      → M17_SystemicCascadeWarning.CascadeChainRegistry  // 6 chains; assess ACTIVE_STATUS each session
+      → M17_SystemicCascadeWarning.sectorStressScore()   // 0–3; ONE D-binding variable for M03
+      → M17_SystemicCascadeWarning.computeYieldCurveSignal()  // D timing estimate; E-pathway flag
+      → M17_SystemicCascadeWarning.assessCascadeLevel()  // → [MONITORING | ALERT | PRE_POSITION]
+      → IF cascadeLevel == ALERT:      surface in briefing; review §5 ALERT ladder
+      → IF cascadeLevel == PRE_POSITION: surface in briefing; present §5 PRE_POSITION advisory actions;
+                                         require client confirmation before any execution
+      // NEVER routes yield_curve signals into M03.DeriveScenarioProbabilities
+      // NEVER auto-executes PrePositioningLadder actions
+      // sector PE metrics: ALWAYS cross-reference from SectorPE_ApprovedSources before reporting
+
     // Instrument classification flow (M15)
     instrument_classification
       → M15_InstrumentClassification.ValidateClassifications()   // session start — HARD_STOP if unclassified
@@ -178,6 +212,7 @@ FRAMEWORK PersonalFinancialAdvisor {
         3: M15_InstrumentClassification.classifyInstrument()  // replaces M08.classifyRole()
            M15_InstrumentClassification.dominantDirective()   // for directive per scenario
         4: M03_ScenarioFramework.DeriveScenarioProbabilities()
+           // input variables include M17.sectorStressScore() as D-binding variable
         5: M13_GrowthObjectives.idealAllocation() per scenario
            → uses M15.blendedScenarioReturn() for all return lookups
         6: M03_ScenarioFramework.scenarioWeightedAllocation()
@@ -254,6 +289,18 @@ FRAMEWORK PersonalFinancialAdvisor {
     instrument_classification:   per-instrument component weights            // §11.3
     classification_staleness:    90 calendar days (warning threshold)        // §11
     next_full_audit:             June 30, 2026
+    // Systemic cascade thresholds (M17) — all in CALIBRATION_STATE §12
+    farm_filings_D_alert_YoY:    +50% year-over-year                         // §12.1 — provisional
+    natgas_D_alert:              $6.00/mmBtu sustained 30 days               // §12.1 — provisional
+    fertilizer_D_alert:          +50% above 12-month average                 // §12.1 — provisional
+    KRE_underperformance_alert:  −15% vs SPX over 90 days                    // §12.2 — provisional
+    SOFR_DFF_D_alert:            SOFR > EFFR (DFF) by +10bp, sustained 5 trading days  // §12.2
+    margin_monthly_decline_alert: −5% single month after record high         // §12.3 — provisional
+    private_credit_gate_alert:   3 distinct named fund gate events in 90 days // §12.3 — provisional
+    E_term_premium_alert:        150 bp (THREEFYTP10)                        // §12.5 — provisional
+    E_term_premium_warning:      100 bp (THREEFYTP10)                        // §12.5 — provisional
+    E_yield_30Y_warning:         5.50%                                        // §12.5 — provisional
+    resteepening_prior_inversion_min: 3 months sustained inversion before flag fires  // §12.7
   }
 
   // ─── FIXED STRUCTURAL RULES (never calibration-dated) ─────────────────────────
@@ -277,7 +324,7 @@ FRAMEWORK PersonalFinancialAdvisor {
     calibration_prospective_only:     M11_CreditAndCalibration.ProspectiveOnly
     anchor_positions_in_recalib:      high-conviction positions not touched in M13.RecalibrationSequence
     market_regime_boundary:           M14 signals NEVER feed M03.DeriveScenarioProbabilities
-    no_hardcoded_tickers_in_modules:  instrument tickers never appear in M01–M16 module files
+    no_hardcoded_tickers_in_modules:  instrument tickers never appear in M01–M17 module files
     no_hardcoded_roles_in_modules:    roles defined in CALIBRATION_STATE §11 only; modules reference roles by name
     blended_return_mandatory:         ALL scenario return computations use M15.blendedScenarioReturn() — never direct §4.1 lookup
     new_instrument_hard_stop:         any ticker in allocation file absent from §11 → HARD_STOP before analysis
@@ -288,7 +335,65 @@ FRAMEWORK PersonalFinancialAdvisor {
                                       never from Calibration_State or memory
     layer_4_neutral_distribution:     ALWAYS use A=35/B=15/C=15/D=10/E=5/F=20 for Layer 4 —
                                       NEVER the current operating scenario distribution
+    M17_yield_curve_boundary:         M17 yield curve signals inform D timing estimates and E-pathway flags only;
+                                      NEVER feed into M03.DeriveScenarioProbabilities() directly
+    M17_sector_PE_source:             FMP sector-PE-snapshot REJECTED for sector valuation —
+                                      use ETF-based PE from M17.SectorPE_ApprovedSources
+    M17_preposition_requires_client:  PrePositioningLadder adjustments require explicit client
+                                      confirmation before any execution; NEVER auto-execute
+    M17_implausibility_check:         any metric deviating >2× from historical norm requires
+                                      cross-reference before inclusion in analysis or briefing
+    M17_chain4_T1_requirement:        CHAIN_4 (manufacturing bankruptcy pace) score contribution
+                                      requires T1 source (AACER/PACER); treat as 0 until available
   }
+
+  // ─── WHAT NEVER TO DO ──────────────────────────────────────────────────────────
+  // Hard stops drawn from GUARD blocks across all modules.
+
+  NEVER [
+    // M12
+    hardcode_Google_Drive_file_ID,
+    use_web_fetch_to_read_Google_Drive_file,
+    hardcode_GitHub_SHA,
+    write_to_GitHub_without_confirming_session_start_fetch_succeeded,
+    // M01
+    treat_T2_or_T3_source_claim_as_fact_without_T1_corroboration,
+    // M02
+    accept_price_from_sidebar_widget_or_aggregator_page,
+    // M03
+    move_scenario_probabilities_on_single_unverified_report,
+    let_scenario_probabilities_sum_to_anything_other_than_100,
+    // M06
+    recommend_based_on_momentum_sentiment_or_single_scenario_thinking,
+    justify_hold_with_qualitative_reasoning_alone__show_EV_math,
+    // M08
+    act_on_scenario_trigger_without_T1_evidence_documented,
+    // M11
+    apply_recalibration_retroactively,
+    // M01
+    apply_asymmetric_skepticism__US_government_gets_same_scrutiny_as_adversarial_actors,
+    // M13
+    call_scenarioWeightedAllocation_or_minimumConvictionWeight_without_account_context,
+    // M14
+    feed_M14_market_regime_signals_into_M03_DeriveScenarioProbabilities,
+    // M15
+    use_direct_section_4_1_role_lookups_for_scenario_return_computations__route_through_blendedScenarioReturn,
+    use_M08_classifyRole_for_allocation_computations__use_M15_classifyInstrument,
+    proceed_with_allocation_computations_if_any_instrument_absent_from_section_11__HARD_STOP,
+    hardcode_instrument_tickers_or_role_names_in_module_files,
+    // M16
+    revise_any_section_4_1_return_table_value_without_completing_all_4_layers_of_M16,
+    adopt_MEDIUM_or_LOW_confidence_return_table_revision_intra_session,
+    run_Layer_4_consistency_check_using_current_operating_scenario_distribution__use_neutral_A35_B15_C15_D10_E5_F20,
+    load_prior_scenario_probabilities_from_memory_or_Calibration_State__always_from_Session_Log_section_8,
+    // M17 — added v1.19
+    feed_M17_yield_curve_signals_into_M03_DeriveScenarioProbabilities,
+    use_FMP_sector_PE_snapshot_for_sector_valuation_analysis,
+    treat_sectorStressScore_3_as_standalone_D_probability_override,
+    execute_PrePositioningLadder_without_explicit_client_confirmation,
+    score_CHAIN_4_manufacturing_bankruptcy_without_T1_AACER_PACER_source,
+    include_any_metric_deviating_2x_from_historical_norm_without_cross_referencing_first
+  ]
 
 }
 ```
