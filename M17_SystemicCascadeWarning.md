@@ -63,7 +63,7 @@ MODULE SystemicCascadeWarning {
   }
 
 
-  / ─── DATA REGISTRY ENTRIES (Phase 2 complete — FetchRegistry.fetchAll() iterates these) ──
+  // ─── DATA REGISTRY ENTRIES (Phase 2 complete — FetchRegistry.fetchAll() iterates these) ──
   // FetchSpec entries registered by M17 at module load. Iterated by M02.GatherIntel STEP 1.
 
   DATA_REGISTRY_ENTRIES {
