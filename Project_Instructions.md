@@ -36,21 +36,22 @@ The framework uses a consistent syntax. Learn it once and apply it everywhere.
 |---|---|---|
 | `00_INDEX.md` | Master map, cross-reference guide, precedence rules | Reference when navigating |
 | `M01_SourceIntegrity.md` | Source tier classification, propaganda checklist, symmetric skepticism | Every time you evaluate a claim |
-| `M02_IntelGathering.md` | Fetch list, price integrity rules, 5-step gathering procedure, primary driver identification | Every session start |
+| `M02_IntelGathering.md` | FetchRegistry orchestrator (v2.0); DATA_REGISTRY_ENTRIES; QualitativeGatherList; price integrity rules; 5-step gathering procedure; primary driver identification | Every session start |
 | `M03_ScenarioFramework.md` | Six scenarios, probability rules, B vs C rule, scenario-weighted allocation math | Every session, every recommendation |
-| `M04_BriefingFormat.md` | Intelligence briefing output template | Every session start |
+| `M04_BriefingFormat.md` | BriefingRegistry orchestrator (v2.0); BRIEFING_REGISTRY_ENTRYs; render functions; briefing template | Every session start |
 | `M05_SessionInit.md` | Session initialization sequence — the entry point | First thing every session |
 | `M06_ClientAndAdvisory.md` | Client profile, tax placement rules, advisory principles, hold EV rule | Every recommendation |
 | `M07_InstrumentEval.md` | Instrument metrics, foreign exposure rule, auto-disqualification | When evaluating any instrument |
 | `M08_FunctionalRoles.md` | Dynamic position classification, dual-role conflict resolution, execution guards, tax placement at execution | Before any position action; classifyRole() used for constituent-level analysis only — see M15 for allocation computations |
 | `M09_ScenariosABC.md` | Execution protocols for Scenarios A, B, C | When A, B, or C probability crosses threshold |
 | `M10_ScenariosDEF.md` | Execution protocols for Scenarios D, E, F | When D, E, or F probability crosses threshold |
-| `M11_CreditAndCalibration.md` | Credit signal protocol, calibration discipline, updated Scenario D trigger | Every session (credit fetch + signal test) |
+| `M11_CreditAndCalibration.md` | Credit signal protocol (v1.1); DATA_REGISTRY_ENTRIES (HY_OAS, CCC_OAS, IG_OAS, BBB_OAS, MOVE); BRIEFING_REGISTRY_ENTRY id: CREDIT_SIGNALS; calibration discipline; updated Scenario D trigger | Every session (credit fetch + signal test) |
 | `M12_DriveProtocol.md` | Hybrid GitHub + Google Drive file access protocol (Amendment 2) | Every session start, before any file read |
 | `M13_GrowthObjectives.md` | Growth objectives, ideal allocation, feasibility check, recalibration sequence | Every allocation recommendation; supersedes M03 idealAllocation() and minimumConvictionWeight() |
-| `M14_MarketRegime.md` | Market desensitization detection, underweight opportunity-cost review, entry price extension guard | Every session (divergence signal + briefing block); before any ADD executes (EntryExtensionGuard) |
+| `M14_MarketRegime.md` | Market regime detection (v1.1); DATA_REGISTRY_ENTRIES (VIX_30D_AVG, VIX_90D_AVG, BROAD_EQUITY_TRAILING); BRIEFING_REGISTRY_ENTRY id: MARKET_REGIME_SIGNAL; underweight review; EntryExtensionGuard | Every session (divergence signal + briefing block); before any ADD executes (EntryExtensionGuard) |
 | `M15_InstrumentClassification.md` | Extensible role registry, composite decomposition, blended scenario returns, session-start validation | Session start (ValidateClassifications); every allocation computation (blendedScenarioReturn); every position action (classifyInstrument + dominantDirective) |
 | `M16_ReturnTableCalibration.md` | §4.1 return table revision methodology: 4-layer framework, confidence levels, adoption rules, living update triggers, audit cadence | When revising any §4.1 return table value; check LivingUpdateTriggers at session start if scenario probabilities have shifted materially |
+| `M17_SystemicCascadeWarning.md` | Cascade chain registry (v1.2); sector stress scoring; yield curve protocol; supply chain indicators; pre-positioning ladder (role-based); BRIEFING_REGISTRY_ENTRY id: CASCADE_EARLY_WARNING; data integrity rules | Every session (cascade scoring + yield curve signal + briefing block) |
 | `CALIBRATION_STATE.md` | Live threshold values + calibration log — **lives in GitHub, fetched every session** | Every session — never use remembered values |
 | `Session_Log.md` | Session credit readings (§7) + scenario state (§8) — **AUTHORITATIVE source for prior scenario probabilities and open items** — lives in GitHub, fetched every session | Every session — fetched concurrently with Calibration_State.md |
 | `Calibration_Log.md` | §3 calibration history archive — lives in GitHub | Read-only during sessions; updated only on calibration events (version bumps) |
@@ -95,24 +96,33 @@ Execute `M05_SessionInit.SessionStartSequence` in strict order:
                                    Both fetches run concurrently after Step 1 is confirmed.
                                    From Calibration_State.md: apply §1, §2 thresholds;
                                      §4 return table + multipliers (M13); §9 M14 market regime
-                                     thresholds; §11 role registry and instrument classification.
+                                     thresholds; §11 role registry and instrument classification;
+                                     §12 M17 cascade thresholds.
                                    From Session_Log.md §8: load prior scenario probabilities
                                      and open items — Session_Log §8 is AUTHORITATIVE;
                                      never use Calibration_State or memory for prior probs.
                                    Run M15.ValidateClassifications() — HARD_STOP if any
                                      allocation instrument is absent from §11.
-4. Fetch market data            → M02_IntelGathering.FETCH_LIST
-                                   (includes M11 credit spreads and M14.FetchList:
-                                    VIX trailing averages; broad equity 30/60/90d trailing performance)
+4. Fetch market data            → FetchRegistry.fetchAll()  ← Phase 2 complete
+                                   (M02 core data: energy, equities, rates, FX, inflation, FFR
+                                    + M11 credit spreads: HY_OAS, CCC_OAS, IG_OAS, BBB_OAS, MOVE
+                                    + M14 VIX/equity trailing: VIX_30D_AVG, VIX_90D_AVG, BROAD_EQUITY_TRAILING
+                                    + M17 cascade chain inputs: YIELD_CURVE, KRE, THREEFYTP10, SOFR, DFF,
+                                      FINRA_MARGIN_DEBT, NATGAS_HENRY_HUB, FARM_FILINGS_YOY)
+                                   + M02.QualitativeGatherList (geopolitical status, Fed guidance — web search)
+                                   @see M02_IntelGathering.GatherIntel STEP 1
 5. Identify primary driver      → M02_IntelGathering.identifyPrimaryDriver()
 6. Check recalibration trigger  → M03_ScenarioFramework.RecalibrationRule
-                                   M11_CreditAndCalibration.CalibrationDiscipline.SessionLoad
+   M11_CreditAndCalibration.CalibrationDiscipline.SessionLoad
 7. Complete intel gathering     → M02_IntelGathering.GatherIntel STEPS 2–5
                                    + M14.ComputeDivergenceSignal()
+                                   + M17.sectorStressScore() + M17.computeYieldCurveSignal() + M17.assessCascadeLevel()
                                    IF composite IN [HIGH, MODERATE]:
                                      M14.UnderweightReviewTrigger(account) for each account
-8. Produce briefing             → M04_BriefingFormat.IntelligenceBriefing
-                                   (includes M14.MarketRegimeSignal block after EQUITY MARKETS section)
+8. Produce briefing             → BriefingRegistry.assemble(readings)  ← Phase 2 complete
+                                   @see M04_BriefingFormat.IntelligenceBriefing
+                                   (ordered section list: M04-owned + M11 CREDIT_SIGNALS
+                                    + M14 MARKET_REGIME_SIGNAL + M17 CASCADE_EARLY_WARNING)
 9. Begin portfolio discussion
    → before any ADD executes:  M14.EntryExtensionGuard(asset, account)
 
@@ -202,6 +212,7 @@ Current live values are in `CALIBRATION_STATE.md`:
 - §4 — growth objectives return table and multipliers (M13)
 - §9 — market regime thresholds (M14)
 - §11 — role registry and instrument classification table (M15)
+- §12 — cascade chain thresholds (M17)
 
 Prior scenario probabilities and open items are in `Session_Log.md`:
 - §8 — session state log (prior probabilities, open triggers, open decisions, next-session flags)
@@ -228,7 +239,7 @@ These are hard stops drawn from `GUARD` blocks across the framework. They requir
 - **NEVER** apply asymmetric skepticism to any actor — US government gets the same scrutiny as adversarial governments (`M01`)
 - **NEVER** let scenario probabilities sum to anything other than 100% (`M03`)
 - **NEVER** call M03.scenarioWeightedAllocation() or M03.minimumConvictionWeight() without an account context — M13 versions require it (`M13`)
-- **NEVER** feed M14 market regime signals into M03.DeriveScenarioProbabilities() — M14 signals route to entry-timing EV only (`M14`)
+- **NEVER** feed M14 market regime signals into M03.DeriveScenarioProbabilities() (`M14`)
 - **NEVER** use direct §4.1 role lookups for scenario return computations — always route through M15.blendedScenarioReturn() (`M15`)
 - **NEVER** use M08.classifyRole() for allocation computations — use M15.classifyInstrument() (`M15`)
 - **NEVER** proceed with allocation computations if any instrument in the allocation file is absent from CALIBRATION_STATE §11 — M15.ValidateClassifications() is a HARD_STOP (`M15`)
@@ -237,13 +248,11 @@ These are hard stops drawn from `GUARD` blocks across the framework. They requir
 - **NEVER** adopt a MEDIUM or LOW confidence return table revision intra-session — log as pending and defer to Q-end audit (`M16`)
 - **NEVER** run the Layer 4 consistency check using the current operating scenario distribution — always use neutral distribution A=35/B=15/C=15/D=10/E=5/F=20 (`M16`)
 - **NEVER** load prior scenario probabilities from memory or from Calibration_State.md — always load from Session_Log.md §8 (`M12`)
-
----
-
-## Output discipline
-
-- Surface data quality issues explicitly. If a price came from an unapproved source, label it: *"Unverified price — requires dedicated source confirmation."*
-- Surface every `NEVER` violation as a hard stop, not a soft note.
-- When a threshold fires, state explicitly which threshold, which source confirmed it, and what action it triggers.
-- When scenario probabilities shift, state explicitly what T1 evidence caused each move.
-- When B and C are simultaneously above 30%, document the justification in the briefing.
+- **NEVER** feed M17 yield curve signals into M03.DeriveScenarioProbabilities() — yield curve signals are D timing estimates only (`M17`)
+- **NEVER** use FMP sector-PE-snapshot for sector valuation — use ETF-based PE sources per M17 §6 (`M17`)
+- **NEVER** treat sectorStressScore == 3 as a standalone D probability override — it is one binding variable (`M17`)
+- **NEVER** execute PrePositioningLadder actions without explicit client confirmation (`M17`)
+- **NEVER** score CHAIN_4 without a T1 AACER/PACER source — treat contribution as 0 until available (`M17`)
+- **NEVER** edit M02 to add a new module's data source — register `DATA_REGISTRY_ENTRIES` in the owning module; `FetchRegistry.fetchAll()` picks it up automatically (`00_INDEX` Phase 2 rule)
+- **NEVER** edit M04 to add a new module's briefing section — register `BRIEFING_REGISTRY_ENTRY` in the owning module; `BriefingRegistry.assemble()` picks it up automatically (`00_INDEX` Phase 2 rule)
+- **NEVER** treat `QualitativeGatherList` output as `DataReading` — qualitative items (geopolitical, Fed guidance) are working inputs only, never FetchSpec-registered (`M02`)
