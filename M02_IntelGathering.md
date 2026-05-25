@@ -1,57 +1,97 @@
 # M02 — Intelligence Gathering
+<!-- Version: 2.0 | Adopted: May 25, 2026 -->
+<!-- Changes from v1.x: Phase 2 complete — FETCH_LIST replaced by DATA_REGISTRY_ENTRIES + -->
+<!--   QualitativeGatherList; GatherIntel STEP 1 now calls FetchRegistry.fetchAll(); -->
+<!--   MODULE_MANIFEST added. M02 is now a thin orchestrator for DATA_INTELLIGENCE. -->
+<!--   Adding a new module's data no longer requires editing M02 — register in the owning module. -->
 <!-- Cross-references: @see M01_SourceIntegrity, @see M03_ScenarioFramework, @see M04_BriefingFormat -->
-<!-- Extended by: M11_CreditAndCalibration (adds credit spreads to fetch list) -->
-<!-- Extended by: M14_MarketRegime (adds VIX trailing averages and position trailing performance to fetch list) -->
+<!-- Extended by: M11 (HY_OAS, CCC_OAS, IG_OAS, BBB_OAS, MOVE) -->
+<!-- Extended by: M14 (VIX_30D_AVG, VIX_90D_AVG, BROAD_EQUITY_TRAILING) -->
+<!-- Extended by: M17 (YIELD_CURVE, KRE, KBE, THREEFYTP10, SOFR, DFF, FINRA_MARGIN_DEBT, NATGAS_HENRY_HUB, FARM_FILINGS_YOY) -->
+
+<!-- MODULE MANIFEST
+  ID:              M02_IntelGathering
+  Version:         2.0
+  Sub-project:     DATA_INTELLIGENCE
+  Reason to change: core M02-owned data sources change (energy, equities, rates, FX, inflation);
+                    OR qualitative gather methodology changes.
+                    Adding a new module's structured data: register DATA_REGISTRY_ENTRIES in that
+                    module; M02 does not change.
+  Inputs consumed:  (none — M02 is the DATA_INTELLIGENCE origin layer; produces DataReading)
+  Outputs produced: List<DataReading>   // via FetchRegistry.fetchAll()
+  Calibration deps: none (PriceDataIntegrity rules are structural)
+  Types consumed:   @see FW_Types.md — FetchSpec, DataReading, FetchRegistry
+-->
 
 ```
 MODULE IntelGathering {
 
-  // ─── PRIORITY FETCH LIST (every session) ────────────────────────────────
-  // Execute at session start before any analysis. @see M05_SessionInit for order.
+  // ─── DATA REGISTRY ENTRIES (M02-owned structured data points) ───────────────────────
+  // Registered with FetchRegistry at module load. Iterated by FetchRegistry.fetchAll().
+  // Series IDs / tickers NOT stored in FetchSpec — live in descriptions or approved source URLs.
 
-  FETCH_LIST priority {
-    geopolitical: [
-      active_conflict_status,
-      escalation_or_deescalation_signals,
-      breaking_geopolitical_events(window: last_48h)
-    ]
-    energy: [
-      Brent_crude, WTI, natural_gas
-    ]
-    safe_haven: [
-      gold_spot, silver
-    ]
-    equities: [
-      SP500, NASDAQ, Dow, Russell2000
-    ]
-    volatility: [
-      VIX
-    ]
-    fixed_income: [
-      treasury_10Y, treasury_2Y, MOVE_index
-    ]
-    currency: [
-      DXY
-    ]
-    inflation: [
-      latest_CPI_print,
-      breakeven_inflation_rates(FRED: T10YIE, T5YIE)
-    ]
-    fed: [
-      current_fed_funds_rate,
-      forward_guidance_changes
-    ]
-    holdings: [
-      live_prices_all_client_positions   // from allocation file @see M05_SessionInit
-    ]
-    credit: @see M11_CreditAndCalibration.FetchList  // added by Extension v1
-    market_regime: @see M14_MarketRegime.FetchList   // added by M14
-                   // VIX trailing averages (30d, 90d); broad equity 30/60/90d trailing performance;
-                   // position-level 30/60/90d trailing closes
-                   // runs concurrently with credit fetch in Step 4
+  DATA_REGISTRY_ENTRIES {
+
+    // Energy
+    REGISTER FetchSpec { id: "BRENT_CRUDE",     source: WEBSEARCH_T1, description: "Brent crude spot BZ=F — verify against EIA or CME settlement", update_frequency: DAILY, acceptable_lag_days: 1 }
+    REGISTER FetchSpec { id: "WTI",             source: WEBSEARCH_T1, description: "WTI crude spot CL=F — verify against EIA or CME settlement",   update_frequency: DAILY, acceptable_lag_days: 1 }
+    REGISTER FetchSpec { id: "NATURAL_GAS",     source: WEBSEARCH_T1, description: "Henry Hub natural gas front-month",                            update_frequency: DAILY, acceptable_lag_days: 1 }
+
+    // Safe haven / precious metals
+    REGISTER FetchSpec { id: "GOLD_SPOT",       source: WEBSEARCH_T1, description: "Gold spot XAUUSD — verify against LBMA or Kitco",  update_frequency: DAILY, acceptable_lag_days: 1 }
+    REGISTER FetchSpec { id: "SILVER",          source: WEBSEARCH_T1, description: "Silver spot XAGUSD — verify against LBMA or Kitco", update_frequency: DAILY, acceptable_lag_days: 1 }
+
+    // Broad equities
+    REGISTER FetchSpec { id: "SP500",           source: WEBSEARCH_T1, description: "S&P 500 closing level — NYSE official",            update_frequency: DAILY, acceptable_lag_days: 1 }
+    REGISTER FetchSpec { id: "NASDAQ_COMP",     source: WEBSEARCH_T1, description: "NASDAQ Composite closing level — NASDAQ official", update_frequency: DAILY, acceptable_lag_days: 1 }
+    REGISTER FetchSpec { id: "DOW",             source: WEBSEARCH_T1, description: "Dow Jones Industrial Average — NYSE official",    update_frequency: DAILY, acceptable_lag_days: 1 }
+    REGISTER FetchSpec { id: "RUSSELL2000",     source: WEBSEARCH_T1, description: "Russell 2000 closing level — NYSE official",      update_frequency: DAILY, acceptable_lag_days: 1 }
+
+    // Volatility (current close — trailing averages registered by M14)
+    REGISTER FetchSpec { id: "VIX",             source: ALLOCATION_SPREADSHEET_OTHER, description: "VIX current daily close", update_frequency: DAILY, acceptable_lag_days: 1 }
+
+    // Fixed income / rates
+    REGISTER FetchSpec { id: "TREASURY_10Y",    source: FRED_SPREADSHEET_TAB, description: "DGS10 — 10-year Treasury yield", update_frequency: DAILY, acceptable_lag_days: 1 }
+    REGISTER FetchSpec { id: "TREASURY_2Y",     source: FRED_SPREADSHEET_TAB, description: "DGS2 — 2-year Treasury yield",  update_frequency: DAILY, acceptable_lag_days: 1 }
+
+    // Currency
+    REGISTER FetchSpec { id: "DXY",             source: WEBSEARCH_T1, description: "US Dollar Index DX=F", update_frequency: DAILY, acceptable_lag_days: 1 }
+
+    // Inflation breakevens (FRED)
+    REGISTER FetchSpec { id: "BREAKEVEN_10Y",   source: FRED_SPREADSHEET_TAB, description: "T10YIE — 10-year breakeven inflation rate", update_frequency: DAILY, acceptable_lag_days: 1 }
+    REGISTER FetchSpec { id: "BREAKEVEN_5Y",    source: FRED_SPREADSHEET_TAB, description: "T5YIE — 5-year breakeven inflation rate",  update_frequency: DAILY, acceptable_lag_days: 1 }
+
+    // CPI (monthly release — lag reflects BLS release cadence)
+    REGISTER FetchSpec { id: "CPI_YOY",         source: WEBSEARCH_T1, description: "Latest BLS CPI YoY print — check release date",
+                                                 update_frequency: MONTHLY, acceptable_lag_days: 35 }
+
+    // Monetary policy
+    REGISTER FetchSpec { id: "FED_FUNDS_RATE",  source: FRED_SPREADSHEET_TAB, description: "DFF — effective federal funds rate", update_frequency: DAILY, acceptable_lag_days: 1 }
+
+    // Holdings prices — already in allocation sheet (Step 1); registered for manifest completeness
+    REGISTER FetchSpec { id: "HOLDINGS_PRICES", source: GOOGLEFINANCE, description: "Live prices via GOOGLEFINANCE in allocation sheet — no separate fetch needed",
+                                                 update_frequency: DAILY, acceptable_lag_days: 0 }
   }
 
-  // ─── PRICE DATA INTEGRITY RULE ───────────────────────────────────────────
+
+  // ─── QUALITATIVE GATHER LIST ─────────────────────────────────────────────────────────
+  // Items requiring open-ended web search + interpretation. Not representable as FetchSpec
+  // (no fixed series ID, qualitative output, or inherently interpretive).
+  // Gathered in GatherIntel STEP 1 alongside FetchRegistry.fetchAll().
+  // Source tier assessed per M01_SourceIntegrity.classify() before use.
+  // Outputs are NOT DataReading — they are working inputs to GatherIntel STEPS 2–5.
+
+  QUALITATIVE_GATHER_LIST {
+    active_conflict_status:         web_search (T1 preferred) — current conflict zones and status
+    escalation_or_deescalation:     web_search — geopolitical signals from last 48h
+    breaking_geopolitical_events:   web_search — window: last 48h
+    fed_forward_guidance_changes:   web_search — latest Fed statements, press conferences, minutes
+    NOTE: "NEVER treat qualitative outputs as DataReading.
+           Apply M01_SourceIntegrity.classify() to every item before use in analysis."
+  }
+
+
+  // ─── PRICE DATA INTEGRITY RULE ───────────────────────────────────────────────────────
 
   GUARD PriceDataIntegrity {
     REQUIRE: specific_price_quote sourced_from dedicated_instrument_page
@@ -64,50 +104,62 @@ MODULE IntelGathering {
     APPROVED_SOURCES {
       gold_silver:  [LBMA, Kitco_spot, World_Gold_Council]
       oil:          [EIA_weekly_reports, CME_Group_settlement_data]
-      equities:     [NYSE_official, NASDAQ_official]  // exchange closing print only
-      rates:        [
-        treasury.gov,        // Daily Treasury Par Yield Curve Rates
-        FRED(DGS10, DGS2, T10YIE, T5YIE)
-      ]
+      equities:     [NYSE_official, NASDAQ_official]
+      rates:        [treasury.gov, FRED(DGS10, DGS2, T10YIE, T5YIE)]
     }
 
     IF price_sourced_from: unapproved_source {
       LABEL: 'Unverified price — requires dedicated source confirmation.'
     }
 
-    // Extraordinary movement rule
     IF single_instrument_move > 40% OVER any_90d_window {
       CLASSIFY: extraordinary_claim
       REQUIRE: cross_verification from >= 2 dedicated T1_price_sources
                 before_entering_digest_as_fact
-      // Note: threshold is a relative move — inherently self-adjusting.
-      // Review only if structural volatility regime changes materially.
     }
   }
 
-  // ─── GATHERING PROCEDURE (Steps 1–5) ────────────────────────────────────
+
+  // ─── GATHERING PROCEDURE (Steps 1–5) ────────────────────────────────────────────────
 
   PROCEDURE GatherIntel {
 
     STEP 1: FetchCurrentData {
-      execute: @see IntelGathering.FETCH_LIST
-      REQUIRE: source_date <= 48h_ago  // for fast-moving situations
+      // Phase 2 complete: FetchRegistry owns all structured data fetches.
+      // All module DATA_REGISTRY_ENTRIES populated at framework load time.
+
+      execute_structured:   FetchRegistry.fetchAll()
+      // Parallel fetch across all registered FetchSpecs from all modules.
+      //   M02 contributes: BRENT_CRUDE, WTI, NATURAL_GAS, GOLD_SPOT, SILVER,
+      //                    SP500, NASDAQ_COMP, DOW, RUSSELL2000, VIX,
+      //                    TREASURY_10Y, TREASURY_2Y, DXY,
+      //                    BREAKEVEN_10Y, BREAKEVEN_5Y, CPI_YOY, FED_FUNDS_RATE,
+      //                    HOLDINGS_PRICES (already in allocation sheet)
+      //   M11 contributes: HY_OAS, CCC_OAS, IG_OAS, BBB_OAS, MOVE
+      //   M14 contributes: VIX_30D_AVG, VIX_90D_AVG, BROAD_EQUITY_TRAILING
+      //   M17 contributes: YIELD_CURVE, KRE, KBE, THREEFYTP10, SOFR, DFF,
+      //                    FINRA_MARGIN_DEBT, NATGAS_HENRY_HUB, FARM_FILINGS_YOY
+      // RETURN: List<DataReading>   // @see FW_Types.md
+
+      execute_qualitative:  QUALITATIVE_GATHER_LIST
+      // Web searches for: active_conflict_status, escalation_or_deescalation,
+      //                   breaking_geopolitical_events, fed_forward_guidance_changes
+
+      REQUIRE: structured_readings.timestamp within acceptable_lag_days for each FetchSpec
       apply:   @see PriceDataIntegrity
+      OUTPUT:  List<DataReading>
     }
 
     STEP 2: ApplySourceIntegrity {
       FOR each significant_claim {
-        identify: tier           // @see M01_SourceIntegrity.Tier
-        check:    propaganda_fingerprints  // @see M01_SourceIntegrity.PropagandaMarker
+        identify: tier
+        check:    propaganda_fingerprints
         determine: T1_corroboration
         classify_as: Verified | Unverified | AdversarialSignal
       }
     }
 
     STEP 3: EnumerateTransmissionMechanisms {
-      // For every market-moving development — enumerate ALL mechanisms first.
-      // Stopping at first plausible mechanism is an ERROR.
-
       FOR each market_moving_development {
         OUTPUT_FORMAT {
           Development: [what happened]
@@ -121,14 +173,12 @@ MODULE IntelGathering {
         }
         AFTER identifying any market_moving_narrative {
           RUN: dedicated_search(primary_geopolitical_actors)
-          // One search pass is NOT sufficient on days with active diplomatic developments
         }
       }
     }
 
     STEP 4: IdentifyOmissions {
       ACTIVELY_SEEK: what_is_NOT_being_reported
-      // Absence of coverage on financially consequential events is itself signal
     }
 
     STEP 5: FollowTheMoney {
@@ -144,11 +194,10 @@ MODULE IntelGathering {
 
   }
 
-  // ─── PRIMARY DRIVER IDENTIFICATION ──────────────────────────────────────
-  // Run before updating scenario probabilities. @see M03_ScenarioFramework.
+
+  // ─── PRIMARY DRIVER IDENTIFICATION ──────────────────────────────────────────────────
 
   FUNCTION identifyPrimaryDriver() {
-    // Prevents scenario framework anchoring to prior regime after environment shift.
     OUTPUT_FORMAT {
       PRIMARY_DRIVER_ASSESSMENT {
         current_dominant_driver:   [name explicitly]
@@ -156,7 +205,6 @@ MODULE IntelGathering {
         duration_of_dominance:     [how long this has been primary driver]
         challenger_drivers:        [emerging secondary drivers that could displace it]
         recalibration_trigger_check: Yes | No
-        // If Yes → recalibrate scenario probabilities @see M03_ScenarioFramework.RecalibrationRule
       }
     }
   }

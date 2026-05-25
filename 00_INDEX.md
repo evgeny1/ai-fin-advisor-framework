@@ -1,21 +1,21 @@
 # 00 — Index & Module Map
 <!-- Personal Financial Advisor Framework — Pseudo-Code Edition -->
 <!-- Source documents: Framework_Main_v1, Framework_Extension_v1, Calibration_State, Amendment 1, Amendment 2 -->
-<!-- Last updated: May 25, 2026 (v1.20 Phase 0+1 architecture: FW_Types.md added (shared type contracts); -->
-<!--   SUB_PROJECTS block added; DataRegistry + BriefingRegistry declared as extension points; -->
-<!--   M17 v1.1 — §5 PrePositioningLadder now fully role-based (zero tickers); -->
-<!--   MODULE_MANIFEST pattern introduced; NEVER list updated; PERMANENT_RULES updated) -->
+<!-- Last updated: May 25, 2026 (v1.21 Phase 2 registry integration: M02 v2.0 — FetchRegistry.fetchAll() -->
+<!--   replaces hardcoded FETCH_LIST; M04 v2.0 — BriefingRegistry.assemble() replaces hardcoded section -->
+<!--   list; M11 v1.1 + M14 v1.1 — DATA_REGISTRY_ENTRIES and BRIEFING_REGISTRY_ENTRY added; -->
+<!--   M17 v1.2 — Phase 2 complete comment updates; M05 updated; PERMANENT_RULES updated) -->
 
 ```
 FRAMEWORK PersonalFinancialAdvisor {
 
-  // ─── MODULE REGISTRY ───────────────────────────────────────────────────────────
+  // ─── MODULE REGISTRY ─────────────────────────────────────────────────────────────────
 
   MODULES {
     M01_SourceIntegrity           // Source tiers, propaganda checklist, symmetric skepticism
-    M02_IntelGathering            // Fetch list, price integrity, gathering procedure, primary driver
+    M02_IntelGathering            // FetchRegistry orchestrator, price integrity, gather procedure, primary driver
     M03_ScenarioFramework         // Six scenarios, probability rules, B vs C rule, scenario-weighted math
-    M04_BriefingFormat            // Intelligence briefing output template
+    M04_BriefingFormat            // BriefingRegistry orchestrator, render functions, briefing template
     M05_SessionInit               // Session initialization sequence — entry point
     M06_ClientAndAdvisory         // Client profile, advisory principles
     M07_InstrumentEval            // Instrument evaluation framework
@@ -29,7 +29,7 @@ FRAMEWORK PersonalFinancialAdvisor {
     M15_InstrumentClassification  // Extensible role registry, composite decomposition, blended returns
     M16_ReturnTableCalibration    // §4.1 return table revision methodology
     M17_SystemicCascadeWarning    // Cascade chain registry, sector stress scoring, yield curve protocol,
-                                  //   supply chain indicators, pre-positioning ladder (role-based, v1.1),
+                                  //   supply chain indicators, pre-positioning ladder (role-based, v1.2),
                                   //   data integrity rules
     // Cross-cutting framework files (@see SUB_PROJECTS below)
     FW_Types                      // Shared type contracts — ALL modules consume/produce these types
@@ -39,10 +39,11 @@ FRAMEWORK PersonalFinancialAdvisor {
   }
 
 
-  // ─── SUB-PROJECTS ──────────────────────────────────────────────────────────────
+  // ─── SUB-PROJECTS ────────────────────────────────────────────────────────────────────
   // Each sub-project has exactly ONE reason to change. @see FW_Types.md for contracts.
-  // Phase 1 status: structure declared; module manifest and registry patterns introduced.
-  // Phase 2 target: M02 integrates FetchRegistry.fetchAll(); M04 integrates BriefingRegistry.assemble().
+  // Phase 2 complete: M02 integrates FetchRegistry.fetchAll(); M04 integrates BriefingRegistry.assemble().
+  //   Adding new data → register DATA_REGISTRY_ENTRIES in the owning module; M02 does not change.
+  //   Adding new briefing section → register BRIEFING_REGISTRY_ENTRY in the owning module; M04 does not change.
   // Phase 3 target: M11 splits into M11_CreditData (DATA_INTELLIGENCE) + M11_CreditAnalysis (ANALYSIS_ENGINE).
 
   SUB_PROJECTS {
@@ -84,13 +85,13 @@ FRAMEWORK PersonalFinancialAdvisor {
       modules:          [M05_SessionInit, M04_BriefingFormat]
       extension_points: [FetchRegistry, BriefingRegistry]   // @see FW_Types.md
       note:             "Thin wiring layer. Contains NO business logic.
-                         Phase 2 target: iterates registries only — does not enumerate modules."
+                         Phase 2 complete: iterates registries only — does not enumerate modules."
     }
 
   }  // end SUB_PROJECTS
 
 
-  // ─── FILE MAP ───────────────────────────────────────────────────────────────────
+  // ─── FILE MAP ────────────────────────────────────────────────────────────────────────
 
   FILE_MAP {
     // Framework core (Project Knowledge — no fetch needed)
@@ -98,22 +99,22 @@ FRAMEWORK PersonalFinancialAdvisor {
 
     // Framework modules (Project Knowledge — no fetch needed)
     "M01_SourceIntegrity.md"
-    "M02_IntelGathering.md"
+    "M02_IntelGathering.md"            // v2.0: FetchRegistry orchestrator
     "M03_ScenarioFramework.md"
-    "M04_BriefingFormat.md"
+    "M04_BriefingFormat.md"            // v2.0: BriefingRegistry orchestrator
     "M05_SessionInit.md"
     "M06_ClientAndAdvisory.md"
     "M07_InstrumentEval.md"
     "M08_FunctionalRoles.md"
     "M09_ScenariosABC.md"
     "M10_ScenariosDEF.md"
-    "M11_CreditAndCalibration.md"
+    "M11_CreditAndCalibration.md"      // v1.1: DATA_REGISTRY_ENTRIES + BRIEFING_REGISTRY_ENTRY added
     "M12_DriveProtocol.md"
     "M13_GrowthObjectives.md"
-    "M14_MarketRegime.md"
+    "M14_MarketRegime.md"              // v1.1: DATA_REGISTRY_ENTRIES + BRIEFING_REGISTRY_ENTRY added
     "M15_InstrumentClassification.md"
     "M16_ReturnTableCalibration.md"
-    "M17_SystemicCascadeWarning.md"    // v1.1: role-based ladder, MODULE_MANIFEST, registry entries
+    "M17_SystemicCascadeWarning.md"    // v1.2: Phase 2 complete; registry comments updated
 
     // GitHub-resident operational files (fetched every session)
     "Calibration_State.md"  // LIVE CONFIG: §1–§6, §9–§12 thresholds, return table, classifications
@@ -123,7 +124,7 @@ FRAMEWORK PersonalFinancialAdvisor {
   }
 
 
-  // ─── LOAD ORDER (every session) ────────────────────────────────────────────────────
+  // ─── LOAD ORDER (every session) ──────────────────────────────────────────────────────
 
   SESSION_START_SEQUENCE {
     // @see M05_SessionInit.SessionStartSequence for full detail
@@ -132,11 +133,14 @@ FRAMEWORK PersonalFinancialAdvisor {
     3:  M12_FileProtocol.fetchCalibrationState()  // GitHub — Calibration_State.md
         M12_FileProtocol.fetchSessionLog()        // GitHub — Session_Log.md (CONCURRENT)
         // Apply: §1, §2 thresholds; §4 return table (M13); §9 M14 thresholds;
-        //        §11 classifications (M15); §12 M17 thresholds
+        //        §11 classifications (M15); §12 M17 cascade thresholds
         // Load: §8 prior probabilities (AUTHORITATIVE)
         // Run M15.ValidateClassifications() — HARD_STOP if any instrument absent from §11
-    4:  M02_IntelGathering.FETCH_LIST             // includes M11, M14, M17 fetch specs
-        // Phase 2 target: FetchRegistry.fetchAll() replaces explicit enumeration
+    4:  FetchRegistry.fetchAll()                  // Phase 2 complete — parallel fetch of all registered FetchSpecs
+        // M02 (core market data), M11 (credit spreads), M14 (VIX trailing, equity trailing),
+        // M17 (yield curve, cascade chain inputs)
+        // + M02.QualitativeGatherList (geopolitical, Fed guidance — web search)
+        // @see M02_IntelGathering.GatherIntel STEP 1
     5:  M02_IntelGathering.identifyPrimaryDriver()
     6:  M03_ScenarioFramework.RecalibrationRule  +  M11.CalibrationDiscipline.SessionLoad
     7:  M02_IntelGathering.GatherIntel STEPS 2–5
@@ -146,8 +150,9 @@ FRAMEWORK PersonalFinancialAdvisor {
         + M17.assessCascadeLevel()               // → [MONITORING | ALERT | PRE_POSITION]
         → IF M14.composite IN [HIGH, MODERATE]: M14.UnderweightReviewTrigger(account)
         → IF M17.cascadeLevel IN [ALERT, PRE_POSITION]: surface in briefing; prepare §5 review
-    8:  M04_BriefingFormat.IntelligenceBriefing   // includes M14 + M17 briefing blocks
-        // Phase 2 target: BriefingRegistry.assemble() replaces explicit block enumeration
+    8:  BriefingRegistry.assemble(readings)       // Phase 2 complete — ordered section list
+        // M04-owned + M11, M14, M17 registered sections assembled in declared order
+        // @see M04_BriefingFormat.IntelligenceBriefing
     9:  portfolio discussion
         → before any ADD executes: M14.EntryExtensionGuard(asset, account)
     10: M12_FileProtocol.WriteBack
@@ -155,7 +160,7 @@ FRAMEWORK PersonalFinancialAdvisor {
   }
 
 
-  // ─── PRECEDENCE RULES ──────────────────────────────────────────────────────────────
+  // ─── PRECEDENCE RULES ────────────────────────────────────────────────────────────────
 
   PRECEDENCE [highest → lowest] {
     1:   M11_CreditAndCalibration
@@ -168,13 +173,13 @@ FRAMEWORK PersonalFinancialAdvisor {
     4.7: M15_InstrumentClassification
     4.8: M17_SystemicCascadeWarning    // sectorStressScore() = one D-binding variable;
                                        // yield curve signals = timing only, NEVER into M03;
-                                       // AdvisoryAction.role_id = RoleID always (v1.1)
+                                       // AdvisoryAction.role_id = RoleID always (v1.2)
     5:   M09_ScenariosABC, M10_ScenariosDEF
     6:   M01–M08
   }
 
 
-  // ─── KEY CROSS-REFERENCE MAP ────────────────────────────────────────────────────────
+  // ─── KEY CROSS-REFERENCE MAP ─────────────────────────────────────────────────────────
 
   CROSS_REFERENCES {
 
@@ -184,12 +189,13 @@ FRAMEWORK PersonalFinancialAdvisor {
       → M01_SourceIntegrity.SymmetricSkepticism
 
     market_data
-      → M02_IntelGathering.FETCH_LIST  // Phase 2: FetchRegistry.fetchAll()
+      → FetchRegistry.fetchAll()  // Phase 2 complete (M02_IntelGathering.GatherIntel STEP 1)
+      → M02_IntelGathering.QualitativeGatherList  // geopolitical, Fed guidance — web search
       → M02_IntelGathering.PriceDataIntegrity
-      → M02_IntelGathering.GatherIntel (Steps 1–5)
+      → M02_IntelGathering.GatherIntel (Steps 2–5)
       → M02_IntelGathering.identifyPrimaryDriver()
       → M03_ScenarioFramework.RecalibrationRule?
-      → M04_BriefingFormat.IntelligenceBriefing  // Phase 2: BriefingRegistry.assemble()
+      → BriefingRegistry.assemble(readings)  // Phase 2 complete (M04_BriefingFormat.IntelligenceBriefing)
 
     credit_spreads
       → M11_CreditAndCalibration.SignalConvergenceTest()
@@ -212,13 +218,12 @@ FRAMEWORK PersonalFinancialAdvisor {
       → IF ALERT or PRE_POSITION: §5 AdvisoryAction[] (role-based; client confirmation required)
       // NEVER routes yield_curve signals into M03
       // NEVER auto-executes AdvisoryAction
-      // All metric cross-reference: @see M17 §6 DataIntegrity
 
     instrument_classification
       → M15.ValidateClassifications()    // session start — HARD_STOP if unclassified
       → M15.classifyInstrument()         // §11 lookup → ComponentVector
       → M15.blendedScenarioReturn()      // weighted blend → BlendedReturn
-      → M15.dominantDirective()          // for M09/M10 execution directives
+      → M15.dominantDirective()
 
     return_table_revision
       → M16.CalibrationMethodology() [4 layers]
@@ -228,8 +233,6 @@ FRAMEWORK PersonalFinancialAdvisor {
 
     allocation_recommendation
       → M13.RecommendationFlow [steps 1–10]
-        // Step 4: DeriveScenarioProbabilities() consumes CreditSignal + RegimeSignal + CascadeSignal
-        // Step 5: idealAllocation() uses BlendedReturn from M15
       → PRODUCES AllocationTarget[] (@see FW_Types.md)
 
     execution_trigger
@@ -242,10 +245,9 @@ FRAMEWORK PersonalFinancialAdvisor {
       → PRODUCES ExecutionDirective (@see FW_Types.md)
 
     advisory_action
-      // Source: M17 §5 PrePositioningLadder
       → PRODUCES AdvisoryAction { role_id: RoleID, ... } (@see FW_Types.md)
-      // Instrument resolution at execution: M15.classifyInstrument() + CALIBRATION_STATE §11
-      // Tax placement at execution: M06.TaxPlacement(role_id, account)
+      // Instrument resolution: M15.classifyInstrument() + CALIBRATION_STATE §11
+      // Tax placement: M06.TaxPlacement(role_id, account)
 
     recommendation
       → M06.SimplicityTest()
@@ -265,7 +267,7 @@ FRAMEWORK PersonalFinancialAdvisor {
   }
 
 
-  // ─── CALIBRATION-DATED THRESHOLDS AT A GLANCE ─────────────────────────────────
+  // ─── CALIBRATION-DATED THRESHOLDS AT A GLANCE ────────────────────────────────────────
 
   CALIBRATION_DATED_THRESHOLDS {
     HY_STRESS_DELTA:             +150 bps   // §1.1
@@ -314,7 +316,7 @@ FRAMEWORK PersonalFinancialAdvisor {
   }
 
 
-  // ─── FIXED STRUCTURAL RULES ────────────────────────────────────────────────────
+  // ─── FIXED STRUCTURAL RULES ──────────────────────────────────────────────────────────
 
   PERMANENT_RULES {
     source_tier_definitions:          M01_SourceIntegrity
@@ -361,10 +363,22 @@ FRAMEWORK PersonalFinancialAdvisor {
     sub_project_boundary:             PORTFOLIO_ADVISOR never reads DataReading directly;
                                         ANALYSIS_ENGINE never reads AllocationTarget or AdvisoryAction;
                                         cross-boundary data flows through FW_Types.md contracts only
+    // Phase 2 architecture rules (added v1.21)
+    FetchRegistry_is_extension_point:    add new module data → DATA_REGISTRY_ENTRIES in the owning module;
+                                           FetchRegistry.fetchAll() picks it up; M02 does not change
+    BriefingRegistry_is_extension_point: add new briefing section → BRIEFING_REGISTRY_ENTRY in owning module;
+                                           BriefingRegistry.assemble() picks it up; M04 does not change
+    canonical_briefing_section_ids:      PRIMARY_DRIVER | SCENARIO_PROBABILITIES | ENERGY_AND_COMMODITIES
+                                           | EQUITY_MARKETS | MARKET_REGIME_SIGNAL | FIXED_INCOME_AND_RATES
+                                           | CREDIT_SIGNALS | CASCADE_EARLY_WARNING
+                                           | CURRENCY | CURRENT_HOLDINGS | GEOPOLITICAL_SIGNAL
+                                           | PENDING_TRIGGERS | NET_ASSESSMENT
+    qualitative_gather_not_DataReading:  M02.QualitativeGatherList outputs are working inputs only —
+                                           NEVER registered as DataReading or FetchSpec
   }
 
 
-  // ─── WHAT NEVER TO DO ──────────────────────────────────────────────────────────
+  // ─── WHAT NEVER TO DO ────────────────────────────────────────────────────────────────
 
   NEVER [
     // M12
@@ -412,7 +426,11 @@ FRAMEWORK PersonalFinancialAdvisor {
     // Phase 0+1 architecture rules (added v1.20)
     use_ticker_symbol_in_AdvisoryAction__role_id_must_be_RoleID_resolved_via_section_11,
     cross_sub_project_boundary_with_raw_DataReading_or_AllocationTarget__use_FW_Types_contracts,
-    add_new_module_without_MODULE_MANIFEST_block
+    add_new_module_without_MODULE_MANIFEST_block,
+    // Phase 2 architecture rules (added v1.21)
+    edit_M02_to_add_new_module_data__register_DATA_REGISTRY_ENTRIES_in_owning_module,
+    edit_M04_to_add_new_briefing_section__register_BRIEFING_REGISTRY_ENTRY_in_owning_module,
+    treat_QualitativeGatherList_output_as_DataReading
   ]
 
 }
