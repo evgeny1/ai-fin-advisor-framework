@@ -89,7 +89,7 @@ MODULE SessionInit {
        // Run M15.ValidateClassifications() — HARD_STOP if any allocation instrument absent from §11.
 
     4: fetch_current_market_data
-       // Phase 2 complete: FetchRegistry.fetchAll() — parallel fetch of all registered FetchSpecs
+       // Phase 2 complete: M18.FetchRegistry.fetchAll() — parallel fetch of all registered FetchSpecs
        // Registered by all modules at load time:
        //   M02 (core market data: energy, equities, rates, FX, inflation, FFR, holdings)
        //   M11 (credit spreads: HY_OAS, CCC_OAS, IG_OAS, BBB_OAS, MOVE)
