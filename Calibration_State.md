@@ -2,7 +2,9 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.19  Last updated: May 25, 2026 (Full M05 session — §12 M17 thresholds added; scenario probabilities updated A=7/B=36/C=41/D=5/E=4/F=7 via DeriveScenarioProbabilities() with D_precursor_binding=2; C-trigger clock Day 0 T2-confirmed; BZ=F overnight ~$107.60; portfolio total ~$775k)
+# Version: 1.20  Last updated: May 25, 2026 (FW-BUG-01: CHAIN_3 two-mode scoring fix;
+# FW-GAP-02: D_precursor_binding clarified; framework Phase 2 confirmed complete;
+# CascadeLevel corrected to MONITORING; D=5% maintained by client approval)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -116,6 +118,16 @@ May 25 full session: No new CPI or GDP since May 13. **CPI B trigger status: pri
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+2026-05-25 - Framework v1.20 (same session day). **FW-BUG-01 CHAIN_3 two-mode fix.**
+Prior v1.19 session scored CHAIN_3 as FIRES based on margin debt record + gate events.
+Corrected: FIRES requires MARGIN_MOM_DECLINE ≤−5% after record OR gate_count ≥3. Neither
+met in Apr 2026 data (MoM was +6.8% rising to record; gate count = 2). CHAIN_3 = WATCH
+(record loaded; score 0). Revised formal sectorStressScore = 0. CascadeLevel = MONITORING.
+D_precursor_binding clarified = sectorStressScore only (0 formal); yield curve
+D_timing_signal = RECESSION_ONSET_PATTERN is informational timing context, not a binding
+variable count. D=5% maintained by prior client approval (qualitative grounds); revisit at
+Q2 audit with T1 CHAIN_4 count (AACER/PACER). Phase 2 confirmed complete: M02 v2.0,
+M04 v2.0, M11/M14/M17 v1.1+ all have DATA_REGISTRY_ENTRIES and BRIEFING_REGISTRY_ENTRY.
 
 2026-05-25 - Full M05 session (v1.19). **§12 M17 thresholds pushed** (first formal action this session). Scenario probabilities updated: A=7%(unch), B=36%(unch), C=41%(−3pp), D=5%(+2pp), E=4%(+1pp), F=7%(unch) — D/E uplift reflects M17 CascadeLevel ALERT (formal sectorStressScore=2: CHAIN_3 margin debt $1.304T all-time record + gate events; CHAIN_4 corporate bankruptcies 14-yr high qualitative; D_timing_signal=RECESSION_ONSET_PATTERN post-inversion yield curve re-steepening; THREEFYTP10=0.8117% 14-yr high). Credit T1 carry (May 21): HY=278, IG=75, CCC=939 — all thresholds clear; CCC quiet re-widening (+2 bps) vs HY tightening noted. BZ=F C-trigger clock: **Day 0 confirmed** — max ~5–6 consecutive days ≥$110 (approx. May 13–19); reset ~May 20; 10-day requirement NOT met (T2 reconstruction; BZ=F May 14–19 T1 pending). BZ=F Sunday night ~$107.60 (T2). MOVE=78.43, VIX=16.70, S&P=7,473.47 (May 22 close). Memorial Day — US markets closed; S&P futures overnight −2.7% (7,268.25) — watch Tuesday open. M14 composite: HIGH (unchanged). EVs updated throughout §11 at new probability vector. Portfolio ~$775k; all accounts within ±2pp of v1.18 targets; no rebalancing required.
 
@@ -721,12 +733,17 @@ All values CALIBRATION_DATED. First audit: June 30, 2026.
 | KRE_alert | KRE −15% vs SPX over 90 days | Current: KRE $69.37 (May 22). Not fired. CHAIN_2 NOT fired. |
 | SOFR_DFF_alert | SOFR–DFF spread +10 bp sustained 5 days | Current: −11 bp (normal). CHAIN_2 NOT fired. |
 
-### 12.3 Private Credit / Margin Chain
+### 12.3 Private Credit / Margin Chain (two-mode — v1.20)
 
-| Parameter | Alert Threshold | Notes |
-| --- | --- | --- |
-| margin_MoM_alert | −5% MoM after all-time record | CHAIN_3 FIRES: $1.304T Apr 2026 all-time record. Watch for −5% reversal trigger. |
-| gate_count_alert | 3+ fund gate/suspension events in 90 days | CHAIN_3 FIRES (partial): BlackRock CLO OC breach; Blue Owl gate event observed. Formal count <3; qualitative signal elevated. |
+| Mode | Parameter | Threshold | Score | Current Status |
+| --- | --- | --- | --- | --- |
+| **WATCH** | margin_at_nominal_record | FINRA margin debt at all-time nominal high | 0 (precursor loaded; not firing) | **WATCH: $1.304T Apr 2026 all-time record. MoM was +6.8% (rising to record).** |
+| **FIRES** | margin_MoM_decline | ≤ −5% MoM after record high | +1 | NOT fired. Watch for reversal month. |
+| **FIRES** | gate_count_alert | 3+ named fund gate/suspension events in 90 days | +1 (OR with above) | NOT fired. 2 events observed (BlackRock CLO OC breach; Blue Owl gate). |
+
+Design rationale: record high = leveraged stack maximally loaded (WATCH).
+The −5% decline = cascade onset, forced selling begins (FIRES). Two separate signals.
+CHAIN_3_WATCH surfaces in briefing watch_chains field regardless of formal score.
 
 ### 12.4 Manufacturing / Corporate Stress Chain
 
@@ -774,12 +791,20 @@ CascadeLevel mapping:
 | --- | --- |
 | 0 | NORMAL |
 | 1 | WATCH |
-| **2** | **ALERT ← current (May 25, 2026)** |
+| **0** | **MONITORING ← current (May 25, 2026, v1.20 corrected)** |
 | 3 | WARNING |
 | 4 | CRITICAL |
 
-D_precursor_binding = sectorStressScore + D_timing_signal_active (1 if RECESSION_ONSET_PATTERN confirmed)
-D_precursor_binding (May 25) = 2 (formal) + 1 (yield curve timing) = **3 qualitative / 2 formal**
+D_precursor_binding = sectorStressScore (only)
+
+The yield curve D_timing_signal (RECESSION_ONSET_PATTERN) is an informational timing
+estimate — it informs when D might arrive and the urgency of pre-positioning review.
+It does NOT add numerically to D_precursor_binding. Adding it would conflate two
+distinct concepts: precursor accumulation (what sectorStressScore measures) and
+timing pattern (what the yield curve measures). They feed different analytical layers.
+
+D_precursor_binding (May 25, v1.20): 0 (formal sectorStressScore = 0 after CHAIN_3 correction)
+D=5% maintained by client approval from prior session (qualitative basis). Revisit Q2 audit.
 
 Integration with M03.DeriveScenarioProbabilities():
 - D_precursor_binding is a supplementary overlay — does NOT replace M11 formal trigger thresholds
@@ -875,7 +900,9 @@ sectorStressScore() = count of formally fired chains (CHAIN_1 through CHAIN_4):
 | 3 | WARNING | 3 |
 | 4 | CRITICAL | 3 (capped — M11 formal trigger required for further D escalation) |
 
-**Current (May 25, 2026): sectorStressScore = 2** (CHAIN_3 formally + CHAIN_4 qualitatively) → **CascadeLevel: ALERT** → **D_precursor_binding = 2.**
+**Current (May 25, 2026, v1.20 corrected): sectorStressScore = 0** → **CascadeLevel: MONITORING** → **D_precursor_binding = 0.**
+Qualitative context: CHAIN_3 WATCH (record loaded) + CHAIN_4 qualitative + yield curve RECESSION_ONSET_PATTERN.
+D=5% by client directive (not mechanically derived). Revisit Q2 with T1 CHAIN_4 data.
 
 Applied to DeriveScenarioProbabilities() May 25 full M05 session: D 3%→5% (+2pp), E 3%→4% (+1pp), C 44%→41% (−3pp). Client approved. Active probabilities: A=7/B=36/C=41/D=5/E=4/F=7.
 

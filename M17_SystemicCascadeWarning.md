@@ -1,7 +1,8 @@
 # M17 — Systemic Cascade Early Warning
-<!-- Version: 1.2 | Adopted: May 25, 2026 -->
-<!-- Changes from v1.1: Phase 2 complete — FetchList_LEGACY comment updated; -->
-<!--   DATA_REGISTRY_ENTRIES and BRIEFING_REGISTRY_ENTRY comments updated. -->
+<!-- Version: 1.3 | Adopted: May 25, 2026 -->
+<!-- Changes from v1.2: FW-BUG-01 — CHAIN_3 two-mode scoring fix. -->
+<!--   sectorStressScore() now distinguishes WATCH (record high, score 0) -->
+<!--   from FIRES (−5% MoM decline after record OR gate_count ≥3, score +1). -->
 <!-- Changes from v1.0: Phase 0 ticker fix (§5 PrePositioningLadder now role-based, zero tickers); -->
 <!--   MODULE_MANIFEST added; DATA_REGISTRY_ENTRIES and BRIEFING_REGISTRY_ENTRY added; -->
 <!--   NEVER list updated. -->
@@ -63,10 +64,10 @@ MODULE SystemicCascadeWarning {
   }
 
 
-  // ─── DATA REGISTRY ENTRIES (Phase 2 complete — FetchRegistry.fetchAll() iterates these) ──
-  // FetchSpec entries registered by M17 at module load. Iterated by M02.GatherIntel STEP 1.
+  // ─── DATA REGISTRY ENTRIES (LEGACY — superseded by M18_MarketDataFetch, v1.3) ──────────
+  // Moved to M18_MarketDataFetch.DATA_REGISTRY_ENTRIES. Retained here for reference.
 
-  DATA_REGISTRY_ENTRIES {
+  DATA_REGISTRY_ENTRIES_LEGACY {
     REGISTER FetchSpec { id: "YIELD_CURVE",       source: FMP_ECONOMICS_TREASURY_RATES, update_frequency: DAILY }
     REGISTER FetchSpec { id: "KRE",               source: ALLOCATION_SPREADSHEET_OTHER,  update_frequency: DAILY }
     REGISTER FetchSpec { id: "KBE",               source: ALLOCATION_SPREADSHEET_OTHER,  update_frequency: DAILY }
@@ -193,9 +194,22 @@ MODULE SystemicCascadeWarning {
         AND SOFR_DFF_spread >= CALIBRATION_STATE.§12.2.D_alert_SOFR_DFF) {
       score += 1
     }
+    // CHAIN_3 — two modes:
+    // Mode 1 WATCH: margin debt at all-time nominal record → precursor loaded.
+    //   Sets CHAIN_3_WATCH = TRUE for briefing. Does NOT increment sectorStressScore.
+    //   Rationale: record high = the leveraged stack is fully loaded, not yet unwinding.
+    // Mode 2 FIRES: MoM decline ≥5% after record, OR formal gate count ≥3.
+    //   Unwinding has begun → cascade onset → score += 1.
+    CHAIN_3_WATCH = FALSE
+    CHAIN_3_FIRES = FALSE
+    IF FINRA_margin_debt_at_nominal_record == TRUE {
+      CHAIN_3_WATCH = TRUE
+      // surface in briefing; do not increment score
+    }
     IF (FINRA_margin_debt_MoM_change <= CALIBRATION_STATE.§12.3.D_alert_margin_monthly_decline
         OR private_credit_gate_count_90d >= CALIBRATION_STATE.§12.3.D_alert_gate_count_90d) {
       score += 1
+      CHAIN_3_FIRES = TRUE
     }
     IF corporate_bankruptcy_quarterly_pace >= CALIBRATION_STATE.§12.4.D_alert_bankruptcy_pace {
       score += 1
@@ -213,12 +227,21 @@ MODULE SystemicCascadeWarning {
                  sectorStressScore is a leading indicator, not an override."
   }
 
-  // SESSION NOTE (May 25, 2026 — first application):
-  // CHAIN_1: borderline (+46% vs +50% threshold) — score 0 (threshold not met; very close)
-  // CHAIN_2: does NOT fire — SOFR–DFF benign; KRE not underperforming
-  // CHAIN_3: FIRES — margin debt all-time record; gate events observed
-  // CHAIN_4: FIRES qualitatively — T1 source pending for formal score
-  // → formal score = 2; qualitative leans 3 → CascadeLevel = ALERT
+  // SESSION NOTE (May 25, 2026, v1.3 corrected):
+  // CHAIN_1: borderline (+46% vs +50% threshold) — score 0; NATGAS data gap this session
+  // CHAIN_2: does NOT fire — SOFR–DFF benign (−11bp); KRE not underperforming vs SPX
+  // CHAIN_3: WATCH — margin debt $1.304T all-time nominal record (Apr 2026)
+  //   CHAIN_3_WATCH = TRUE; MoM was +6.8% (rising to record, not declining)
+  //   gate count = 2 (BlackRock CLO OC breach; Blue Owl gate) — below 3 threshold
+  //   → FIRES = FALSE; score contribution = 0
+  //   Prior v1.2 session note ("CHAIN_3: FIRES") was incorrect — corrected here.
+  // CHAIN_4: FIRES qualitatively — corporate bankruptcies 14-yr high; T1 count (AACER/PACER) pending
+  //   → score contribution = 0 until T1 confirmed (per NEVER: score_Chain_4_without_T1_source)
+  // → formal sectorStressScore = 0 → CascadeLevel = MONITORING
+  // → D_precursor_binding = 0 (formal)
+  // → D=5% maintained by prior client approval; revisit at Q2 audit with T1 CHAIN_4 data
+  // Note: qualitative picture remains elevated (CHAIN_3 WATCH + CHAIN_4 + yield curve
+  //   RECESSION_ONSET_PATTERN) — surface in briefing even though formal score = 0
 
 
   // ─── §3 YIELD CURVE PROTOCOL ───────────────────────────────────────────────
@@ -504,7 +527,8 @@ MODULE SystemicCascadeWarning {
 
   BriefingBlock {
     cascade_level:        [MONITORING | ALERT | PRE_POSITION]
-    active_chains:        [list ChainID at or above D_alert threshold]
+    active_chains:        [list ChainID at or above D_alert threshold (FIRES)]
+    watch_chains:         [list ChainID in WATCH mode — precursor loaded, not yet firing]    
     sector_stress_score:  [0|1|2|3] — brief narrative
 
     yield_curve {

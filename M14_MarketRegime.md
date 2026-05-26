@@ -1,7 +1,7 @@
 # M14 — Market Regime & Entry Discipline
-<!-- Version: 1.1 | Adopted: May 25, 2026 -->
-<!-- Changes from v1.0: MODULE_MANIFEST added; DATA_REGISTRY_ENTRIES added (Phase 2 registry integration); -->
-<!--   BRIEFING_REGISTRY_ENTRY added; FetchList renamed FetchList_LEGACY (superseded). -->
+<!-- Version: 1.2 | Adopted: May 25, 2026 -->
+<!-- Changes from v1.1: DATA_REGISTRY_ENTRIES moved to M18_MarketDataFetch (v1.20 M18 integration). -->
+<!--   M14 DATA_REGISTRY_ENTRIES block renamed _LEGACY. M18 is the single FetchSpec registry. -->
 <!-- Addresses: market desensitization detection, underweight opportunity cost, entry price extension -->
 <!-- Generalizes: WAR PREMIUM ENTRY GUARD (previously user-mandated, unmodularized) -->
 <!-- Extends: M02_IntelGathering (FetchRegistry), M04_BriefingFormat (BriefingRegistry), M08_FunctionalRoles (execution guards) -->
@@ -35,12 +35,10 @@ MODULE MarketRegimeDiscipline {
   // NEVER feed M14 signals into DeriveScenarioProbabilities().
   // @see M03_ScenarioFramework.DeriveScenarioProbabilities.ScoringIntegrity
 
-  // ─── DATA REGISTRY ENTRIES (registers M14's FetchSpecs with FetchRegistry) ──────────
-  // Phase 2 complete: FetchRegistry.fetchAll() in M02 iterates these entries.
-  // VIX current close registered by M02 (id: "VIX"); trailing averages are M14's.
-  // BRENT_CRUDE used in ComputeDivergenceSignal() registered by M02 (id: "BRENT_CRUDE").
+  // ─── DATA REGISTRY ENTRIES (LEGACY — superseded by M18_MarketDataFetch, v1.2) ─────────
+  // Moved to M18_MarketDataFetch.DATA_REGISTRY_ENTRIES. Retained here for reference.
 
-  DATA_REGISTRY_ENTRIES {
+  DATA_REGISTRY_ENTRIES_LEGACY {
     REGISTER FetchSpec { id: "VIX_30D_AVG",          source: WEBSEARCH_T1, description: "VIX 30-day rolling avg — CBOE or FRED VIXCLS series",   update_frequency: DAILY, acceptable_lag_days: 1 }
     REGISTER FetchSpec { id: "VIX_90D_AVG",          source: WEBSEARCH_T1, description: "VIX 90-day rolling avg — CBOE or FRED VIXCLS series",   update_frequency: DAILY, acceptable_lag_days: 1 }
     REGISTER FetchSpec { id: "BROAD_EQUITY_TRAILING", source: WEBSEARCH_T1, description: "VTI or SPX 30/60/90d trailing pct-change — approved source", update_frequency: DAILY, acceptable_lag_days: 1 }

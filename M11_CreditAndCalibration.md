@@ -1,8 +1,7 @@
 # M11 — Credit Signal Protocol & Calibration Discipline
-<!-- Source: Framework_Extension_v1_Credit_And_Calibration.md -->
-<!-- Version: 1.1 | Adopted: May 25, 2026 -->
-<!-- Changes from v1.0: MODULE_MANIFEST added; DATA_REGISTRY_ENTRIES added (Phase 2 registry integration); -->
-<!--   BRIEFING_REGISTRY_ENTRY added; FetchList renamed FetchList_LEGACY (superseded). -->
+<!-- Version: 1.2 | Adopted: May 25, 2026 -->
+<!-- Changes from v1.1: DATA_REGISTRY_ENTRIES moved to M18_MarketDataFetch (v1.20 M18 integration). -->
+<!--   M11 DATA_REGISTRY_ENTRIES block renamed _LEGACY. M18 is the single FetchSpec registry. -->
 <!-- Extends: M02_IntelGathering (FetchRegistry), M04_BriefingFormat (BriefingRegistry), M10_ScenariosDEF (D trigger) -->
 <!-- Companion: @see CALIBRATION_STATE (must load every session); @see FW_Types.md (types) -->
 
@@ -23,12 +22,10 @@
 ```
 MODULE CreditSignal {
 
-  // ─── DATA REGISTRY ENTRIES (registers M11's FetchSpecs with FetchRegistry) ──────────
-  // Phase 2 complete: FetchRegistry.fetchAll() in M02 iterates these entries.
-  // Series IDs are NOT stored in FetchSpec — they live in descriptions or CALIBRATION_STATE.
-  // All values sourced from allocation spreadsheet FRED tab (live-linked).
+  // ─── DATA REGISTRY ENTRIES (LEGACY — superseded by M18_MarketDataFetch, v1.2) ─────────
+  // Moved to M18_MarketDataFetch.DATA_REGISTRY_ENTRIES. Retained here for reference.
 
-  DATA_REGISTRY_ENTRIES {
+  DATA_REGISTRY_ENTRIES_LEGACY {
     REGISTER FetchSpec { id: "HY_OAS",  source: FRED_SPREADSHEET_TAB, description: "ICE BofA US HY OAS — BAMLH0A0HYM2",     update_frequency: DAILY, acceptable_lag_days: 1 }
     REGISTER FetchSpec { id: "CCC_OAS", source: FRED_SPREADSHEET_TAB, description: "ICE BofA CCC & Lower OAS — BAMLH0A3HYC", update_frequency: DAILY, acceptable_lag_days: 1 }
     REGISTER FetchSpec { id: "IG_OAS",  source: FRED_SPREADSHEET_TAB, description: "ICE BofA US IG OAS — BAMLC0A0CM",        update_frequency: DAILY, acceptable_lag_days: 1 }

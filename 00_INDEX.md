@@ -28,9 +28,13 @@ FRAMEWORK PersonalFinancialAdvisor {
     M14_MarketRegime              // Market desensitization signal, underweight review, entry extension guard
     M15_InstrumentClassification  // Extensible role registry, composite decomposition, blended returns
     M16_ReturnTableCalibration    // §4.1 return table revision methodology
-    M17_SystemicCascadeWarning    // Cascade chain registry, sector stress scoring, yield curve protocol,
-                                  //   supply chain indicators, pre-positioning ladder (role-based, v1.2),
-                                  //   data integrity rules
+    M17_SystemicCascadeWarning    // Cascade chain registry, sector stress scoring (v1.3 two-mode),
+                                  //   yield curve protocol, supply chain indicators,
+                                  //   pre-positioning ladder (role-based), data integrity rules
+    M18_MarketDataFetch           // Centralized financial data registry (v1.0, added v1.20):
+                                  //   all DATA_REGISTRY_ENTRIES for the framework in one place;
+                                  //   PriceDataIntegrity guard. M02/M11/M14/M17 entries superseded.
+    // Cross-cutting framework files (@see SUB_PROJECTS below)
     // Cross-cutting framework files (@see SUB_PROJECTS below)
     FW_Types                      // Shared type contracts — ALL modules consume/produce these types
     CALIBRATION_STATE             // Live threshold values (GitHub: Calibration_State.md)
@@ -50,8 +54,11 @@ FRAMEWORK PersonalFinancialAdvisor {
 
     DATA_INTELLIGENCE {
       reason_to_change: "data sources or source quality rules change"
-      modules:          [M01_SourceIntegrity, M02_IntelGathering, M12_DriveProtocol]
-      extension_point:  FetchRegistry  // new modules add FetchSpec entries; M02 does not change
+      modules:          [M01_SourceIntegrity, M02_IntelGathering, M12_DriveProtocol,
+                         M18_MarketDataFetch]
+      extension_point:  M18_MarketDataFetch
+                        // New series: add ENTRY to M18.DATA_REGISTRY_ENTRIES only.
+                        // No other module changes when adding a data series.
       produces:         List<DataReading>   // @see FW_Types.md
     }
 
@@ -114,7 +121,8 @@ FRAMEWORK PersonalFinancialAdvisor {
     "M14_MarketRegime.md"              // v1.1: DATA_REGISTRY_ENTRIES + BRIEFING_REGISTRY_ENTRY added
     "M15_InstrumentClassification.md"
     "M16_ReturnTableCalibration.md"
-    "M17_SystemicCascadeWarning.md"    // v1.2: Phase 2 complete; registry comments updated
+    "M17_SystemicCascadeWarning.md"    // v1.3: two-mode CHAIN_3, role-based ladder, MODULE_MANIFEST
+    "M18_MarketDataFetch.md"           // v1.0: all framework DATA_REGISTRY_ENTRIES centralized here
 
     // GitHub-resident operational files (fetched every session)
     "Calibration_State.md"  // LIVE CONFIG: §1–§6, §9–§12 thresholds, return table, classifications
@@ -430,6 +438,7 @@ FRAMEWORK PersonalFinancialAdvisor {
     // Phase 2 architecture rules (added v1.21)
     edit_M02_to_add_new_module_data__register_DATA_REGISTRY_ENTRIES_in_owning_module,
     edit_M04_to_add_new_briefing_section__register_BRIEFING_REGISTRY_ENTRY_in_owning_module,
+    add `DATA_REGISTRY_ENTRIES` to any module other than M18 — all structured data series are registered in `M18_MarketDataFetch.DATA_REGISTRY_ENTRIES` only; no other module should define FetchSpecs
     treat_QualitativeGatherList_output_as_DataReading
   ]
 

@@ -1,9 +1,9 @@
 # M02 — Intelligence Gathering
-<!-- Version: 2.0 | Adopted: May 25, 2026 -->
-<!-- Changes from v1.x: Phase 2 complete — FETCH_LIST replaced by DATA_REGISTRY_ENTRIES + -->
-<!--   QualitativeGatherList; GatherIntel STEP 1 now calls FetchRegistry.fetchAll(); -->
-<!--   MODULE_MANIFEST added. M02 is now a thin orchestrator for DATA_INTELLIGENCE. -->
-<!--   Adding a new module's data no longer requires editing M02 — register in the owning module. -->
+<!-- Version: 2.1 | Adopted: May 25, 2026 -->
+<!-- Changes from v2.0: M18 integration — DATA_REGISTRY_ENTRIES block moved to M18_MarketDataFetch. -->
+<!--   M02's DATA_REGISTRY_ENTRIES are now _LEGACY (superseded by M18). -->
+<!--   GatherIntel STEP 1 now references M18 explicitly. -->
+<!--   To add a new data series: register in M18_MarketDataFetch.DATA_REGISTRY_ENTRIES only. -->
 <!-- Cross-references: @see M01_SourceIntegrity, @see M03_ScenarioFramework, @see M04_BriefingFormat -->
 <!-- Extended by: M11 (HY_OAS, CCC_OAS, IG_OAS, BBB_OAS, MOVE) -->
 <!-- Extended by: M14 (VIX_30D_AVG, VIX_90D_AVG, BROAD_EQUITY_TRAILING) -->
@@ -26,11 +26,12 @@
 ```
 MODULE IntelGathering {
 
-  // ─── DATA REGISTRY ENTRIES (M02-owned structured data points) ───────────────────────
-  // Registered with FetchRegistry at module load. Iterated by FetchRegistry.fetchAll().
-  // Series IDs / tickers NOT stored in FetchSpec — live in descriptions or approved source URLs.
+  // ─── DATA REGISTRY ENTRIES (LEGACY — superseded by M18_MarketDataFetch, v2.1) ────────
+  // All DATA_REGISTRY_ENTRIES moved to M18_MarketDataFetch.DATA_REGISTRY_ENTRIES (v1.20).
+  // M18 is the single source of truth for all structured data series.
+  // Block retained here for reference only. FetchRegistry.fetchAll() pulls from M18.
 
-  DATA_REGISTRY_ENTRIES {
+  DATA_REGISTRY_ENTRIES_LEGACY {
 
     // Energy
     REGISTER FetchSpec { id: "BRENT_CRUDE",     source: WEBSEARCH_T1, description: "Brent crude spot BZ=F — verify against EIA or CME settlement", update_frequency: DAILY, acceptable_lag_days: 1 }
@@ -125,20 +126,23 @@ MODULE IntelGathering {
   PROCEDURE GatherIntel {
 
     STEP 1: FetchCurrentData {
-      // Phase 2 complete: FetchRegistry owns all structured data fetches.
-      // All module DATA_REGISTRY_ENTRIES populated at framework load time.
+      // Phase 2 complete (M18 integration, v2.1): all structured FetchSpecs in M18_MarketDataFetch.
+      // M18 is the single registry; FetchRegistry.fetchAll() iterates M18.DATA_REGISTRY_ENTRIES.
 
       execute_structured:   FetchRegistry.fetchAll()
-      // Parallel fetch across all registered FetchSpecs from all modules.
-      //   M02 contributes: BRENT_CRUDE, WTI, NATURAL_GAS, GOLD_SPOT, SILVER,
-      //                    SP500, NASDAQ_COMP, DOW, RUSSELL2000, VIX,
-      //                    TREASURY_10Y, TREASURY_2Y, DXY,
-      //                    BREAKEVEN_10Y, BREAKEVEN_5Y, CPI_YOY, FED_FUNDS_RATE,
-      //                    HOLDINGS_PRICES (already in allocation sheet)
-      //   M11 contributes: HY_OAS, CCC_OAS, IG_OAS, BBB_OAS, MOVE
-      //   M14 contributes: VIX_30D_AVG, VIX_90D_AVG, BROAD_EQUITY_TRAILING
-      //   M17 contributes: YIELD_CURVE, KRE, KBE, THREEFYTP10, SOFR, DFF,
-      //                    FINRA_MARGIN_DEBT, NATGAS_HENRY_HUB, FARM_FILINGS_YOY
+      // All entries sourced from M18_MarketDataFetch.DATA_REGISTRY_ENTRIES:
+      //   Energy: BRENT_CRUDE, WTI, NATURAL_GAS
+      //   Metals: GOLD_SPOT, SILVER
+      //   Equities: SP500, NASDAQ_COMP, DOW, RUSSELL2000
+      //   Volatility: VIX, VIX_30D_AVG, VIX_90D_AVG, MOVE, BROAD_EQUITY_TRAILING
+      //   Regional banks: KRE, KBE
+      //   Rates: TREASURY_10Y, TREASURY_2Y, YIELD_CURVE, SOFR, DFF, THREEFYTP10,
+      //          BREAKEVEN_10Y, BREAKEVEN_5Y
+      //   Credit: HY_OAS, CCC_OAS, IG_OAS, BBB_OAS
+      //   FX: DXY
+      //   Macro: CPI_YOY, FED_FUNDS_RATE
+      //   Cascade: FINRA_MARGIN_DEBT, NATGAS_HENRY_HUB, FARM_FILINGS_YOY
+      //   Holdings: HOLDINGS_PRICES (from Step 1 allocation sheet fetch)
       // RETURN: List<DataReading>   // @see FW_Types.md
 
       execute_qualitative:  QUALITATIVE_GATHER_LIST
