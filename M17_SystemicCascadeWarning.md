@@ -1,5 +1,12 @@
 # M17 — Systemic Cascade Early Warning
-<!-- Version: 1.3 | Adopted: May 25, 2026 -->
+<!-- Version: 1.4 | Adopted: May 29, 2026 -->
+<!-- Changes from v1.3: -->
+<!--   Finding 2 fix: computeYieldCurveSignal() now derives e_pathway_type -->
+<!--     (SYSTEMIC_LIQUIDITY | RESERVE_EROSION) from DXY direction + IG/sovereign CDS -->
+<!--     convergence signals. Consumed by M10.ScenarioE directive conditional branch. -->
+<!--   Finding 7 doc: CHAIN_5 THREEFYTP10 150bp alert threshold flagged as lacking -->
+<!--     historical calibration basis; added to Q2 audit checklist. -->
+<!--   MODULE MANIFEST version bumped to 1.4. -->
 <!-- Changes from v1.2: FW-BUG-01 — CHAIN_3 two-mode scoring fix. -->
 <!--   sectorStressScore() now distinguishes WATCH (record high, score 0) -->
 <!--   from FIRES (−5% MoM decline after record OR gate_count ≥3, score +1). -->
@@ -12,7 +19,7 @@
 
 <!-- MODULE MANIFEST
   ID:              M17_SystemicCascadeWarning
-  Version:         1.2
+  Version:         1.4
   Sub-project:     ANALYSIS_ENGINE (§1–4, §6) | PORTFOLIO_ADVISOR (§5)
   Phase-2 note:    §5 spans two sub-projects. Planned split:
                      M17_CascadeAnalysis (ANALYSIS_ENGINE)
@@ -23,7 +30,7 @@
   Inputs consumed:  DataReading<YIELD_CURVE>, DataReading<FINRA_MARGIN_DEBT>,
                     DataReading<KRE>, DataReading<SOFR>, DataReading<DFF>,
                     DataReading<THREEFYTP10>, DataReading<NATGAS_HENRY_HUB>,
-                    DataReading<FARM_FILINGS_YOY>
+                    DataReading<FARM_FILINGS_YOY>, DataReading<DXY>
   Outputs produced: CascadeSignal, YieldCurveSignal, AdvisoryAction[]
   Calibration deps: CALIBRATION_STATE §12
   Types consumed:   @see FW_Types.md — DataReading, CascadeSignal, YieldCurveSignal,
@@ -64,7 +71,7 @@ MODULE SystemicCascadeWarning {
   }
 
 
-  // ─── DATA REGISTRY ENTRIES (LEGACY — superseded by M18_MarketDataFetch, v1.3) ──────────
+  // ─── DATA REGISTRY ENTRIES (LEGACY — superseded by M18_MarketDataFetch, v1.4) ──────────
   // Moved to M18_MarketDataFetch.DATA_REGISTRY_ENTRIES. Retained here for reference.
 
   DATA_REGISTRY_ENTRIES_LEGACY {
@@ -164,6 +171,12 @@ MODULE SystemicCascadeWarning {
       E_alert_threshold: @see CALIBRATION_STATE §12.5
       lead_time_estimate: 12–36 months (slow-moving)
       ACTIVE_STATUS:    WATCH — THREEFYTP10 at 0.81% (14-year high); 30Y at 5.07%
+      // ⚠ CALIBRATION GAP (Finding 7, May 29, 2026): The E_term_premium_alert threshold
+      //   of 150 bps lacks documented historical calibration basis. Pre-2008 THREEFYTP10
+      //   exceeded 150 bps routinely, suggesting this level may be historically normal
+      //   rather than genuinely alarming. Formal calibration required at Q2 audit
+      //   (June 30, 2026): compute historical percentile distribution of THREEFYTP10
+      //   and anchor the alert threshold to the 90th percentile of the full series.
     }
 
     CHAIN Municipal_Fiscal {
@@ -277,13 +290,60 @@ MODULE SystemicCascadeWarning {
       ELSE → E_watch_flag = CLEAR
     }
 
+    // ─── E PATHWAY TYPE DETERMINATION (added v1.4) ──────────────────────────
+    // Determines whether a Scenario E trigger would be SYSTEMIC_LIQUIDITY
+    // (classic credit crisis — 2008/LTCM analog: dollar strengthens, Treasuries rally)
+    // or RESERVE_EROSION (dollar reserve status challenge: dollar weakens,
+    // Treasuries under pressure).
+    //
+    // Source: DataReading<DXY> — fetched via M18 as WEBSEARCH_T1 (reliable, always available;
+    //   FMP forex confirmed ACCESS DENIED at current plan tier May 29, 2026).
+    //   DXY source: investing.com/indices/usdollar or MarketWatch DXY — dedicated page, T1.
+    //
+    // This field is consumed ONLY by M10.ScenarioE directive conditional branch.
+    // NEVER feeds into M03.DeriveScenarioProbabilities().
+
+    RULE DeterminePathwayType {
+      // Primary signal: DXY direction over 30 trading days
+      dxy_30d_change = (DXY_current - DXY_30d_prior) / DXY_30d_prior
+
+      // Secondary signal: IG transmission + sovereign CDS convergence
+      // (convergence = both firing simultaneously suggests systemic credit, not reserve erosion)
+      ig_and_sovereign_converging = (
+        CreditSignal.IG_transmission_reached == TRUE
+        AND sovereign_CDS_widening_significantly == TRUE
+        AND DXY_current > DXY_30d_prior  // dollar strengthening — flight to safety
+      )
+
+      IF ig_and_sovereign_converging {
+        // IG transmission + sovereign CDS widening + dollar strengthening =
+        // classic systemic liquidity crisis pattern (2008 Q4, 1998 LTCM)
+        e_pathway_type = SYSTEMIC_LIQUIDITY
+      } ELSE IF dxy_30d_change < -0.03 {
+        // Dollar weakening >3% over 30 days in an E-stress context =
+        // reserve erosion / de-dollarization signal
+        e_pathway_type = RESERVE_EROSION
+      } ELSE IF dxy_30d_change > +0.03 {
+        // Dollar strengthening >3% without IG+sovereign CDS convergence =
+        // ambiguous; lean SYSTEMIC_LIQUIDITY (flight-to-safety pattern)
+        e_pathway_type = SYSTEMIC_LIQUIDITY
+      } ELSE {
+        // DXY flat (within ±3%) — insufficient signal to distinguish;
+        // default to RESERVE_EROSION (more protective directive set)
+        e_pathway_type = RESERVE_EROSION
+        FLAG: "e_pathway_type defaulted to RESERVE_EROSION (DXY flat, insufficient signal).
+               Surface in E-scenario briefing. Revisit if DXY moves materially."
+      }
+    }
+
     // Reading (May 25, 2026): spread_10Y_2Y=+43bp; spread_10Y_3M=+88bp;
     // D_timing_signal=RECESSION_ONSET_PATTERN; term_premium=0.81% (14-yr high);
     // E_watch_flag=FISCAL_STRESS_BUILDING; yield_30Y=5.07%
 
     RETURN YieldCurveSignal {
       spread_10Y_2Y, spread_10Y_3M, curve_state,
-      D_timing_signal, D_timing_estimate, term_premium, E_watch_flag, yield_30Y
+      D_timing_signal, D_timing_estimate, term_premium, E_watch_flag, yield_30Y,
+      e_pathway_type  // added v1.4
     }
   }
 
@@ -467,7 +527,7 @@ MODULE SystemicCascadeWarning {
         action: AdvisoryAction {
           role_id:    geopolitical_premium,
           direction:  HOLD,
-          rationale:  "Conflict escalation drives both D-risk AND this role’s return.
+          rationale:  "Conflict escalation drives both D-risk AND this role's return.
                        No reduction unless D confirmed AND conflict de-escalates concurrently.",
           execution_note: "@see CALIBRATION_STATE §11 for instruments in this role"
         }
@@ -516,7 +576,7 @@ MODULE SystemicCascadeWarning {
     REGISTER BriefingSectionSpec {
       id:             "CASCADE_EARLY_WARNING"
       title:          "SYSTEMIC CASCADE EARLY WARNING"
-      position_after: "CREDIT_SIGNALS"     // M11’s section id
+      position_after: "CREDIT_SIGNALS"     // M11's section id
       module_id:      M17
       render_fn:      "M17.BriefingBlock"
     }
@@ -528,7 +588,7 @@ MODULE SystemicCascadeWarning {
   BriefingBlock {
     cascade_level:        [MONITORING | ALERT | PRE_POSITION]
     active_chains:        [list ChainID at or above D_alert threshold (FIRES)]
-    watch_chains:         [list ChainID in WATCH mode — precursor loaded, not yet firing]    
+    watch_chains:         [list ChainID in WATCH mode — precursor loaded, not yet firing]
     sector_stress_score:  [0|1|2|3] — brief narrative
 
     yield_curve {
@@ -538,6 +598,7 @@ MODULE SystemicCascadeWarning {
       D_timing_signal:  [RECESSION_ONSET_PATTERN | CURVE_INVERTED | MONITORING]
       term_premium:     ___% [Δ vs prior] [E_watch_flag]
       yield_30Y:        ___%
+      e_pathway_type:   [SYSTEMIC_LIQUIDITY | RESERVE_EROSION] — surface when E probability >= 5%
     }
 
     supply_chain {
@@ -564,11 +625,15 @@ MODULE SystemicCascadeWarning {
     use_ticker_symbol_in_AdvisoryAction:
       "AdvisoryAction.role_id must be a RoleID from FW_Types.md — never a ticker.
        Tickers are resolved from CALIBRATION_STATE §11 at execution time.
-       This keeps §5 valid when the portfolio’s instruments change."
+       This keeps §5 valid when the portfolio's instruments change."
 
     route_yield_curve_signals_into_M03:
       "Yield curve signals are D timing estimates only. They inform narrative;
        they do not add binding variables to DeriveScenarioProbabilities()."
+
+    use_e_pathway_type_in_M03:
+      "e_pathway_type routes M10 directives only — it is a portfolio execution signal,
+       not a probability input. NEVER feed it into DeriveScenarioProbabilities()."
 
     use_FMP_sector_PE_snapshot:
       "FMP sector-PE-snapshot is unweighted across all exchange-listed companies.

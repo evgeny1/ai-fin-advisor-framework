@@ -1,5 +1,11 @@
 # FW_Types — Framework Shared Type Definitions
-<!-- Version: 1.0 | Adopted: May 25, 2026 -->
+<!-- Version: 1.1 | Adopted: May 25, 2026 | Updated: May 29, 2026 -->
+<!-- Changes v1.1: -->
+<!--   DEFECT-FWT-01: DataSource enum — added FMP_CHART and FMP_COMMODITY (used in M18 FetchSpecs -->
+<!--     but missing from type contract; type violation now resolved). -->
+<!--   DEFECT-FWT-02: YieldCurveSignal — added e_pathway_type field (SYSTEMIC_LIQUIDITY | -->
+<!--     RESERVE_EROSION) to support M10.ScenarioE pathway-conditional directives. -->
+<!--     ModuleID enum updated to include M18. -->
 <!-- Sub-project: FRAMEWORK_CORE -->
 <!-- Purpose: defines the shared contracts (types) used across all sub-projects. -->
 <!--   DATA_INTELLIGENCE produces DataReading. -->
@@ -15,7 +21,7 @@ TYPES FrameworkCore {
   // ─── SUB-PROJECT REGISTRY ──────────────────────────────────────────────
 
   ENUM SubProject {
-    DATA_INTELLIGENCE,   // M01, M02, M12
+    DATA_INTELLIGENCE,   // M01, M02, M12, M18
     ANALYSIS_ENGINE,     // M03, M11, M14, M15, M16, M17 §1–4
     PORTFOLIO_ADVISOR,   // M06, M07, M08, M09, M10, M13, M17 §5
     FRAMEWORK_CORE,      // FW_Types.md, CALIBRATION_STATE, SESSION_LOG, 00_INDEX
@@ -33,6 +39,12 @@ TYPES FrameworkCore {
     ALLOCATION_SPREADSHEET_OTHER,  // Other indexes tab (VIX, MOVE, KRE, etc.)
     GOOGLEFINANCE,                 // live prices via GOOGLEFINANCE function
     FMP_ECONOMICS_TREASURY_RATES,  // FMP economics.treasury-rates endpoint
+    FMP_CHART,                     // FMP:chart historical-price-eod-light endpoint (added v1.1)
+                                   //   confirmed working for ^VIX and SPY at current plan tier
+                                   //   used by: VIX_30D_AVG, VIX_90D_AVG, BROAD_EQUITY_TRAILING
+    FMP_COMMODITY,                 // FMP:commodity endpoint (added v1.1)
+                                   //   plan tier not yet confirmed — verify at Q2 audit
+                                   //   candidate for BRENT_CRUDE if BZUSD confirmed accessible
     FMP_MARKET_PERFORMANCE,        // FMP marketPerformance — REJECTED for sector PE (see M17 §6)
     WEBSEARCH_T1,                  // web search returning T1 source
     WEBSEARCH_T2,                  // web search returning T2 source
@@ -119,6 +131,15 @@ TYPES FrameworkCore {
     term_premium:      Float           // THREEFYTP10
     E_watch_flag:      E_PATHWAY_WATCH | FISCAL_STRESS_BUILDING | CLEAR
     yield_30Y:         Float
+    e_pathway_type:    SYSTEMIC_LIQUIDITY | RESERVE_EROSION
+    // e_pathway_type (added v1.1) — derived by M17.computeYieldCurveSignal().
+    // Consumed by M10.ScenarioE directives to route two position responses correctly:
+    //   SYSTEMIC_LIQUIDITY: classic credit crisis (2008/LTCM analog) — dollar strengthens,
+    //     Treasuries rally. Rate_sensitive_income_long_duration = Hold or Add.
+    //   RESERVE_EROSION: dollar reserve status challenged — dollar weakens,
+    //     Treasuries under pressure. Rate_sensitive_income_long_duration = Reduce or Exit.
+    // Derivation logic: @see M17.computeYieldCurveSignal.DeterminePathwayType
+    // NEVER feeds into M03.DeriveScenarioProbabilities() — directive layer only.
   }
 
   STRUCT ScenarioProbabilities {
@@ -190,7 +211,7 @@ TYPES FrameworkCore {
 
   STRUCT FetchRegistry {
     // Accumulates FetchSpec from all modules. Replaces M02 hardcoded FETCH_LIST.
-    // Phase 1 status: declared here; full integration requires M02 update (Phase 2).
+    // Phase 2 complete: M18 is the single DATA_REGISTRY_ENTRIES source.
     entries: List<FetchSpec>
     FUNCTION register(spec: FetchSpec) → void  // idempotent on duplicate id
     FUNCTION fetchAll() → List<DataReading>     // parallel fetch of all entries
@@ -206,7 +227,7 @@ TYPES FrameworkCore {
 
   STRUCT BriefingRegistry {
     // Accumulates BriefingSectionSpec from all modules. Replaces M04 hardcoded sections.
-    // Phase 1 status: declared here; full integration requires M04 update (Phase 2).
+    // Phase 2 complete: all modules register their own BRIEFING_REGISTRY_ENTRY.
     sections: List<BriefingSectionSpec>
     FUNCTION register(spec: BriefingSectionSpec) → void
     FUNCTION assemble(readings: List<DataReading>) → OrderedList<BriefingSection>
@@ -256,7 +277,8 @@ TYPES FrameworkCore {
 
   ENUM ModuleID {
     M01, M02, M03, M04, M05, M06, M07, M08,
-    M09, M10, M11, M12, M13, M14, M15, M16, M17
+    M09, M10, M11, M12, M13, M14, M15, M16, M17, M18
+    // M18 added v1.1 — centralized data fetch registry
   }
 
   ENUM SourceTier { T1, T2, T3 }

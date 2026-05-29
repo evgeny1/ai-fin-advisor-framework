@@ -4,6 +4,10 @@
 <!-- All protocols apply: @see M08_FunctionalRoles.DeEscalation -->
 <!-- Minimum conviction weight: @see M03_ScenarioFramework.minimumConvictionWeight() -->
 <!-- Scenario D trigger updated by: @see M11_CreditAndCalibration.ScenarioDTrigger -->
+<!-- Updated May 29, 2026: ScenarioE RESPONSES now conditional on YieldCurveSignal.e_pathway_type -->
+<!--   (Finding 2 fix). Two directives branch: rate_sensitive_income_long_duration and -->
+<!--   rate_sensitive_income_short_duration differ between SYSTEMIC_LIQUIDITY and RESERVE_EROSION. -->
+<!--   All other directives and sequences unchanged. -->
 
 ```
 MODULE ScenarioD {  // Deflationary Recession
@@ -170,6 +174,34 @@ MODULE ScenarioE {  // Structural Rupture
     NOTE: "Scenario E de-escalation threshold is 20% — not 25%. @see M08_FunctionalRoles.DeEscalation"
   }
 
+  // ─── PATHWAY NOTE (added May 29, 2026) ───────────────────────────────────
+  // Scenario E conflates two historically distinct crisis pathways that produce
+  // opposite rate-market outcomes. Two directives below branch on e_pathway_type
+  // from YieldCurveSignal (@see M17.computeYieldCurveSignal.DeterminePathwayType):
+  //
+  //   SYSTEMIC_LIQUIDITY — classic credit crisis (2008 Q4, 1998 LTCM analog):
+  //     Dollar strengthens (flight to safety). Treasuries rally as Fed cuts.
+  //     Long-duration bonds are defensive assets, not liabilities.
+  //     Empirical basis: TLT +26% in 2008; 10Y yield fell from 4.0% to 2.1%.
+  //
+  //   RESERVE_EROSION — dollar reserve status genuinely challenged:
+  //     Dollar weakens. Foreign demand for Treasuries falls.
+  //     Long-duration bonds face mark-to-market losses from yield rise.
+  //     No clean historical analog post-Bretton Woods — LOW confidence.
+  //
+  // All other directives (precious metals, equities, commodities, real assets,
+  // policy thematic) are UNCHANGED — they hold in both pathway types.
+  // Only rate_sensitive_income_long_duration and rate_sensitive_income_short_duration
+  // branch by pathway.
+  //
+  // ⚠ NOTE: The §4.1 return table for inflation_hedge_precious_metals Scenario E
+  //   ([+10, +20] conservative) is anchored to E-Type 2 (RESERVE_EROSION).
+  //   For SYSTEMIC_LIQUIDITY, gold fell ~30% during 2008 Q3-Q4 before recovering.
+  //   The §4.1 EV computation will overstate precious metals return if
+  //   SYSTEMIC_LIQUIDITY materializes. Surface this caveat in E-scenario briefing.
+  //   Formal resolution deferred to Q2 audit — requires a separate §4.1 row
+  //   or pathway-weighted blend methodology.
+
   // ─── POSITION RESPONSES ──────────────────────────────────────────────────
 
   RESPONSES {
@@ -182,6 +214,9 @@ MODULE ScenarioE {  // Structural Rupture
       action:   Add aggressively to scenario_weighted_target
       apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
       rationale: "Reserve status erosion is the core driver of this scenario — directly supports the precious metals thesis at maximum conviction."
+      note:     "⚠ If e_pathway_type = SYSTEMIC_LIQUIDITY: this directive remains but surface the §4.1
+                 return caveat in briefing (gold historically sold off in acute 2008-type crises before recovering).
+                 Do not change the directive — change the EV expectation disclosed to client."
       urgency:  Immediate  // highest priority action in Scenario E
     }
     inflation_hedge_commodity_linked: {
@@ -200,18 +235,46 @@ MODULE ScenarioE {  // Structural Rupture
       rationale: "Fiscal and governance stress in Scenario E impairs government spending capacity and program continuity."
       urgency:  High
     }
+
+    // ── PATHWAY-CONDITIONAL DIRECTIVES ────────────────────────────────────
+    // Read e_pathway_type from YieldCurveSignal before executing either of these.
+    // Source: M17.computeYieldCurveSignal() → YieldCurveSignal.e_pathway_type
+
     rate_sensitive_income_short_duration: {
-      action:   Evaluate
-      note:     "Sovereign debt stress may impair even short-duration government instruments.
-                 If holding is sovereign → assess counterparty. If money-market or T-bill → evaluate flight-to-quality vs stress."
-      urgency:  Evaluate  // case-by-case
+      IF e_pathway_type == SYSTEMIC_LIQUIDITY {
+        action:   Hold
+        rationale: "In classic credit crisis, short-duration Treasuries are flight-to-safety assets.
+                   Sovereign counterparty risk is low. Roll at elevated yields while crisis resolves."
+        urgency:  Low
+      }
+      IF e_pathway_type == RESERVE_EROSION {
+        action:   Evaluate — assess sovereign counterparty
+        note:     "If holding is T-bill or sovereign money-market: evaluate whether
+                   reserve erosion impairs demand for short UST. If money-market only:
+                   assess counterparty exposure to foreign sovereign holdings."
+        urgency:  Evaluate  // case-by-case — original behavior preserved for RESERVE_EROSION
+      }
     }
+
     rate_sensitive_income_long_duration: {
-      action:   Reduce or Exit
-      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
-      rationale: "Sovereign debt stress directly impairs long-duration government bonds. Reserve status challenge compresses demand for US Treasuries."
-      urgency:  High
+      IF e_pathway_type == SYSTEMIC_LIQUIDITY {
+        action:   Hold OR Add IF EV_calculation_supports
+        rationale: "In classic credit crisis, long-duration Treasuries rally as Fed cuts aggressively
+                   and flight-to-safety drives yield compression. 2008 empirical: TLT +26%, 10Y 4.0%→2.1%.
+                   Long duration is a hedge, not a liability, in SYSTEMIC_LIQUIDITY."
+        REQUIRE:  explicit_EV_calculation per @see M06_ClientAndAdvisory.HoldJustification
+        urgency:  Hold; Add_if_EV_confirms
+      }
+      IF e_pathway_type == RESERVE_EROSION {
+        action:   Reduce or Exit
+        apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+        rationale: "Sovereign debt stress directly impairs long-duration government bonds.
+                   Reserve status challenge compresses demand for US Treasuries.
+                   Mark-to-market losses compound as foreign holders reduce UST exposure."
+        urgency:  High  // original behavior preserved for RESERVE_EROSION
+      }
     }
+
     broad_market_equity_domestic: {
       action:   reduce_to minimumConvictionWeight()
       apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
@@ -230,11 +293,19 @@ MODULE ScenarioE {  // Structural Rupture
 
   SEQUENCE RotationE {
     1: confirm_trigger with sovereign_CDS, DXY_trajectory, credit_spread_data from T1
-    2: exit international_equity AND add precious_metals  // twin immediate actions
+       ALSO: read e_pathway_type from YieldCurveSignal
+             // determines rate directives in steps 2 and 3
+    2: exit international_equity AND add precious_metals  // twin immediate actions — both pathway types
        apply: @see M08_FunctionalRoles.ExecutionTaxPlacement
-    3: reduce long_duration_income (sovereign exposure)
-       evaluate short_duration_income counterparty
-       apply: @see M08_FunctionalRoles.ExecutionTaxPlacement
+    3: IF e_pathway_type == SYSTEMIC_LIQUIDITY {
+         hold long_duration_income (or add if EV confirms)
+         hold short_duration_income
+       }
+       IF e_pathway_type == RESERVE_EROSION {
+         reduce long_duration_income (sovereign exposure)
+         evaluate short_duration_income counterparty
+         apply: @see M08_FunctionalRoles.ExecutionTaxPlacement
+       }
     4: reduce domestic_equity to minimumConvictionWeight()
     5: reduce policy_driven_thematic_equity to minimumConvictionWeight()
     6: hold [geopolitical_premium, commodity_linked, real_asset_contracted_revenue]
@@ -366,6 +437,15 @@ MODULE ScenarioF {  // Growth Overheat
   INVALIDATION ScenarioFInvalidation {
     condition_1: GDP_growth < 2% on BEA_advance_estimate
                  // ⚑ CALIBRATION_DATED — @see CALIBRATION_STATE §2.3
+                 // ⚠ CLIFF EFFECT NOTE (Finding 1, May 29, 2026): The CPI scoring
+                 //   boundary at 4% YoY (check_cpi in M03.ScenarioF) creates a hard
+                 //   cliff — F scoring collapses immediately when CPI crosses 4%,
+                 //   routing probability mass directly to B without a transition band.
+                 //   In practice, regime transitions are continuous. A single CPI print
+                 //   at 4.0% can cause a large single-session F→B shift that the 25pp
+                 //   session cap may not fully buffer. Formal resolution at Q2 audit:
+                 //   consider a transitional scoring band (CPI 3.5–4.0%) that produces
+                 //   partial probability shifts rather than a binary cutoff.
     condition_2: CPI >= 4% YoY → reassess B_or_C
     condition_3: supply_shock_verified → reclassify to C
     condition_4: credit_spreads_widening_materially → assess D
