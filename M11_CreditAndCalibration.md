@@ -7,7 +7,7 @@
 
 <!-- MODULE MANIFEST
   ID:              M11_CreditAndCalibration
-  Version:         1.1
+  Version:         1.2
   Sub-project:     ANALYSIS_ENGINE (CreditSignal) | FRAMEWORK_CORE (CalibrationDiscipline)
   Phase-3 note:    Planned split: M11_CreditData (DATA_INTELLIGENCE) + M11_CreditAnalysis (ANALYSIS_ENGINE)
   Reason to change (CreditSignal):          credit signal methodology or spread thresholds change

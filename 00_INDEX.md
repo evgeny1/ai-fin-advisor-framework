@@ -1,10 +1,8 @@
 # 00 — Index & Module Map
 <!-- Personal Financial Advisor Framework — Pseudo-Code Edition -->
 <!-- Source documents: Framework_Main_v1, Framework_Extension_v1, Calibration_State, Amendment 1, Amendment 2 -->
-<!-- Last updated: May 25, 2026 (v1.21 Phase 2 registry integration: M02 v2.0 — FetchRegistry.fetchAll() -->
-<!--   replaces hardcoded FETCH_LIST; M04 v2.0 — BriefingRegistry.assemble() replaces hardcoded section -->
-<!--   list; M11 v1.1 + M14 v1.1 — DATA_REGISTRY_ENTRIES and BRIEFING_REGISTRY_ENTRY added; -->
-<!--   M17 v1.2 — Phase 2 complete comment updates; M05 updated; PERMANENT_RULES updated) -->
+<!-- Last updated: May 29, 2026 (v1.22 audit fixes: DEFECT-01 NEVER block syntax, DEFECT-02 duplicate comment, -->
+<!--   DEFECT-03 M18 added to MODULE REGISTRY, DEFECT-04 FetchRegistry_is_extension_point updated to M18-canonical) -->
 
 ```
 FRAMEWORK PersonalFinancialAdvisor {
@@ -31,10 +29,9 @@ FRAMEWORK PersonalFinancialAdvisor {
     M17_SystemicCascadeWarning    // Cascade chain registry, sector stress scoring (v1.3 two-mode),
                                   //   yield curve protocol, supply chain indicators,
                                   //   pre-positioning ladder (role-based), data integrity rules
-    M18_MarketDataFetch           // Centralized financial data registry (v1.0, added v1.20):
+    M18_MarketDataFetch           // Centralized financial data registry (v1.1, added v1.20):
                                   //   all DATA_REGISTRY_ENTRIES for the framework in one place;
                                   //   PriceDataIntegrity guard. M02/M11/M14/M17 entries superseded.
-    // Cross-cutting framework files (@see SUB_PROJECTS below)
     // Cross-cutting framework files (@see SUB_PROJECTS below)
     FW_Types                      // Shared type contracts — ALL modules consume/produce these types
     CALIBRATION_STATE             // Live threshold values (GitHub: Calibration_State.md)
@@ -46,7 +43,7 @@ FRAMEWORK PersonalFinancialAdvisor {
   // ─── SUB-PROJECTS ────────────────────────────────────────────────────────────────────
   // Each sub-project has exactly ONE reason to change. @see FW_Types.md for contracts.
   // Phase 2 complete: M02 integrates FetchRegistry.fetchAll(); M04 integrates BriefingRegistry.assemble().
-  //   Adding new data → register DATA_REGISTRY_ENTRIES in the owning module; M02 does not change.
+  //   Adding new data → register DATA_REGISTRY_ENTRIES in M18_MarketDataFetch only; M02 does not change.
   //   Adding new briefing section → register BRIEFING_REGISTRY_ENTRY in the owning module; M04 does not change.
   // Phase 3 target: M11 splits into M11_CreditData (DATA_INTELLIGENCE) + M11_CreditAnalysis (ANALYSIS_ENGINE).
 
@@ -106,7 +103,7 @@ FRAMEWORK PersonalFinancialAdvisor {
 
     // Framework modules (Project Knowledge — no fetch needed)
     "M01_SourceIntegrity.md"
-    "M02_IntelGathering.md"            // v2.0: FetchRegistry orchestrator
+    "M02_IntelGathering.md"            // v2.1: FetchRegistry orchestrator; M18 integration
     "M03_ScenarioFramework.md"
     "M04_BriefingFormat.md"            // v2.0: BriefingRegistry orchestrator
     "M05_SessionInit.md"
@@ -115,14 +112,14 @@ FRAMEWORK PersonalFinancialAdvisor {
     "M08_FunctionalRoles.md"
     "M09_ScenariosABC.md"
     "M10_ScenariosDEF.md"
-    "M11_CreditAndCalibration.md"      // v1.1: DATA_REGISTRY_ENTRIES + BRIEFING_REGISTRY_ENTRY added
+    "M11_CreditAndCalibration.md"      // v1.2: DATA_REGISTRY_ENTRIES → _LEGACY; M18 integration
     "M12_DriveProtocol.md"
     "M13_GrowthObjectives.md"
-    "M14_MarketRegime.md"              // v1.1: DATA_REGISTRY_ENTRIES + BRIEFING_REGISTRY_ENTRY added
+    "M14_MarketRegime.md"              // v1.2: DATA_REGISTRY_ENTRIES → _LEGACY; M18 integration
     "M15_InstrumentClassification.md"
     "M16_ReturnTableCalibration.md"
     "M17_SystemicCascadeWarning.md"    // v1.3: two-mode CHAIN_3, role-based ladder, MODULE_MANIFEST
-    "M18_MarketDataFetch.md"           // v1.0: all framework DATA_REGISTRY_ENTRIES centralized here
+    "M18_MarketDataFetch.md"           // v1.1: all framework DATA_REGISTRY_ENTRIES centralized here
 
     // GitHub-resident operational files (fetched every session)
     "Calibration_State.md"  // LIVE CONFIG: §1–§6, §9–§12 thresholds, return table, classifications
@@ -371,9 +368,10 @@ FRAMEWORK PersonalFinancialAdvisor {
     sub_project_boundary:             PORTFOLIO_ADVISOR never reads DataReading directly;
                                         ANALYSIS_ENGINE never reads AllocationTarget or AdvisoryAction;
                                         cross-boundary data flows through FW_Types.md contracts only
-    // Phase 2 architecture rules (added v1.21)
-    FetchRegistry_is_extension_point:    add new module data → DATA_REGISTRY_ENTRIES in the owning module;
-                                           FetchRegistry.fetchAll() picks it up; M02 does not change
+    // Phase 2 architecture rules (added v1.21; FetchRegistry rule updated v1.22)
+    FetchRegistry_is_extension_point:    add new data series → DATA_REGISTRY_ENTRIES in M18_MarketDataFetch only;
+                                           FetchRegistry.fetchAll() picks it up; M02 does not change;
+                                           owning-module registration is superseded by M18 (v1.21)
     BriefingRegistry_is_extension_point: add new briefing section → BRIEFING_REGISTRY_ENTRY in owning module;
                                            BriefingRegistry.assemble() picks it up; M04 does not change
     canonical_briefing_section_ids:      PRIMARY_DRIVER | SCENARIO_PROBABILITIES | ENERGY_AND_COMMODITIES
@@ -435,10 +433,10 @@ FRAMEWORK PersonalFinancialAdvisor {
     use_ticker_symbol_in_AdvisoryAction__role_id_must_be_RoleID_resolved_via_section_11,
     cross_sub_project_boundary_with_raw_DataReading_or_AllocationTarget__use_FW_Types_contracts,
     add_new_module_without_MODULE_MANIFEST_block,
-    // Phase 2 architecture rules (added v1.21)
+    // Phase 2 architecture rules (added v1.21; updated v1.22)
     edit_M02_to_add_new_module_data__register_DATA_REGISTRY_ENTRIES_in_owning_module,
     edit_M04_to_add_new_briefing_section__register_BRIEFING_REGISTRY_ENTRY_in_owning_module,
-    add `DATA_REGISTRY_ENTRIES` to any module other than M18 — all structured data series are registered in `M18_MarketDataFetch.DATA_REGISTRY_ENTRIES` only; no other module should define FetchSpecs
+    add_DATA_REGISTRY_ENTRIES_to_any_module_other_than_M18,  // all structured data series registered in M18 only; no other module defines FetchSpecs
     treat_QualitativeGatherList_output_as_DataReading
   ]
 

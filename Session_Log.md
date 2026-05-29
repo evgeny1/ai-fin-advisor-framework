@@ -135,8 +135,7 @@ open_decisions:
   3. secular_technology_growth B: PENDING June 30.
   4. URA evaluation: PENDING June 30.
   5. US-Iran deal A-probability update: PENDING T1-confirmed signed deal or systematic Hormuz reopening.
-  6. NATURAL_GAS fetch: mandatory next session (CHAIN_1 borderline).
-  7. S&P Tuesday May 26 open: confirm gap from futures (+0.95% as of Memorial Day).
+  6. S&P Tuesday May 26 open: confirm gap from futures (+0.95% as of Memorial Day).
 
 next_session_flags:
   - LOAD: "Calibration State loaded, last update: May 25, 2026 | Session Log loaded"

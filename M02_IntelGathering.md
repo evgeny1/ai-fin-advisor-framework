@@ -11,7 +11,7 @@
 
 <!-- MODULE MANIFEST
   ID:              M02_IntelGathering
-  Version:         2.0
+  Version:         2.1
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: core M02-owned data sources change (energy, equities, rates, FX, inflation);
                     OR qualitative gather methodology changes.

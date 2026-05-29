@@ -10,7 +10,7 @@
 
 <!-- MODULE MANIFEST
   ID:              M14_MarketRegime
-  Version:         1.1
+  Version:         1.2
   Sub-project:     ANALYSIS_ENGINE
   Reason to change: market desensitization detection methodology or entry guard thresholds change
   Inputs consumed:  DataReading<VIX_30D_AVG>, DataReading<VIX_90D_AVG>,
