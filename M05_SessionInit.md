@@ -8,6 +8,8 @@
 <!-- Updated May 25, 2026 (Phase 2 registry integration): Step 4 now calls FetchRegistry.fetchAll() -->
 <!--   (M02.GatherIntel STEP 1); Step 8 now calls BriefingRegistry.assemble(readings) -->
 <!--   (M04.IntelligenceBriefing); §12 M17 cascade thresholds added to Step 3 apply list. -->
+<!-- Updated May 29, 2026 (portfolio-state-writeback): Step 10 WriteBack now writes three files -->
+<!--   atomically: Calibration_State.md + Session_Log.md + Portfolio_State.md. -->
 <!-- Cross-references: @see M12_FileProtocol, @see M04_BriefingFormat, @see M03_ScenarioFramework -->
 
 ```
@@ -30,7 +32,7 @@ MODULE SessionInit {
   }
 
   INPUT_3: FrameworkFiles {
-    // Framework modules (M01–M17) are Project Knowledge — always in context, no fetch needed.
+    // Framework modules (M01–M18) are Project Knowledge — always in context, no fetch needed.
     // CALIBRATION_STATE and Session_Log.md live in GitHub — fetch every session.
 
     fetch_via:        @see M12_FileProtocol.fetchCalibrationState()
@@ -125,7 +127,8 @@ MODULE SessionInit {
 
     10: write_session_state_and_credit_readings_to_github
         // @see M12_FileProtocol.WriteBack
-        // push_files([Calibration_State.md, Session_Log.md]) — single atomic operation
+        // push_files([Calibration_State.md, Session_Log.md, Portfolio_State.md]) — single atomic operation to master
+        // Portfolio_State.md rendered by M12.constructPortfolioState() — companion project context snapshot
         // ALWAYS execute at session end — do not wait for client instruction
   }
 
