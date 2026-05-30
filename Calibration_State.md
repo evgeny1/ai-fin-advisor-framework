@@ -2,11 +2,12 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.21  Last updated: May 26, 2026 (four corrections applied:
-# §3 duplicate May-25 v1.19 log entries merged into one;
-# §11 PAVE stale CascadeLevel ALERT reference corrected to MONITORING;
-# §11 SIVR B-component arithmetic error corrected (5.70→6.00, EV +2.92%→+3.03%);
-# §12.8 cascade level mapping table rebuilt — duplicate Score=0 removed, Score=2 ALERT restored)
+# Version: 1.23  Last updated: May 30, 2026 (Q2 audit session continuation:
+# §4.1 emerging_market_equity A adopted HIGH confidence [+4,+9]→[+10,+20] ★;
+# §11 AIPO classification weights updated for sector drift (STG 0.30→0.16, PDT 0.20→0.63,
+#   RAC 0.45→0.14 net IHC absorbed, IHC 0.05→0.07); AIPO EV recomputed;
+# §11 PAVE exit triggers formally encoded; §11 XAR forward PE note corrected;
+# §11 MAGS hold-only override confirmed; §6 items 8/13/14/15/21/32/33 marked COMPLETE)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -19,7 +20,7 @@ Persistent framework configuration — load at every session start alongside Ses
 
 At session start, after both files are fetched, the advisor must state in the briefing:
 
-"Calibration State loaded, last update: May 26, 2026 | Session Log loaded"
+"Calibration State loaded, last update: May 30, 2026 | Session Log loaded"
 
 Absence of either confirmation line indicates the respective file was not loaded and the session is invalid for threshold-sensitive decisions.
 
@@ -121,6 +122,24 @@ May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-05-30 - Framework v1.23 (Q2 audit session continuation). §4.1 adoption: emerging_market_equity
+A revised [+4,+9]⚑ → [+10,+20]★ HIGH confidence. L2: 3 analogues (1991 Gulf drawdown +15-20%
+real, 2003 Iraq drawdown +15-20% real, 2016 commodity rebound +10-15% real). L3: VWO
+Taiwan/China 56.7% concentration depresses D/E conservative values vs broad EM benchmark
+(structural adj applied — D/E remain PENDING). L4: gap to institutional anchor (+5.5%) documented
+as (a)+(d); gap expected given VWO concentration vs blended EM unconditional. Client confirmed.
+§11 AIPO classification weights updated for confirmed sector drift (May 30 T1 data: Industrials
+57.09%, Technology 16.46%, Utilities 14.42%, Energy 6.91%, FinSvcs 3.60%): PDT 0.20→0.63,
+STG 0.30→0.16, RAC+IHC restructured → RAC 0.14 (utilities/power gen), IHC 0.07 (energy/Cameco).
+AIPO EV recomputed: +1.54% (↓ from +2.16%; STG weight reduction at B/C primary driver; see §11).
+§11 PAVE: explicit exit triggers encoded (4 triggers: B formal fire, Aug 15 no-bill, reduced-level
+extension, CascadeLevel ALERT; hold conditions: A≥20% on T1 deal, clean extension). Constituent
+bucket analysis complete: Bucket A ~35-45% insulated (Eaton, Trane, CSX, UP, Basic Materials);
+Bucket B ~30-40% partial (Quanta, E&C backlog 12-24mo); Bucket C ~20-25% at-risk (highway
+formula contractors). §11 XAR: forward PE corrected to ~35.5x (not 66.59x trailing artifact);
+classification and target confirmed. §11 MAGS: hold-only override confirmed; no ADD at EV −2.17%.
+§6 items 8/13/14/15/21/32/33 marked COMPLETE. Scenario probs: A=7/B=36/C=41/D=5/E=4/F=7 unchanged.
 
 2026-05-29 - Framework v1.22 (Q2 audit session). §4.1 adoptions: consumer_defensive_equity C
 revised [0,+4]→[+2,+6] and upgraded ⚑→★ (HIGH confidence; L2: 1974 +4-6% real, 1979-80 +3-5%
@@ -238,7 +257,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | consumer_defensive_equity | [0, +4]★ | [+2, +6]★ | [+2, +6]★ | [-5, 0]⚑ | [-8, -2]⚑ | [-3, +2]⚑ |
 | healthcare_defensive_equity | [1, 5]⚑ | [1, 4]⚑ | [-2, 3]⚑ | [-4, 1]⚑ | [-8, -2]⚑ | [1, 5]⚑ |
 | floating_rate_credit_income | [1, 3]⚑ | [1, 3]⚑ | [1, 3]⚑ | [-10, -4]⚑ | [-8, -2]⚑ | [1, 3]⚑ |
-| emerging_market_equity | [4, 9]⚑ | [-12, -6]⚑ | [-15, -9]⚑ | [-25, -15]⚑ | [-22, -14]⚑ | [4, 11]⚑ |
+| emerging_market_equity | [+10, +20]★ | [-12, -6]⚑ | [-15, -9]⚑ | [-25, -15]⚑ | [-22, -14]⚑ | [4, 11]⚑ |
 
 secular_technology_growth: added v1.7 Apr 28. B and C values revised v1.8 Apr 30. Provisional - empirical audit June 30, 2026.
 inflation_hedge_precious_metals Scenario C: revised v1.8 Apr 30 (C-hawk regime empirical data).
@@ -249,7 +268,7 @@ systematic_trend_following: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1
 consumer_defensive_equity: added v1.13 May 6. B value ADOPTED HIGH confidence (v1.13). A value ADOPTED HIGH confidence (v1.22 — [0,+4]; status upgrade, values unchanged). C value ADOPTED HIGH confidence (v1.22 — REVISED [0,+4]→[+2,+6]; L2: 1974, 1979-80, 2022; L4 pass). D/E/F PENDING June 30. Layer 4 neutral check: +1.00% midpoints (pre-C revision) → +1.30% post-revision — consistent with JPM LTCMA consumer staples 1-3% real unconditional.
 healthcare_defensive_equity: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: +1.70% midpoints — below JPM LTCMA healthcare 2-4% real; gap reflects B/C distribution penalizing equity. Resolve at June 30.
 floating_rate_credit_income: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Key risk: D scenario credit seizure (-10% to -4%) vs SGOV safety. Layer 4 neutral check: +0.93%.
-emerging_market_equity: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: -2.55% midpoints — below EM institutional anchor (~+3-5% real) reflecting current crisis distribution skew. Resolve at June 30.
+emerging_market_equity: added v1.13 May 6. Scenario A ADOPTED HIGH confidence (v1.23 — REVISED [+4,+9]→[+10,+20]; L2: 1991 Gulf drawdown +15-20% real, 2003 Iraq drawdown +15-20% real, 2016 commodity rebound +10-15% real; 3 analogues. L3: VWO Taiwan/China 56.7% concentration depresses D/E conservative values; structural adj documented. L4: gap to institutional anchor +5.5% documented as (a)+(d); expected given VWO concentration vs blended EM unconditional). B-F PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: −2.55% midpoints. Resolve at June 30. ⚠ floating_rate_credit_income C=[+1,+3]: flag for Q3 — may conflate nominal vs real return basis (2022 FLOT: −0.6% nominal ≈ −7% real at 8% CPI). Reconcile at Q3 audit.
 ⚠ 14 additional revision proposals pending June 30 formal adoption — see §6 item 23.
 
 ### 4.2 IRA Target Multipliers (10-year horizon)
@@ -507,8 +526,9 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 #### XAR
 - Components: geopolitical_premium (0.90) + broad_market_equity_domestic (0.10)
 - ThematicETF_ClassificationAudit COMPLETED April 29. Confirmed.
-- Last reviewed: 2026-04-29
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+1.46%** (updated v1.19; prior at C=44: +1.65%). Ranked #6.
+- Last reviewed: 2026-05-30 (v1.23 — staleness check complete; classification confirmed)
+- ⚠ Valuation note: Forward P/E ~35.5x (war-premium elevated; within thesis range for geopolitical_premium; peacetime norm 18-22x. Watch for compression if A-probability rises above 20%. 66.59x trailing PE seen in some sources is a stale artifact — use forward PE only.)
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+1.46%**
   - A: (0.90×(-2)+0.10×5)×0.07 = -1.30×0.07 = -0.091%
   - B: (0.90×2+0.10×(-8))×0.36 = 1.00×0.36 = +0.360%
   - C: (0.90×4+0.10×(-4))×0.41 = 3.20×0.41 = +1.312%
@@ -578,9 +598,22 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - Components: broad_market_equity_domestic (0.82) + policy_driven_thematic_equity (0.18)
 - ThematicETF_ClassificationAudit conducted Apr 28. Status: watch (not FLAGGED).
 - Last reviewed: 2026-05-06 (status reconfirmed — no new legislation; IIJA core programs intact)
-- Cost basis: $54.09/share. Current: $54.94/share (May 22). Embedded gain: ~$427 on 502 shares (essentially breakeven). Target: ~11% in Taxable Acc4. Currently 10.39%.
-- **CascadeLevel MONITORING (v1.20 corrected — was ALERT in v1.19). Exit window review NOT formally triggered at MONITORING level. PAVE discussion remains open: EV −4.03%, IIJA Sep 30 expiry approaching, low urgency. Revisit if CascadeLevel reaches ALERT or higher.**
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): approximately **−4.03%** (updated v1.19; worse at higher D/E; prior: −3.84%).
+- Cost basis: $54.09/share. Current: ~$56.31 (May 30). Embedded gain: ~$1,111 on 502 shares. Target: ~11% in Taxable Acc4.
+- **HOLD with explicit exit triggers (v1.23, May 30, 2026). Constituent-level analysis complete:**
+  - Bucket A (~35-45% NAV) — INSULATED: Eaton (ETN), Trane Technologies, CSX, Union Pacific, Basic Materials (~19%). Revenue driven by private capex, freight volume, data center buildout, reshoring. IIJA expiration impact: LOW.
+  - Bucket B (~30-40% NAV) — PARTIAL: Quanta Services (~60% utility/grid revenue, not highway), E&C firms with multi-year backlogs. Backlog insulates 12-24 months. IIJA expiration impact: MODERATE, LAGGED.
+  - Bucket C (~20-25% NAV) — AT-RISK: Highway/bridge formula contractors. Formula funding reverts from ~$66B/yr to ~$46B/yr on hard expiration. Discretionary grants (BUILD, RAISE, PROTECT) cease new awards immediately. IIJA expiration impact: MATERIAL, NEAR-TERM.
+  - Modal congressional outcome: short-term extension at some level (historical base rate ~1/3 of cycles since 1991). Not a clean resolution — slows new award activity even if funding continues.
+  - PDT 18% weight may OVERSTATE IIJA dependency: Bucket A/B largest holdings are not mandate-driven. Reduces both risk and the hold thesis (PDT A upside).
+- **EXIT TRIGGERS (any one fires → exit at next rebalancing):**
+  1. CPI mid-June ≥4.0% → B formal trigger fires. B scenario = worst simultaneous outcome for Bucket C + domestic equity compression.
+  2. No congressional action of any kind on IIJA by August 15, 2026 (6 weeks before expiration). Hard lapse or panic extension becomes modal; get ahead of construction firm re-rating.
+  3. IIJA extension or new bill passed at REDUCED funding levels. Bucket C mandate impairment confirmed.
+  4. CascadeLevel reaches ALERT (sectorStressScore ≥2). M17 §12 FLAGGED instrument exit window protocol.
+- **HOLD CONDITIONS (reassess before any exit):**
+  - Iran deal T1 confirmed → A-probability rises to ≥20%: Bucket A/B (Eaton, Trane, CSX, UP, Basic Materials) benefit materially from A-scenario reflation; IIJA reauthorization odds also improve.
+  - IIJA short-term extension at current levels: acute cliff risk removed; continue monitoring.
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **−4.03%**. EV unchanged; IIJA risk partially embedded in PDT B/C values.
   - A: (0.82×5+0.18×4)×0.07 = 4.82×0.07 = +0.337%
   - B: (0.82×(-8)+0.18×(-3))×0.36 = -7.10×0.36 = -2.556%
   - C: (0.82×(-4)+0.18×(-1))×0.41 = -3.46×0.41 = -1.419%
@@ -591,28 +624,31 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - Monitor IIJA reauthorization September 30, 2026.
 
 #### AIPO
-- Components: real_asset_contracted_revenue (0.45) + secular_technology_growth (0.30) + policy_driven_thematic_equity (0.20) + inflation_hedge_commodity_linked (0.05)
-- CLASSIFICATION REVISED v1.14 (May 7, 2026): ThematicETF_ClassificationAudit() COMPLETE. Prior v1.13 classification included broad_market_equity_domestic (0.15) — ELIMINATED.
-- Basis: Defiance AI & Power Infrastructure ETF. Tracks MarketVector US Listed AI & Power Infrastructure Index. Holdings must derive ≥50% revenue from AI hardware, data centers, or power infrastructure. 78 holdings. Confirmed sector breakdown: Industrials 50% (Quanta Services 8.6%, Eaton 7.9%), IT 30% (GE Vernova 8.2%, Vertiv 7.9%, NVDA 4.2%, AVGO 3.9%, AMD 2.1%), Utilities 20%. US-domiciled 90.1%, foreign 9.5%.
-- AUM: ~$457M. Expense ratio: 0.69%. Inception: 07/24/2025 (thin track record — flag at Q2).
-- ⚠ NVDA overlap: AIPO holds NVDA 4.2%, AVGO 3.9%, AMD 2.1%. MAGS holds NVDA (Magnificent 7). Partial overlap in AI chip layer. Manageable at current target weights — track for Q2 concentration review.
-- ⚠ PAVE overlap: ETN (Eaton) in both AIPO (~8%) and PAVE (~3.4%). Audit at Q2 June 30.
-- Last reviewed: 2026-05-07 (v1.14 — ThematicETF_ClassificationAudit() COMPLETE)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+2.16%** (updated v1.19; prior at C=44: +2.42%). Ranked #5.
-  - A:  0.45×3 + 0.30×6 + 0.20×4 + 0.05×2 = 4.05% × 0.07 = +0.284%
-  - B:  0.45×6 + 0.30×(-6) + 0.20×(-3) + 0.05×6 = 0.60% × 0.36 = +0.216%
-  - C:  0.45×8 + 0.30×2 + 0.20×(-1) + 0.05×7 = 4.35% × 0.41 = +1.784%
-  - D:  0.45×2 + 0.30×(-14) + 0.20×(-5) + 0.05×(-8) = -4.70% × 0.05 = -0.235%
-  - E:  0.45×2 + 0.30×(-10) + 0.20×(-6) + 0.05×2 = -3.20% × 0.04 = -0.128%
-  - F:  0.45×3 + 0.30×4 + 0.20×4 + 0.05×2 = 3.45% × 0.07 = +0.242%
-  - Total: +2.163% ≈ +2.16%
+- Components: policy_driven_thematic_equity (0.63) + secular_technology_growth (0.16) + real_asset_contracted_revenue (0.14) + inflation_hedge_commodity_linked (0.07)
+- CLASSIFICATION REVISED v1.23 (May 30, 2026): Sector drift confirmed via T1 data (Yahoo Finance May 30). Prior v1.14 weights (RAC 0.45, STG 0.30, PDT 0.20, IHC 0.05) reflected May 7 holdings (Industrials 50%, IT 30%, Utilities 20%). Current holdings: Industrials 57.09%, Technology 16.46%, Utilities 14.42%, Energy 6.91%, FinSvcs 3.60%. STG drift −13.5pp; Industrials +7pp — both exceed 5pp threshold. New weights: PDT 0.63 (infra/power mandate: PWR, GEV, ETN, VRT, MasTec), STG 0.16 (AI hardware: NVDA 3.54%, AVGO 4.03%), RAC 0.14 (utilities/power gen: CEG, BE), IHC 0.07 (energy: Cameco + other). FinSvcs 3.60% residual assigned to dominant PDT. Prior v1.14 classification: ThematicETF_ClassificationAudit() COMPLETE May 7, 2026.
+- Basis: Defiance AI & Power Infrastructure ETF. Tracks MarketVector US Listed AI & Power Infrastructure Index. Holdings must derive ≥50% revenue from AI hardware, data centers, or power infrastructure. 78 holdings as of May 30, 2026. AUM: ~$434M (growing rapidly — was $100M Jan 2026). Expense ratio: 0.69%. Inception: 07/24/2025 (thin track record — flag at Q2).
+- ⚠ NVDA/AVGO overlap with MAGS: NVDA 3.54% + AVGO 4.03% in AIPO → ~0.6-0.9% portfolio combined with MAGS contribution. Not material. Monitor.
+- ⚠ PAVE overlap: ETN (Eaton) ~8% of AIPO + ~3-5% of PAVE → ~1.1% portfolio combined. IMMATERIAL (confirmed May 30).
+- Last reviewed: 2026-05-30 (v1.23 — ThematicETF_ClassificationAudit weight drift update)
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.02%** (recomputed v1.23 at new weights; ↓ from +2.16%). Ranked ~#10.
+  - A:  (0.63×4 + 0.16×6 + 0.14×3 + 0.07×2) = 4.04% × 0.07 = +0.283%
+  - B:  (0.63×(-3) + 0.16×(-6) + 0.14×6 + 0.07×6) = -1.59% × 0.36 = -0.572%
+  - C:  (0.63×(-1) + 0.16×2 + 0.14×8 + 0.07×7) = 1.30% × 0.41 = +0.533%
+  - D:  (0.63×(-5) + 0.16×(-14) + 0.14×2 + 0.07×(-8)) = -5.67% × 0.05 = -0.284%
+  - E:  (0.63×(-6) + 0.16×(-10) + 0.14×2 + 0.07×2) = -4.96% × 0.04 = -0.198%
+  - F:  (0.63×4 + 0.16×4 + 0.14×3 + 0.07×2) = 3.72% × 0.07 = +0.260%
+  - Total: +0.022% ≈ +0.02%
+  - ⚠ EV ALERT: reclassification moves AIPO from +2.16% to near-zero. PDT B/C (−3%/−1%) now dominant (63% weight). B contribution alone = −0.572% drag. C contribution +0.533% partially offsets. AIPO hold justified by: (a) C-scenario energy/infrastructure thesis; (b) A-scenario upside (+0.283%); (c) no superior replacement for AI power infrastructure exposure. Review targets at June 30 — EV differential vs URA (+4.17%) and MLPX (+5.67%) now larger.
+  - ⚠ FEASIBILITY CHECK REQUIRED: reduced EV may affect Primary IRA/Roth feasibility. Run M13.FeasibilityCheck() at next full session with updated AIPO contribution.
 - TAX PLACEMENT: ALL ACCOUNTS including taxable.
-- Target allocation (v1.22): **7% Primary IRA; 7% Primary Roth**; 8% Primary Taxable; 6% Relative IRA; 10% Relative Roth. (Reduced 1pp IRA/Roth v1.22 to fund URA; EV differential URA +4.17% vs AIPO +2.16% = +2.01pp in favour of swap.)
+- Target allocation (v1.22): **7% Primary IRA; 7% Primary Roth**; 8% Primary Taxable; 6% Relative IRA; 10% Relative Roth.
 
 #### MAGS
 - Components: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15)
-- Last reviewed: 2026-04-30
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): approximately **−2.17%** (updated v1.19; prior at C=44: −1.77%; deteriorating as D/E increase and C decreases). Ranked #11.
+- Last reviewed: 2026-05-30 (v1.23 — hold-only override confirmed)
+- ⚠ EV deterioration: from −1.77% (C=44, D=3) to −2.17% (C=41, D=5). D scenario deeply negative (−13.70% blended) — increasing D weight amplifies drag. Override remains in force but EV trendline is worsening.
+- **HOLD-ONLY OVERRIDE CONFIRMED (v1.23, May 30, 2026): No ADD at EV −2.17%. Override justified solely by absence of positive-EV secular_technology_growth alternative (URA covers RAC/IHC/STG partially; application-layer gap remains unresolved). Revisit if secular_technology_growth B adjudication at June 30 produces a materially different B conservative value.**
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): approximately **−2.17%** (updated v1.19). Ranked #11.
   - A:  (0.85×6+0.15×5)×0.07 = 5.85×0.07 = +0.410%
   - B:  (0.85×(-6)+0.15×(-8))×0.36 = -6.30×0.36 = -2.268%
   - C:  (0.85×2+0.15×(-4))×0.41 = 1.10×0.41 = +0.451%
@@ -620,7 +656,6 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
   - E:  (0.85×(-10)+0.15×(-8))×0.04 = -9.70×0.04 = -0.388%
   - F:  (0.85×4+0.15×7)×0.07 = 4.45×0.07 = +0.312%
   - Total: −2.168% ≈ −2.17%
-- ⚠ EV deterioration: from −1.77% (C=44, D=3) to −2.17% (C=41, D=5). D scenario deeply negative (−13.70% blended) — increasing D weight amplifies drag. Override remains in force but EV trendline is worsening.
 - Target allocation (v1.22): **3% Primary IRA; 4% Primary Roth**; 3% Relative IRA; 8% Relative Roth. (Reduced v1.22 to fund URA addition; EV improvement +0.04pp per account.)
 - TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY. Swap structure generates phantom taxable gains in losing years.
 - MAGS vs AGIX upgrade evaluation: monitor Anthropic IPO news. Assess at Q3 2026 or earlier on announcement.

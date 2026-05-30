@@ -149,21 +149,32 @@ open_triggers:
   - XOM post-Hormuz ramp-up lag (~2mo): not encoded. Monitor if deal signed.
 
 open_decisions:
-  1. PAVE: exit review deferred. EV −4.03%. CascadeLevel MONITORING. IIJA Sep 30 approaching.
-     Re-engage if CascadeLevel reaches ALERT or if IIJA reauthorization at risk.
-  2. MAGS: targets reduced to IRA 3%, Roth 4% (this session). Override maintained.
-     EV −2.17%. Continue monitoring.
+  1. PAVE: HOLD with explicit exit triggers (v1.23). EV −4.03%. CascadeLevel MONITORING.
+     EXIT on: (1) CPI ≥4.0% mid-June; (2) no IIJA action by Aug 15, 2026; (3) IIJA at reduced
+     levels; (4) CascadeLevel ALERT. HOLD if: A-prob ≥20% on T1 deal; clean IIJA extension.
+     Constituent analysis: Bucket A insulated (~35-45%), Bucket B partial (~30-40%),
+     Bucket C at-risk highway contractors (~20-25%). See §11 PAVE for full trigger text.
+  2. MAGS: HOLD-only override CONFIRMED (v1.23). Targets IRA 3%, Roth 4%. No ADD. EV −2.17%.
+     Revisit if secular_technology_growth B adjudication at June 30 materially changes B value.
   3. secular_technology_growth B calibration: PENDING June 30 adjudication (both proposals on table).
   4. §6 item 23 pending proposals (14 items): PENDING June 30 formal adoption.
   5. CHAIN_4 manufacturing: T1 formal confirmation pending (AACER/PACER).
   6. AIPO track record flag: inception Jul 2025 — thin. Re-verify at June 30.
-  7. AIPO/PAVE ETN (Eaton) overlap: ~8% AIPO + ~3.4% PAVE — confirm materiality at June 30.
-  8. NVDA/AVGO/AMD overlap AIPO vs MAGS: monitor at June 30.
+  7. AIPO EV ALERT: reclassification v1.23 moves EV from +2.16% to +0.02%. Run M13.FeasibilityCheck()
+     at next full session. Review targets at June 30 given EV now near-zero vs URA +4.17%.
+  8. NVDA/AVGO/AMD overlap AIPO vs MAGS: confirmed immaterial (~0.6-0.9% portfolio). No action.
+  9. XOM post-Hormuz ramp-up lag (~2mo): not encoded. Monitor if deal signed.
 
 next_session_flags:
-  - LOAD: "Calibration State loaded, last update: May 29, 2026 | Session Log loaded"
+  - LOAD: "Calibration State loaded, last update: May 30, 2026 | Session Log loaded"
+  - LOAD via Desktop Commander / local git bash — NOT GitHub MCP. File: Calibration_State.md
   - FIRST: confirm US-Iran deal status (signed or not) — gates A probability discussion
   - FIRST: BZ=F current close — confirm C-trigger clock status
+  - FIRST: run M13.FeasibilityCheck() with updated AIPO EV (+0.02%) — Primary IRA/Roth feasibility
   - CPI mid-June binary event: run DeriveScenarioProbabilities() immediately on 8:30am ET release
-  - June 30 Q2 audit: all remaining §5/§6 items (items 6-7, 9-10, 13-17, 19-24, 26, 29-39)
+    → if ≥4.0%: B formal trigger fires → EXIT PAVE (Trigger 1)
+  - PAVE watch: August 15, 2026 — exit if no congressional IIJA action of any kind by that date
+  - June 30 Q2 audit: all remaining §5/§6 items (6-7, 9-10, 13-17, 19-24, 26, 29-39)
   - secular_technology_growth B adjudication at June 30: [-2,+4] vs [-12,-3]
+  - M07 screens COMPLETE: FLOT PASS; VWO PASS (⚠ Taiwan/China 56.7% geopolitical concentration flag)
+  - §6 items COMPLETE this session: 8, 13, 14, 15, 21, 32, 33
