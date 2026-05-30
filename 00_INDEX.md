@@ -1,8 +1,8 @@
 # 00 — Index & Module Map
 <!-- Personal Financial Advisor Framework — Pseudo-Code Edition -->
 <!-- Source documents: Framework_Main_v1, Framework_Extension_v1, Calibration_State, Amendment 1, Amendment 2 -->
-<!-- Last updated: May 29, 2026 (v1.22 audit fixes: DEFECT-01 NEVER block syntax, DEFECT-02 duplicate comment, -->
-<!--   DEFECT-03 M18 added to MODULE REGISTRY, DEFECT-04 FetchRegistry_is_extension_point updated to M18-canonical) -->
+<!-- Last updated: May 29, 2026 (v1.23 portfolio-state-writeback: Portfolio_State.md added to SOURCE_MAP, -->
+<!--   WriteBack upgraded to three-file atomic push, PERMANENT_RULES and NEVER list updated) -->
 
 ```
 FRAMEWORK PersonalFinancialAdvisor {
@@ -26,16 +26,17 @@ FRAMEWORK PersonalFinancialAdvisor {
     M14_MarketRegime              // Market desensitization signal, underweight review, entry extension guard
     M15_InstrumentClassification  // Extensible role registry, composite decomposition, blended returns
     M16_ReturnTableCalibration    // §4.1 return table revision methodology
-    M17_SystemicCascadeWarning    // Cascade chain registry, sector stress scoring (v1.3 two-mode),
+    M17_SystemicCascadeWarning    // Cascade chain registry, sector stress scoring (v1.4 e_pathway_type),
                                   //   yield curve protocol, supply chain indicators,
                                   //   pre-positioning ladder (role-based), data integrity rules
     M18_MarketDataFetch           // Centralized financial data registry (v1.1, added v1.20):
                                   //   all DATA_REGISTRY_ENTRIES for the framework in one place;
                                   //   PriceDataIntegrity guard. M02/M11/M14/M17 entries superseded.
     // Cross-cutting framework files (@see SUB_PROJECTS below)
-    FW_Types                      // Shared type contracts — ALL modules consume/produce these types
+    FW_Types                      // Shared type contracts (v1.1) — ALL modules consume/produce these types
     CALIBRATION_STATE             // Live threshold values (GitHub: Calibration_State.md)
     SESSION_LOG                   // Session credit readings (§7) + scenario state (§8) (GitHub)
+    PORTFOLIO_STATE               // Companion project context snapshot (GitHub: Portfolio_State.md) — written every session
     CALIBRATION_LOG               // §3 calibration history archive (GitHub, read-only)
   }
 
@@ -80,7 +81,7 @@ FRAMEWORK PersonalFinancialAdvisor {
 
     FRAMEWORK_CORE {
       reason_to_change: "fundamental shared contracts change (rare)"
-      files:            [FW_Types.md, CALIBRATION_STATE, SESSION_LOG, 00_INDEX]
+      files:            [FW_Types.md, CALIBRATION_STATE, SESSION_LOG, PORTFOLIO_STATE, 00_INDEX]
       note:             "All other sub-projects depend on FRAMEWORK_CORE. It depends on nothing."
     }
 
@@ -99,7 +100,7 @@ FRAMEWORK PersonalFinancialAdvisor {
 
   FILE_MAP {
     // Framework core (Project Knowledge — no fetch needed)
-    "FW_Types.md"                      // FRAMEWORK_CORE: shared type contracts (added v1.20)
+    "FW_Types.md"                      // FRAMEWORK_CORE: shared type contracts (v1.1, added v1.20)
 
     // Framework modules (Project Knowledge — no fetch needed)
     "M01_SourceIntegrity.md"
@@ -118,12 +119,13 @@ FRAMEWORK PersonalFinancialAdvisor {
     "M14_MarketRegime.md"              // v1.2: DATA_REGISTRY_ENTRIES → _LEGACY; M18 integration
     "M15_InstrumentClassification.md"
     "M16_ReturnTableCalibration.md"
-    "M17_SystemicCascadeWarning.md"    // v1.3: two-mode CHAIN_3, role-based ladder, MODULE_MANIFEST
+    "M17_SystemicCascadeWarning.md"    // v1.4: e_pathway_type derivation; CHAIN_5 calibration gap
     "M18_MarketDataFetch.md"           // v1.1: all framework DATA_REGISTRY_ENTRIES centralized here
 
     // GitHub-resident operational files (fetched every session)
     "Calibration_State.md"  // LIVE CONFIG: §1–§6, §9–§12 thresholds, return table, classifications
     "Session_Log.md"        // SESSION DATA: §7 credit readings, §8 scenario state (AUTHORITATIVE for prior probs)
+    "Portfolio_State.md"    // COMPANION CONTEXT: living snapshot written every session — companion project only
     "Calibration_Log.md"    // ARCHIVE: §3 history; read-only
     "Archive_[Year]Q[N].md" // Q-end compaction archives
   }
@@ -151,7 +153,7 @@ FRAMEWORK PersonalFinancialAdvisor {
     7:  M02_IntelGathering.GatherIntel STEPS 2–5
         + M14.ComputeDivergenceSignal()           // → RegimeSignal
         + M17.sectorStressScore()                 // → CascadeSignal.D_precursor_binding
-        + M17.computeYieldCurveSignal()           // → YieldCurveSignal
+        + M17.computeYieldCurveSignal()           // → YieldCurveSignal (incl. e_pathway_type)
         + M17.assessCascadeLevel()               // → [MONITORING | ALERT | PRE_POSITION]
         → IF M14.composite IN [HIGH, MODERATE]: M14.UnderweightReviewTrigger(account)
         → IF M17.cascadeLevel IN [ALERT, PRE_POSITION]: surface in briefing; prepare §5 review
@@ -160,8 +162,10 @@ FRAMEWORK PersonalFinancialAdvisor {
         // @see M04_BriefingFormat.IntelligenceBriefing
     9:  portfolio discussion
         → before any ADD executes: M14.EntryExtensionGuard(asset, account)
+        → if Scenario E active: read YieldCurveSignal.e_pathway_type before rate directives
     10: M12_FileProtocol.WriteBack
-        // push_files([Calibration_State.md, Session_Log.md]) — atomic to master
+        // push_files([Calibration_State.md, Session_Log.md, Portfolio_State.md]) — atomic to master
+        // Portfolio_State.md rendered by M12.constructPortfolioState() — companion project context snapshot
   }
 
 
@@ -178,6 +182,7 @@ FRAMEWORK PersonalFinancialAdvisor {
     4.7: M15_InstrumentClassification
     4.8: M17_SystemicCascadeWarning    // sectorStressScore() = one D-binding variable;
                                        // yield curve signals = timing only, NEVER into M03;
+                                       // e_pathway_type = M10 directive routing only, NEVER into M03;
                                        // AdvisoryAction.role_id = RoleID always (v1.2)
     5:   M09_ScenariosABC, M10_ScenariosDEF
     6:   M01–M08
@@ -218,10 +223,11 @@ FRAMEWORK PersonalFinancialAdvisor {
 
     cascade_early_warning
       → M17.sectorStressScore()                         // → CascadeSignal.D_precursor_binding
-      → M17.computeYieldCurveSignal()                   // → YieldCurveSignal (timing only)
+      → M17.computeYieldCurveSignal()                   // → YieldCurveSignal (timing + e_pathway_type)
       → M17.assessCascadeLevel()
       → IF ALERT or PRE_POSITION: §5 AdvisoryAction[] (role-based; client confirmation required)
       // NEVER routes yield_curve signals into M03
+      // NEVER routes e_pathway_type into M03
       // NEVER auto-executes AdvisoryAction
 
     instrument_classification
@@ -246,6 +252,7 @@ FRAMEWORK PersonalFinancialAdvisor {
       → M14.EntryExtensionGuard() (if ADD)
       → M08.ExecutionGuards (graduated response)
       → [M09 | M10].RESPONSES[role]
+      → IF M10.ScenarioE: read YieldCurveSignal.e_pathway_type for rate directives
       → M08.ExecutionTaxPlacement
       → PRODUCES ExecutionDirective (@see FW_Types.md)
 
@@ -269,6 +276,11 @@ FRAMEWORK PersonalFinancialAdvisor {
       → M11.CalibrationDiscipline.ReviewRelativeThreshold?
       → M11.CalibrationDiscipline.ReviewAbsoluteThreshold?
       → CALIBRATION_STATE §3 (log entry)
+
+    session_writeback
+      → M12.WriteBack
+      → M12.constructPortfolioState()   // renders Portfolio_State.md from session data
+      → push_files([Calibration_State.md, Session_Log.md, Portfolio_State.md])
   }
 
 
@@ -305,7 +317,13 @@ FRAMEWORK PersonalFinancialAdvisor {
     role_registry:               extensible list of roles + binding drivers  // §11.1
     instrument_classification:   per-instrument component weights            // §11.3
     classification_staleness:    90 calendar days
-    next_full_audit:             June 30, 2026
+    next_full_audit:             September 30, 2026
+    // MOVE index thresholds (M11/M14 — §9.4, added v1.22)
+    MOVE_NORMAL:                 < 80
+    MOVE_ELEVATED:               80–100
+    MOVE_STRESS:                 100–130
+    MOVE_CRISIS:                 > 130
+    MOVE_SYSTEMIC:               > 160
     // Cascade thresholds (M17) — §12
     farm_filings_D_alert_YoY:    +50% YoY
     natgas_D_alert:              $6.00/mmBtu sustained 30 days
@@ -342,6 +360,8 @@ FRAMEWORK PersonalFinancialAdvisor {
     calibration_prospective_only:     M11.ProspectiveOnly
     market_regime_boundary:           M14 signals NEVER feed M03.DeriveScenarioProbabilities
     cascade_timing_boundary:          M17 yield curve signals inform D timing only —
+                                        NEVER feed into M03.DeriveScenarioProbabilities
+    e_pathway_type_boundary:          M17 e_pathway_type routes M10 directives only —
                                         NEVER feed into M03.DeriveScenarioProbabilities
     no_hardcoded_tickers_in_modules:  instrument tickers never appear in M01–M17 module files
     no_hardcoded_roles_in_modules:    roles defined in CALIBRATION_STATE §11 only
@@ -381,6 +401,9 @@ FRAMEWORK PersonalFinancialAdvisor {
                                            | PENDING_TRIGGERS | NET_ASSESSMENT
     qualitative_gather_not_DataReading:  M02.QualitativeGatherList outputs are working inputs only —
                                            NEVER registered as DataReading or FetchSpec
+    portfolio_state_writeback:           Portfolio_State.md written atomically with Session_Log.md
+                                           and Calibration_State.md at every session end —
+                                           NEVER write Session_Log.md without also writing Portfolio_State.md
   }
 
 
@@ -424,6 +447,7 @@ FRAMEWORK PersonalFinancialAdvisor {
     load_prior_probs_from_memory_or_Calibration_State__always_Session_Log_section_8,
     // M17
     feed_M17_yield_curve_signals_into_M03_DeriveScenarioProbabilities,
+    feed_e_pathway_type_into_M03_DeriveScenarioProbabilities,
     use_FMP_sector_PE_snapshot_for_sector_valuation,
     treat_sectorStressScore_3_as_standalone_D_probability_override,
     execute_PrePositioningLadder_without_explicit_client_confirmation,
@@ -437,7 +461,11 @@ FRAMEWORK PersonalFinancialAdvisor {
     edit_M02_to_add_new_module_data__register_DATA_REGISTRY_ENTRIES_in_owning_module,
     edit_M04_to_add_new_briefing_section__register_BRIEFING_REGISTRY_ENTRY_in_owning_module,
     add_DATA_REGISTRY_ENTRIES_to_any_module_other_than_M18,  // all structured data series registered in M18 only; no other module defines FetchSpecs
-    treat_QualitativeGatherList_output_as_DataReading
+    treat_QualitativeGatherList_output_as_DataReading,
+    // Portfolio_State rules (added v1.23)
+    write_Session_Log_without_also_writing_Portfolio_State,  // all three operational files must be consistent as of the same session
+    write_Portfolio_State_with_stale_probabilities__use_session_end_confirmed_vector_only,
+    use_Portfolio_State_for_execution_decisions__advisory_project_only
   ]
 
 }

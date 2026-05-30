@@ -7,7 +7,12 @@
 <!--   - WriteBack updated: push_files([Calibration_State.md, Session_Log.md]) — atomic to master -->
 <!--   - COMPACTION_PROCEDURE added (quarterly; defines Archive file naming convention) -->
 <!--   - SOURCE_MAP updated to include Session_Log.md and Calibration_Log.md -->
-<!-- GitHub: all framework .md files including Calibration_State.md and Session_Log.md (read + write) -->
+<!-- Updated May 29, 2026 (portfolio-state-writeback amendment): -->
+<!--   - Portfolio_State.md added to SOURCE_MAP and WriteBack (THREE-file atomic write) -->
+<!--   - constructPortfolioState() procedure added -->
+<!--   - NEVER list updated: write Session_Log.md without also writing Portfolio_State.md -->
+<!--   - PatternB_Rules updated accordingly -->
+<!-- GitHub: all framework .md files including Calibration_State.md, Session_Log.md, Portfolio_State.md (read + write) -->
 <!-- Google Drive: Allocation sheet only (read only) -->
 <!-- Applies to: M05_SessionInit INPUT_1 (Drive), INPUT_3 (GitHub) -->
 
@@ -22,14 +27,15 @@ MODULE FileProtocol {
       repo:   "ai-fin-advisor-framework"
       branch: "master"
       files: {
-        LIVE_CONFIG:     "Calibration_State.md"   // §1-§6, §9-§11 thresholds and classifications
-        SESSION_LOG:     "Session_Log.md"          // §7 credit readings, §8 scenario state — AUTHORITATIVE for prior probs
-        CALIBRATION_LOG: "Calibration_Log.md"      // §3 archive — read only (history); updated on calibration events
-        FRAMEWORK:       [all M01–M16 module .md files]
+        LIVE_CONFIG:      "Calibration_State.md"   // §1-§6, §9-§12 thresholds and classifications
+        SESSION_LOG:      "Session_Log.md"          // §7 credit readings, §8 scenario state — AUTHORITATIVE for prior probs
+        PORTFOLIO_STATE:  "Portfolio_State.md"      // companion project context snapshot — written every session
+        CALIBRATION_LOG:  "Calibration_Log.md"     // §3 archive — read only (history); updated on calibration events
+        FRAMEWORK:        [all M01–M18 module .md files]
       }
       access: read + write
       write_method: {
-        session_writeback:    push_files (two-file atomic: Calibration_State.md + Session_Log.md)
+        session_writeback:    push_files (three-file atomic: Calibration_State.md + Session_Log.md + Portfolio_State.md)
         framework_amendments: push_files (multi-file, branch + PR)
         calibration_events:   push_files (may include Calibration_Log.md in addition to above)
       }
@@ -52,6 +58,7 @@ MODULE FileProtocol {
     NEVER:  write framework amendments directly to master — always branch + PR
     NEVER:  write §8 if scenario_probabilities do not sum to 100%
     NEVER:  write §7 row if T1_flag == stale AND no_better_source_available
+    NEVER:  write Session_Log.md without also writing Portfolio_State.md in the same push_files call
   }
 
   // ─── CANONICAL GITHUB WRITE WORKFLOW ─────────────────────────────────────────
@@ -63,9 +70,9 @@ MODULE FileProtocol {
   //   → NO SHA required for any file in push_files
   //   → PR body must be .md formatted
   //
-  // PATTERN B: Session Write-Back (§7 credit + §8 scenario state — two files)
+  // PATTERN B: Session Write-Back (§7 credit + §8 scenario state + Portfolio_State — three files)
   //   → push_files targeting master directly (atomic; no SHA required)
-  //   → Both Calibration_State.md and Session_Log.md written in ONE push_files call
+  //   → Calibration_State.md, Session_Log.md, and Portfolio_State.md written in ONE push_files call
   //   → This is the ONLY permitted direct-to-master write for operational data
 
   CANONICAL_GITHUB_WRITE_WORKFLOW {
@@ -126,15 +133,16 @@ MODULE FileProtocol {
     }
 
     // ── PATTERN B: Session Write-Back ────────────────────────────────────────
-    // Use for: session-end write of §7 (credit) + §8 (scenario state) to master.
-    // TWO files written atomically via push_files — no SHA required.
-    // push_files is the only write method for session write-back as of v1.12.
+    // Use for: session-end write of §7 (credit) + §8 (scenario state) + Portfolio_State to master.
+    // THREE files written atomically via push_files — no SHA required.
+    // push_files is the only write method for session write-back.
 
     PATTERN_B SessionWriteBack {
       // @see WriteBack procedure below
-      // Both Calibration_State.md and Session_Log.md written in ONE push_files call.
-      // Calibration_State.md included IF any §1-§6/§9-§11 values changed this session.
+      // Calibration_State.md, Session_Log.md, and Portfolio_State.md written in ONE push_files call.
+      // Calibration_State.md included IF any §1-§6/§9-§12 values changed this session.
       // Session_Log.md ALWAYS included (§7 and §8 updated every session).
+      // Portfolio_State.md ALWAYS included (companion context snapshot updated every session).
 
       STEP 1: construct Session_Log_updated_content {
         // Take full Session_Log.md content loaded at session start
@@ -149,17 +157,22 @@ MODULE FileProtocol {
         // IF no calibration changes: use content from session-start fetch unchanged
       }
 
-      STEP 3: push_files {
+      STEP 3: construct Portfolio_State_updated_content {
+        // @see constructPortfolioState() below
+      }
+
+      STEP 4: push_files {
         tool:    github:push_files
         branch:  SOURCE_MAP.github.branch  // "master"
         owner:   SOURCE_MAP.github.owner
         repo:    SOURCE_MAP.github.repo
-        message: "Session write-back: [today's date] — §7 credit + §8 scenario state"
+        message: "Session write-back: [today's date] — §7 credit + §8 scenario state + Portfolio_State"
         files:   [
           { path: "Session_Log.md",       content: Session_Log_updated_content },
-          { path: "Calibration_State.md", content: Calibration_State_updated_content }
+          { path: "Calibration_State.md", content: Calibration_State_updated_content },
+          { path: "Portfolio_State.md",   content: Portfolio_State_updated_content }
         ]
-        // push_files requires NO SHA — atomic write of both files
+        // push_files requires NO SHA — atomic write of all three files
       }
 
       GUARD PatternB_Rules {
@@ -167,9 +180,11 @@ MODULE FileProtocol {
         NEVER:  write §8 entry if scenario_probabilities do not sum to 100%
         NEVER:  write §7 row if T1_flag == stale AND no_better_source_available
                 // log the gap: "[date] — readings unavailable this session"
-        ALWAYS: §7 and §8 written in single push_files call with Calibration_State.md
-        NEVER:  write only Session_Log.md without also writing Calibration_State.md —
-                // both must be consistent as of the same session
+        ALWAYS: §7, §8, and Portfolio_State written in single push_files call with Calibration_State.md
+        NEVER:  write only Session_Log.md without also writing Portfolio_State.md —
+                // all three operational files must be consistent as of the same session
+        NEVER:  write Portfolio_State.md with stale scenario_probabilities —
+                // always use the probabilities confirmed at the END of the current session
       }
     }
 
@@ -240,6 +255,7 @@ MODULE FileProtocol {
         CALIBRATION_STATE §4   // growth objectives return table + multipliers
         CALIBRATION_STATE §9   // M14 market regime thresholds
         CALIBRATION_STATE §11  // M15 role registry + instrument classification table
+        CALIBRATION_STATE §12  // M17 cascade thresholds
       // NOTE: §8 session state is now in Session_Log.md — load via fetchSessionLog()
     }
 
@@ -274,7 +290,7 @@ MODULE FileProtocol {
   }
 
   // ─── FRAMEWORK FILE FETCH (GitHub) ───────────────────────────────────────────
-  // For any framework module file (M01–M16).
+  // For any framework module file (M01–M18).
   // Framework modules are Project Knowledge (always in context) —
   // this function is for explicit re-fetch or inspection when needed.
 
@@ -285,6 +301,89 @@ MODULE FileProtocol {
     path:   path
     branch: SOURCE_MAP.github.branch
     RETURN file_contents
+  }
+
+  // ─── PORTFOLIO STATE CONSTRUCTION ────────────────────────────────────────────
+  // Produces the Portfolio_State.md content for the companion project.
+  // Called during WriteBack (STEP 3 of PATTERN_B).
+  // Sources: Session_Log §8 new_entry + CALIBRATION_STATE §11 + allocation sheet readings.
+  // This is a RENDER function — it assembles existing data, never invents new values.
+  // The output format matches the Portfolio_State.md template established May 29, 2026.
+
+  FUNCTION constructPortfolioState() -> String {
+
+    // All values drawn from data already computed this session.
+    // NEVER use prior-session values for scenario probabilities — use session-end confirmed probs.
+
+    SECTION scenario_probabilities {
+      // From §8 new entry (confirmed end-of-session probabilities)
+      source: Session_Log §8 new_entry.scenario_probabilities
+      include: probability per scenario + one-line rationale per scenario
+      include: primary_driver + challenger_drivers from identifyPrimaryDriver()
+    }
+
+    SECTION regime_context {
+      // Plain-language summary of what B/C/D/A mean for this portfolio right now
+      // 2-3 sentences per active scenario (>= 10% probability)
+      // Highlight the single most important regime implication
+      source: M03.ScenarioFramework scenario descriptions + current probability vector
+    }
+
+    SECTION credit_and_market_signals {
+      // All readings fetched this session
+      source: §7 new_row values + FetchRegistry readings from Step 4
+      include: HY_OAS, IG_OAS, CCC_OAS, MOVE, VIX, S&P, DFF, SOFR, THREEFYTP10,
+               30Y yield, yield curve spreads, BZ=F/WTI, DXY, FINRA margin debt, KRE
+      include: threshold status for each (NORMAL / WATCH / FIRED)
+      include: M14 composite regime signal + cascade level
+    }
+
+    SECTION positions {
+      // From allocation sheet (live prices) + §11 EVs
+      source: Allocation sheet (prices, quantities, account balances) + CALIBRATION_STATE §11
+      include per instrument: ticker, role(s), EV, scenario verdict summary,
+                              target allocations, current status note
+      include: portfolio total
+      include: instruments not currently held + their adoption triggers
+    }
+
+    SECTION open_triggers {
+      // From §8 new_entry.open_triggers
+      source: Session_Log §8 new_entry
+      format: table with trigger, status, what fires if triggered
+    }
+
+    SECTION open_decisions {
+      // From §8 new_entry.open_decisions
+      source: Session_Log §8 new_entry
+    }
+
+    SECTION account_feasibility {
+      // From M13.FeasibilityCheck results this session
+      source: current session feasibility computation
+      include: required EV, achieved EV, gap, status per account
+    }
+
+    SECTION next_session_priorities {
+      // From §8 new_entry.next_session_flags
+      source: Session_Log §8 new_entry
+    }
+
+    SECTION framework_version {
+      // Calibration_State version + Session_Log last entry date
+      source: Calibration_State.md header + session metadata
+    }
+
+    HEADER {
+      "# Portfolio State\n"
+      "<!-- Living snapshot — updated after each advisory session write-back -->\n"
+      "<!-- Source of truth: Calibration_State.md [version] + Session_Log.md ([date]) -->\n"
+      "<!-- Last updated: [today's date] ([session type]) -->\n"
+      "<!-- Purpose: context document for the conversational companion project -->\n"
+      "<!-- Do NOT use for execution decisions — use the advisory project for that -->\n"
+    }
+
+    RETURN assembled_markdown_content
   }
 
   // ─── WRITE-BACK PROCEDURE (session end) ────────────────────────────────────────
@@ -328,6 +427,12 @@ MODULE FileProtocol {
       // ALWAYS include in push_files even if unchanged — ensures atomic consistency
     }
 
+    STEP 3: construct Portfolio_State_updated_content {
+      CALL constructPortfolioState()
+      // Renders current session state as Portfolio_State.md
+      // Uses session-end confirmed values — NEVER prior-session values for probabilities
+    }
+
     GUARD WriteIntegrity {
       NEVER:  overwrite existing rows in §7 or §8 — append only
       NEVER:  write §7 row if T1_flag == stale AND no_better_source_available
@@ -335,18 +440,21 @@ MODULE FileProtocol {
       NEVER:  write §8 entry if scenario_probabilities do not sum to 100%
               // log the error: "[date] — scenario state write skipped:
               //                 probabilities did not sum to 100%"
-      ALWAYS: write §7 and §8 in a SINGLE push_files call with both files
+      ALWAYS: write all three files in a SINGLE push_files call
+      NEVER:  write Portfolio_State.md with scenario_probabilities that differ from §8 new_entry
+              // both must reflect the same session-end confirmed probability vector
     }
 
-    STEP 3: push_files {
+    STEP 4: push_files {
       tool:    github:push_files
       owner:   SOURCE_MAP.github.owner
       repo:    SOURCE_MAP.github.repo
       branch:  SOURCE_MAP.github.branch   // "master"
-      message: "Session write-back: [today's date] — §7 credit + §8 scenario state"
+      message: "Session write-back: [today's date] — §7 credit + §8 scenario state + Portfolio_State"
       files:   [
         { path: "Session_Log.md",       content: Session_Log_updated_content },
-        { path: "Calibration_State.md", content: Calibration_State_updated_content }
+        { path: "Calibration_State.md", content: Calibration_State_updated_content },
+        { path: "Portfolio_State.md",   content: Portfolio_State_updated_content }
       ]
     }
   }
@@ -364,8 +472,6 @@ MODULE FileProtocol {
 
     STEP 2: create_archive_file {
       filename: "Archive_[Year]Q[N].md"
-        // Examples: Archive_2026Q2.md (created June 30, 2026)
-        //           Archive_2026Q3.md (created September 30, 2026)
       content:
         header: "# Session Log Archive — [Year] Q[N]\n"
                "Archived: [audit date]\n"
@@ -375,11 +481,8 @@ MODULE FileProtocol {
     }
 
     STEP 3: compact_session_log {
-      // Replace Session_Log.md with compacted version:
       §7_retained:  last 10 session credit readings
       §8_retained:  last 3 full session entries
-                    // All prior entries collapsed to one-line summary table:
-                    //   format: | date | A%/B%/C%/D%/E%/F% | key_decision |
       // Add compaction note at top of §8: "Entries before [cutoff_date] archived to [filename]"
     }
 
@@ -389,12 +492,13 @@ MODULE FileProtocol {
       //   Archive_[Year]Q[N].md  (new file)
       //   Session_Log.md         (compacted)
       // Calibration_State.md included if §3 was also trimmed this session
+      // Portfolio_State.md included (re-render after compaction)
       branch_name: "session-log-compaction-[Year]Q[N]"
     }
 
     ARCHIVE_NAMING_CONVENTION {
-      quarterly:  "Archive_[Year]Q[N].md"   // e.g., Archive_2026Q2.md
-      annual:     "Archive_[Year].md"        // created if quarterly archives are merged end-of-year
+      quarterly:  "Archive_[Year]Q[N].md"
+      annual:     "Archive_[Year].md"
       contents:   "§7 credit rows + §8 session entries prior to compaction cutoff
                    + §3 calibration entries prior to trimming (if trimmed this session)"
     }
@@ -402,27 +506,21 @@ MODULE FileProtocol {
 
   // ─── IMPLEMENTATION NOTES ─────────────────────────────────────────────────────────
   // April 20, 2026: Allocation sheet fetched via web_fetch → stale/incorrect data.
-  // Seven false discrepancies. Session partially invalidated.
   // Fixed by switching to Google Drive API (search_files + read_file_content).
   //
   // April 23, 2026: Calibration_State.md migrated from Google Drive to GitHub.
-  // Drive write-back required create_file + manual duplicate deletion each session.
-  // GitHub push_files overwrites cleanly in place without requiring SHA.
   //
   // April 28, 2026: CANONICAL_GITHUB_WRITE_WORKFLOW codified.
-  // Root cause of recurring write failures: using create_or_update_file in a loop
-  // for multi-file amendments (requires SHA per file, fails on new files, sequential
-  // API calls multiply failure probability). Fixed by:
-  //   - push_files for all multi-file operations (atomic, no SHA, any number of files)
-  //   - create_or_update_file retired from session write-back workflow
-  //   - create_branch always uses from_branch name, never SHA
+  // push_files for all multi-file operations (atomic, no SHA, any number of files).
   //
   // May 6, 2026 (v1.12): File architecture split implemented.
-  // Calibration_State.md was growing to 55KB+, causing push_files content size failures.
-  // Fixed by splitting §7 and §8 into Session_Log.md (separate file).
   // Session write-back now uses push_files for two files (Calibration_State.md + Session_Log.md).
-  // No SHA required. Both files remain in master branch for operational access.
-  // Calibration_Log.md added for §3 archive history (updated only on calibration events).
+  //
+  // May 29, 2026 (portfolio-state-writeback amendment): Portfolio_State.md added.
+  // Purpose: living context snapshot for the conversational companion project.
+  // Written atomically with Session_Log.md and Calibration_State.md every session.
+  // constructPortfolioState() renders current session data — no new data fetched.
+  // WriteBack is now a three-file atomic push_files call.
 
 }
 ```
