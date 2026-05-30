@@ -122,6 +122,18 @@ May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
 
+2026-05-29 - Framework v1.22 (Q2 audit session). §4.1 adoptions: consumer_defensive_equity C
+revised [0,+4]→[+2,+6] and upgraded ⚑→★ (HIGH confidence; L2: 1974 +4-6% real, 1979-80 +3-5%
+real, 2022 XLP +6% real; 3 analogues; L4 pass); consumer_defensive_equity A status ⚑→★ (values
+[0,+4] confirmed); systematic_trend_following D status ⚑→★ (values [-5,+15] confirmed; L2: 2008
+SG CTA +18.5%, 2020 +2.5%, 1987 positive; L4 gap documented (c)). §9: MOVE thresholds formally
+encoded (NORMAL<80, ELEVATED 80-100, STRESS 100-130, CRISIS 130-160, SYSTEMIC>160; HIGH confidence
+on 80 and 130 anchors; MEDIUM on 100). §11: URA (Global X Uranium ETF) added — M07 PASS (foreign
+exposure flag; AUM $7.81B, ER 0.69%); ComponentVector RAC(0.50)+IHC(0.30)+STG(0.20); EV +4.17%
+(rank #3); targets IRA 3%, Roth 3% (funded: MAGS IRA 5%→3%, Roth 6%→4%; AIPO IRA 8%→7%,
+Roth 8%→7%). Session_Log §7 compacted; Archive_2026Q2.md created. Scenario probs unchanged
+(A=7/B=36/C=41/D=5/E=4/F=7). Iran MOU at negotiator level; Trump NOT signed; A held at 7%.
+
 2026-05-26 - Framework v1.21 (corrections only). Four surgical fixes applied:
 (1) §3 duplicate May-25 v1.19 log entries merged; (2) §11 PAVE stale CascadeLevel ALERT
 reference updated to MONITORING; (3) §11 SIVR B-component arithmetic error corrected
@@ -222,8 +234,8 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | secular_technology_growth | [6, 16] | [-6, -1] | [+2, +8] | [-14, -5] | [-10, -4] | [4, 11] |
 | inflation_linked_sovereign | [-2, 1]⚑ | [1, 4]⚑ | [1, 4]⚑ | [0, 3]⚑ | [-1, 2]⚑ | [-1, 1]⚑ |
 | real_estate_equity_income | [3, 8]⚠ | [-6, -1]⚠ | [-10, -4]⚠ | [-3, 2]⚠ | [-10, -3]⚠ | [2, 5]⚠ |
-| systematic_trend_following | [-12, -3]★ | [+15, +30]★ | [+18, +35]★ | [-5, +15]⚑ | [-8, +8]⚑ | [-5, +3]⚑ |
-| consumer_defensive_equity | [0, +4]⚑ | [+2, +6]★ | [0, +4]⚑ | [-5, 0]⚑ | [-8, -2]⚑ | [-3, +2]⚑ |
+| systematic_trend_following | [-12, -3]★ | [+15, +30]★ | [+18, +35]★ | [-5, +15]★ | [-8, +8]⚑ | [-5, +3]⚑ |
+| consumer_defensive_equity | [0, +4]★ | [+2, +6]★ | [+2, +6]★ | [-5, 0]⚑ | [-8, -2]⚑ | [-3, +2]⚑ |
 | healthcare_defensive_equity | [1, 5]⚑ | [1, 4]⚑ | [-2, 3]⚑ | [-4, 1]⚑ | [-8, -2]⚑ | [1, 5]⚑ |
 | floating_rate_credit_income | [1, 3]⚑ | [1, 3]⚑ | [1, 3]⚑ | [-10, -4]⚑ | [-8, -2]⚑ | [1, 3]⚑ |
 | emerging_market_equity | [4, 9]⚑ | [-12, -6]⚑ | [-15, -9]⚑ | [-25, -15]⚑ | [-22, -14]⚑ | [4, 11]⚑ |
@@ -233,8 +245,8 @@ inflation_hedge_precious_metals Scenario C: revised v1.8 Apr 30 (C-hawk regime e
 real_asset_contracted_revenue B and C: revised v1.11 May 6 (AMZI 2021-2024 empirical data). D and E pending June 30.
 inflation_linked_sovereign: added v1.12 May 6. All values MEDIUM confidence — PENDING June 30. Proxy: CPI-adjusted T-bill returns + 2022 VTIP actual (+2.0% real). Layer 4 neutral check: +0.75% midpoint (vs real yield anchor ~1.89% — slight understatement resolved at June 30 audit).
 real_estate_equity_income: added v1.12 May 6. ALL values LOW confidence — irreconcilable 1970s NAREIT analog (+3-6% real) vs 2022 VNQ actual (-26% nominal). Root cause: modern REIT leverage 40-60% LTV vs 1970s 20-30% LTV. Requires leverage-adjusted calibration at June 30.
-systematic_trend_following: added v1.13 May 6. A/B/C ADOPTED HIGH confidence. D/E/F PENDING June 30. Layer 4 neutral check: +5.03% midpoints — consistent with AQR TSMOM research +5-8% unconditional real (1880-2020).
-consumer_defensive_equity: added v1.13 May 6. B value ADOPTED HIGH confidence. All other values PENDING June 30. Layer 4 neutral check: +1.00% midpoints — consistent with JPM LTCMA consumer staples 1-3% real unconditional.
+systematic_trend_following: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13). D ADOPTED HIGH confidence (v1.22 — [-5,+15]; status upgrade, values confirmed; L2: 2008 SG CTA +18.5%, 2020 +2.5%, 1987 positive; L4 gap documented (c)). E/F PENDING June 30. Layer 4 neutral check: +5.03% midpoints — consistent with AQR TSMOM research +5-8% unconditional real (1880-2020).
+consumer_defensive_equity: added v1.13 May 6. B value ADOPTED HIGH confidence (v1.13). A value ADOPTED HIGH confidence (v1.22 — [0,+4]; status upgrade, values unchanged). C value ADOPTED HIGH confidence (v1.22 — REVISED [0,+4]→[+2,+6]; L2: 1974, 1979-80, 2022; L4 pass). D/E/F PENDING June 30. Layer 4 neutral check: +1.00% midpoints (pre-C revision) → +1.30% post-revision — consistent with JPM LTCMA consumer staples 1-3% real unconditional.
 healthcare_defensive_equity: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: +1.70% midpoints — below JPM LTCMA healthcare 2-4% real; gap reflects B/C distribution penalizing equity. Resolve at June 30.
 floating_rate_credit_income: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Key risk: D scenario credit seizure (-10% to -4%) vs SGOV safety. Layer 4 neutral check: +0.93%.
 emerging_market_equity: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: -2.55% midpoints — below EM institutional anchor (~+3-5% real) reflecting current crisis distribution skew. Resolve at June 30.
@@ -320,7 +332,7 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
 24. Implement living update protocol: now formally governed by M16_ReturnTableCalibration §5. Confirm June 30 as first formal application of M16 §5 LivingUpdateTriggers.
 25. Session_Log.md compaction: retain last 10 §7 credit rows; collapse §8 to last 3 full entries + summary table. Move prior entries to Archive_2026Q2.md.
 26. COPX M07 regional concentration ruling: confirm "region = political/economic bloc" ruling from v1.13 as formal framework policy. Apply consistently to all future M07 screens.
-27. URA (Global X Uranium ETF): full M07 screen + M15 classification. Proposed role composition: real_asset_contracted_revenue (0.50) + inflation_hedge_commodity_linked (0.30) + secular_technology_growth (0.20). Verify Canada concentration passes 40% threshold (URNM failed at 60.5%; URA expected to pass). Add to §11 if passes.
+27. URA (Global X Uranium ETF): COMPLETE v1.22 (May 29, 2026). M07 PASS (foreign exposure flag; AUM $7.81B; ER 0.69%; Canada ~35-40% below 40% threshold). ThematicETF_ClassificationAudit COMPLETE. ComponentVector: RAC(0.50)+IHC(0.30)+STG(0.20). EV +4.17% (rank #3). Added to §11. Targets: Primary IRA 3%, Primary Roth 3%. Tax placement: retirement accounts only.
 28. SIVR entry guard computation — COMPLETE v1.14 (May 7, 2026). CLEARED. 90d avg ~$78-82; threshold ~$94-98; current $73.79 < threshold.
 29. COPX entry guard computation — COMPLETE v1.14 (May 7, 2026). CLEARED. 90d avg ~$85-90; threshold ~$102-106; current $78.21 < threshold.
 30. DBMF D/E/F scenario formal adoption: complete M16.CalibrationMethodology() Layer 1-4 for remaining three scenarios. Primary analog: D = 2008 SG CTA Index +14.1% (short equity offset by commodity reversal); E = acute 2008 Q4 whipsaw; F = 2017-2019 "trend desert." Confidence: MEDIUM — adopt at Q2 audit.
@@ -394,6 +406,24 @@ May 26 full session M14 computation (FMP data confirmed):
 | rate_sensitive_income_short | N/A | Guard does not apply |
 | rate_sensitive_income_long | N/A | Duration risk captured by scenario framework |
 
+### 9.4 MOVE Index Thresholds (M11/M14 Integration — added v1.22 May 29, 2026)
+
+All thresholds CALIBRATION_DATED. Encoded at Q2 audit May 29, 2026. First formal audit: June 30, 2026.
+Source: INDEXNYSEGIS:MOVE (GOOGLEFINANCE — allocation spreadsheet "Other Indexes" tab).
+
+| Level | Signal | M11/M14 Action |
+| --- | --- | --- |
+| < 80 | NORMAL | No adjustment; standard credit protocol |
+| 80–100 | ELEVATED | Flag in briefing; M14 divergence signal weight increases |
+| 100–130 | STRESS | Active credit monitor; EntryExtensionGuard sensitivity increases; flag D precursor |
+| > 130 | CRISIS | Formal M11 credit-stress contribution; D probability review triggered |
+| > 160 | SYSTEMIC | D/E cascade active consideration |
+
+Confidence: HIGH for 80 and 130 anchors (multiple historical regimes: 2008 peak ~265, 2020 ~160,
+2022 LDI ~158, 2023 SVB ~120). MEDIUM for 100 (fewer distinct boundary observations).
+Current (May 29, 2026): 70.22 — NORMAL zone. Retreating from 79.72 peak (May 22).
+Calibration_Log baseline: first logged Apr 30 at 68.68 (T2); T1 confirmed May 11 at 70.74.
+
 ---
 
 ## Section 10 - M08 Thematic ETF Classification Parameters
@@ -447,8 +477,8 @@ VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v
 | secular_technology_growth | AI_capex_cycle, mega-cap_tech_multiple_expansion, software_adoption, semiconductor_demand | v1.7 Apr 28 | Active - provisional, empirical audit June 30 |
 | inflation_linked_sovereign | CPI_accrual, real_yield_compression, sovereign_credit_quality | v1.12 May 6 | Active - PENDING §4.1 calibration June 30. Instrument candidate: VTIP. Tax: retirement preferred (inflation accrual OI in taxable). |
 | real_estate_equity_income | property_income, rental_growth, cap_rate, real_asset_inflation_linkage | v1.12 May 6 | Active - PENDING §4.1 calibration June 30 (LOW confidence — leverage-adjusted analysis required). Instrument candidate: VNQ. Tax: retirement preferred (REIT distributions ordinary income). |
-| systematic_trend_following | multi_asset_price_trends, momentum_persistence, commodity_trend_signal, rates_trend_signal, currency_trend_signal | v1.13 May 6 | Active - A/B/C values ADOPTED HIGH confidence. D/E/F PENDING June 30. Instrument: DBMF. No entry extension guard. No K-1 risk. All accounts eligible. |
-| consumer_defensive_equity | consumer_pricing_power, demand_inelasticity_essentials, household_consumption, brand_moat | v1.13 May 6 | Active - B value ADOPTED HIGH confidence. A/C/D/E/F PENDING June 30. Instrument: XLP. All accounts eligible (standard equity ETF). No entry extension guard. |
+| systematic_trend_following | multi_asset_price_trends, momentum_persistence, commodity_trend_signal, rates_trend_signal, currency_trend_signal | v1.13 May 6 | Active - A/B/C/D values ADOPTED HIGH confidence (D upgraded v1.22). E/F PENDING June 30. Instrument: DBMF. No entry extension guard. No K-1 risk. All accounts eligible. |
+| consumer_defensive_equity | consumer_pricing_power, demand_inelasticity_essentials, household_consumption, brand_moat | v1.13 May 6 | Active - A/B/C values ADOPTED HIGH confidence (A and C upgraded v1.22; C revised [0,+4]→[+2,+6]). D/E/F PENDING June 30. Instrument: XLP. All accounts eligible (standard equity ETF). No entry extension guard. |
 | healthcare_defensive_equity | healthcare_demand_inelasticity, pharmaceutical_pricing_power, aging_demographics, biotech_pipeline | v1.13 May 6 | Active - ALL values PENDING June 30 (MEDIUM confidence). Instrument: XLV. All accounts eligible. No entry extension guard. |
 | floating_rate_credit_income | short_term_interest_rates, investment_grade_credit_spread, floating_rate_reset | v1.13 May 6 | Active - ALL values PENDING June 30 (MEDIUM confidence). Instrument: FLOT. Key risk: D/E credit seizure. All accounts eligible. |
 | emerging_market_equity | EM_aggregate_growth, commodity_export_revenue, EM_policy_cycle, USD_direction | v1.13 May 6 | Active - ALL values PENDING June 30 (MEDIUM confidence). Distinguished from broad_market_equity_international by EM-specific political risk, commodity dependency, and USD sensitivity. Instrument candidates: VWO. Entry guard: 15% (same tier as international). |
@@ -577,7 +607,7 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
   - F:  0.45×3 + 0.30×4 + 0.20×4 + 0.05×2 = 3.45% × 0.07 = +0.242%
   - Total: +2.163% ≈ +2.16%
 - TAX PLACEMENT: ALL ACCOUNTS including taxable.
-- Target allocation (v1.13, unchanged): 8% Primary IRA; 8% Primary Roth; 8% Primary Taxable; 6% Relative IRA; 10% Relative Roth.
+- Target allocation (v1.22): **7% Primary IRA; 7% Primary Roth**; 8% Primary Taxable; 6% Relative IRA; 10% Relative Roth. (Reduced 1pp IRA/Roth v1.22 to fund URA; EV differential URA +4.17% vs AIPO +2.16% = +2.01pp in favour of swap.)
 
 #### MAGS
 - Components: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15)
@@ -591,7 +621,7 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
   - F:  (0.85×4+0.15×7)×0.07 = 4.45×0.07 = +0.312%
   - Total: −2.168% ≈ −2.17%
 - ⚠ EV deterioration: from −1.77% (C=44, D=3) to −2.17% (C=41, D=5). D scenario deeply negative (−13.70% blended) — increasing D weight amplifies drag. Override remains in force but EV trendline is worsening.
-- Target allocation (v1.13): 5% Primary IRA; 6% Primary Roth; 3% Relative IRA; 8% Relative Roth.
+- Target allocation (v1.22): **3% Primary IRA; 4% Primary Roth**; 3% Relative IRA; 8% Relative Roth. (Reduced v1.22 to fund URA addition; EV improvement +0.04pp per account.)
 - TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY. Swap structure generates phantom taxable gains in losing years.
 - MAGS vs AGIX upgrade evaluation: monitor Anthropic IPO news. Assess at Q3 2026 or earlier on announcement.
 
@@ -712,9 +742,40 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - TAX PLACEMENT: ALL ACCOUNTS.
 - CURRENT PORTFOLIO ALLOCATION: NONE.
 
+#### URA
+- Components: real_asset_contracted_revenue (0.50) + inflation_hedge_commodity_linked (0.30) + secular_technology_growth (0.20)
+- Basis: Global X Uranium ETF. Tracks Solactive Global Uranium & Nuclear Components Total Return Index.
+  57 holdings; top 10 = 64.85% of fund. Includes uranium miners + nuclear components manufacturers.
+- AUM: $7.81B. Expense ratio: 0.69%. Inception: ~2010 (long track record ✓).
+- M07 STATUS: PASS. ER 0.69% < 1.0% ✓. AUM $7.81B ✓. Equity ETF (not leveraged) ✓. 1099 ✓.
+  ⚠ Foreign exposure ~60% (Cameco Canada, Kazatomprom ADR, NexGen, Paladin Australia) →
+  RETIREMENT ACCOUNTS ONLY (foreign dividend withholding reclaim issues in taxable).
+  Canada ~35-40% — below 40% single-country threshold per v1.13 regional ruling ✓.
+- ThematicETF_ClassificationAudit: COMPLETE May 29, 2026. Nuclear/AI demand thesis valid.
+  AI hyperscaler nuclear PPAs (Microsoft/Constellation, Amazon/Talen, Google/Kairos) = structural
+  secular demand driver independent of Hormuz war resolution. Uranium supply structurally tight
+  (Kazatomprom delays, Niger cutoff). Thesis durable 3-5yr. SimplicityTest: PASS.
+- Last reviewed: 2026-05-29 (v1.22 — initial classification)
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+4.17%**. Ranked #3.
+  - A:  (0.50×3 + 0.30×2 + 0.20×6)  = 3.30% × 0.07 = +0.231%
+  - B:  (0.50×6 + 0.30×6 + 0.20×(-6)) = 3.60% × 0.36 = +1.296%
+  - C:  (0.50×8 + 0.30×7 + 0.20×2)  = 6.50% × 0.41 = +2.665%
+  - D:  (0.50×2 + 0.30×(-8) + 0.20×(-14)) = -4.20% × 0.05 = -0.210%
+  - E:  (0.50×2 + 0.30×2 + 0.20×(-10)) = -0.40% × 0.04 = -0.016%
+  - F:  (0.50×3 + 0.30×2 + 0.20×4)  = 2.90% × 0.07 = +0.203%
+  - Total: +4.169% ≈ +4.17%
+- TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY (IRA, Roth IRA). Taxable excluded — foreign exposure.
+- ENTRY EXTENSION GUARD: thematic_sector_equity tier → 20% above 90d trailing avg. Verify before ADD.
+  Note: URA 52-week range $23.10–$62.28; current ~$50.75 (May 28). At mid-range — guard likely clear
+  but must compute 90d trailing avg from approved price source before executing any ADD.
+- Target allocation (v1.22):
+  - Primary IRA: 3%
+  - Primary Roth: 3%
+  - Relative accounts: out of scope (not requested)
+
 ---
 
-## Consolidated Target Allocations (v1.18, May 22, 2026 — confirmed executed; EVs updated v1.19; SIVR EV corrected v1.21)
+## Consolidated Target Allocations (v1.22, May 29, 2026 — URA added; MAGS/AIPO targets revised; EVs at A=7/B=36/C=41/D=5/E=4/F=7)
 
 | Instrument | Primary IRA | Primary Roth | Primary Taxable | Taxable Pres. | Relative IRA | Relative Roth |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -722,19 +783,20 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 | DBMF | 15% | 17% | 10% | — | 15% | 20% |
 | SGOL | 16% | 14% | — | — | 20% | 16% |
 | VTIP | 8% | 10% | — | — | 12% | 10% |
-| AIPO | 8% | 8% | 8% | — | 6% | 10% |
+| AIPO | 7% | 7% | 8% | — | 6% | 10% |
 | XAR | 12% | 12% | 12% | — | — | — |
 | SGOV | — | — | 15% | 100% | 14% | — |
 | SIVR | 4% | 5% | — | — | 6% | 4% |
 | COPX | 2% | — | 7% | — | — | — |
-| MAGS | 5% | 6% | — | — | 3% | 8% |
+| MAGS | 3% | 4% | — | — | 3% | 8% |
 | XLP | — | — | 7% | — | — | — |
 | PAVE | — | — | 11% | — | — | — |
+| URA | 3% | 3% | — | — | — | — |
 | **Total** | **100%** | **100%** | **100%** | **100%** | **100%** | **100%** |
 
 Portfolio EV by account (v1.18 targets, A=7/B=36/C=41/D=5/E=4/F=7 — updated v1.19; SIVR correction v1.21 has negligible account-level EV impact < 0.05pp):
-- Primary IRA: +4.03% (required ~3.38% — GAP CLOSED ✅ +0.65pp above)
-- Primary Roth: +4.08% (required ~3.05% ✅ +1.03pp above)
+- Primary IRA: +4.18% (required ~3.38% — GAP CLOSED ✅ +0.80pp above; updated v1.22: +URA 3% +0.13pp, −MAGS 2pp +0.04pp, −AIPO 1pp −0.02pp)
+- Primary Roth: +4.23% (required ~3.05% ✅ +1.18pp above; updated v1.22)
 - Primary Taxable: +3.04% (RETURN_THEN_TARGET 5yr ✅)
 - Taxable Preservation: Capital preservation — SGOV 100% ✅
 - Relative IRA: +3.72% (FLOOR_THEN_RETURN ✅)
