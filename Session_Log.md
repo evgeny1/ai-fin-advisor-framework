@@ -26,6 +26,7 @@
 | 2026-05-25 (research/dev + full M05) | 278 (carry) | 75 (carry) | 939 (carry) | FRED T1 via allocation spreadsheet tab — May 21 close (most recent; May 25 is Sunday/Memorial Day). Also confirmed: BAMLC0A4CBBB (BBB OAS) 94 bps; SOFR 3.51%; DFF 3.62%; SOFR–DFF spread −11bp (normal). MOVE: 78.43 (GOOGLEFINANCE live). VIX: 16.70. S&P 7,473.47 (May 22 close). S&P Futures overnight: 7,268.25 (−2.7%). FINRA margin debt: $1.304T (Apr 2026 record). THREEFYTP10: 0.8117% (May 15 — 14-yr high). Yield curve (FMP May 22): 10Y–2Y +43bp; 10Y–3M +88bp; 30Y 5.07%. BZ=F overnight ~$107.60 (Yahoo Finance pre-market T2, Memorial Day). | **T1 — spreadsheet tab + FMP** |
 | 2026-05-25 (second M05 — v1.20 framework evaluation) | 278 (carry) | 75 (carry) | 939 (carry) | Carry — Memorial Day; no new FRED data. BZ=F intraday (Memorial Day session): ~$93-96 (down ~6% from $100.21 May 22 close) on US-Iran deal optimism. S&P futures: +0.95% (reversed from prior −2.7% overnight). DXY ~98.92. Gold $4,523, Silver $76.15 (May 22). Kevin Warsh sworn in as 17th Fed Chairman May 22. | T1 carry; BZ=F T2 (Investing.com/Trading Economics CFD); equities T2 |
 | 2026-05-29 (Q2 audit — full M05) | **278** | **73** | **935** | **FRED T1 — embedded allocation spreadsheet tab.** May 28 close. MOVE: 70.22 (GOOGLEFINANCE live). VIX: 15.32. S&P: 7,580. DFF: 3.62%. BBB OAS: 93bps. BB OAS: 161bps. KRE: $69.61. BZ=F: ~$91-92 (CNBC/Trading Economics T1, May 29 intraday — down ~19% in May on Iran deal optimism). NatGas (DHHNGSP): $3.10 (May 26). | **T1 — spreadsheet tab** |
+| 2026-06-01 (objective type resolution — ad-hoc) | **274** | **74** | **941** | **FRED T1 — embedded allocation spreadsheet tab.** May 31 close: HY BAMLH0A0HYM2 2.74%, IG BAMLC0A0CM 0.74%, CCC BAMLH0A3HYC 9.41%. MOVE: 73.33 (GOOGLEFINANCE). VIX: 16.05. S&P: 7,599.96. KRE: $68.31. SOFR: 3.63%. DFF: 3.62%. NatGas: $3.10 (May 26 — latest available). | **T1 — spreadsheet tab** |
 
 ---
 
@@ -63,44 +64,6 @@ open_decisions:
 5. XOM post-Hormuz ramp-up lag: ~2mo not encoded. Monitor.
 6. Goldman Brent $90 Q4: T1 not confirmed. Carry.
 7. CHAIN_4 manufacturing: T1 formal confirmation pending.
-
----
-
-date: 2026-05-25 (second M05 session — v1.20 framework evaluation)
-scenario_probabilities: { A: 7%, B: 36%, C: 41%, D: 5%, E: 4%, F: 7% }
-  // UNCHANGED. Trump deal announcement evaluated but A NOT updated per M01 source integrity.
-  // No signed deal; no permanent Hormuz reopening; T2 cluster only.
-primary_driver: US-Iran War / Hormuz ceasefire negotiations Day ~86. BZ=F ~$93-96 Memorial Day. Kevin Warsh sworn in as Fed Chair May 22.
-session_type: second M05 session same day (framework evaluation + v1.20 bug fixes)
-
-framework_changes_this_session:
-  - FW-BUG-01 FIXED: M17 v1.3 — CHAIN_3 two-mode scoring
-  - M18_MarketDataFetch.md v1.0 ADDED
-  - Calibration_State v1.20: CHAIN_3 two-mode table; CascadeLevel corrected to MONITORING
-
-corrected_cascade_state:
-  sectorStressScore: 0 (formal)
-  CascadeLevel: MONITORING
-  D_precursor_binding: 0 (formal)
-  CHAIN_3_WATCH: TRUE — $1.304T record loaded
-
-open_triggers:
-  - Brent C-trigger clock: Day 0; BZ=F ~$93-96. Well below $110.
-  - US-Iran deal: no signed agreement. A=7% unchanged.
-  - CPI mid-June: BINARY EVENT — print 3/3 threshold for B formal trigger.
-  - THREEFYTP10: 0.8117% rising toward 100bp E_term_premium_warning.
-  - CHAIN_1: farm filings +46% vs 50%; NATURAL_GAS mandatory next session.
-  - CHAIN_4: T1 corporate bankruptcy count pending.
-  - MOVE: 78.43 — formal threshold pending Q2.
-  - IIJA reauthorization: September 30, 2026.
-  - Q2 audit: June 30, 2026.
-
-open_decisions:
-  1. PAVE: exit review deferred. EV −4.03%. Low urgency.
-  2. MAGS: at target. Override in force. EV −2.17%.
-  3. secular_technology_growth B: PENDING June 30.
-  4. URA evaluation: PENDING June 30.
-  5. US-Iran deal A-probability update: PENDING T1-confirmed signed deal.
 
 ---
 
@@ -178,3 +141,81 @@ next_session_flags:
   - secular_technology_growth B adjudication at June 30: [-2,+4] vs [-12,-3]
   - M07 screens COMPLETE: FLOT PASS; VWO PASS (⚠ Taiwan/China 56.7% geopolitical concentration flag)
   - §6 items COMPLETE this session: 8, 13, 14, 15, 21, 32, 33
+
+---
+
+date: 2026-06-01 (objective type resolution — ad-hoc)
+scenario_probabilities: { A: 7%, B: 36%, C: 41%, D: 5%, E: 4%, F: 7% }
+  // UNCHANGED. No new macro binary events.
+  // derivation_method: carry from 2026-05-29
+primary_driver: US-Iran War Day ~93. BZ=F ~$91-92 (carry). No signed deal. DFF 3.62%. May CPI print pending mid-June.
+session_type: ad-hoc — objective type review (no full M05 sequence; no allocation fetch; no market data fetch)
+
+resolutions_this_session:
+  ISSUE_1 — Relative Roth IRA objective type:
+    FINDING: No mismatch. Allocation sheet is correct.
+    Allocation sheet: Roth IRA (...466) | relative | 15 | TARGET_THEN_RETURN | FALSE | 0.4 | 0.3
+    M13 code: TARGET_THEN_RETURN — "Used for: IRA (primary), Roth IRA (primary + relative)"
+    RATIONALE: 15-year Roth horizon + no RMDs applies regardless of owner age. The 75yo age
+    constraint changes the IRA objective (shorter distribution horizon → FLOOR_THEN_RETURN) but
+    NOT the Roth (no RMDs, indefinite compounding horizon, TARGET_THEN_RETURN correct).
+    drawdown_tolerance: 0.3 is correctly more conservative than primary Roth (0.35). Encoded correctly.
+    RESOLUTION: No change to Allocation sheet. No change to Calibration_State.
+    NOTE FOR FUTURE SESSIONS: Do NOT re-flag Relative Roth as FLOOR_THEN_RETURN.
+    M13 classification is authoritative. This confusion arose from memory/notes — not from the files.
+
+  ISSUE_2 — Relative IRA floor specification:
+    FINDING: Floor is correctly defined. No field is misplaced.
+    Allocation sheet: IRA (...469) | relative | 10 | FLOOR_THEN_RETURN | TRUE | 0.4 | 0.2
+    floor_nominal_loss: TRUE — correct; M13 struct defines this as Bool where true = constraint active.
+    The floor level itself is implicit in M13.FeasibilityCheck() FLOOR_THEN_RETURN branch:
+      "IF scenario_return_s < 0 → floor_breach = true" — floor = zero nominal loss.
+    Probability threshold for which scenarios to test: §4.4 floor_nominal_loss_probability_threshold = 15%.
+    drawdown_tolerance: 0.2 is a separate position-sizing constraint (used in MLPX 24% × 67% = 16.1%
+    < 20% calculation). It is NOT the floor — it operates in a different function.
+    RESOLUTION: No change to Allocation sheet. No change to Calibration_State.
+    NOTE FOR FUTURE SESSIONS: floor_nominal_loss (Bool=TRUE) + M13 §4.4 threshold (15%) +
+    zero-return floor in FeasibilityCheck() are three separate components that together define the
+    complete FLOOR_THEN_RETURN constraint. drawdown_tolerance (0.2) is the position-sizing guard —
+    a distinct parameter. Neither is a misplaced value.
+
+credit_readings (May 31 close, T1 — via embedded allocation spreadsheet):
+  HY: 274bps | IG: 74bps | CCC: 941bps | MOVE: 73.33 | VIX: 16.05 | S&P: 7,599.96
+  KRE: $68.31. SOFR: 3.63%. DFF: 3.62%.
+  HY 274bps: −4bps from May 28. IG 74bps: +1bp. CCC 941bps: +6bps. All thresholds CLEAR.
+  CCC quietly widening (+6bps in 3 days) while HY tightening — divergence watch. No threshold fires.
+  MOVE 73.33: NORMAL zone (<80). Retreating from May 22 peak.
+
+open_triggers: (carry from 2026-05-29 — no changes)
+  - US-Iran deal: MOU text agreed at negotiator level; Trump NOT signed. A=7% unchanged.
+  - CPI mid-June (May data): BINARY EVENT — B formal trigger on ≥4.0% (3rd print).
+  - Brent C-trigger clock: INACTIVE. BZ=F ~$91-92 (carry).
+  - THREEFYTP10: 0.8117% vs 100bp warning — below by ~19bp.
+  - CHAIN_3_WATCH: $1.304T FINRA margin debt record. No FIRE condition met.
+  - CHAIN_4: T1 AACER/PACER bankruptcy count pending.
+  - IIJA reauthorization: September 30, 2026 (PAVE watch).
+  - Q2 audit: June 30, 2026.
+  - CCC divergence watch: +6bps in 3 days while HY tightening. Not at threshold — monitor.
+
+open_decisions: (carry from 2026-05-29 — no changes)
+  1. PAVE: HOLD with explicit exit triggers (v1.23). EV −4.03%. CascadeLevel MONITORING.
+  2. MAGS: HOLD-only override CONFIRMED. EV −2.17%. No ADD.
+  3. secular_technology_growth B calibration: PENDING June 30.
+  4. §6 item 23 pending proposals (14 items): PENDING June 30.
+  5. CHAIN_4 manufacturing: T1 formal confirmation pending.
+  6. AIPO track record flag: inception Jul 2025. Re-verify at June 30.
+  7. AIPO EV ALERT: EV +0.02%. Run M13.FeasibilityCheck() at next full session.
+  8. XOM post-Hormuz ramp-up lag (~2mo): not encoded. Monitor if deal signed.
+
+next_session_flags:
+  - LOAD: "Calibration State loaded, last update: May 30, 2026 | Session Log loaded"
+  - FIRST: confirm US-Iran deal status (signed or not) — gates A probability discussion
+  - FIRST: BZ=F current close — confirm C-trigger clock status
+  - FIRST: run M13.FeasibilityCheck() with updated AIPO EV (+0.02%) — Primary IRA/Roth feasibility
+  - CPI mid-June binary event: run DeriveScenarioProbabilities() immediately on 8:30am ET release
+    → if ≥4.0%: B formal trigger fires → EXIT PAVE (Trigger 1)
+  - PAVE watch: August 15, 2026 — exit if no congressional IIJA action of any kind by that date
+  - June 30 Q2 audit: all remaining §5/§6 items (6-7, 9-10, 13-17, 19-24, 26, 29-39)
+  - Relative Roth / Relative IRA objective type: RESOLVED 2026-06-01. DO NOT re-flag.
+    See §8 entry 2026-06-01 resolutions_this_session for full findings.
+  - CCC divergence: +6bps in 3 days while HY tightening — watch for acceleration at next session.
