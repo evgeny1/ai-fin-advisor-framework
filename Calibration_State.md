@@ -2,12 +2,13 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.23  Last updated: May 30, 2026 (Q2 audit session continuation:
-# §4.1 emerging_market_equity A adopted HIGH confidence [+4,+9]→[+10,+20] ★;
-# §11 AIPO classification weights updated for sector drift (STG 0.30→0.16, PDT 0.20→0.63,
-#   RAC 0.45→0.14 net IHC absorbed, IHC 0.05→0.07); AIPO EV recomputed;
-# §11 PAVE exit triggers formally encoded; §11 XAR forward PE note corrected;
-# §11 MAGS hold-only override confirmed; §6 items 8/13/14/15/21/32/33 marked COMPLETE)
+# Version: 1.24  Last updated: June 1, 2026 (CHAIN_4 calibration:
+# §12.4 bankruptcy_quarterly thresholds revised — 800/quarter eliminated (undocumented,
+#   empirically impossible on S&P large-company series); WATCH ≥220, FIRES ≥300 adopted
+#   HIGH confidence per M16 4-layer procedure; T1 source amended to ABI/Epiq AACER
+#   press releases (T1-equivalent); canonical series confirmed as S&P Global
+#   large-company (≥$2M public debt or ≥$10M private assets/liabilities);
+# §6 item 38 updated; §3 log entry added)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -20,7 +21,7 @@ Persistent framework configuration — load at every session start alongside Ses
 
 At session start, after both files are fetched, the advisor must state in the briefing:
 
-"Calibration State loaded, last update: May 30, 2026 | Session Log loaded"
+"Calibration State loaded, last update: June 1, 2026 | Session Log loaded"
 
 Absence of either confirmation line indicates the respective file was not loaded and the session is invalid for threshold-sensitive decisions.
 
@@ -122,6 +123,27 @@ May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-01 - Framework v1.24 (CHAIN_4 calibration). §12.4 revised: prior bankruptcy_quarterly_alert
+of 800/quarter eliminated — undocumented, no M16 basis, exceeded empirical GFC peak (~459/quarter)
+by ~74%, would never fire under any observed historical scenario. Canonical series confirmed:
+S&P Global Market Intelligence large-company (public co. with ≥$2M public debt; private co. with
+≥$10M assets/liabilities). T1 source amended: ABI/Epiq AACER press releases qualify as
+T1-equivalent — same underlying data as direct AACER access, published within days of month-end.
+M16 4-layer calibration complete (HIGH confidence):
+  L1: GFC peak ~459/quarter empirical ceiling; normal baseline ~100-150/quarter.
+  L2: 2009 GFC ~459/quarter (full systemic), 2010 aftermath ~207/quarter (confirmed stress),
+      2024-2026 ~170-200/quarter (elevated, not stress regime). 3 clean analogues.
+  L3: (a) CHAIN_4 is early-warning signal — thresholds should fire before GDP/HY confirm
+      recession; argues lower end of stress range. (b) S&P series includes ≥$2M floor;
+      some small-company noise at elevated baseline; argues WATCH not too close to current
+      readings. Net: adjustments roughly offset; proposed thresholds held.
+  L4: neutral distribution (A=35/B=15/C=15/D=10/E=5/F=20) — 300/quarter consistent with
+      D-weight environment; A=35/F=20 growth-dominant → ~90-120/quarter, well clear of WATCH.
+      Consistency check PASS.
+New thresholds: WATCH ≥220/quarter ★ HIGH; FIRES ≥300/quarter ★ HIGH.
+Current Q1 2026: 188/quarter — BELOW WATCH. CHAIN_4 score = 0. CascadeLevel remains MONITORING.
+§6 item 38 updated. No probability changes this version.
 
 2026-05-30 - Framework v1.23 (Q2 audit session continuation). §4.1 adoption: emerging_market_equity
 A revised [+4,+9]⚑ → [+10,+20]★ HIGH confidence. L2: 3 analogues (1991 Gulf drawdown +15-20%
@@ -372,7 +394,7 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
   - Current §4.1 B value [-6,-1] remains operative until June 30 adjudication.
 36. GOOGLEFINANCE ticker setup (v1.17): New allocation spreadsheet tab added for market data "Other Indexes". Confirmed working: VIX (INDEXCBOE:VIX), S&P 500 (INDEXSP:.INX), MOVE (INDEXNYSEGIS:MOVE). FRED series: use existing spreadsheet "FRED Series" tab. BZ=F is canonical Brent reference for C-trigger clock per v1.17.
 37. AI capex / secular_technology_growth context note (v1.18, May 22, 2026): Session intelligence — hyperscaler AI capex $660-830B committed for 2026 (nearly doubling 2025). Capex intensity 45-57% of revenue (vs 10-15% in 2020). Revenue growth 15-16% vs capex growth 60-80%; FCF projected to decline 90% across Big Four. Private credit ($800B+ in AI infrastructure financing) opacity flagged as tail risk not visible in HY/IG spread series. AI utility pricing emerging (62% usage-based by 2027). Prisoner's dilemma / war-of-attrition structure confirmed: no coordination mechanism among 5+ hyperscalers; 18-36 month infrastructure commitment periods prevent exit. Fiber optic 1999 analogy: technology correct, equity returns poor due to timing, cost of capital, and competitive dynamics. Portfolio implication: AIPO (infrastructure layer, contracted revenue) positive EV in B/C; MAGS (hyperscaler equity) negative EV in B/C — distinction maintained. No §4.1 changes warranted from session analysis.
-38. M17 §12 thresholds (v1.19, corrected v1.20): First formal application May 25, 2026. sectorStressScore()=0 (formal, v1.20 corrected). CascadeLevel=MONITORING. CHAIN_3_WATCH=TRUE ($1.304T margin debt record loaded; FIRES on ≥−5% MoM or 3+ gate events). CHAIN_4 T1 pending. D=5% maintained by prior client approval (qualitative). Formal Q2 audit: calibrate all §12 thresholds; confirm CHAIN_4 count; formal integration of yield curve D_timing_signal; M18 allocation spreadsheet series gap resolution.
+38. M17 §12 thresholds (v1.19, corrected v1.20): First formal application May 25, 2026. sectorStressScore()=0 (formal, v1.20 corrected). CascadeLevel=MONITORING. CHAIN_3_WATCH=TRUE ($1.304T margin debt record loaded; FIRES on ≥−5% MoM or 3+ gate events). CHAIN_4 CALIBRATED v1.24 (June 1, 2026): canonical series = S&P Global large-company; T1-equivalent = ABI/Epiq AACER press releases; WATCH ≥220/quarter, FIRES ≥300/quarter (HIGH confidence, M16 4-layer complete); current Q1 2026 = 188/quarter — BELOW WATCH. Prior 800/quarter threshold eliminated. D=5% maintained by prior client approval (qualitative). Formal Q2 audit: calibrate remaining §12 thresholds; formal integration of yield curve D_timing_signal; M18 allocation spreadsheet series gap resolution.
 39. M18 FMP data fetch (v1.21, May 26, 2026): FMP:chart historical-price-eod-light confirmed working for ^VIX and SPY. VIX_30D_AVG=17.99 and VIX_90D_AVG=21.24 computed from 62 trading days of FMP EOD data. SPY 30-trading-day return=+8.68% (Apr 13→May 22). FMP:indexes endpoint ACCESS DENIED for ^SPX (requires higher plan tier) — SPY via FMP:chart is the confirmed working substitute for BROAD_EQUITY_TRAILING. M18 updated accordingly (v1.1).
 
 ---
@@ -874,9 +896,23 @@ CHAIN_3_WATCH surfaces in briefing watch_chains field regardless of formal score
 
 ### 12.4 Manufacturing / Corporate Stress Chain
 
-| Parameter | Alert Threshold | Notes |
-| --- | --- | --- |
-| bankruptcy_quarterly_alert | 800+ large company filings per quarter | CHAIN_4 qualitatively fired — corporate bankruptcies at 14-year high. T1 AACER/PACER formal count pending — contribution = 0 until T1 source confirmed (NEVER rule). |
+**Canonical data source (v1.24, June 1, 2026):** S&P Global Market Intelligence large-company series.
+Scope: public companies with public debt and assets/liabilities ≥$2M, OR private companies with assets/liabilities ≥$10M at time of filing.
+**T1-equivalent source:** ABI monthly/quarterly press releases citing Epiq AACER data. Direct AACER/PACER database access not required — ABI/Epiq AACER press releases qualify as T1-equivalent for CHAIN_4 scoring.
+
+Historical reference (S&P series, quarterly rates):
+- Normal baseline (2022-2023): ~90-120/quarter
+- Elevated/stress-adjacent (2024-2026): ~170-200/quarter
+- Post-GFC aftermath (2010): ~207/quarter
+- GFC acute peak (2009): ~459/quarter (empirical ceiling on record)
+
+| Parameter | Alert Threshold | Confidence | Notes |
+| --- | --- | --- | --- |
+| bankruptcy_quarterly_WATCH | ≥220/quarter | HIGH ★ | Above post-GFC 2010 level; stress regime confirmed. M16 4-layer complete June 1, 2026. |
+| bankruptcy_quarterly_FIRES | ≥300/quarter | HIGH ★ | ~65% of GFC peak; systemic cascade signal. Fires CHAIN_4 score (+1). M16 4-layer complete June 1, 2026. |
+
+Current (Q1 2026): 188/quarter (S&P Global, large-company) — BELOW WATCH threshold. CHAIN_4 NOT fired.
+Prior threshold of 800/quarter ELIMINATED — was undocumented, lacked M16 basis, and exceeded the empirical GFC peak (~459/quarter) by ~74%. Would never have fired under any observed historical scenario.
 
 ### 12.5 Sovereign Stress / Scenario E Watch
 
@@ -909,7 +945,7 @@ sectorStressScore() — sum of fired CHAIN indicators:
 | CHAIN_1 (Agriculture) | NOT fired (+46% vs +50% threshold; natgas $2.71 vs $6) | 0 |
 | CHAIN_2 (CRE/RegBank) | NOT fired (SOFR-DFF benign; KRE stable) | 0 |
 | CHAIN_3 (Private/Margin) | WATCH — record loaded; FIRES conditions NOT met (MoM +6.8%, gate count 2/3) | 0 |
-| CHAIN_4 (Manufacturing) | Qualitative only — T1 count pending; contribution = 0 | 0 |
+| CHAIN_4 (Manufacturing) | NOT fired. Q1 2026: 188/quarter vs WATCH ≥220 / FIRES ≥300 (v1.24). ABI/Epiq AACER T1-equivalent confirmed. | 0 |
 | **Total** | | **0** |
 
 CascadeLevel mapping:
