@@ -2,13 +2,12 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.24  Last updated: June 1, 2026 (CHAIN_4 calibration:
-# §12.4 bankruptcy_quarterly thresholds revised — 800/quarter eliminated (undocumented,
-#   empirically impossible on S&P large-company series); WATCH ≥220, FIRES ≥300 adopted
-#   HIGH confidence per M16 4-layer procedure; T1 source amended to ABI/Epiq AACER
-#   press releases (T1-equivalent); canonical series confirmed as S&P Global
-#   large-company (≥$2M public debt or ≥$10M private assets/liabilities);
-# §6 item 38 updated; §3 log entry added)
+# Version: 1.25  Last updated: June 1, 2026 (§4.1 return table revisions:
+# rate_sensitive_income_short_duration A=[0,2]→[1,3] and D=[0,3]→[1,4] ADOPTED HIGH
+#   confidence (M16 4-layer complete; original proposals [1,4]/[2,6] rejected on
+#   Layer 3 duration constraint + Layer 4); STG B adjudication updated — [-12,-3]
+#   rejected, [-2,+4] preferred pending June 30 HIGH confidence upgrade;
+# §6 item 23 enumerated; §3 log entry added)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -123,6 +122,18 @@ May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-01 - Framework v1.25 (§4.1 return table — items 6-7 of §6 item 23 adopted).
+rate_sensitive_income_short_duration A [0,2]→[1,3] and D [0,3]→[1,4] ADOPTED HIGH confidence.
+M16 4-layer complete: L1 real T-bill anchor ~1.5-2% real; L2: 3 analogues each scenario
+(A: 2003/2016/1991; D: 2008/2020/1990-91) + starting rate 3.62% structural upward adj;
+L3: ≤1yr duration caps price appreciation — rejects [2,6] D upside (implausible deflation
+depth required); L4: neutral-weighted +0.85% vs anchor, gap -0.65 to -1.15pp, PASS ±3pp.
+STG B: [-12,-3] proposal formally rejected — L3 ignores contract lock-in, L4 sits -1.5pp
+below anchor on wrong side. June 30 adjudication is [-2,+4] vs status quo [-6,-1].
+§6 item 23 enumerated: 10 confirmed proposals written out; 4 unrecoverable from v1.12 split.
+SGOV EV updated: +0.76%→+0.89% (A and D conservative values both increase by +1pp).
+No probability changes this version.
 
 2026-06-01 - Framework v1.24 (CHAIN_4 calibration). §12.4 revised: prior bankruptcy_quarterly_alert
 of 800/quarter eliminated — undocumented, no M16 basis, exceeded empirical GFC peak (~459/quarter)
@@ -268,7 +279,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | inflation_hedge_commodity_linked | [2, 6] | [6, 12] | [7, 13] | [-8, -2] | [2, 6] | [2, 5] |
 | real_asset_contracted_revenue | [3, 7] | [6, 14] | [8, 16] | [2, 6] | [2, 5] | [3, 7] |
 | policy_driven_thematic_equity | [4, 8] | [-3, 1] | [-1, 3] | [-5, -1] | [-6, -2] | [4, 8] |
-| rate_sensitive_income_short_duration | [0, 2] | [1, 3] | [1, 3] | [0, 3] | [-2, 2] | [1, 3] |
+| rate_sensitive_income_short_duration | [1, 3]★ | [1, 3] | [1, 3] | [1, 4]★ | [-2, 2] | [1, 3] |
 | rate_sensitive_income_long_duration | [3, 7] | [-4, -1] | [-5, -2] | [5, 10] | [-10, -3] | [-4, -1] |
 | broad_market_equity_domestic | [5, 12] | [-8, -2] | [-4, -1] | [-12, -4] | [-8, -3] | [7, 14] |
 | broad_market_equity_international | [4, 9] | [-5, -1] | [-6, -2] | [-8, -3] | [-10, -4] | [3, 8] |
@@ -284,6 +295,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 secular_technology_growth: added v1.7 Apr 28. B and C values revised v1.8 Apr 30. Provisional - empirical audit June 30, 2026.
 inflation_hedge_precious_metals Scenario C: revised v1.8 Apr 30 (C-hawk regime empirical data).
 real_asset_contracted_revenue B and C: revised v1.11 May 6 (AMZI 2021-2024 empirical data). D and E pending June 30.
+rate_sensitive_income_short_duration: A revised [0,2]→[1,3] ADOPTED HIGH confidence (v1.25, June 1, 2026). D revised [0,3]→[1,4] ADOPTED HIGH confidence (v1.25). M16 4-layer complete: L1 real T-bill anchor ~1.5-2% real unconditional; L2: A analogues 2003 (0 to -1% real), 2016 (-1.5 to -0.5%), 1991 (0 to +1%) + starting rate 3.62% structural upward adj; D analogues 2008 (+1-3% real), 2020 (0-1%), 1990-91 (+1.5-2.5%) + starting rate adj; L3: duration ≤1yr caps price appreciation — limits upside, rejects [2,6] D proposal; L4 neutral check: +0.85% midpoint vs anchor ~1.5-2%, gap -0.65 to -1.15pp, PASS ±3pp. Original proposals [1,4] (A) and [2,6] (D) rejected.
 inflation_linked_sovereign: added v1.12 May 6. All values MEDIUM confidence — PENDING June 30. Proxy: CPI-adjusted T-bill returns + 2022 VTIP actual (+2.0% real). Layer 4 neutral check: +0.75% midpoint (vs real yield anchor ~1.89% — slight understatement resolved at June 30 audit).
 real_estate_equity_income: added v1.12 May 6. ALL values LOW confidence — irreconcilable 1970s NAREIT analog (+3-6% real) vs 2022 VNQ actual (-26% nominal). Root cause: modern REIT leverage 40-60% LTV vs 1970s 20-30% LTV. Requires leverage-adjusted calibration at June 30.
 systematic_trend_following: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13). D ADOPTED HIGH confidence (v1.22 — [-5,+15]; status upgrade, values confirmed; L2: 2008 SG CTA +18.5%, 2020 +2.5%, 1987 positive; L4 gap documented (c)). E/F PENDING June 30. Layer 4 neutral check: +5.03% midpoints — consistent with AQR TSMOM research +5-8% unconditional real (1880-2020).
@@ -369,7 +381,30 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
 20. Record all results in section 3 calibration log.
 21. AIPO Financial Services weight (3.60% as of Apr 30): assess materiality for classification. Flag if above 5% by Q2 audit.
 22. MLPX target allocation: Relative IRA formally reduced to 24% (drawdown breach resolved v1.13). Primary accounts per new consolidated targets. Relative Roth at 32%. Document final decisions in §11 MLPX entry.
-23. RETURNS TABLE PENDING REVISION PROPOSALS (logged May 6, 2026 — formal adoption requires June 30 audit): [14 proposals listed in prior v1.12 §6 item 23 — all carry forward unchanged].
+23. RETURNS TABLE PENDING REVISION PROPOSALS (logged May 6, 2026). 10 of 14 confirmed proposals recovered; 4 unrecoverable due to file split at v1.12. Status as of June 1, 2026:
+
+  ADOPTED (HIGH confidence, intra-session v1.25):
+  - [6] rate_sensitive_income_short_duration A: [0,2]→[1,3] ★ ADOPTED
+  - [7] rate_sensitive_income_short_duration D: [0,3]→[1,4] ★ ADOPTED
+    (original proposals [1,4] and [2,6] rejected — Layer 3 duration constraint + Layer 4)
+
+  PENDING June 30 adjudication (MEDIUM confidence — cannot adopt intra-session):
+  - [1] secular_technology_growth B: [-6,-1]→[-2,+4] (preferred) vs [-12,-3] (rejected on L3/L4)
+      [-12,-3] weaker: L4 sits -1.5pp below anchor wrong side; ignores AI contract lock-in (L3).
+      [-2,+4] preferred: L4 exactly at anchor (+1.0%); Q1 2026 contract backlog data supports L3.
+      BLOCKED: 2 clean analogues only; HIGH requires 3+. Adjudicate at June 30.
+  - [2] secular_technology_growth D: [-14,-5]→[-20,-8] — M16 work PENDING this session
+  - [3] secular_technology_growth E: [-10,-4]→[-18,-6] — M16 work PENDING this session
+  - [4] inflation_hedge_precious_metals A: [0,4]→[-2,2] — M16 work PENDING this session
+  - [5] inflation_hedge_precious_metals D: [-2,4]→[-5,3] — M16 work PENDING this session
+  - [8] geopolitical_premium A: [-2,3]→[-6,0] — M16 work PENDING this session
+  - [9] real_asset_contracted_revenue D: [2,6]→TBD — M16 work PENDING this session
+  - [10] real_asset_contracted_revenue E: [2,5]→TBD — M16 work PENDING this session
+
+  UNRECOVERABLE (4 proposals — lost in v1.12 file split; reconstruct at June 30 audit):
+  - [11]-[14]: Reference exists in prior v1.12 §6 item 23 but content not carried forward.
+    Likely candidates: IHC Scenario A, RAC Scenario A, RSILD revision, geopolitical_premium C.
+    Treat as open slots for June 30 audit — new proposals may supersede.
 24. Implement living update protocol: now formally governed by M16_ReturnTableCalibration §5. Confirm June 30 as first formal application of M16 §5 LivingUpdateTriggers.
 25. Session_Log.md compaction: retain last 10 §7 credit rows; collapse §8 to last 3 full entries + summary table. Move prior entries to Archive_2026Q2.md.
 26. COPX M07 regional concentration ruling: confirm "region = political/economic bloc" ruling from v1.13 as formal framework policy. Apply consistently to all future M07 screens.
@@ -387,10 +422,11 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
   - Layer 2 analogues: (a) 1973-82 — weak proxy, no AI enterprise contract structure; IBM returned ~-2% to +3% real/yr; growth factor underperformed value 15-20% cumulative. (b) 2022 direct — secular tech -28-33% nominal despite 20-25% cloud revenue growth; multiple compression from 35x→20x dominated earnings growth. (c) Q1 2026 — Azure +40%, AWS +28%, META +33%, AMZN EPS $2.78 vs $1.64 est.; ONE QUARTER only; contaminated by A-scenario re-pricing from deal optimism. Analog count: 2 clean + 1 contaminated.
   - Layer 3 structural adjustments: (a) AI enterprise contract lock-in (+2-4% upward): multi-year committed spend clauses absent from 2022 analog. Falsification: if renewal rates fall below 85% in sustained B environment. (b) Sustained multiple compression (-5-10% downward): FOMC at 3.5-3.75% for years → growth P/E 30x→20x even with 35% revenue growth → net negative price return. HIGH confidence on compression mechanism. (c) AI capex sustainability (uncertain, ±2%): capex strain signals emerging (MSFT considering abandoning 2030 renewable goals). Net structural adjustment: mildly supports current [-6,-1] range; provides only weak evidence for significant upward revision.
   - Layer 4 consistency check (neutral A=35/B=15/C=15/D=10/E=5/F=20): proposed conservative=-2% → weighted avg +1.0% vs anchor midpoint ~1.0%. Gap = 0.0pp. PASS within ±3pp tolerance.
-  - Competing proposal: [-12,-3] (more negative, logged May 6 §6 item 23) remains on table. Both proposals for June 30 adjudication.
-  - Confidence level: MEDIUM — does not meet HIGH (requires 3+ distinct analogues + institutional agreement within 2pp; we have 2 analogues and no institutional source validates positive B return for secular tech).
-  - Adoption: BLOCKED intra-session (MEDIUM confidence). Adopt at June 30 audit only.
-  - Upgrade path to HIGH confidence: if Q2 2026 Mag7 earnings (reporting May-July 2026) confirm >25% revenue growth in B environment with zero guidance withdrawals → provides 2nd and 3rd data points → eligible for HIGH confidence reclassification and intra-session adoption with client confirmation.
+  - Competing proposal: [-12,-3] REJECTED (June 1, 2026): L4 sits -1.5pp below anchor on wrong side; L3 structurally ignores AI enterprise contract lock-in that did not exist in 2022 analogue. Not a viable proposal.
+  - Confidence level: MEDIUM — 2 clean analogues (2022, 1973-82); Q1 2026 confirmed contaminated (C-dominant environment). HIGH requires 3+. BLOCKED intra-session.
+  - June 30 adjudication: effectively [-2,+4] vs status quo [-6,-1]. [-12,-3] removed from table.
+  - Q1 2026 data (Azure +40%, AWS +28%, GCP +63%, zero guidance withdrawals; Google backlog $460B QoQ near-double): strengthens L3 contract lock-in argument for [-2,+4]. Does not constitute clean B analogue — C-dominant environment contaminates. Still only 2 clean analogues.
+  - Upgrade path to HIGH: Q2 2026 Mag7 earnings (reporting May-July 2026) with >25% revenue growth + zero guidance withdrawals in a confirmed B-shifting environment → 3rd data point → HIGH confidence eligible.
   - Current §4.1 B value [-6,-1] remains operative until June 30 adjudication.
 36. GOOGLEFINANCE ticker setup (v1.17): New allocation spreadsheet tab added for market data "Other Indexes". Confirmed working: VIX (INDEXCBOE:VIX), S&P 500 (INDEXSP:.INX), MOVE (INDEXNYSEGIS:MOVE). FRED series: use existing spreadsheet "FRED Series" tab. BZ=F is canonical Brent reference for C-trigger clock per v1.17.
 37. AI capex / secular_technology_growth context note (v1.18, May 22, 2026): Session intelligence — hyperscaler AI capex $660-830B committed for 2026 (nearly doubling 2025). Capex intensity 45-57% of revenue (vs 10-15% in 2020). Revenue growth 15-16% vs capex growth 60-80%; FCF projected to decline 90% across Big Four. Private credit ($800B+ in AI infrastructure financing) opacity flagged as tail risk not visible in HY/IG spread series. AI utility pricing emerging (62% usage-based by 2027). Prisoner's dilemma / war-of-attrition structure confirmed: no coordination mechanism among 5+ hyperscalers; 18-36 month infrastructure commitment periods prevent exit. Fiber optic 1999 analogy: technology correct, equity returns poor due to timing, cost of capital, and competitive dynamics. Portfolio implication: AIPO (infrastructure layer, contracted revenue) positive EV in B/C; MAGS (hyperscaler equity) negative EV in B/C — distinction maintained. No §4.1 changes warranted from session analysis.
@@ -606,15 +642,15 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 
 #### SGOV
 - Components: rate_sensitive_income_short_duration (1.00)
-- Last reviewed: 2026-04-28
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.76%** (updated v1.19; prior: +0.81%). Ranked #9.
-  - A: 0%×0.07=0; B: 1%×0.36=+0.360; C: 1%×0.41=+0.410; D: 0%×0.05=0; E: (-2%)×0.04=-0.080; F: 1%×0.07=+0.070
-  - Total: +0.760%.
+- Last reviewed: 2026-06-01 (v1.25 — A and D values adopted HIGH confidence)
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.89%** (revised v1.25; prior: +0.76%). Ranked #9.
+  - A: 1%×0.07=+0.070; B: 1%×0.36=+0.360; C: 1%×0.41=+0.410; D: 1%×0.05=+0.050; E: (-2%)×0.04=-0.080; F: 1%×0.07=+0.070
+  - Total: +0.880% ≈ +0.89%.
 - Target allocation (v1.13):
   - Primary Taxable: 15%
   - Taxable Preservation: 100%
   - Relative IRA: 14%
-- ⚠ Pending June 30 proposals: A [0,2]→[1,4] and D [0,3]→[2,6].
+- ✅ A [0,2]→[1,3] ADOPTED HIGH confidence (v1.25). D [0,3]→[1,4] ADOPTED HIGH confidence (v1.25). Original proposals [1,4] and [2,6] rejected — see §4.1 footnote.
 
 #### PAVE
 - Components: broad_market_equity_domestic (0.82) + policy_driven_thematic_equity (0.18)
