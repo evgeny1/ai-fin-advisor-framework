@@ -2,12 +2,12 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.25  Last updated: June 1, 2026 (§4.1 return table revisions:
-# rate_sensitive_income_short_duration A=[0,2]→[1,3] and D=[0,3]→[1,4] ADOPTED HIGH
-#   confidence (M16 4-layer complete; original proposals [1,4]/[2,6] rejected on
-#   Layer 3 duration constraint + Layer 4); STG B adjudication updated — [-12,-3]
-#   rejected, [-2,+4] preferred pending June 30 HIGH confidence upgrade;
-# §6 item 23 enumerated; §3 log entry added)
+# Version: 1.26  Last updated: June 1, 2026 (§4.1 return table — items 9-10 of §6 item 23:
+# real_asset_contracted_revenue D=[2,6]→[-6,+2] and E=[2,5]→[-10,0] ADOPTED HIGH
+#   confidence; STG D/E revisions blocked L4 (conditional on STG B June 30);
+#   IHP A/D blocked L4 (full row coherence review June 30);
+#   geopolitical_premium A revised proposal [-4,+1] blocked MEDIUM confidence;
+# §3 log entry added)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -122,6 +122,21 @@ May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-01 - Framework v1.26 (§4.1 items 9-10 of §6 item 23 adopted; M16 work complete on all 10).
+real_asset_contracted_revenue D [2,6]→[-6,+2] and E [2,5]→[-10,0] ADOPTED HIGH confidence.
+M16 4-layer: L1 infrastructure anchor 4-5% real; L2 primary analogue 2008 AMZ -53% price
++10% distribution = ~-30% total nominal real (worst on record); 2020 AMZ ~-20%;
+L3 MLPX contracted revenue quality above broad AMZ → D conservative -8%→-6%;
+L4 neutral-weighted +2.65% vs anchor 4-5%, gap -1.35 to -2.35pp, PASS ±3pp.
+STG D [-20,-8] and E [-18,-6]: direction correct, empirically supported (NDX -41.7% 2008),
+BLOCKED L4 — must adopt jointly with STG B upward revision at June 30.
+IHP A [-2,2] and D [-5,3]: direction correct, BLOCKED L4 — full precious metals row
+coherence review required at June 30 (C value interaction).
+GP A [-4,+1] (revised from [-6,0]): BLOCKED MEDIUM confidence (2 clean analogues);
+L4 exception documented (role definition inherently underperforms neutral anchor).
+MLPX EV updated: +5.67%→+5.10% (RAC D/E corrections; -0.57pp impact).
+No probability changes this version.
 
 2026-06-01 - Framework v1.25 (§4.1 return table — items 6-7 of §6 item 23 adopted).
 rate_sensitive_income_short_duration A [0,2]→[1,3] and D [0,3]→[1,4] ADOPTED HIGH confidence.
@@ -277,7 +292,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | geopolitical_premium | [-2, 3] | [2, 6] | [4, 10] | [-4, 0] | [1, 5] | [1, 4] |
 | inflation_hedge_precious_metals | [0, 4] | [6, 12] | [-2, 6] | [-2, 4] | [10, 20] | [-3, 1] |
 | inflation_hedge_commodity_linked | [2, 6] | [6, 12] | [7, 13] | [-8, -2] | [2, 6] | [2, 5] |
-| real_asset_contracted_revenue | [3, 7] | [6, 14] | [8, 16] | [2, 6] | [2, 5] | [3, 7] |
+| real_asset_contracted_revenue | [3, 7] | [6, 14] | [8, 16] | [-6, 2]★ | [-10, 0]★ | [3, 7] |
 | policy_driven_thematic_equity | [4, 8] | [-3, 1] | [-1, 3] | [-5, -1] | [-6, -2] | [4, 8] |
 | rate_sensitive_income_short_duration | [1, 3]★ | [1, 3] | [1, 3] | [1, 4]★ | [-2, 2] | [1, 3] |
 | rate_sensitive_income_long_duration | [3, 7] | [-4, -1] | [-5, -2] | [5, 10] | [-10, -3] | [-4, -1] |
@@ -294,7 +309,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 
 secular_technology_growth: added v1.7 Apr 28. B and C values revised v1.8 Apr 30. Provisional - empirical audit June 30, 2026.
 inflation_hedge_precious_metals Scenario C: revised v1.8 Apr 30 (C-hawk regime empirical data).
-real_asset_contracted_revenue B and C: revised v1.11 May 6 (AMZI 2021-2024 empirical data). D and E pending June 30.
+real_asset_contracted_revenue B and C: revised v1.11 May 6 (AMZI 2021-2024 empirical data). D revised [2,6]→[-6,+2] ADOPTED HIGH confidence (v1.26, June 1, 2026). E revised [2,5]→[-10,0] ADOPTED HIGH confidence (v1.26). M16 4-layer complete: L1 infrastructure unconditional ~4-5% real; L2: 2008 AMZ price -53% + ~10% distribution yield = ~-30% total nominal real (primary D analogue), 2020 AMZ ~-20% full year; L3: MLPX contracted fee-based revenue quality above broad AMZ index → upward adj from -8% to -6% D conservative; L4: neutral-weighted +2.65% vs anchor 4-5%, gap -1.35 to -2.35pp, PASS ±3pp. Prior D=[2,6] and E=[2,5] were clearly inconsistent with 2008 empirical data (-30% total real). E more negative than D: acute systemic rupture without multi-year recovery buffer.
 rate_sensitive_income_short_duration: A revised [0,2]→[1,3] ADOPTED HIGH confidence (v1.25, June 1, 2026). D revised [0,3]→[1,4] ADOPTED HIGH confidence (v1.25). M16 4-layer complete: L1 real T-bill anchor ~1.5-2% real unconditional; L2: A analogues 2003 (0 to -1% real), 2016 (-1.5 to -0.5%), 1991 (0 to +1%) + starting rate 3.62% structural upward adj; D analogues 2008 (+1-3% real), 2020 (0-1%), 1990-91 (+1.5-2.5%) + starting rate adj; L3: duration ≤1yr caps price appreciation — limits upside, rejects [2,6] D proposal; L4 neutral check: +0.85% midpoint vs anchor ~1.5-2%, gap -0.65 to -1.15pp, PASS ±3pp. Original proposals [1,4] (A) and [2,6] (D) rejected.
 inflation_linked_sovereign: added v1.12 May 6. All values MEDIUM confidence — PENDING June 30. Proxy: CPI-adjusted T-bill returns + 2022 VTIP actual (+2.0% real). Layer 4 neutral check: +0.75% midpoint (vs real yield anchor ~1.89% — slight understatement resolved at June 30 audit).
 real_estate_equity_income: added v1.12 May 6. ALL values LOW confidence — irreconcilable 1970s NAREIT analog (+3-6% real) vs 2022 VNQ actual (-26% nominal). Root cause: modern REIT leverage 40-60% LTV vs 1970s 20-30% LTV. Requires leverage-adjusted calibration at June 30.
@@ -388,18 +403,44 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
   - [7] rate_sensitive_income_short_duration D: [0,3]→[1,4] ★ ADOPTED
     (original proposals [1,4] and [2,6] rejected — Layer 3 duration constraint + Layer 4)
 
+  ADOPTED (HIGH confidence, intra-session v1.26):
+  - [9] real_asset_contracted_revenue D: [2,6]→[-6,+2] ★ ADOPTED (M16 4-layer complete)
+  - [10] real_asset_contracted_revenue E: [2,5]→[-10,0] ★ ADOPTED (M16 4-layer complete)
+    (Prior values [2,6] and [2,5] inconsistent with 2008 empirical data; AMZ -30% total real)
+
   PENDING June 30 adjudication (MEDIUM confidence — cannot adopt intra-session):
   - [1] secular_technology_growth B: [-6,-1]→[-2,+4] (preferred) vs [-12,-3] (rejected on L3/L4)
       [-12,-3] weaker: L4 sits -1.5pp below anchor wrong side; ignores AI contract lock-in (L3).
       [-2,+4] preferred: L4 exactly at anchor (+1.0%); Q1 2026 contract backlog data supports L3.
       BLOCKED: 2 clean analogues only; HIGH requires 3+. Adjudicate at June 30.
-  - [2] secular_technology_growth D: [-14,-5]→[-20,-8] — M16 work PENDING this session
-  - [3] secular_technology_growth E: [-10,-4]→[-18,-6] — M16 work PENDING this session
-  - [4] inflation_hedge_precious_metals A: [0,4]→[-2,2] — M16 work PENDING this session
-  - [5] inflation_hedge_precious_metals D: [-2,4]→[-5,3] — M16 work PENDING this session
-  - [8] geopolitical_premium A: [-2,3]→[-6,0] — M16 work PENDING this session
-  - [9] real_asset_contracted_revenue D: [2,6]→TBD — M16 work PENDING this session
-  - [10] real_asset_contracted_revenue E: [2,5]→TBD — M16 work PENDING this session
+  - [8] geopolitical_premium A: [-2,3]→[-4,+1] (revised from original [-6,0])
+      Original [-6,0] rejected: fails L4 more severely than current values.
+      Revised [-4,+1]: supported by post-Gulf War 1991 (-15% real) and Cold War dividend analogues,
+      moderated by structural US/NATO defense budget increases and contractor backlog.
+      L4 documented exception: geopolitical_premium inherently underperforms unconditional anchor
+      in neutral distribution — acceptable given role definition (conflict-scenario premium only).
+      BLOCKED: MEDIUM confidence (2 clean analogues). Adjudicate at June 30.
+
+  BLOCKED pending STG B resolution (adopt jointly at June 30):
+  - [2] secular_technology_growth D: [-14,-5]→[-20,-8]
+      Empirically supported (NDX -41.7% nominal 2008; annualized D period ~-20 to -25% real).
+      BLOCKED L4: adopting D/E revisions without STG B upward revision pushes neutral-weighted
+      return from +0.40% to -0.60% vs anchor ~1.0%. Must adopt jointly with STG B at June 30.
+  - [3] secular_technology_growth E: [-10,-4]→[-18,-6]
+      Empirically supported (2008 acute Q4 ~-25% in single quarter; E is shorter but more violent).
+      BLOCKED L4: same reason as STG D. Adopt jointly with STG B at June 30.
+
+  BLOCKED pending full row coherence review (June 30):
+  - [4] inflation_hedge_precious_metals A: [0,4]→[-2,2]
+      Direction correct (1990s normalization -3 to -5%/yr real; war premium unwind applies).
+      BLOCKED L4: IHP neutral-weighted already at +0.30% (below 3% anchor by 2.7pp). Further
+      downward A revision without adjusting B/C coherently fails ±3pp tolerance. Full row
+      review required — C value [-2,+6] revised Apr 30 needs reassessment in context of A/D.
+  - [5] inflation_hedge_precious_metals D: [-2,4]→[-5,3]
+      Direction partially correct (war premium unwind at elevated starting price ~$3,300+).
+      2008 analogue: gold ~flat full year (-2% real). Proposed -5% too severe.
+      BLOCKED L4: same row coherence issue. Revised proposal would be [-4,+3].
+      Adopt as package with A revision at June 30 row review.
 
   UNRECOVERABLE (4 proposals — lost in v1.12 file split; reconstruct at June 30 audit):
   - [11]-[14]: Reference exists in prior v1.12 §6 item 23 but content not carried forward.
@@ -602,14 +643,14 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 #### MLPX
 - Components: real_asset_contracted_revenue (0.65) + inflation_hedge_commodity_linked (0.35)
 - Last reviewed: 2026-05-13 (v1.17 — entry guards CLEARED)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+5.67%** (updated v1.19; prior at C=44: +5.91%). Ranked #2.
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+5.10%** (revised v1.26; prior: +5.67% — RAC D/E values corrected). Ranked #2.
   - A: (0.65×3+0.35×2)×0.07 = 2.65×0.07 = +0.186%
   - B: (0.65×6+0.35×6)×0.36 = 6.00×0.36 = +2.160%
   - C: (0.65×8+0.35×7)×0.41 = 7.65×0.41 = +3.137%
-  - D: (0.65×2+0.35×(-8))×0.05 = -1.50×0.05 = -0.075%
-  - E: (0.65×2+0.35×2)×0.04 = 2.00×0.04 = +0.080%
+  - D: (0.65×(-6)+0.35×(-8))×0.05 = -6.70×0.05 = -0.335%
+  - E: (0.65×(-10)+0.35×2)×0.04 = -5.80×0.04 = -0.232%
   - F: (0.65×3+0.35×2)×0.07 = 2.65×0.07 = +0.186%
-  - Total: +5.674% ≈ +5.67%.
+  - Total: +5.102% ≈ +5.10%.
 - Target allocation (v1.13 consolidated targets):
   - Primary IRA: 30%
   - Primary Roth: 28%
@@ -887,13 +928,14 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 | URA | 3% | 3% | — | — | — | — |
 | **Total** | **100%** | **100%** | **100%** | **100%** | **100%** | **100%** |
 
-Portfolio EV by account (v1.18 targets, A=7/B=36/C=41/D=5/E=4/F=7 — updated v1.19; SIVR correction v1.21 has negligible account-level EV impact < 0.05pp):
-- Primary IRA: +4.18% (required ~3.38% — GAP CLOSED ✅ +0.80pp above; updated v1.22: +URA 3% +0.13pp, −MAGS 2pp +0.04pp, −AIPO 1pp −0.02pp)
-- Primary Roth: +4.23% (required ~3.05% ✅ +1.18pp above; updated v1.22)
-- Primary Taxable: +3.04% (RETURN_THEN_TARGET 5yr ✅)
+Portfolio EV by account (v1.22 targets, A=7/B=36/C=41/D=5/E=4/F=7 — updated v1.26 for RAC D/E corrections):
+- Primary IRA: **+3.86%** (required ~3.38% — GAP CLOSED ✅ +0.48pp above; −0.17pp from RAC D/E correction)
+- Primary Roth: **+3.92%** (required ~3.05% ✅ +0.87pp above; −0.16pp from RAC D/E correction)
+- Primary Taxable: **+2.87%** (RETURN_THEN_TARGET 5yr ✅; −0.17pp from RAC D/E correction)
 - Taxable Preservation: Capital preservation — SGOV 100% ✅
-- Relative IRA: +3.72% (FLOOR_THEN_RETURN ✅)
-- Relative Roth: +4.46% (required ~3.05% ✅)
+- Relative IRA: **+3.58%** (FLOOR_THEN_RETURN ✅; −0.14pp from RAC D/E correction)
+- Relative Roth: **+4.28%** (required ~3.05% ✅; −0.18pp from RAC D/E correction)
+- NOTE: All accounts remain feasible. IRA gap narrows to +0.48pp — flag for monitoring if further downward revisions occur at June 30.
 
 ---
 
