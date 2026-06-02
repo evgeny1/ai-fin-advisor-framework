@@ -27,6 +27,7 @@
 | 2026-05-25 (second M05 — v1.20 framework evaluation) | 278 (carry) | 75 (carry) | 939 (carry) | Carry — Memorial Day; no new FRED data. BZ=F intraday (Memorial Day session): ~$93-96 (down ~6% from $100.21 May 22 close) on US-Iran deal optimism. S&P futures: +0.95% (reversed from prior −2.7% overnight). DXY ~98.92. Gold $4,523, Silver $76.15 (May 22). Kevin Warsh sworn in as 17th Fed Chairman May 22. | T1 carry; BZ=F T2 (Investing.com/Trading Economics CFD); equities T2 |
 | 2026-05-29 (Q2 audit — full M05) | **278** | **73** | **935** | **FRED T1 — embedded allocation spreadsheet tab.** May 28 close. MOVE: 70.22 (GOOGLEFINANCE live). VIX: 15.32. S&P: 7,580. DFF: 3.62%. BBB OAS: 93bps. BB OAS: 161bps. KRE: $69.61. BZ=F: ~$91-92 (CNBC/Trading Economics T1, May 29 intraday — down ~19% in May on Iran deal optimism). NatGas (DHHNGSP): $3.10 (May 26). | **T1 — spreadsheet tab** |
 | 2026-06-01 (objective type resolution — ad-hoc) | **274** | **74** | **941** | **FRED T1 — embedded allocation spreadsheet tab.** May 31 close: HY BAMLH0A0HYM2 2.74%, IG BAMLC0A0CM 0.74%, CCC BAMLH0A3HYC 9.41%. MOVE: 73.33 (GOOGLEFINANCE). VIX: 16.05. S&P: 7,599.96. KRE: $68.31. SOFR: 3.63%. DFF: 3.62%. NatGas: $3.10 (May 26 — latest available). | **T1 — spreadsheet tab** |
+| 2026-06-02 (full M05 session — v1.29) | **274** | **74** | **941** | **FRED T1 — embedded allocation spreadsheet tab.** May 31 close (most recent). BZ=F: ~$95.30 (Yahoo Finance T1 close, +3.5% on Iran escalation). DXY: 99.19 (Trading Economics T1). 10Y: 4.51%; 2Y: 4.04%; 30Y: 4.98%; 10Y-2Y: +42bp. S&P open 7,599.96; close 7,609.78 (+0.13%). AIPO: $34.01 (+3.59%); COPX: $93.66 (+4.00%); MLPX: $73.50 (+2.03%). MOVE: 73.33 session-start. All credit thresholds CLEAR. CCC divergence watch active. | **T1 (credit) — spreadsheet tab; T2 (BZ=F, DXY, instruments)** |
 
 ---
 
@@ -233,3 +234,83 @@ next_session_flags:
   - AIPO EV ALERT: +0.02% (v1.23 reclassification). Monitor at June 30; review targets.
   - §6 items COMPLETE or substantially advanced this session (June 1): 23 (enumerated),
     CHAIN_4 threshold calibration, RSID A/D adoption, RAC D/E adoption.
+
+---
+
+date: 2026-06-02 (full M05 session — v1.29)
+scenario_probabilities: { A: 7%, B: 36%, C: 41%, D: 5%, E: 4%, F: 7% }
+  // UNCHANGED. No T1 macro binary event. Iran comm. suspension T2 adversarial — M01 NEVER rule applied.
+  // ISM PMI 54 + PCE 3.8%/3.3% support B/C but do not constitute threshold events.
+  // derivation_method: carry from 2026-06-01
+primary_driver: US-Iran War Day 95. BZ=F ~$95.30 (June 2 close, +3.5% on day). C-trigger clock INACTIVE.
+  Iran suspended communications with Washington (Iranian media T2, June 1) following Israeli strikes in
+  Lebanon. Iran + regional allies considering closure of Hormuz AND Bab el-Mandeb (T2 adversarial — NEW
+  escalation flag, not in prior sessions; no T1 confirmation). Trump: MOU "within next week." DFF 3.62%.
+  ISM Manufacturing PMI 54 (May, T1 — 4-yr high, price pressures elevated). PCE 3.8%/3.3% annual (T1).
+  Fed hike Dec odds >60%. Kevin Warsh hawkish. FOMC June 17-18.
+session_type: full M05 (v1.29)
+
+calibration_changes_this_session:
+  - URA EntryExtensionGuard CLEARED (v1.29): 90d avg $51.71 (63 trading days March 3–June 1, T2).
+    Threshold $62.05. Current $50.76 < $62.05. Safety margin $11.29 (18.2%). Retirement accounts only.
+  - URA EV: +4.17%→+4.02% (RAC D/E v1.26 + STG B v1.27 effects now applied to §11)
+  - SIVR EV: +3.03%→+2.93% (IHP A/D v1.27 effects now applied to §11)
+  - SGOL EV: §11 text corrected +1.43%→+1.24% (v1.27 §3 log had correct value; §11 text was stale)
+  - COPX: $93.66 June 2 close (+4.00%) noted in §11; entry guard stale for ADD — re-verify before any ADD
+  - AIPO: §11 target review note added; reduction to IRA/Roth 3% under client deliberation (not adopted)
+
+credit_signals (May 31 close, T1 via embedded spreadsheet — most recent available):
+  HY: 274bps | IG: 74bps | CCC: 941bps | MOVE: 73.33 (session-start) | VIX: 16.05 (session-start)
+  All thresholds CLEAR. CCC divergence watch: +6bps in 3 days (May 28→31) while HY tightens.
+
+cascade_signals:
+  sectorStressScore: 0. CascadeLevel: MONITORING. D_precursor_binding: 0.
+  D_timing_signal: RECESSION_ONSET_PATTERN (10Y-2Y +42bp, 10Y-3M +76bp — post-inversion re-steepening).
+  THREEFYTP10: 0.8285% (May 22) — below 100bp E_term_premium_warning (~17bp gap). Rising.
+  30Y: 4.98% (June 1) — below 5.50% E_30Y_warning. CHAIN_3_WATCH: $1.304T record (Apr-26, MoM +6.8%).
+
+open_triggers:
+  - CPI May: ~June 10-12 BINARY EVENT. If ≥4.0%: B formal trigger fires → EXIT PAVE (Trigger 1).
+  - US-Iran deal: Iran suspended communications (T2 June 1); Trump MOU "within next week." A=7% unchanged.
+  - Bab el-Mandeb threat: T2 adversarial (NEW). WATCH. T1 confirmation → reassess C immediately.
+  - BZ=F $95.30: C-trigger clock INACTIVE (<$110 threshold).
+  - THREEFYTP10: 0.8285% vs 100bp — below by ~17bp. Rising trend.
+  - CHAIN_3_WATCH: $1.304T record. MoM +6.8% — FIRE requires ≤-5%. No fire condition.
+  - CHAIN_4: Q1 2026 188/qtr vs WATCH ≥220. Score 0. Next quarterly data pending.
+  - COPX: $93.66 close. Entry guard re-verification required before any ADD (90d window shifted).
+  - IIJA reauthorization: Sep 30, 2026 (PAVE Aug 15 exit trigger).
+  - Q2 audit: June 30, 2026 (28 days).
+  - URA ADD: entry guard cleared. Execute when allocation sheet targets updated.
+
+open_decisions:
+  1. PAVE: HOLD with exit triggers (v1.23). EV -4.03%. CascadeLevel MONITORING.
+     EXIT on: CPI ≥4.0% mid-June; no IIJA action by Aug 15; IIJA reduced; CascadeLevel ALERT.
+     HOLD if: A≥20% on T1 deal; clean IIJA extension.
+  2. MAGS: HOLD-only override. EV -0.94% (v1.27). Targets IRA 3%, Roth 4%.
+     Allocation sheet still shows 5%/6% — update simultaneously with URA ADD execution.
+  3. URA ADD: IRA 3%, Roth 3%. Entry guard CLEARED (v1.29). Tax: retirement only.
+     Fund via MAGS IRA 5%→3%, Roth 6%→4%; AIPO IRA 8%→7%, Roth 8%→7%.
+     Allocation sheet NOT yet updated. Execute when confirmed.
+  4. AIPO target reduction: UNDER CLIENT DELIBERATION.
+     Proposed: IRA 7%→3%, Roth 7%→3%; DBMF IRA 15%→19%, Roth 17%→21%.
+     EV improvement ~+0.44pp/year per retirement account.
+     C-scenario thesis validated June 2 (+3.59%). IRA overall gain +$1,027.67 (+5.08%) as of June 2.
+     Not adopted — allocation sheet unchanged pending client decision.
+  5. STG B/D/E joint adjudication: PENDING June 30.
+  6. §6 item 23: 5 blocked proposals pending June 30.
+  7. XOM post-Hormuz ramp-up lag (~2mo): Monitor if deal signed.
+  8. Primary IRA EV buffer: ~+0.39pp (with current sheet targets; improves when URA ADD executed).
+
+next_session_flags:
+  - LOAD: "Calibration State loaded, last update: June 2, 2026 | Session Log loaded"
+  - LOAD via Desktop Commander / local git bash — NOT GitHub MCP. File: Calibration_State.md
+  - FIRST: US-Iran deal status — T1 MOU announcement possible June 2-9; gates A probability
+  - FIRST: BZ=F current close — watch for restart near $110
+  - CPI mid-June: run DeriveScenarioProbabilities() immediately on release (≥4.0% = EXIT PAVE)
+  - Bab el-Mandeb: check for T1 confirmation at session start; if confirmed reassess C immediately
+  - URA ADD: confirm allocation sheet targets updated (guard cleared); execute MAGS/AIPO/URA trades
+  - AIPO reduction: implement IRA/Roth 7%→3% + DBMF bump if client confirms
+  - PAVE: Aug 15 deadline; CPI is next controlling event
+  - COPX: $93.66 close — monitor for continued rise toward ~$102 guard threshold
+  - June 30 Q2 audit: STG B/D/E joint adoption; IHP row review; GP A MEDIUM→HIGH; all §5/§6 items;
+    AIPO target June 30 formal review if not decided before; 14 pending §4.1 proposals

@@ -2,14 +2,10 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.28  Last updated: June 1, 2026 (§4.1 return table — STF E/F + ILS A/D/F + CDQ D/F adopted:
-# systematic_trend_following E=[-8,+8] and F=[-5,+3] ADOPTED HIGH (3 analogues each);
-# inflation_linked_sovereign A=[-2,1] D=[0,3] F=[-1,1] ADOPTED HIGH (status upgrade, values unchanged);
-# consumer_defensive_equity D=[-5,0] and F=[-3,+2] ADOPTED HIGH (3 analogues each; E remains MEDIUM);
-# XLP EV corrected: C=0 bug fixed → +0.14%→+0.76%;
-# MAGS EV line items corrected (D/E inputs were wrong; total was accidentally right);
-# AIPO track record flag substantially closed ($733M AUM, ETF.com award);
-# §3 log entry added)
+# Version: 1.29  Last updated: June 2, 2026 (§11 EV corrections: URA +4.17%→+4.02%, SIVR +3.03%→+2.93%,
+# SGOL §11 text +1.43%→+1.24%; URA EntryExtensionGuard CLEARED: 90d avg $51.71, threshold $62.05,
+# current $50.76 clear by 18.2%; COPX price note updated $93.66 June 2 close;
+# no §4.1 changes; no probability changes; no target allocation changes this version)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -124,6 +120,19 @@ May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-02 - Framework v1.29 (§11 EV corrections; URA entry guard cleared; COPX price note).
+URA EntryExtensionGuard CLEARED: 90d avg $51.71 (63 trading days March 3–June 1, T2 FinancialContent/
+Investing.com). Threshold $62.05 (90d avg × 1.20). Current $50.76 < $62.05. Safety margin $11.29
+(18.2% below trigger). Estimation sensitivity: ±$2 on 5 unconfirmed March days shifts threshold ±$0.80;
+conclusion unchanged. ADD eligible: retirement accounts only (foreign exposure flag).
+§11 EV corrections — applying v1.26/v1.27 adoptions not previously propagated to instrument entries:
+URA: +4.17%→+4.02% (RAC D=-6 v1.26, RAC E=-10 v1.26, STG B=-2 v1.27 now in §11 computation).
+SIVR: +3.03%→+2.93% (IHP A=-2 v1.27, IHP D=-3 v1.27 now in §11 computation).
+SGOL: §11 body text corrected to +1.24% (v1.27 §3 log had correct value; §11 text showed stale +1.43%).
+COPX: $93.66 June 2 close (+4.00%); entry guard threshold ~$102-106; re-verify before any ADD.
+No §4.1 table changes. No probability changes. No target allocation changes this version.
+AIPO target reduction (IRA/Roth 7%→3%; DBMF IRA/Roth +4pp): under client deliberation; not adopted.
 
 2026-06-01 - Framework v1.28 (§4.1 multi-role adoption; EV corrections; AIPO flag closed).
 STF E=[-8,+8] and F=[-5,+3] ADOPTED HIGH confidence. L2: E: 2008 Q4 SG CTA ~-4% quarterly,
@@ -738,21 +747,21 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - Components: inflation_hedge_precious_metals (1.00)
 - Last reviewed: 2026-04-28
 - CALIBRATION ANOMALY RESOLVED Apr 30 (v1.8): §4.1 Scenario C revised [+7%,+14%]->[-2%,+6%]. C-hawk regime empirical basis.
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+1.43%** (updated v1.19; prior at C=44: +1.31%; E weight increase improved SGOL as E conservative = +10%). Ranked #7.
-  - A: 0%×0.07 = 0%
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+1.24%** (revised v1.29; IHP A=-2 and D=-3 adopted v1.27; §11 text corrected from stale +1.43%). Ranked #7.
+  - A: (-2%)×0.07 = -0.140%  [IHP A=-2 adopted v1.27]
   - B: 6%×0.36 = +2.160%
   - C: (-2%)×0.41 = -0.820%
-  - D: (-2%)×0.05 = -0.100%
+  - D: (-3%)×0.05 = -0.150%  [IHP D=-3 adopted v1.27]
   - E: 10%×0.04 = +0.400%
   - F: (-3%)×0.07 = -0.210%
-  - Total: +1.430%.
+  - Total: +1.240%.
 - Target allocation (v1.18 CONFIRMED):
   - Primary IRA: 16%
   - Primary Roth: 14%
   - Relative IRA: 20% (CONFIRMED EXECUTED v1.18 — reduced from 26%)
   - Relative Roth: 16% (CONFIRMED EXECUTED v1.18 — reduced from 22%)
   - Note: SIVR added as complement; SGOL + SIVR combined restores precious metals exposure
-- ⚠ Pending June 30 proposals: A [0,4]→[-2,2] and D [-2,4]→[-5,3].
+- ⚠ IHP A and D proposals from prior sessions: ADOPTED v1.27 (A [-2,+2] ★; D [-3,+3] ★). §11 EV updated v1.29.
 
 #### SGOV
 - Components: rate_sensitive_income_short_duration (1.00)
@@ -817,6 +826,11 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
   - ⚠ FEASIBILITY CHECK REQUIRED: reduced EV may affect Primary IRA/Roth feasibility. Run M13.FeasibilityCheck() at next full session with updated AIPO contribution.
 - TAX PLACEMENT: ALL ACCOUNTS including taxable.
 - Target allocation (v1.22): **7% Primary IRA; 7% Primary Roth**; 8% Primary Taxable; 6% Relative IRA; 10% Relative Roth.
+- ⚠️ TARGET REVIEW IN PROGRESS (v1.29, June 2, 2026): Proposed IRA 7%→3%, Roth 7%→3%; DBMF
+  IRA 15%→19%, Roth 17%→21% (4pp freed per account → DBMF). EV +2.16% (v1.22) → +0.13% (v1.27)
+  following reclassification to PDT-dominant. EV improvement per account ~+0.44pp/year. Client
+  deliberating. Allocation sheet unchanged pending client confirmation. C-scenario infrastructure
+  thesis validated June 2 (+3.59% on Iran energy escalation). IRA overall gain +$1,027.67 (+5.08%).
 
 #### MAGS
 - Components: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15)
@@ -868,14 +882,14 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - Basis: Aberdeen Standard Physical Silver Shares ETF. Tracks spot silver price via physical silver bullion. Lower cost alternative to SLV (0.30% ER vs 0.50%)
 - AUM: ~$5.5B. Expense ratio: 0.30%. Custodian: ICBC Standard Bank (UK).
 - Last reviewed: 2026-05-26 (v1.21 — B-component arithmetic corrected)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+3.03%** (CORRECTED v1.21; prior v1.19 value +2.92% was wrong — B blended was listed as 5.70% but both components use 6% → correct blended = 6.00%). Ranked #3.
-  - A:  (0.55×0 + 0.45×2) = 0.90% × 0.07 = +0.063%
-  - B:  (0.55×6 + 0.45×6) = 6.00% × 0.36 = +2.160%  ← corrected from erroneous 5.70%
-  - C:  (0.55×(-2) + 0.45×7) = 2.05% × 0.41 = +0.841%
-  - D:  (0.55×(-2) + 0.45×(-8)) = -4.70% × 0.05 = -0.235%
-  - E:  (0.55×10 + 0.45×2) = 6.40% × 0.04 = +0.256%
-  - F:  (0.55×(-3) + 0.45×2) = -0.75% × 0.07 = -0.053%
-  - Total: +3.032% ≈ +3.03%.
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+2.93%** (revised v1.29; IHP A=-2 and D=-3 from v1.27 now applied). Ranked #4.
+  - A:  (0.55×(-2) + 0.45×2) = -0.20% × 0.07 = -0.014%  [IHP A=-2 adopted v1.27]
+  - B:  (0.55×6 + 0.45×6) = 6.00% × 0.36 = +2.160%  [unchanged]
+  - C:  (0.55×(-2) + 0.45×7) = 2.05% × 0.41 = +0.841%  [unchanged]
+  - D:  (0.55×(-3) + 0.45×(-8)) = -5.25% × 0.05 = -0.263%  [IHP D=-3 adopted v1.27]
+  - E:  (0.55×10 + 0.45×2) = 6.40% × 0.04 = +0.256%  [unchanged]
+  - F:  (0.55×(-3) + 0.45×2) = -0.75% × 0.07 = -0.053%  [unchanged]
+  - Total: +2.927% ≈ +2.93%.
 - TAX PLACEMENT: Retirement accounts preferred. Physical silver ETF is classified as a collectible; capital gains taxed at 28% max rate in taxable accounts.
 - ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026). 90d trailing average ~$78-82; guard threshold ~$94-98; current ~$71.82 — well below threshold.
 - Target allocation (v1.18 CONFIRMED):
@@ -900,7 +914,10 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
   - F:  (0.75×2 + 0.25×3) = 2.25% × 0.07 = +0.158%
   - Total floor: +2.601% ≈ +2.60%. Mining-leverage adjusted estimate: ~+3.2-4.0%.
 - TAX PLACEMENT: ALL ACCOUNTS.
-- ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026). 90d avg ~$85-90; threshold ~$102-106; current $83.35 — below threshold.
+- ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026) at $83.35. 90d avg ~$85-90; threshold ~$102-106.
+  ⚠️ Price update (v1.29, June 2, 2026): COPX closed **$93.66** (+4.00%). 90d reference window has shifted
+  (now March 3–June 2). Original clearing is stale for ADD purposes — must recompute 90d trailing avg from
+  T1 price data before any ADD. No ADD planned; at target (2% IRA, 7% Taxable).
 - Target allocation (v1.13): 2% Primary IRA; 7% Primary Taxable.
 
 #### VTIP
@@ -970,18 +987,19 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
   secular demand driver independent of Hormuz war resolution. Uranium supply structurally tight
   (Kazatomprom delays, Niger cutoff). Thesis durable 3-5yr. SimplicityTest: PASS.
 - Last reviewed: 2026-05-29 (v1.22 — initial classification)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+4.17%**. Ranked #3.
-  - A:  (0.50×3 + 0.30×2 + 0.20×6)  = 3.30% × 0.07 = +0.231%
-  - B:  (0.50×6 + 0.30×6 + 0.20×(-6)) = 3.60% × 0.36 = +1.296%
-  - C:  (0.50×8 + 0.30×7 + 0.20×2)  = 6.50% × 0.41 = +2.665%
-  - D:  (0.50×2 + 0.30×(-8) + 0.20×(-14)) = -4.20% × 0.05 = -0.210%
-  - E:  (0.50×2 + 0.30×2 + 0.20×(-10)) = -0.40% × 0.04 = -0.016%
-  - F:  (0.50×3 + 0.30×2 + 0.20×4)  = 2.90% × 0.07 = +0.203%
-  - Total: +4.169% ≈ +4.17%
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+4.02%** (revised v1.29; RAC D=-6/E=-10 from v1.26 and STG B=-2 from v1.27 now applied). Ranked #3.
+  - A:  (0.50×3 + 0.30×2 + 0.20×6)  = 3.30% × 0.07 = +0.231%  [unchanged]
+  - B:  (0.50×6 + 0.30×6 + 0.20×(-2)) = 4.40% × 0.36 = +1.584%  [STG B=-2 adopted v1.27]
+  - C:  (0.50×8 + 0.30×7 + 0.20×2)  = 6.50% × 0.41 = +2.665%  [unchanged]
+  - D:  (0.50×(-6) + 0.30×(-8) + 0.20×(-14)) = -8.20% × 0.05 = -0.410%  [RAC D=-6 adopted v1.26]
+  - E:  (0.50×(-10) + 0.30×2 + 0.20×(-10)) = -6.40% × 0.04 = -0.256%  [RAC E=-10 adopted v1.26]
+  - F:  (0.50×3 + 0.30×2 + 0.20×4)  = 2.90% × 0.07 = +0.203%  [unchanged]
+  - Total: +4.017% ≈ +4.02%
 - TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY (IRA, Roth IRA). Taxable excluded — foreign exposure.
-- ENTRY EXTENSION GUARD: thematic_sector_equity tier → 20% above 90d trailing avg. Verify before ADD.
-  Note: URA 52-week range $23.10–$62.28; current ~$50.75 (May 28). At mid-range — guard likely clear
-  but must compute 90d trailing avg from approved price source before executing any ADD.
+- ENTRY EXTENSION GUARD: **CLEARED (v1.29, June 2, 2026).** 90d trailing avg: **$51.71** (63 trading days
+  March 3–June 1, 2026; T2 FinancialContent/Investing.com). Threshold (20% above avg): **$62.05**.
+  Current: ~$50.76 (May 29 T2). $50.76 < $62.05. Safety margin: $11.29 (18.2% below trigger).
+  ADD eligible: RETIREMENT ACCOUNTS ONLY.
 - Target allocation (v1.22):
   - Primary IRA: 3%
   - Primary Roth: 3%
