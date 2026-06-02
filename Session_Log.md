@@ -144,78 +144,92 @@ next_session_flags:
 
 ---
 
-date: 2026-06-01 (objective type resolution — ad-hoc)
+date: 2026-06-01 (pre-session calibration work — ad-hoc, extended)
 scenario_probabilities: { A: 7%, B: 36%, C: 41%, D: 5%, E: 4%, F: 7% }
   // UNCHANGED. No new macro binary events.
   // derivation_method: carry from 2026-05-29
 primary_driver: US-Iran War Day ~93. BZ=F ~$91-92 (carry). No signed deal. DFF 3.62%. May CPI print pending mid-June.
-session_type: ad-hoc — objective type review (no full M05 sequence; no allocation fetch; no market data fetch)
+session_type: ad-hoc extended — objective type resolution + open decision closure + §6 item 23 M16 work
 
-resolutions_this_session:
-  ISSUE_1 — Relative Roth IRA objective type:
-    FINDING: No mismatch. Allocation sheet is correct.
-    Allocation sheet: Roth IRA (...466) | relative | 15 | TARGET_THEN_RETURN | FALSE | 0.4 | 0.3
-    M13 code: TARGET_THEN_RETURN — "Used for: IRA (primary), Roth IRA (primary + relative)"
-    RATIONALE: 15-year Roth horizon + no RMDs applies regardless of owner age. The 75yo age
-    constraint changes the IRA objective (shorter distribution horizon → FLOOR_THEN_RETURN) but
-    NOT the Roth (no RMDs, indefinite compounding horizon, TARGET_THEN_RETURN correct).
-    drawdown_tolerance: 0.3 is correctly more conservative than primary Roth (0.35). Encoded correctly.
-    RESOLUTION: No change to Allocation sheet. No change to Calibration_State.
-    NOTE FOR FUTURE SESSIONS: Do NOT re-flag Relative Roth as FLOOR_THEN_RETURN.
-    M13 classification is authoritative. This confusion arose from memory/notes — not from the files.
+calibration_versions_this_session: v1.24 → v1.25 → v1.26
 
-  ISSUE_2 — Relative IRA floor specification:
-    FINDING: Floor is correctly defined. No field is misplaced.
-    Allocation sheet: IRA (...469) | relative | 10 | FLOOR_THEN_RETURN | TRUE | 0.4 | 0.2
-    floor_nominal_loss: TRUE — correct; M13 struct defines this as Bool where true = constraint active.
-    The floor level itself is implicit in M13.FeasibilityCheck() FLOOR_THEN_RETURN branch:
-      "IF scenario_return_s < 0 → floor_breach = true" — floor = zero nominal loss.
-    Probability threshold for which scenarios to test: §4.4 floor_nominal_loss_probability_threshold = 15%.
-    drawdown_tolerance: 0.2 is a separate position-sizing constraint (used in MLPX 24% × 67% = 16.1%
-    < 20% calculation). It is NOT the floor — it operates in a different function.
-    RESOLUTION: No change to Allocation sheet. No change to Calibration_State.
-    NOTE FOR FUTURE SESSIONS: floor_nominal_loss (Bool=TRUE) + M13 §4.4 threshold (15%) +
-    zero-return floor in FeasibilityCheck() are three separate components that together define the
-    complete FLOOR_THEN_RETURN constraint. drawdown_tolerance (0.2) is the position-sizing guard —
-    a distinct parameter. Neither is a misplaced value.
+work_completed:
+  1. Objective type issues RESOLVED (see below).
+  2. CHAIN_4 calibrated (v1.24): threshold 800/quarter eliminated; WATCH ≥220, FIRES ≥300 adopted
+     HIGH confidence; T1 source amended to ABI/Epiq AACER press releases.
+  3. M13.FeasibilityCheck() run — Primary IRA +4.04% (req 3.38%) ✅; Primary Roth +4.08% (req 3.05%) ✅.
+     AIPO reclassification impact: +0.002pp — immaterial. Open decision #7 CLOSED.
+  4. STG B: [-12,-3] formally rejected; [-2,+4] preferred; June 30 adjudication is effectively
+     [-2,+4] vs status quo. MEDIUM confidence — blocked intra-session.
+  5. §6 item 23 M16 work completed on 8 of 10 confirmed proposals:
+     ADOPTED HIGH confidence:
+       [6] RSID A: [0,2]→[1,3] ★  [7] RSID D: [0,3]→[1,4] ★
+       [9] RAC D: [2,6]→[-6,+2] ★  [10] RAC E: [2,5]→[-10,0] ★
+     BLOCKED (documented, specific resolution path):
+       [2] STG D [-20,-8]: conditional on STG B upward adoption (L4 coherence)
+       [3] STG E [-18,-6]: same condition
+       [4] IHP A [-2,2]: full precious metals row coherence review required (L4)
+       [5] IHP D [-5,3]: same; revised proposal [-4,+3]; adopt as package with A
+       [8] GP A [-4,+1] (revised from [-6,0]): MEDIUM confidence; L4 exception documented
+  6. §6 item 23 enumerated: 10 confirmed proposals written out; 4 unrecoverable from v1.12 split.
+
+objective_type_resolutions:
+  Relative Roth IRA (...466): TARGET_THEN_RETURN CONFIRMED CORRECT. Allocation sheet is authoritative.
+    M13 explicitly assigns TARGET_THEN_RETURN to "Roth IRA (primary + relative)". No RMDs = indefinite
+    horizon regardless of owner age. DO NOT re-flag as FLOOR_THEN_RETURN.
+  Relative IRA (...469) floor: CORRECTLY DEFINED. floor_nominal_loss=TRUE (Bool, constraint active).
+    Floor = zero nominal loss per M13.FeasibilityCheck() FLOOR_THEN_RETURN branch. Probability
+    threshold = §4.4 15%. drawdown_tolerance=0.2 is a separate position-sizing guard. No field misplaced.
+
+account_ev_updates (v1.26 — RAC D/E corrections, -0.57pp MLPX EV impact):
+  Primary IRA: +4.04%→+3.86% (req 3.38% ✅ +0.48pp — monitor if further June 30 revisions)
+  Primary Roth: +4.08%→+3.92% (req 3.05% ✅ +0.87pp)
+  Primary Taxable: +3.04%→+2.87% (RETURN_THEN_TARGET ✅)
+  Relative IRA: +3.72%→+3.58% (FLOOR_THEN_RETURN ✅ — floor not breached in B/C)
+  Relative Roth: +4.46%→+4.28% (req 3.05% ✅)
 
 credit_readings (May 31 close, T1 — via embedded allocation spreadsheet):
   HY: 274bps | IG: 74bps | CCC: 941bps | MOVE: 73.33 | VIX: 16.05 | S&P: 7,599.96
   KRE: $68.31. SOFR: 3.63%. DFF: 3.62%.
-  HY 274bps: −4bps from May 28. IG 74bps: +1bp. CCC 941bps: +6bps. All thresholds CLEAR.
+  HY −4bps from May 28. IG +1bp. CCC +6bps. All thresholds CLEAR.
   CCC quietly widening (+6bps in 3 days) while HY tightening — divergence watch. No threshold fires.
-  MOVE 73.33: NORMAL zone (<80). Retreating from May 22 peak.
+  MOVE 73.33: NORMAL (<80).
 
-open_triggers: (carry from 2026-05-29 — no changes)
-  - US-Iran deal: MOU text agreed at negotiator level; Trump NOT signed. A=7% unchanged.
+open_triggers: (carry from 2026-05-29)
+  - US-Iran deal: MOU at negotiator level; Trump NOT signed. A=7% unchanged.
   - CPI mid-June (May data): BINARY EVENT — B formal trigger on ≥4.0% (3rd print).
-  - Brent C-trigger clock: INACTIVE. BZ=F ~$91-92 (carry).
+  - Brent C-trigger clock: INACTIVE. BZ=F ~$91-92.
   - THREEFYTP10: 0.8117% vs 100bp warning — below by ~19bp.
-  - CHAIN_3_WATCH: $1.304T FINRA margin debt record. No FIRE condition met.
-  - CHAIN_4: T1 AACER/PACER bankruptcy count pending.
+  - CHAIN_3_WATCH: $1.304T record. No FIRE condition met.
+  - CHAIN_4: CALIBRATED (v1.24). Q1 2026 = 188/quarter — BELOW WATCH (≥220). Score=0.
   - IIJA reauthorization: September 30, 2026 (PAVE watch).
   - Q2 audit: June 30, 2026.
-  - CCC divergence watch: +6bps in 3 days while HY tightening. Not at threshold — monitor.
+  - CCC divergence: +6bps in 3 days while HY tightening — watch for acceleration.
 
-open_decisions: (carry from 2026-05-29 — no changes)
+open_decisions:
   1. PAVE: HOLD with explicit exit triggers (v1.23). EV −4.03%. CascadeLevel MONITORING.
   2. MAGS: HOLD-only override CONFIRMED. EV −2.17%. No ADD.
-  3. secular_technology_growth B calibration: PENDING June 30.
-  4. §6 item 23 pending proposals (14 items): PENDING June 30.
-  5. CHAIN_4 manufacturing: T1 formal confirmation pending.
-  6. AIPO track record flag: inception Jul 2025. Re-verify at June 30.
-  7. AIPO EV ALERT: EV +0.02%. Run M13.FeasibilityCheck() at next full session.
-  8. XOM post-Hormuz ramp-up lag (~2mo): not encoded. Monitor if deal signed.
+  3. STG B calibration: [-2,+4] preferred; PENDING June 30 HIGH confidence upgrade.
+  4. §6 item 23: 4 proposals adopted; 5 blocked with specific June 30 resolution paths.
+     STG D/E: adopt jointly with STG B. IHP A/D: full row review. GP A: MEDIUM→HIGH path.
+  5. AIPO track record flag: inception Jul 2025. Re-verify at June 30.
+  6. XOM post-Hormuz ramp-up lag (~2mo): not encoded. Monitor if deal signed.
+  7. Primary IRA gap narrowed to +0.48pp (req 3.38%, achievable 3.86%). Monitor at June 30
+     — if STG D/E and IHP downward revisions adopted, gap could tighten further.
 
 next_session_flags:
-  - LOAD: "Calibration State loaded, last update: May 30, 2026 | Session Log loaded"
-  - FIRST: confirm US-Iran deal status (signed or not) — gates A probability discussion
+  - LOAD: "Calibration State loaded, last update: June 1, 2026 | Session Log loaded"
+  - FIRST: confirm US-Iran deal status — gates A probability discussion
   - FIRST: BZ=F current close — confirm C-trigger clock status
-  - FIRST: run M13.FeasibilityCheck() with updated AIPO EV (+0.02%) — Primary IRA/Roth feasibility
   - CPI mid-June binary event: run DeriveScenarioProbabilities() immediately on 8:30am ET release
     → if ≥4.0%: B formal trigger fires → EXIT PAVE (Trigger 1)
-  - PAVE watch: August 15, 2026 — exit if no congressional IIJA action of any kind by that date
-  - June 30 Q2 audit: all remaining §5/§6 items (6-7, 9-10, 13-17, 19-24, 26, 29-39)
+  - PAVE watch: August 15, 2026 — exit if no congressional IIJA action
+  - June 30 Q2 audit: remaining §5/§6 items; STG B/D/E joint adjudication; IHP row review;
+    GP A MEDIUM→HIGH upgrade; consumer_defensive D/E/F; healthcare all; floating_rate all;
+    emerging_market B-F; systematic_trend_following E/F; DBMF D/E/F; inflation_linked_sovereign all
   - Relative Roth / Relative IRA objective type: RESOLVED 2026-06-01. DO NOT re-flag.
-    See §8 entry 2026-06-01 resolutions_this_session for full findings.
-  - CCC divergence: +6bps in 3 days while HY tightening — watch for acceleration at next session.
+  - M13.FeasibilityCheck() COMPLETE 2026-06-01: both accounts feasible. Re-run at June 30
+    after STG D/E and IHP revisions adopted — Primary IRA gap at +0.48pp warrants monitoring.
+  - AIPO EV ALERT: +0.02% (v1.23 reclassification). Monitor at June 30; review targets.
+  - §6 items COMPLETE or substantially advanced this session (June 1): 23 (enumerated),
+    CHAIN_4 threshold calibration, RSID A/D adoption, RAC D/E adoption.
