@@ -28,6 +28,7 @@
 | 2026-05-29 (Q2 audit — full M05) | **278** | **73** | **935** | **FRED T1 — embedded allocation spreadsheet tab.** May 28 close. MOVE: 70.22 (GOOGLEFINANCE live). VIX: 15.32. S&P: 7,580. DFF: 3.62%. BBB OAS: 93bps. BB OAS: 161bps. KRE: $69.61. BZ=F: ~$91-92 (CNBC/Trading Economics T1, May 29 intraday — down ~19% in May on Iran deal optimism). NatGas (DHHNGSP): $3.10 (May 26). | **T1 — spreadsheet tab** |
 | 2026-06-01 (objective type resolution — ad-hoc) | **274** | **74** | **941** | **FRED T1 — embedded allocation spreadsheet tab.** May 31 close: HY BAMLH0A0HYM2 2.74%, IG BAMLC0A0CM 0.74%, CCC BAMLH0A3HYC 9.41%. MOVE: 73.33 (GOOGLEFINANCE). VIX: 16.05. S&P: 7,599.96. KRE: $68.31. SOFR: 3.63%. DFF: 3.62%. NatGas: $3.10 (May 26 — latest available). | **T1 — spreadsheet tab** |
 | 2026-06-02 (full M05 session — v1.29) | **274** | **74** | **941** | **FRED T1 — embedded allocation spreadsheet tab.** May 31 close (most recent). BZ=F: ~$95.30 (Yahoo Finance T1 close, +3.5% on Iran escalation). DXY: 99.19 (Trading Economics T1). 10Y: 4.51%; 2Y: 4.04%; 30Y: 4.98%; 10Y-2Y: +42bp. S&P open 7,599.96; close 7,609.78 (+0.13%). AIPO: $34.01 (+3.59%); COPX: $93.66 (+4.00%); MLPX: $73.50 (+2.03%). MOVE: 73.33 session-start. All credit thresholds CLEAR. CCC divergence watch active. | **T1 (credit) — spreadsheet tab; T2 (BZ=F, DXY, instruments)** |
+| 2026-06-02 (AIPO classification audit — v1.30) | 274 (carry) | 74 (carry) | 941 (carry) | Carry — ad-hoc classification correction session. No new market data fetched. AIPO ThematicETF_ClassificationAudit() re-run from T1 source (Defiance ETFs official page, 77 holdings, $750.87M AUM). | T1 carry |
 
 ---
 
@@ -314,3 +315,82 @@ next_session_flags:
   - COPX: $93.66 close — monitor for continued rise toward ~$102 guard threshold
   - June 30 Q2 audit: STG B/D/E joint adoption; IHP row review; GP A MEDIUM→HIGH; all §5/§6 items;
     AIPO target June 30 formal review if not decided before; 14 pending §4.1 proposals
+
+---
+
+date: 2026-06-02 (AIPO classification audit — ad-hoc v1.30)
+scenario_probabilities: { A: 7%, B: 36%, C: 41%, D: 5%, E: 4%, F: 7% }
+  // UNCHANGED. Ad-hoc classification correction — no macro binary events.
+  // derivation_method: carry from 2026-06-02 full M05
+primary_driver: AIPO ThematicETF_ClassificationAudit() re-run. Companion project audit, June 2, 2026.
+  T1 source: Defiance ETFs official holdings page, 77 holdings, $750.87M AUM.
+session_type: ad-hoc classification correction (no M05 sequence)
+
+calibration_changes_this_session:
+  - Calibration_State v1.30:
+  - §11 AIPO classification REVISED (full T1 re-audit from Defiance ETFs official page):
+      Old (v1.23): PDT(0.63)+STG(0.16)+RAC(0.14)+IHC(0.07) — was itself an error
+      New (v1.30): RAC(0.55)+STG(0.16)+IHC(0.11)+PDT(0.04)+UNCLASSIFIED_bitcoin(0.07)
+      Three errors corrected: (1) PDT 0.63→0.04: Industrials are commercial RAC not PDT (binding driver test);
+      (2) IHC 0.05→0.11: CCJ 3.78% uranium + 4 others missed/understated; Bloom Energy added;
+      (3) STG 0.30→0.16: GEV was erroneously in IT bucket; confirmed Industrials/RAC.
+      RAC 0.14→0.55: direct result of Industrials reclassification.
+      UNCLASSIFIED 0.07: bitcoin miners (11 holdings). Option A adopted — 0% EV contribution.
+      Q3 action: create bitcoin_mining_hpc role with M16 calibration.
+  - §11 AIPO EV: +0.13%→+3.28% (all current operative §4.1 values applied)
+      ⚠ Session instructions' +3.54% used stale RAC D=+2, RAC E=+2, STG B=−6. Corrected to +3.28%.
+  - §11 AIPO rank: ~#10→#3 (above SIVR +2.93%, below URA +4.02%)
+  - §10.3 Application Log: two new rows added (v1.23 drift update annotated as error source; v1.30 full audit)
+  - §3 Calibration Log: v1.30 entry added
+  - No §4.1 changes. No probability changes. No target allocation changes.
+
+ev_rank_table_updated (A=7/B=36/C=41/D=5/E=4/F=7):
+  #1 DBMF  +11.02%
+  #2 MLPX  +5.10%
+  #3 URA   +4.02%
+  #3 AIPO  +3.28%  ← revised (was +0.13%)
+  #4 SIVR  +2.93%
+  #5 COPX  +2.60%
+  #6 XAR   +1.46%
+  #7 SGOL  +1.24%
+  #8 XLP   +0.76%  (formerly #8 at +0.76%)
+  #9 SGOV  +0.89%
+  #10 MAGS −0.94%
+  VTIP     +0.52%
+  PAVE     −4.03%
+
+open_triggers: (carry from 2026-06-02 full M05)
+  - CPI May: ~June 10-12 BINARY EVENT. If ≥4.0%: B formal trigger → EXIT PAVE.
+  - US-Iran deal: Iran comms suspended (T2). A=7% unchanged.
+  - Bab el-Mandeb threat: T2 adversarial. WATCH for T1 confirmation.
+  - BZ=F $95.30: C-trigger INACTIVE.
+  - THREEFYTP10: 0.8285% vs 100bp — below by ~17bp.
+  - CHAIN_3_WATCH: $1.304T record. No FIRE condition.
+  - COPX: $93.66 — entry guard re-verification required before any ADD (~$102 threshold area).
+  - IIJA reauthorization: Sep 30, 2026 (PAVE Aug 15 exit trigger).
+  - Q2 audit: June 30, 2026 (28 days).
+  - URA ADD: entry guard cleared; execute when allocation sheet targets updated.
+
+open_decisions:
+  1. PAVE: HOLD with exit triggers (v1.23). EV −4.03%. CascadeLevel MONITORING.
+  2. MAGS: HOLD-only override. EV −0.94%. Targets IRA 3%, Roth 4%.
+  3. URA ADD: IRA 3%, Roth 3%. Guard cleared. Fund via MAGS −2pp/Roth; AIPO −1pp each. Allocation sheet not yet updated.
+  4. AIPO target reduction: UNDER CLIENT DELIBERATION. IRA/Roth 7%→3% + DBMF +4pp.
+     At corrected EV +3.28% (#3 rank), reduction is still EV-optimal (DBMF differential +7.74pp)
+     but AIPO is no longer marginal. Client decision pending.
+  5. STG B/D/E joint adjudication: PENDING June 30.
+  6. §6 item 23: 5 blocked proposals pending June 30.
+  7. XOM post-Hormuz ramp-up lag: Monitor if deal signed.
+  8. Bitcoin miners Q3 action: create bitcoin_mining_hpc role + M16 calibration.
+
+next_session_flags:
+  - LOAD: "Calibration State loaded, last update: June 2, 2026 | Session Log loaded"
+  - LOAD via Desktop Commander / local git bash — NOT GitHub MCP
+  - FIRST: US-Iran deal status — T1 MOU possible; gates A probability
+  - FIRST: BZ=F current close — watch restart near $110
+  - CPI mid-June: run DeriveScenarioProbabilities() immediately (≥4.0% = EXIT PAVE)
+  - URA ADD: confirm allocation sheet updated; execute MAGS/AIPO/URA trades
+  - AIPO reduction: confirm IRA/Roth 7%→3% + DBMF bump if client confirms
+  - AIPO EV is now +3.28% (#3) — update any EV references that still show +0.13%
+  - COPX: monitor — $93.66 is approaching ~$102 entry guard area
+  - June 30 Q2 audit: STG B/D/E; IHP row review; all §5/§6 items; bitcoin_mining role design
