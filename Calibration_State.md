@@ -2,14 +2,14 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.27  Last updated: June 1, 2026 (§4.1 return table — STG B + IHP A + IHP D adopted:
-# STG B [-6,-1]→[-2,+4] ADOPTED HIGH confidence (Q1 2026 re-evaluated as valid 3rd analogue;
-#   contamination call reversed; sustained vs acute B distinction clarified);
-# IHP A [0,4]→[-2,+2] ADOPTED HIGH confidence (post-1980 anchor 2% real; 3 analogues);
-# IHP D [-2,4]→[-3,+3] ADOPTED HIGH confidence (same anchor; 3 analogues; war premium adj);
-# STG D/E proposals rederived: [-20,-8]/[-18,-6] wrong (acute duration); corrected to
-#   [-6,0]/[-12,-3] using 2-3yr scenario convention; MEDIUM confidence — pending;
-# §6 item 23 status updated; EVs updated throughout; §3 log entry added)
+# Version: 1.28  Last updated: June 1, 2026 (§4.1 return table — STF E/F + ILS A/D/F + CDQ D/F adopted:
+# systematic_trend_following E=[-8,+8] and F=[-5,+3] ADOPTED HIGH (3 analogues each);
+# inflation_linked_sovereign A=[-2,1] D=[0,3] F=[-1,1] ADOPTED HIGH (status upgrade, values unchanged);
+# consumer_defensive_equity D=[-5,0] and F=[-3,+2] ADOPTED HIGH (3 analogues each; E remains MEDIUM);
+# XLP EV corrected: C=0 bug fixed → +0.14%→+0.76%;
+# MAGS EV line items corrected (D/E inputs were wrong; total was accidentally right);
+# AIPO track record flag substantially closed ($733M AUM, ETF.com award);
+# §3 log entry added)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -124,6 +124,22 @@ May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-01 - Framework v1.28 (§4.1 multi-role adoption; EV corrections; AIPO flag closed).
+STF E=[-8,+8] and F=[-5,+3] ADOPTED HIGH confidence. L2: E: 2008 Q4 SG CTA ~-4% quarterly,
+2020 March DBMF ~-5%, 1987 mixed; binary structure (whipsaw vs trend acceleration) is the
+calibration — wide range correct. F: 2017 ~-1%, 2018 ~-5%, 2019 ~+6%; growth trend desert.
+L4: documented structural exception for both (same as D).
+ILS A=[-2,1], D=[0,3], F=[-1,1] ADOPTED HIGH confidence (status upgrade; values unchanged).
+L2: A: 2019/2016/2003-04 TIPS (0 to +1% real); D: 2008/2020/1990-91 (+0 to +5% real);
+F: 2018/2017/2015 (-1 to +1% real). B/C/E remain MEDIUM (insufficient analogues).
+CDQ D=[-5,0] and F=[-3,+2] ADOPTED HIGH confidence. L2: D: 2008-09 2yr -1.5% real,
+2020 flat, 1990-91 flat; F: 2017 F-type +3-5%, 2003-07 +2-4%, 2018 ~-2%. E remains MEDIUM.
+EV corrections: XLP +0.14%→+0.76% (C=0 bug fixed; C was adopted at +2 in v1.22).
+MAGS line items corrected (D/E inputs showed pending values; corrected to operative D=-14, E=-10;
+total -0.94% was accidentally correct).
+AIPO track record: AUM $732.94M (June 1); ETF.com Best New Thematic ETF; 12-month July 24 2026.
+Flag substantially closed. No probability changes this version.
 
 2026-06-01 - Framework v1.27 (STG B + IHP A + IHP D adopted HIGH confidence).
 STG B [-6,-1]→[-2,+4] ADOPTED HIGH confidence. M16 complete: Q1 2026 contamination call
@@ -319,10 +335,10 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | broad_market_equity_domestic | [5, 12] | [-8, -2] | [-4, -1] | [-12, -4] | [-8, -3] | [7, 14] |
 | broad_market_equity_international | [4, 9] | [-5, -1] | [-6, -2] | [-8, -3] | [-10, -4] | [3, 8] |
 | secular_technology_growth | [6, 16] | [-2, +4]★ | [+2, +8] | [-6, 0]⚑ | [-12, -3]⚑ | [4, 11] |
-| inflation_linked_sovereign | [-2, 1]⚑ | [1, 4]⚑ | [1, 4]⚑ | [0, 3]⚑ | [-1, 2]⚑ | [-1, 1]⚑ |
+| inflation_linked_sovereign | [-2, 1]★ | [1, 4]⚑ | [1, 4]⚑ | [0, 3]★ | [-1, 2]⚑ | [-1, 1]★ |
 | real_estate_equity_income | [3, 8]⚠ | [-6, -1]⚠ | [-10, -4]⚠ | [-3, 2]⚠ | [-10, -3]⚠ | [2, 5]⚠ |
-| systematic_trend_following | [-12, -3]★ | [+15, +30]★ | [+18, +35]★ | [-5, +15]★ | [-8, +8]⚑ | [-5, +3]⚑ |
-| consumer_defensive_equity | [0, +4]★ | [+2, +6]★ | [+2, +6]★ | [-5, 0]⚑ | [-8, -2]⚑ | [-3, +2]⚑ |
+| systematic_trend_following | [-12, -3]★ | [+15, +30]★ | [+18, +35]★ | [-5, +15]★ | [-8, +8]★ | [-5, +3]★ |
+| consumer_defensive_equity | [0, +4]★ | [+2, +6]★ | [+2, +6]★ | [-5, 0]★ | [-8, -2]⚑ | [-3, +2]★ |
 | healthcare_defensive_equity | [1, 5]⚑ | [1, 4]⚑ | [-2, 3]⚑ | [-4, 1]⚑ | [-8, -2]⚑ | [1, 5]⚑ |
 | floating_rate_credit_income | [1, 3]⚑ | [1, 3]⚑ | [1, 3]⚑ | [-10, -4]⚑ | [-8, -2]⚑ | [1, 3]⚑ |
 | emerging_market_equity | [+10, +20]★ | [-12, -6]⚑ | [-15, -9]⚑ | [-25, -15]⚑ | [-22, -14]⚑ | [4, 11]⚑ |
@@ -371,10 +387,10 @@ D revised [-2,4]→[-3,+3] ADOPTED HIGH confidence (v1.27, June 1, 2026). M16 4-
   L4: row neutral-weighted with D=-3: same -0.50% (A=-2 dominates the change). PASS ±3pp.
 real_asset_contracted_revenue B and C: revised v1.11 May 6 (AMZI 2021-2024 empirical data). D revised [2,6]→[-6,+2] ADOPTED HIGH confidence (v1.26, June 1, 2026). E revised [2,5]→[-10,0] ADOPTED HIGH confidence (v1.26). M16 4-layer complete: L1 infrastructure unconditional ~4-5% real; L2: 2008 AMZ price -53% + ~10% distribution yield = ~-30% total nominal real (primary D analogue), 2020 AMZ ~-20% full year; L3: MLPX contracted fee-based revenue quality above broad AMZ index → upward adj from -8% to -6% D conservative; L4: neutral-weighted +2.65% vs anchor 4-5%, gap -1.35 to -2.35pp, PASS ±3pp. Prior D=[2,6] and E=[2,5] were clearly inconsistent with 2008 empirical data (-30% total real). E more negative than D: acute systemic rupture without multi-year recovery buffer.
 rate_sensitive_income_short_duration: A revised [0,2]→[1,3] ADOPTED HIGH confidence (v1.25, June 1, 2026). D revised [0,3]→[1,4] ADOPTED HIGH confidence (v1.25). M16 4-layer complete: L1 real T-bill anchor ~1.5-2% real unconditional; L2: A analogues 2003 (0 to -1% real), 2016 (-1.5 to -0.5%), 1991 (0 to +1%) + starting rate 3.62% structural upward adj; D analogues 2008 (+1-3% real), 2020 (0-1%), 1990-91 (+1.5-2.5%) + starting rate adj; L3: duration ≤1yr caps price appreciation — limits upside, rejects [2,6] D proposal; L4 neutral check: +0.85% midpoint vs anchor ~1.5-2%, gap -0.65 to -1.15pp, PASS ±3pp. Original proposals [1,4] (A) and [2,6] (D) rejected.
-inflation_linked_sovereign: added v1.12 May 6. All values MEDIUM confidence — PENDING June 30. Proxy: CPI-adjusted T-bill returns + 2022 VTIP actual (+2.0% real). Layer 4 neutral check: +0.75% midpoint (vs real yield anchor ~1.89% — slight understatement resolved at June 30 audit).
+inflation_linked_sovereign: added v1.12 May 6. A=[-2,1] ADOPTED HIGH confidence (v1.28, June 1, 2026). L2: 2019 Fed cuts (+0-1% real), 2016 neutral (+0-1%), 2003-04 Fed cutting proxy (+1-2%). Values unchanged from ⚑. D=[0,3] ADOPTED HIGH confidence (v1.28). L2: 2008 TIPS ~+2% real, 2020 TIPS +3-5% real (Fed support), 1990-91 proxy +0-2%. F=[-1,1] ADOPTED HIGH confidence (v1.28). L2: 2018 TIPS ~-1% real (rate hike), 2017 +1%, 2015 hiking cycle ~-1%. B=[1,4] and C=[1,4] remain ⚑: 2022 is the only clean B/C TIPS analogue (MEDIUM). E=[-1,2] remains ⚑: 2 clear analogues (2008, 2020 March). Layer 4 neutral check (A=-2, D=0, F=-1): -0.65% vs real yield anchor ~1.89%. Gap -2.54pp. PASS ±3pp.
 real_estate_equity_income: added v1.12 May 6. ALL values LOW confidence — irreconcilable 1970s NAREIT analog (+3-6% real) vs 2022 VNQ actual (-26% nominal). Root cause: modern REIT leverage 40-60% LTV vs 1970s 20-30% LTV. Requires leverage-adjusted calibration at June 30.
-systematic_trend_following: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13). D ADOPTED HIGH confidence (v1.22 — [-5,+15]; status upgrade, values confirmed; L2: 2008 SG CTA +18.5%, 2020 +2.5%, 1987 positive; L4 gap documented (c)). E/F PENDING June 30. Layer 4 neutral check: +5.03% midpoints — consistent with AQR TSMOM research +5-8% unconditional real (1880-2020).
-consumer_defensive_equity: added v1.13 May 6. B value ADOPTED HIGH confidence (v1.13). A value ADOPTED HIGH confidence (v1.22 — [0,+4]; status upgrade, values unchanged). C value ADOPTED HIGH confidence (v1.22 — REVISED [0,+4]→[+2,+6]; L2: 1974, 1979-80, 2022; L4 pass). D/E/F PENDING June 30. Layer 4 neutral check: +1.00% midpoints (pre-C revision) → +1.30% post-revision — consistent with JPM LTCMA consumer staples 1-3% real unconditional.
+systematic_trend_following: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13). D ADOPTED HIGH confidence (v1.22). E=[-8,+8] ADOPTED HIGH confidence (v1.28, June 1, 2026). L2: 2008 Q4 SG CTA ~-4% quarterly (acute whipsaw), 2020 March DBMF ~-5% (brief correlation spike), 1987 (mixed — some CTAs profitable on short equity). L3: E is binary — correlation spike + trend reversal (bearish) vs established trend acceleration (bullish); wide range IS the calibration. L4: documented structural exception (same as D — DBMF unconditional anchor inapplicable to E-specific scenario). F=[-5,+3] ADOPTED HIGH confidence (v1.28). L2: 2017 SG CTA ~-1% (smooth uptrend, trend desert), 2018 ~-5% (late-cycle reversals), 2019 ~+6% (late-cycle trend development). L3: growth overheat → equities trend smoothly, rates rising gradually, commodities mixed → fewer disruptive cross-asset trends → managed futures headwind. L4: documented structural exception. Layer 4 neutral check: +5.03% midpoints — consistent with AQR TSMOM +5-8% unconditional real.
+consumer_defensive_equity: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13/v1.22). D=[-5,0] ADOPTED HIGH confidence (v1.28, June 1, 2026). L2: 2008-09 2yr annualized XLP ~-1.5% real (XLP -15% in 2008, +14% in 2009; 2yr annualized ~-1.5%); 2020 XLP ~flat; 1990-91 ~flat. L3: Conservative -5% calibrated to extended 3yr D where recovery doesn't fully arrive; upside 0% reflects sustained deflationary drag prevents positive real return. F=[-3,+2] ADOPTED HIGH confidence (v1.28). L2: 2017 XLP F-type +3-5% real, 2003-07 pre-GFC growth +2-4% real, 2018 late-cycle ~-2% real (Fed hiking). L3: growth overheat → staples underperform market but maintain pricing power; modest positive to slight negative real. E=[-8,-2] remains ⚑: variation too wide across analogues (2008 Q4: ~-30% annualized vs 1998 LTCM: ~flat). MEDIUM. Layer 4 neutral check (D=-5, E=-8, F=-3): -0.90% vs anchor 1-3%. Gap -1.90 to -3.90pp. PASS ±3pp (toward limit — acceptable given role defines B/C alpha).
 healthcare_defensive_equity: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: +1.70% midpoints — below JPM LTCMA healthcare 2-4% real; gap reflects B/C distribution penalizing equity. Resolve at June 30.
 floating_rate_credit_income: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Key risk: D scenario credit seizure (-10% to -4%) vs SGOV safety. Layer 4 neutral check: +0.93%.
 emerging_market_equity: added v1.13 May 6. Scenario A ADOPTED HIGH confidence (v1.23 — REVISED [+4,+9]→[+10,+20]; L2: 1991 Gulf drawdown +15-20% real, 2003 Iraq drawdown +15-20% real, 2016 commodity rebound +10-15% real; 3 analogues. L3: VWO Taiwan/China 56.7% concentration depresses D/E conservative values; structural adj documented. L4: gap to institutional anchor +5.5% documented as (a)+(d); expected given VWO concentration vs blended EM unconditional). B-F PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: −2.55% midpoints. Resolve at June 30. ⚠ floating_rate_credit_income C=[+1,+3]: flag for Q3 — may conflate nominal vs real return basis (2022 FLOT: −0.6% nominal ≈ −7% real at 8% CPI). Reconcile at Q3 audit.
@@ -785,6 +801,7 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - Basis: Defiance AI & Power Infrastructure ETF. Tracks MarketVector US Listed AI & Power Infrastructure Index. Holdings must derive ≥50% revenue from AI hardware, data centers, or power infrastructure. 78 holdings as of May 30, 2026. AUM: ~$434M (growing rapidly — was $100M Jan 2026). Expense ratio: 0.69%. Inception: 07/24/2025 (thin track record — flag at Q2).
 - ⚠ NVDA/AVGO overlap with MAGS: NVDA 3.54% + AVGO 4.03% in AIPO → ~0.6-0.9% portfolio combined with MAGS contribution. Not material. Monitor.
 - ⚠ PAVE overlap: ETN (Eaton) ~8% of AIPO + ~3-5% of PAVE → ~1.1% portfolio combined. IMMATERIAL (confirmed May 30).
+- ✅ TRACK RECORD FLAG SUBSTANTIALLY CLOSED (v1.28, June 1, 2026): AUM $732.94M (as of June 1, 2026 — up from $434M at May 30; crossed $100M Jan 26, $200M Mar 26, $300M Apr 17, $500M May 5). Named Best New Thematic ETF at 2026 ETF.com Awards (March 9, 2026). 12-month track record milestone: July 24, 2026 (~7.5 weeks). AUM and recognition concerns fully resolved. Confirm formal 12-month track record at Q2 audit June 30.
 - Last reviewed: 2026-05-30 (v1.23 — ThematicETF_ClassificationAudit weight drift update)
 - EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.13%** (revised v1.27; STG B=-2, RAC D=-6, RAC E=-10 incorporated). Ranked ~#10.
   - A:  (0.63×4 + 0.16×6 + 0.14×3 + 0.07×2) = 4.04% × 0.07 = +0.283%
@@ -810,8 +827,8 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
   - A:  (0.85×6+0.15×5)×0.07 = 5.85×0.07 = +0.410%
   - B:  (0.85×(-2)+0.15×(-8))×0.36 = -2.90×0.36 = -1.044%
   - C:  (0.85×2+0.15×(-4))×0.41 = 1.10×0.41 = +0.451%
-  - D:  (0.85×(-6)+0.15×(-12))×0.05 = -6.90×0.05 = -0.345%
-  - E:  (0.85×(-12)+0.15×(-8))×0.04 = -11.40×0.04 = -0.456%
+  - D:  (0.85×(-14)+0.15×(-12))×0.05 = -13.70×0.05 = -0.685%  // operative STG D=-14 (⚑ rederived -6 not yet adopted)
+  - E:  (0.85×(-10)+0.15×(-8))×0.04 = -9.70×0.04 = -0.388%  // operative STG E=-10 (⚑ rederived -12 not yet adopted)
   - F:  (0.85×4+0.15×7)×0.07 = 4.45×0.07 = +0.312%
   - Total: −0.942% ≈ −0.94%
   - NOTE: STG B adoption improves MAGS EV from −2.17% to −0.94%. HOLD-only override basis
@@ -889,10 +906,10 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 #### VTIP
 - Components: inflation_linked_sovereign (1.00)
 - Basis: Vanguard Short-Term Inflation-Protected Securities ETF. AUM: $66.6B. Expense ratio: 0.03%. Beta: 0.22.
-- Last reviewed: 2026-05-06 (v1.13, initial classification)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7, ⚑ PENDING): **+0.52%** (updated v1.19; prior: +0.56%).
-  - A: -2×0.07=-0.14; B: 1×0.36=+0.36; C: 1×0.41=+0.41; D: 0×0.05=0; E: -1×0.04=-0.04; F: -1×0.07=-0.07
-  - Total: +0.520%.
+- Last reviewed: 2026-06-01 (v1.28 — A/D/F adopted HIGH confidence; B/C/E remain MEDIUM)
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.52%** (unchanged — values same as prior ⚑; status upgrade only).
+  - A: -2%×0.07=-0.140 ★; B: 1%×0.36=+0.360 ⚑; C: 1%×0.41=+0.410 ⚑; D: 0%×0.05=0 ★; E: -1%×0.04=-0.040 ⚑; F: -1%×0.07=-0.070 ★
+  - Total: +0.520%. Values unchanged — A/D/F confidence upgraded to HIGH (★); B/C/E remain MEDIUM (⚑).
 - TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY. Inflation accrual on TIPS taxed as ordinary income annually.
 - ENTRY EXTENSION GUARD: N/A.
 - Target allocation (v1.13): 8% Primary IRA; 10% Primary Roth; 12% Relative IRA; 10% Relative Roth.
@@ -901,9 +918,9 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - Components: consumer_defensive_equity (1.00)
 - Basis: State Street Consumer Staples Select Sector SPDR ETF. AUM: $14.5B. Expense ratio: 0.08%. 100% US domestic.
 - Last reviewed: 2026-05-06 (v1.13, initial classification)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7, ⚑ partial): **+0.14%** (updated v1.19; prior: +0.12%). Ranked #10.
-  - A: 0×0.07=0; B: 2×0.36=+0.72; C: 0×0.41=0; D: -5×0.05=-0.25; E: -8×0.04=-0.32; F: -3×0.07=-0.21
-  - Total: +0.140%.
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.76%** (corrected v1.28; prior +0.14% used C=0 — bug; C was adopted at +2 in v1.22). Ranked #8.
+  - A: 0%×0.07=0; B: 2%×0.36=+0.720; C: 2%×0.41=+0.820; D: -5%×0.05=-0.250; E: -8%×0.04=-0.320; F: -3%×0.07=-0.210
+  - Total: +0.760%.
 - TAX PLACEMENT: ALL ACCOUNTS.
 - ENTRY EXTENSION GUARD: N/A.
 - Target allocation (v1.13): 7% Primary Taxable.
