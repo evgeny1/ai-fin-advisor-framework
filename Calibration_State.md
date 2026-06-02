@@ -2,10 +2,11 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.29  Last updated: June 2, 2026 (§11 EV corrections: URA +4.17%→+4.02%, SIVR +3.03%→+2.93%,
-# SGOL §11 text +1.43%→+1.24%; URA EntryExtensionGuard CLEARED: 90d avg $51.71, threshold $62.05,
-# current $50.76 clear by 18.2%; COPX price note updated $93.66 June 2 close;
-# no §4.1 changes; no probability changes; no target allocation changes this version)
+# Version: 1.30  Last updated: June 2, 2026 (AIPO ThematicETF_ClassificationAudit() REVISED — full
+# holdings re-audit from T1 source (Defiance ETFs official page, 06/02/2026, 77 holdings, $750.87M AUM).
+# Classification corrected: RAC 0.45→0.55, STG 0.30→0.16, PDT 0.20→0.04, IHC 0.05→0.11;
+# new UNCLASSIFIED 0.07 (bitcoin miners, 11 holdings). EV +0.13%→+3.28% (corrected operative values).
+# Rank: ~#10→#3. No §4.1 changes; no probability changes; no target allocation changes this version.)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -120,6 +121,8 @@ May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-02 - Framework v1.30 (AIPO ThematicETF_ClassificationAudit() REVISED). Full holdings re-audited from T1 source (Defiance ETFs official page, 06/02/2026, 77 holdings, $750.87M AUM). Three errors corrected from v1.14/v1.23: (1) PDT reduced 0.20→0.04 — AIPO Industrials (PWR, VRT, ETN, GEV, MTZ, STRL, NVT, HUBB, DY, utilities, data centers) are commercial RAC, not policy-driven; binding driver is hyperscaler/utility demand, NOT legislative mandates. (2) IHC increased 0.05→0.11 — uranium exposure (CCJ 3.78% + NXE 0.75%, UUUU 0.50%, DNN 0.44%, LEU 0.44%) was understated or missed in prior top-holdings review; also includes Bloom Energy (BE) 4.56% energy technology, EOSE 0.62%, FLNC 0.61% energy storage. (3) STG reduced 0.30→0.16 — GEV was erroneously counted in "IT 30%" sector bucket by prior data source; confirmed Industrials/RAC. RAC increased 0.45→0.55. New UNCLASSIFIED exposure: bitcoin miners ~7% NAV (11 holdings: HUT, BTDR, HIVE, RIOT, CLSK, CIFR, MARA, CORZ, IREN, WULF, BTBT); no registered M15 role; treated as 0% EV contribution (conservative — unknown/likely negative in B/C). EV corrected: +0.13%→+3.28% (using all current operative §4.1 values: STG B=−2 ★, RAC D=−6 ★, RAC E=−10 ★, STG D=−14 ⚑ operative). ⚠ Session instructions' +3.54% used stale RAC D=+2, RAC E=+2, STG B=−6 — corrected to +3.28% using live calibration state. Rank: ~#10→#3 (above SIVR +2.93%, below URA +4.02%). v1.29/v1.23 PDT-dominant classification (0.63 PDT) was itself a prior error corrected today — the 57% Industrials weight was misclassified as PDT; binding driver test confirms commercial RAC. Q3 action required: add role for bitcoin_mining / speculative_infrastructure_growth (§6 item TBD). last_reviewed updated to June 2, 2026. No §4.1 changes. No probability changes. No target allocation changes this version.
 
 2026-06-02 - Framework v1.29 (§11 EV corrections; URA entry guard cleared; COPX price note).
 URA EntryExtensionGuard CLEARED: 90d avg $51.71 (63 trading days March 3–June 1, T2 FinancialContent/
@@ -653,13 +656,15 @@ All values CALIBRATION_DATED. First audit: June 30, 2026.
 | 2026-04-29 | XAR | ThematicETF_ClassificationAudit | ~65% NAV covered. Mandate-dependent ~75-80%. geopolitical_premium confirmed. | CONFIRMED: 90% geopolitical_premium / 10% broad_market |
 | 2026-05-06 | PAVE | Status confirmation | No new legislation since Apr 28. IIJA core programs intact. NEVI cuts already reflected. userMemory FLAGGED label confirmed stale. | watch (unchanged) |
 | 2026-05-07 | AIPO | ThematicETF_ClassificationAudit | COMPLETE v1.14. Holdings confirmed: Industrials 50%, IT 30%, Utilities 20%. Top holdings: Quanta Services 8.6%, GE Vernova 8.2%, Eaton 7.9%, Vertiv 7.9%, NVDA 4.2%, AVGO 3.9%, AMD 2.1%. Revised components: RAC(0.45), STG(0.30), PDT(0.20), IHC(0.05). BMD ELIMINATED. NVDA/AVGO/AMD overlap with MAGS flagged. | REVISED: see §11 AIPO entry. EV: +2.16% at v1.19 probs (↓ from +2.42%). Ranked #5. Confirm at Q2 for weight drift. |
+| 2026-05-30 | AIPO | ThematicETF_ClassificationAudit (drift update v1.23) | Sector drift: Industrials 57.09%, IT 16.46%, Utilities 14.42%, Energy 6.91%, FinSvcs 3.60%. PDT-dominant reclassification applied. Binding driver test NOT applied to Industrials. | REVISED v1.23: PDT(0.63)+STG(0.16)+RAC(0.14)+IHC(0.07). EV +2.16%→+0.13% (→v1.27: +0.13%). Ranked ~#10. ⚠ PDT assignment to commercial Industrials was an error — corrected v1.30. |
+| 2026-06-02 | AIPO | ThematicETF_ClassificationAudit (full T1 re-audit v1.30) | Full 77-holding audit from Defiance ETFs official page, $750.87M AUM. Industrials confirmed commercial RAC (hyperscaler/utility demand binding driver; NOT legislative mandate). GEV confirmed Industrials/RAC. CCJ 3.78% + 4 other uranium names confirmed IHC. Bitcoin miners: 11 holdings ~7% NAV, no M15 role registered, Option A adopted (UNCLASSIFIED at 0% EV). | REVISED v1.30: RAC(0.55)+STG(0.16)+IHC(0.11)+PDT(0.04)+UNCLASSIFIED(0.07). EV corrected +0.13%→+3.28% (operative §4.1 values). Rank: #3. Q3: create bitcoin_mining role (§6 item pending). |
 
 ---
 
 ## Section 11 - Instrument Classification Registry (M15)
 
 All values CALIBRATION_DATED. First audit: June 30, 2026.
-VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v1.9). AIPO §11 data updated May 6 (v1.10). MLPX EV updated May 6 (v1.11). New roles inflation_linked_sovereign and real_estate_equity_income added May 6 (v1.12). Five new roles added May 6 (v1.13): systematic_trend_following, consumer_defensive_equity, healthcare_defensive_equity, floating_rate_credit_income, emerging_market_equity. New instruments added May 6 (v1.13): DBMF, SIVR, COPX, VTIP, XLP, VNQ, VEA, XLV, FLOT. AIPO reclassified May 7 (v1.14): ThematicETF_ClassificationAudit() COMPLETE. MLPX entry guards CLEARED May 13 (v1.17). Gold reallocation targets confirmed executed May 22 (v1.18). EVs updated at new probability vector May 25 (v1.19): A=7/B=36/C=41/D=5/E=4/F=7. SIVR EV arithmetic corrected May 26 (v1.21): B blended 5.70%→6.00%, total EV +2.92%→+3.03%.
+VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v1.9). AIPO §11 data updated May 6 (v1.10). MLPX EV updated May 6 (v1.11). New roles inflation_linked_sovereign and real_estate_equity_income added May 6 (v1.12). Five new roles added May 6 (v1.13): systematic_trend_following, consumer_defensive_equity, healthcare_defensive_equity, floating_rate_credit_income, emerging_market_equity. New instruments added May 6 (v1.13): DBMF, SIVR, COPX, VTIP, XLP, VNQ, VEA, XLV, FLOT. AIPO reclassified May 7 (v1.14): ThematicETF_ClassificationAudit() COMPLETE. MLPX entry guards CLEARED May 13 (v1.17). Gold reallocation targets confirmed executed May 22 (v1.18). EVs updated at new probability vector May 25 (v1.19): A=7/B=36/C=41/D=5/E=4/F=7. SIVR EV arithmetic corrected May 26 (v1.21): B blended 5.70%→6.00%, total EV +2.92%→+3.03%. AIPO fully re-audited June 2 (v1.30): RAC(0.55)+STG(0.16)+IHC(0.11)+PDT(0.04)+UNCLASSIFIED(0.07 bitcoin miners); EV +3.28%.
 
 ### 11.1 Role Registry
 
@@ -805,33 +810,33 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - Monitor IIJA reauthorization September 30, 2026.
 
 #### AIPO
-- Components: policy_driven_thematic_equity (0.63) + secular_technology_growth (0.16) + real_asset_contracted_revenue (0.14) + inflation_hedge_commodity_linked (0.07)
-- CLASSIFICATION REVISED v1.23 (May 30, 2026): Sector drift confirmed via T1 data (Yahoo Finance May 30). Prior v1.14 weights (RAC 0.45, STG 0.30, PDT 0.20, IHC 0.05) reflected May 7 holdings (Industrials 50%, IT 30%, Utilities 20%). Current holdings: Industrials 57.09%, Technology 16.46%, Utilities 14.42%, Energy 6.91%, FinSvcs 3.60%. STG drift −13.5pp; Industrials +7pp — both exceed 5pp threshold. New weights: PDT 0.63 (infra/power mandate: PWR, GEV, ETN, VRT, MasTec), STG 0.16 (AI hardware: NVDA 3.54%, AVGO 4.03%), RAC 0.14 (utilities/power gen: CEG, BE), IHC 0.07 (energy: Cameco + other). FinSvcs 3.60% residual assigned to dominant PDT. Prior v1.14 classification: ThematicETF_ClassificationAudit() COMPLETE May 7, 2026.
-- Basis: Defiance AI & Power Infrastructure ETF. Tracks MarketVector US Listed AI & Power Infrastructure Index. Holdings must derive ≥50% revenue from AI hardware, data centers, or power infrastructure. 78 holdings as of May 30, 2026. AUM: ~$434M (growing rapidly — was $100M Jan 2026). Expense ratio: 0.69%. Inception: 07/24/2025 (thin track record — flag at Q2).
-- ⚠ NVDA/AVGO overlap with MAGS: NVDA 3.54% + AVGO 4.03% in AIPO → ~0.6-0.9% portfolio combined with MAGS contribution. Not material. Monitor.
-- ⚠ PAVE overlap: ETN (Eaton) ~8% of AIPO + ~3-5% of PAVE → ~1.1% portfolio combined. IMMATERIAL (confirmed May 30).
-- ✅ TRACK RECORD FLAG SUBSTANTIALLY CLOSED (v1.28, June 1, 2026): AUM $732.94M (as of June 1, 2026 — up from $434M at May 30; crossed $100M Jan 26, $200M Mar 26, $300M Apr 17, $500M May 5). Named Best New Thematic ETF at 2026 ETF.com Awards (March 9, 2026). 12-month track record milestone: July 24, 2026 (~7.5 weeks). AUM and recognition concerns fully resolved. Confirm formal 12-month track record at Q2 audit June 30.
-- Last reviewed: 2026-05-30 (v1.23 — ThematicETF_ClassificationAudit weight drift update)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.13%** (revised v1.27; STG B=-2, RAC D=-6, RAC E=-10 incorporated). Ranked ~#10.
-  - A:  (0.63×4 + 0.16×6 + 0.14×3 + 0.07×2) = 4.04% × 0.07 = +0.283%
-  - B:  (0.63×(-3) + 0.16×(-2) + 0.14×6 + 0.07×6) = -0.95% × 0.36 = -0.342%
-  - C:  (0.63×(-1) + 0.16×2 + 0.14×8 + 0.07×7) = 1.30% × 0.41 = +0.533%
-  - D:  (0.63×(-5) + 0.16×(-14) + 0.14×(-6) + 0.07×(-8)) = -6.79% × 0.05 = -0.340%
-  - E:  (0.63×(-6) + 0.16×(-10) + 0.14×(-10) + 0.07×2) = -6.64% × 0.04 = -0.266%
-  - F:  (0.63×4 + 0.16×4 + 0.14×3 + 0.07×2) = 3.72% × 0.07 = +0.260%
-  - Total: +0.128% ≈ +0.13%
-  - ⚠ EV still near-zero. Hold justified by: (a) C-scenario infrastructure thesis; (b) A upside.
-    Further improvement expected if STG D/E adopted at June 30 (D component currently using -14).
-  - ⚠ EV ALERT: reclassification moves AIPO from +2.16% to near-zero. PDT B/C (−3%/−1%) now dominant (63% weight). B contribution alone = −0.572% drag. C contribution +0.533% partially offsets. AIPO hold justified by: (a) C-scenario energy/infrastructure thesis; (b) A-scenario upside (+0.283%); (c) no superior replacement for AI power infrastructure exposure. Review targets at June 30 — EV differential vs URA (+4.17%) and MLPX (+5.67%) now larger.
-  - ⚠ FEASIBILITY CHECK REQUIRED: reduced EV may affect Primary IRA/Roth feasibility. Run M13.FeasibilityCheck() at next full session with updated AIPO contribution.
+- Components: real_asset_contracted_revenue (0.55) + secular_technology_growth (0.16) + inflation_hedge_commodity_linked (0.11) + policy_driven_thematic_equity (0.04) + UNCLASSIFIED_bitcoin_miners (0.07)
+- CLASSIFICATION REVISED v1.30 (June 2, 2026): Full T1 re-audit from Defiance ETFs official page, 77 holdings, $750.87M AUM. Three prior errors corrected:
+  (1) RAC 0.45→0.55: Commercial infrastructure Industrials (PWR, VRT, ETN, GEV, MTZ, STRL, NVT, HUBB, DY, utilities, data centers) — binding driver is commercial contracts with hyperscalers/utilities, NOT government mandates. GEV confirmed Industrials/RAC (erroneously counted as IT in prior data source).
+  (2) IHC 0.05→0.11: Uranium names missed or understated in prior reviews — CCJ 3.78% (largest single uranium position), NXE 0.75%, UUUU 0.50%, DNN 0.44%, LEU 0.44%; also includes Bloom Energy (BE) 4.56% energy technology, EOSE 0.62%, FLNC 0.61% energy storage.
+  (3) PDT 0.20→0.04: Only confirmed policy-mandate holdings: BWXT 1.22% (government nuclear), OKLO 0.88%, SMR 0.49%, NNE 0.44%, FCEL 0.98%. All other Industrials fail M08 binding driver test for PDT.
+  (4) STG 0.30→0.16: Reflects GEV correction + confirmed semiconductor weights: AVGO 4.25%, NVDA 3.80%, AMD 2.71%, ARM 1.18%, MRVL 1.10%, ALAB, LSCC, RMBS, NBIS.
+  UNCLASSIFIED 0.07: Bitcoin miners (~7% NAV) — 11 holdings: HUT, BTDR, HIVE, RIOT, CLSK, CIFR, MARA, CORZ, IREN, WULF, BTBT. No registered M15 role. Option A adopted: flagged UNCLASSIFIED, 0% EV contribution (conservative — likely negative in B/C on energy cost compression; severely negative in D). §6 Q3 action item: create role for bitcoin_mining_hpc / speculative_infrastructure_growth with M16 return table calibration.
+  Prior v1.23 classification (PDT 0.63) was itself an error — sector % drift was tracked but binding driver test was not applied; commercial Industrials incorrectly assigned to PDT.
+- Basis: Defiance AI & Power Infrastructure ETF. Tracks MarketVector US Listed AI & Power Infrastructure Index. Holdings must derive ≥50% revenue from AI hardware, data centers, or power infrastructure. 77 holdings as of June 2, 2026. AUM: $750.87M. Expense ratio: 0.69%. Inception: 07/24/2025.
+- ⚠ NVDA/AVGO overlap with MAGS: AVGO 4.25% + NVDA 3.80% in AIPO → ~0.6-0.9% portfolio combined with MAGS contribution. Not material. Monitor.
+- ⚠ PAVE overlap: ETN (Eaton) in both AIPO and PAVE — confirmed immaterial.
+- ✅ TRACK RECORD FLAG SUBSTANTIALLY CLOSED (v1.28, June 1, 2026): AUM $750.87M (June 2). Named Best New Thematic ETF at 2026 ETF.com Awards. 12-month milestone: July 24, 2026 (~7.5 weeks). Confirm at June 30.
+- Last reviewed: 2026-06-02 (v1.30 — full T1 re-audit)
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+3.28%** (v1.30 corrected; all current operative §4.1 values applied). Ranked **#3**.
+  - A:  (0.55×3 + 0.16×6 + 0.11×2 + 0.04×4) = 2.99% × 0.07 = +0.209%
+  - B:  (0.55×6 + 0.16×(−2) + 0.11×6 + 0.04×(−3)) = 3.52% × 0.36 = +1.267%  [STG B=−2 ★ operative]
+  - C:  (0.55×8 + 0.16×2 + 0.11×7 + 0.04×(−1)) = 5.45% × 0.41 = +2.235%
+  - D:  (0.55×(−6) + 0.16×(−14) + 0.11×(−8) + 0.04×(−5)) = −6.62% × 0.05 = −0.331%  [RAC D=−6 ★; STG D=−14 ⚑ operative]
+  - E:  (0.55×(−10) + 0.16×(−10) + 0.11×2 + 0.04×(−6)) = −7.12% × 0.04 = −0.285%  [RAC E=−10 ★; STG E=−10 ⚑ operative]
+  - F:  (0.55×3 + 0.16×4 + 0.11×2 + 0.04×4) = 2.67% × 0.07 = +0.187%
+  - Total: +3.282% ≈ +3.28%
+  - ⚠ UNCLASSIFIED 0.07 (bitcoin miners) treated as 0% in all scenarios — actual contribution unknown, likely negative in B/C/D. True EV may be modestly below +3.28%.
+  - ⚠ Session instructions computed +3.54% using stale §4.1 values (RAC D=+2, RAC E=+2, STG B=−6). Corrected to +3.28% using current operative calibration state.
+  - NOTE: EV improves further if STG D/E adopted at June 30 (D component currently using operative −14; rederived −6 pending). Adoption of STG D=−6 would shift D contribution to −4.04%×0.05=−0.202% (vs −0.331% now) — net +0.13pp EV improvement.
 - TAX PLACEMENT: ALL ACCOUNTS including taxable.
-- Target allocation (v1.22): **7% Primary IRA; 7% Primary Roth**; 8% Primary Taxable; 6% Relative IRA; 10% Relative Roth.
-- ⚠️ TARGET REVIEW IN PROGRESS (v1.29, June 2, 2026): Proposed IRA 7%→3%, Roth 7%→3%; DBMF
-  IRA 15%→19%, Roth 17%→21% (4pp freed per account → DBMF). EV +2.16% (v1.22) → +0.13% (v1.27)
-  following reclassification to PDT-dominant. EV improvement per account ~+0.44pp/year. Client
-  deliberating. Allocation sheet unchanged pending client confirmation. C-scenario infrastructure
-  thesis validated June 2 (+3.59% on Iran energy escalation). IRA overall gain +$1,027.67 (+5.08%).
-
+- Target allocation (v1.22, unchanged — see open decision): **7% Primary IRA; 7% Primary Roth**; 8% Primary Taxable; 6% Relative IRA; 10% Relative Roth.
+- ⚠️ TARGET REVIEW IN PROGRESS: Client deliberating IRA/Roth 7%→3% + DBMF bump (+4pp). At corrected EV +3.28%, the substitution thesis (DBMF +11.02%) remains strongly dominant in EV terms. EV differential vs DBMF = −7.74pp/year. However, AIPO now holds a valid thesis position at #3 rank. The reduction is still EV-optimal — but AIPO is no longer marginal. Client decision pending; allocation sheet unchanged.
 #### MAGS
 - Components: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15)
 - Last reviewed: 2026-05-30 (v1.23 — hold-only override confirmed)
