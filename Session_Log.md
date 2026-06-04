@@ -29,6 +29,7 @@
 | 2026-06-01 (objective type resolution — ad-hoc) | **274** | **74** | **941** | **FRED T1 — embedded allocation spreadsheet tab.** May 31 close: HY BAMLH0A0HYM2 2.74%, IG BAMLC0A0CM 0.74%, CCC BAMLH0A3HYC 9.41%. MOVE: 73.33 (GOOGLEFINANCE). VIX: 16.05. S&P: 7,599.96. KRE: $68.31. SOFR: 3.63%. DFF: 3.62%. NatGas: $3.10 (May 26 — latest available). | **T1 — spreadsheet tab** |
 | 2026-06-02 (full M05 session — v1.29) | **274** | **74** | **941** | **FRED T1 — embedded allocation spreadsheet tab.** May 31 close (most recent). BZ=F: ~$95.30 (Yahoo Finance T1 close, +3.5% on Iran escalation). DXY: 99.19 (Trading Economics T1). 10Y: 4.51%; 2Y: 4.04%; 30Y: 4.98%; 10Y-2Y: +42bp. S&P open 7,599.96; close 7,609.78 (+0.13%). AIPO: $34.01 (+3.59%); COPX: $93.66 (+4.00%); MLPX: $73.50 (+2.03%). MOVE: 73.33 session-start. All credit thresholds CLEAR. CCC divergence watch active. | **T1 (credit) — spreadsheet tab; T2 (BZ=F, DXY, instruments)** |
 | 2026-06-02 (AIPO classification audit — v1.30) | 274 (carry) | 74 (carry) | 941 (carry) | Carry — ad-hoc classification correction session. No new market data fetched. AIPO ThematicETF_ClassificationAudit() re-run from T1 source (Defiance ETFs official page, 77 holdings, $750.87M AUM). | T1 carry |
+| 2026-06-04 (full M05 — M18 v1.2 re-verification) | 274 (carry) | 74 (carry) | 941 (carry) | FRED T1 via allocation spreadsheet — May 31 close (most recent). MOVE: 71.16 (GOOGLEFINANCE T1 live). VIX: 15.40 (T1 live). S&P: 7,584.31. DXY: 99.43. 10Y: 4.47%; 2Y: 4.05%; 30Y: 4.97%; 10Y-2Y: +42bp. BZ=F: $97.81 (Jun 3 close T1 market_data). KRE: $69.98. All credit thresholds CLEAR. MOVE NORMAL (71.16 < 80). M14 composite HIGH (equity-driven; commodity NOT FIRING — energy_90d +5.52%). | T1 carry (credit); T1 live (MOVE, VIX, S&P, DXY, rates) |
 
 ---
 
@@ -394,3 +395,80 @@ next_session_flags:
   - AIPO EV is now +3.28% (#3) — update any EV references that still show +0.13%
   - COPX: monitor — $93.66 is approaching ~$102 entry guard area
   - June 30 Q2 audit: STG B/D/E; IHP row review; all §5/§6 items; bitcoin_mining role design
+
+---
+
+date: 2026-06-04 (full M05 session — M18 v1.2 regime re-verification; v1.31)
+scenario_probabilities: { A: 7%, B: 36%, C: 41%, D: 5%, E: 4%, F: 7% }
+  // UNCHANGED. No T1 binary events. Iran MOU unsigned; talks fragile. CPI May print pending.
+  // derivation_method: carry from 2026-06-02
+primary_driver: US-Iran War Day ~97. BZ=F $97.81 (Jun 3 T1), $95.24 Jun 4 intraday. C-trigger INACTIVE (<$110). Iran MOU at negotiator level; unsigned. Talks fragile (Iran suspended comms Jun 1 T2; Trump frustrated T2). Kevin Warsh hawkish. DFF 3.62%.
+session_type: full M05 (M18 v1.2 data recalibration + M14 re-verification)
+
+m14_recomputation_results:
+  Prior session validation (Objective 1):
+    BZ=F Feb 25 actual: $70.85 T1 (estimate ~$70 accurate, +$0.85). energy_90d May 26 corrected +36.9% (vs estimate +38.6%). HIGH tier CONFIRMED.
+    VIX Feb 25: 17.93 confirmed as actual T1 close (was NOT an estimate). VIX_change_90d_pts -1.23 pts CONFIRMED EXACT.
+    Prior M14 composite HIGH: FULLY CONFIRMED. No correction needed.
+  Today (June 4) M14 (T1 market_data):
+    energy_90d: BZ=F $97.81 vs Mar 6 $92.69 = +5.52% → commodity_fear_divergence NOT FIRING (below 10% MODERATE threshold).
+      War premium now inside 90d window on both ends; 90d change reflects mid-war vs mid-war, not shock onset.
+    VIX_change_90d_pts: 16.06 (Jun 3) - 29.49 (Mar 6) = -13.43 pts (<=0; moot since commodity not firing).
+    broad_equity_30d: SPY Apr 22→Jun 3 +6.05% >= 5% → equity_scenario_divergence = HIGH.
+    Composite = HIGH (equity-driven only). Commodity_fear_divergence NOT FIRING.
+    UnderweightReviewTrigger: NOT fired (all positions within 5pp of sheet targets).
+
+objective_2_results:
+  MAGS/STG B challenge: CLOSED.
+    MAGS actual YTD +4.79% (Jun 4 live). Prior stale -6% YTD from web aggregator refuted.
+    STG B [-2,+4] * HIGH confidence (v1.27) confirmed. +4.79% YTD consistent with adopted range.
+    Sec 11.2 B descriptor update (editorial: "-6% to -1%" -> "[-2,+4] *") deferred to June 30.
+  PAVE exit review: EV confirmed -4.03% at $57.61 current price and current probability vector. No exit triggers fired. Deferred review stands. CPI June 10-12 = Trigger 1 gate.
+
+standing_item_1 (qualitative):
+  Iran: MOU unsigned; talks fragile. Iran comms suspended Jun 1 T2 adversarial. Trump frustrated T2.
+  C NOT structurally moderated: Hormuz mines in place; physical reopening temporary; deal status uncertain.
+  B/C qualitative: CARRY unchanged. No T1 binary event. CPI June 10-12 is next controlling event.
+
+standing_item_2 (M12 PATTERN_B):
+  instruments.json write step added as Step 3b: local MCP server directory (not GitHub).
+  instruments.json written this session: ["MLPX","DBMF","SGOL","VTIP","AIPO","XAR","SGOV","SIVR","COPX","MAGS","XLP","PAVE","URA"].
+  M12 PATTERN_A amendment drafted as downloadable artifact for manual merge.
+
+open_triggers:
+  - CPI May (June 10-12): BINARY EVENT. >=4.0% -> B formal trigger -> EXIT PAVE Trigger 1.
+  - US-Iran deal: MOU unsigned. Update immediately on T1 signing.
+  - Bab el-Mandeb: T2 adversarial (Jun 2). WATCH for T1 confirmation.
+  - BZ=F: $95-98. C-trigger INACTIVE (<$110 restart threshold).
+  - THREEFYTP10: 0.8285% (May 22 carry) vs 100bp E_term_premium_warning.
+  - 30Y: 4.97% vs 5.50% E_30Y_warning (53bp gap).
+  - CHAIN_3_WATCH: $1.304T April record. May FINRA data pending.
+  - CHAIN_4: Q1 2026 188/qtr vs WATCH >=220. Q2 data pending.
+  - COPX: $90.22 (Jun 4 live). Entry guard re-verify before any ADD (90d window shifted; threshold ~$102).
+  - URA allocation discrepancy: Sheet IRA 1% vs Sec 11 target 3%. Clarify before executing.
+  - June 30 Q2 audit: 26 days.
+
+open_decisions:
+  1. PAVE: HOLD with exit triggers (v1.23). EV -4.03%. CascadeLevel MONITORING. CPI June 10-12 = Trigger 1 gate.
+  2. MAGS: HOLD-only override. EV -0.94%. Targets IRA 3%, Roth 4%. Sheet shows 5%/6% — pending URA trade.
+  3. URA ADD: IRA 3%, Roth 3%. Guard cleared (v1.29). Sheet shows IRA 1% (discrepancy — clarify before executing).
+  4. AIPO target reduction: UNDER CLIENT DELIBERATION. IRA/Roth 7%->3% + DBMF +4pp.
+  5. Sec 6 item 23: 5 blocked proposals pending June 30 (STG D/E, IHP A/D, GP A).
+  6. XOM post-Hormuz ramp-up lag: Monitor if deal signed.
+  7. Bitcoin miners Q3: Create bitcoin_mining_hpc role + M16 calibration (AIPO UNCLASSIFIED 7%).
+  8. Sec 11.2 STG B descriptor: Update editorial at June 30.
+
+next_session_flags:
+  - LOAD: "Calibration State loaded, last update: June 4, 2026 | Session Log loaded"
+  - LOAD via Desktop Commander / local git bash — NOT GitHub MCP
+  - FIRST: CPI May release (June 10-12) — if released, run DeriveScenarioProbabilities() IMMEDIATELY
+    -> if >=4.0%: B formal trigger -> EXIT PAVE Trigger 1; revise B/C split
+  - FIRST: US-Iran deal status — T1 signing gates A probability move
+  - FIRST: BZ=F current close — C-trigger clock watch ($110 restart threshold)
+  - URA: Resolve 1% vs 3% discrepancy; confirm then execute ADD (IRA 2pp + Roth 3pp remaining)
+  - AIPO: Client decision pending on 7%->3% reduction + DBMF bump
+  - COPX: $90.22 Jun 4 — entry guard threshold ~$102; monitor approach
+  - instruments.json: Local write confirmed this session
+  - June 30 Q2 audit: 26 days; STG B/D/E joint adoption; IHP row review; all Sec 5/6 items
+  - M12 PATTERN_A amendment artifact: merge at client discretion
+  - Sec 11.2 descriptor update (editorial only): queue for June 30

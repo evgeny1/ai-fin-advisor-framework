@@ -2,11 +2,11 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.30  Last updated: June 2, 2026 (AIPO ThematicETF_ClassificationAudit() REVISED — full
-# holdings re-audit from T1 source (Defiance ETFs official page, 06/02/2026, 77 holdings, $750.87M AUM).
-# Classification corrected: RAC 0.45→0.55, STG 0.30→0.16, PDT 0.20→0.04, IHC 0.05→0.11;
-# new UNCLASSIFIED 0.07 (bitcoin miners, 11 holdings). EV +0.13%→+3.28% (corrected operative values).
-# Rank: ~#10→#3. No §4.1 changes; no probability changes; no target allocation changes this version.)
+# Version: 1.31  Last updated: June 4, 2026 (M18 v1.2 regime re-verification; M14 re-computed with T1 data.
+# BZ=F Feb 25 actual $70.85 confirmed; prior HIGH tier validated. Today: energy_90d +5.52% — commodity NOT FIRING;
+# equity_scenario_divergence HIGH +6.05%. Composite HIGH (equity-driven). STG B challenge closed — MAGS +4.79% YTD
+# confirms [-2,+4] adoption. PAVE EV -4.03% confirmed. Iran qualitative carry A=7/B=36/C=41/D=5/E=4/F=7.
+# M12 PATTERN_B Step 3b: instruments.json local write added. No Sec 4.1 changes. No probability changes.)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -19,7 +19,7 @@ Persistent framework configuration — load at every session start alongside Ses
 
 At session start, after both files are fetched, the advisor must state in the briefing:
 
-"Calibration State loaded, last update: June 1, 2026 | Session Log loaded"
+"Calibration State loaded, last update: June 4, 2026 | Session Log loaded"
 
 Absence of either confirmation line indicates the respective file was not loaded and the session is invalid for threshold-sensitive decisions.
 
@@ -121,6 +121,22 @@ May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-04 - Framework v1.31 (M18 v1.2 regime re-verification; M14 re-computation; STG B challenge closed).
+BZ=F Feb 25 2026 actual $70.85 T1 (estimate $70 accurate, +$0.85). energy_90d May 26 corrected +36.9%
+(vs estimate +38.6%) — HIGH tier CONFIRMED unchanged. VIX Feb 25 = 17.93 confirmed as actual T1 close
+(was NOT an estimate). VIX_change_90d_pts -1.23 pts confirmed exact. Prior M14 composite HIGH: FULLY CONFIRMED.
+Today (June 4): energy_90d = BZ=F $97.81 (Jun 3 T1) vs $92.69 (Mar 6 T1 — 90d anchor) = +5.52% ->
+commodity_fear_divergence NOT FIRING (war premium now inside 90d window; below 10% MODERATE threshold).
+VIX_change_90d_pts = 16.06 - 29.49 = -13.43 pts. broad_equity_30d = SPY Apr 22->Jun 3 +6.05% ->
+equity_scenario_divergence HIGH. M14 composite = HIGH (equity-driven only). UnderweightReviewTrigger NOT fired.
+STG B challenge CLOSED: MAGS +4.79% YTD (Jun 4 live) confirms [-2,+4] * adoption (v1.27). Stale -6% YTD challenge refuted.
+Sec 11.2 descriptor update (editorial: "-6% to -1%" -> "[-2,+4] *") deferred to June 30.
+PAVE EV confirmed -4.03% at current price $57.61 and current probability vector. No exit triggers fired.
+Iran qualitative: MOU unsigned, talks fragile, C not structurally moderated — CARRY A=7/B=36/C=41/D=5/E=4/F=7.
+M12 PATTERN_B Step 3b added: instruments.json local write to MCP server directory.
+M12 PATTERN_A amendment drafted as artifact. instruments.json written: ["MLPX","DBMF","SGOL","VTIP","AIPO",
+"XAR","SGOV","SIVR","COPX","MAGS","XLP","PAVE","URA"]. No Sec 4.1 changes. No probability changes.
 
 2026-06-02 - Framework v1.30 (AIPO ThematicETF_ClassificationAudit() REVISED). Full holdings re-audited from T1 source (Defiance ETFs official page, 06/02/2026, 77 holdings, $750.87M AUM). Three errors corrected from v1.14/v1.23: (1) PDT reduced 0.20→0.04 — AIPO Industrials (PWR, VRT, ETN, GEV, MTZ, STRL, NVT, HUBB, DY, utilities, data centers) are commercial RAC, not policy-driven; binding driver is hyperscaler/utility demand, NOT legislative mandates. (2) IHC increased 0.05→0.11 — uranium exposure (CCJ 3.78% + NXE 0.75%, UUUU 0.50%, DNN 0.44%, LEU 0.44%) was understated or missed in prior top-holdings review; also includes Bloom Energy (BE) 4.56% energy technology, EOSE 0.62%, FLNC 0.61% energy storage. (3) STG reduced 0.30→0.16 — GEV was erroneously counted in "IT 30%" sector bucket by prior data source; confirmed Industrials/RAC. RAC increased 0.45→0.55. New UNCLASSIFIED exposure: bitcoin miners ~7% NAV (11 holdings: HUT, BTDR, HIVE, RIOT, CLSK, CIFR, MARA, CORZ, IREN, WULF, BTBT); no registered M15 role; treated as 0% EV contribution (conservative — unknown/likely negative in B/C). EV corrected: +0.13%→+3.28% (using all current operative §4.1 values: STG B=−2 ★, RAC D=−6 ★, RAC E=−10 ★, STG D=−14 ⚑ operative). ⚠ Session instructions' +3.54% used stale RAC D=+2, RAC E=+2, STG B=−6 — corrected to +3.28% using live calibration state. Rank: ~#10→#3 (above SIVR +2.93%, below URA +4.02%). v1.29/v1.23 PDT-dominant classification (0.63 PDT) was itself a prior error corrected today — the 57% Industrials weight was misclassified as PDT; binding driver test confirms commercial RAC. Q3 action required: add role for bitcoin_mining / speculative_infrastructure_growth (§6 item TBD). last_reviewed updated to June 2, 2026. No §4.1 changes. No probability changes. No target allocation changes this version.
 
@@ -580,6 +596,17 @@ May 26 full session M14 computation (FMP data confirmed):
 - broad_equity_30d (SPY, 30 trading days): +8.68% (Apr 13→May 22) → ≥ +5% → equity_scenario_divergence = HIGH ✓
 - Composite = HIGH (unchanged).
 - UnderweightReviewTrigger: NOT fired (max drift = Relative Roth MLPX +1.71pp; all accounts below 5pp threshold).
+June 4 full session M14 computation (market_data T1 — M18 v1.2 HARD_GATE compliant):
+  Re-verification of prior session (Objective 1):
+  - BZ=F Feb 25 actual: $70.85 T1. energy_90d May 26: ($97-$70.85)/$70.85 = +36.9%. HIGH confirmed.
+  - VIX Feb 25: 17.93 confirmed as actual T1 close (not an estimate). VIX_change_90d -1.23 pts exact.
+  Today (June 4):
+  - energy_90d: BZ=F $97.81 (Jun 3 T1) vs $92.69 (Mar 6 T1 — 90d anchor) = +5.52% -> NOT FIRING.
+    War premium now inside 90d window; below both HIGH (>=15%) and MODERATE (>=10%) thresholds.
+  - VIX_change_90d_pts: 16.06 (Jun 3) - 29.49 (Mar 6) = -13.43 pts (<=0; moot).
+  - broad_equity_30d: SPY Apr 22->Jun 3 +6.05% >= +5% -> equity_scenario_divergence = HIGH.
+  - Composite = HIGH (equity-driven only; commodity_fear_divergence NOT FIRING). Tier unchanged from prior.
+  - UnderweightReviewTrigger: NOT fired (all positions within 5pp of sheet targets).
 
 ### 9.2 Underweight Review Trigger
 
