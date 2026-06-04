@@ -1,6 +1,17 @@
 # FW_Types — Framework Shared Type Definitions
-<!-- Version: 1.1 | Adopted: May 25, 2026 | Updated: May 29, 2026 -->
-<!-- Changes v1.1: -->
+<!-- Version: 1.2 | Adopted: May 25, 2026 | Updated: June 4, 2026 -->
+<!-- Changes v1.2 (June 4, 2026): -->
+<!--   DEFECT-FWT-03: DataSource enum — added FMP_INDEXES (used by M18 v1.2 for ^VIX, ^GSPC -->
+<!--     index quotes; missing from type contract). -->
+<!--   DEFECT-FWT-04: DataSource enum — added YFINANCE_MCP (market_data MCP server; used by -->
+<!--     M18 v1.2 for HOLDINGS_PRICES, MOVE, DXY, KRE, KBE, NASDAQ_COMP, DOW, RUSSELL2000, -->
+<!--     HISTORICAL_INSTRUMENT_PRICES). -->
+<!--   FMP_COMMODITY comment updated: plan tier confirmed June 4, 2026 (BZUSD, GCUSD, SIUSD -->
+<!--     all working). Removed "not yet confirmed" caveat. -->
+<!--   WEBSEARCH_T1 comment updated: prohibited for price/return/level data per M18 v1.2 -->
+<!--     HARD_GATE NoWebSearchForPriceData. Permitted only for official statistical publications. -->
+<!--   FetchSpec.update_frequency: ON_DEMAND added (used by HISTORICAL_INSTRUMENT_PRICES). -->
+<!-- Changes v1.1 (May 29, 2026): -->
 <!--   DEFECT-FWT-01: DataSource enum — added FMP_CHART and FMP_COMMODITY (used in M18 FetchSpecs -->
 <!--     but missing from type contract; type violation now resolved). -->
 <!--   DEFECT-FWT-02: YieldCurveSignal — added e_pathway_type field (SYSTEMIC_LIQUIDITY | -->
@@ -36,28 +47,53 @@ TYPES FrameworkCore {
   ENUM DataSource {
     FRED_SPREADSHEET_TAB,          // FRED series embedded in allocation spreadsheet
     ALLOCATION_SPREADSHEET_FINRA,  // FINRA margin debt tab
-    ALLOCATION_SPREADSHEET_OTHER,  // Other indexes tab (VIX, MOVE, KRE, etc.)
-    GOOGLEFINANCE,                 // live prices via GOOGLEFINANCE function
+    ALLOCATION_SPREADSHEET_OTHER,  // Other indexes tab (VIX, MOVE, KRE, etc.) — crosscheck gate
+    GOOGLEFINANCE,                 // live prices via GOOGLEFINANCE function (~20-min delay)
     FMP_ECONOMICS_TREASURY_RATES,  // FMP economics.treasury-rates endpoint
     FMP_CHART,                     // FMP:chart historical-price-eod-light endpoint (added v1.1)
-                                   //   confirmed working for ^VIX and SPY at current plan tier
+                                   //   confirmed working: ^VIX, SPY at current plan tier
                                    //   used by: VIX_30D_AVG, VIX_90D_AVG, BROAD_EQUITY_TRAILING
-    FMP_COMMODITY,                 // FMP:commodity endpoint (added v1.1)
-                                   //   plan tier not yet confirmed — verify at Q2 audit
-                                   //   candidate for BRENT_CRUDE if BZUSD confirmed accessible
+    FMP_COMMODITY,                 // FMP:commodity endpoint (added v1.1; confirmed v1.2)
+                                   //   confirmed working free tier June 4, 2026:
+                                   //   BZUSD (Brent), GCUSD (Gold), SIUSD (Silver)
+                                   //   used by: BRENT_CRUDE, GOLD_SPOT, SILVER
+    FMP_INDEXES,                   // FMP:indexes endpoint (added v1.2)
+                                   //   confirmed working free tier June 4, 2026:
+                                   //   ^VIX ($15.40), ^GSPC ($7,584.82)
+                                   //   ACCESS DENIED: ^MOVE, ^SPX, DX-Y.NYB, all forex indexes
+                                   //   used by: VIX, SP500, BROAD_EQUITY_TRAILING
     FMP_MARKET_PERFORMANCE,        // FMP marketPerformance — REJECTED for sector PE (see M17 §6)
+    YFINANCE_MCP,                  // market_data MCP server — yfinance (added v1.2)
+                                   //   tools: market_get_quotes, market_get_ytd,
+                                   //          market_get_history, market_get_macro
+                                   //   instrument list: instruments.json (written by advisory
+                                   //     session WriteBack per M12 PATTERN_B)
+                                   //   confirmed working June 4, 2026: all portfolio instruments
+                                   //   + DX-Y.NYB (DXY), ^MOVE (MOVE), ^GSPC, ^VIX, KRE, KBE
+                                   //   used by: HOLDINGS_PRICES, MOVE, DXY, KRE, KBE,
+                                   //            NASDAQ_COMP, DOW, RUSSELL2000,
+                                   //            HISTORICAL_INSTRUMENT_PRICES
     WEBSEARCH_T1,                  // web search returning T1 source
-    WEBSEARCH_T2,                  // web search returning T2 source
-    MANUAL_CLIENT_INPUT,           // client-confirmed value
-    USDA_OR_AFBF,                  // agricultural data
-    FRED_OR_WEBSEARCH              // FRED preferred; web search fallback
+                                   //   ⚠ PROHIBITED for price/return/index level data
+                                   //   (M18 v1.2 HARD_GATE NoWebSearchForPriceData)
+                                   //   Permitted only for: CPI/BLS official press releases,
+                                   //   USDA farm reports, FOMC statements, geopolitical text,
+                                   //   FRED statistical series pages (breakevens, term premium)
+    WEBSEARCH_T2,                  // web search with uncertain provenance — flag explicitly
+                                   //   PROHIBITED for any numerical framework input
+    MANUAL_CLIENT_INPUT,           // client-confirmed value (e.g. Schwab screenshot — T1)
+    USDA_OR_AFBF,                  // agricultural data — USDA quarterly or AFBF
+    FRED_OR_WEBSEARCH              // FRED preferred; web search fallback only for official
+                                   //   statistical series (not price/return data)
   }
 
   STRUCT FetchSpec {
     id:                  String       // unique data point identifier (e.g. "HY_OAS", "THREEFYTP10")
     source:              DataSource
     description:         String?
-    update_frequency:    DAILY | WEEKLY | MONTHLY | QUARTERLY
+    update_frequency:    DAILY | WEEKLY | MONTHLY | QUARTERLY | ON_DEMAND
+                         // ON_DEMAND: fetch only when explicitly required for a specific task
+                         //   (e.g. HISTORICAL_INSTRUMENT_PRICES — not a standard session fetch)
     acceptable_lag_days: Integer      // days before staleness_flag fires
     // ticker_or_series is NOT stored here — lives in CALIBRATION_STATE or module constants
     // This keeps FetchSpec free of hardcoded series names that may change
