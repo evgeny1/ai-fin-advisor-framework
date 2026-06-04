@@ -161,6 +161,32 @@ MODULE FileProtocol {
         // @see constructPortfolioState() below
       }
 
+      Step 3b — instruments.json sync (LOCAL ONLY — concurrent with or immediately after Step 3):
+
+      FUNCTION writeInstrumentsJson() {
+        path:   [LOCAL_MCP_DIR]/instruments.json
+        format: {
+          "instruments": [<§11.3 active instrument tickers — all tickers at non-zero target in
+                           at least one account in Consolidated Target Allocations>],
+          "last_updated": "<session date YYYY-MM-DD>",
+          "session":      "<session date YYYY-MM-DD> advisory"
+        }
+        source: §11.3 active positions from CALIBRATION_STATE_FETCH result (Calibration_State.md)
+        tool:   Desktop Commander (write_file, mode: rewrite)
+        note:   LOCAL WRITE ONLY — does NOT go to GitHub. Target is the local MCP server directory,
+                not the advisory framework git repository.
+      }
+
+      LOCAL_MCP_DIR = /Users/evgeny/Library/CloudStorage/GoogleDrive-evgeny.shatalov@gmail.com/My Drive/dev/market_data_mcp
+
+      GUARD instruments_json_sync {
+        ALWAYS: execute at every advisory session WriteBack (not just when §11 changes)
+        ALWAYS: source tickers from CALIBRATION_STATE_FETCH — never from memory or prior session
+        NEVER:  include instruments with 0% target in ALL accounts (they are legacy §11 entries only)
+        NEVER:  push instruments.json to GitHub (local MCP directory is the target)
+        REQUIRE: Calibration_State.md successfully fetched this session (Step 3 prerequisite)
+      }
+
       STEP 4: push_files {
         tool:    github:push_files
         branch:  SOURCE_MAP.github.branch  // "master"
