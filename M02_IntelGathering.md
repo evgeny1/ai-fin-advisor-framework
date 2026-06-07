@@ -93,8 +93,18 @@ MODULE IntelGathering {
 
 
   // ─── PRICE DATA INTEGRITY RULE ───────────────────────────────────────────────────────
+  // ⚠ SUPERSEDED by M18_MarketDataFetch.PriceDataIntegrity (v1.2, June 4, 2026).
+  // This block is retained for reference only. M18 is authoritative for:
+  //   - Approved source hierarchy (YFINANCE_MCP → FMP → FRED → allocation sheet → screenshot)
+  //   - HARD_GATE NoWebSearchForPriceData (web search prohibited for all price/return/level data)
+  //   - AllocationPriceCrossCheck (>5% discrepancy between yfinance and allocation sheet = HALT)
+  //   - FMP_PLAN_TIER_MAP (confirmed working vs ACCESS DENIED endpoints at current plan tier)
+  // @see M18_MarketDataFetch.PriceDataIntegrity
+  // @see M18_MarketDataFetch.HARD_GATE NoWebSearchForPriceData
+  // @see M18_MarketDataFetch.AllocationPriceCrossCheck
 
   GUARD PriceDataIntegrity {
+    // LEGACY — apply M18 rules instead. Structural principles below remain valid.
     REQUIRE: specific_price_quote sourced_from dedicated_instrument_page
     NEVER:   accept_price_from [
       sidebar_widgets,
@@ -102,7 +112,11 @@ MODULE IntelGathering {
       derivative_aggregators
     ]
 
-    APPROVED_SOURCES {
+    // APPROVED_SOURCES below are OUTDATED — use M18.PriceDataIntegrity.APPROVED_SOURCES.
+    // Primary sources now: YFINANCE_MCP (market_get_quotes / market_get_macro / market_get_history),
+    //   FMP_COMMODITY (BZUSD/GCUSD/SIUSD), FMP_INDEXES (^VIX/^GSPC).
+    // Web search is PROHIBITED for price/return/level data — see M18 HARD_GATE.
+    APPROVED_SOURCES_LEGACY {
       gold_silver:  [LBMA, Kitco_spot, World_Gold_Council]
       oil:          [EIA_weekly_reports, CME_Group_settlement_data]
       equities:     [NYSE_official, NASDAQ_official]

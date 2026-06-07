@@ -109,11 +109,9 @@ Execute `M05_SessionInit.SessionStartSequence` in strict order:
                                 Run M15.ValidateClassifications() — HARD_STOP if any
                                   allocation instrument is absent from §11.
 
-4. Fetch market data          → FetchRegistry.fetchAll()        ← M18 DATA_REGISTRY_ENTRIES
-                                (M02 core data + M11 credit spreads + M14 VIX trailing
-                                 + M17 cascade chain inputs + DXY via web search)
-                                + M02.QualitativeGatherList (geopolitical, Fed — web search)
-                                @see M02_IntelGathering.GatherIntel STEP 1
+4. Fetch market data          → FetchRegistry.fetchAll()        @see M18_MarketDataFetch
+                                + M02.QualitativeGatherList (geopolitical, Fed guidance —
+                                  web search; these are NOT DataReadings)
 
 5. Identify primary driver    → M02.identifyPrimaryDriver()
 
