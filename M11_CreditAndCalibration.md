@@ -22,25 +22,7 @@
 ```
 MODULE CreditSignal {
 
-  // ─── DATA REGISTRY ENTRIES (LEGACY — superseded by M18_MarketDataFetch, v1.2) ─────────
-  // Moved to M18_MarketDataFetch.DATA_REGISTRY_ENTRIES. Retained here for reference.
-
-  DATA_REGISTRY_ENTRIES_LEGACY {
-    REGISTER FetchSpec { id: "HY_OAS",  source: FRED_SPREADSHEET_TAB, description: "ICE BofA US HY OAS — BAMLH0A0HYM2",     update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "CCC_OAS", source: FRED_SPREADSHEET_TAB, description: "ICE BofA CCC & Lower OAS — BAMLH0A3HYC", update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "IG_OAS",  source: FRED_SPREADSHEET_TAB, description: "ICE BofA US IG OAS — BAMLC0A0CM",        update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "BBB_OAS", source: FRED_SPREADSHEET_TAB, description: "ICE BofA BBB OAS — BAMLC0A4CBBB",        update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "MOVE",    source: ALLOCATION_SPREADSHEET_OTHER, description: "ICE BofA MOVE Index",            update_frequency: DAILY, acceptable_lag_days: 1 }
-  }
-
-  // ─── FETCH LIST (legacy — superseded by DATA_REGISTRY_ENTRIES above) ─────────────────
-  // Retained for reference only. FetchRegistry.fetchAll() owns all structured fetches.
-
-  FetchList_LEGACY {
-    HY_composite:  FRED series BAMLH0A0HYM2   // ICE BofA US High Yield OAS
-    CCC_tail:      FRED series BAMLH0A3HYC    // ICE BofA CCC & Lower HY OAS
-    IG_composite:  FRED series BAMLC0A0CM     // ICE BofA US Corporate IG OAS
-  }
+  // DATA_REGISTRY_ENTRIES and FetchList moved to M18_MarketDataFetch (v1.2). @see M18.
 
   GUARD DataSourceIntegrity {
     REQUIRE: all_credit_spread_values verified_against [

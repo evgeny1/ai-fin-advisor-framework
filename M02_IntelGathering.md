@@ -26,54 +26,7 @@
 ```
 MODULE IntelGathering {
 
-  // ─── DATA REGISTRY ENTRIES (LEGACY — superseded by M18_MarketDataFetch, v2.1) ────────
-  // All DATA_REGISTRY_ENTRIES moved to M18_MarketDataFetch.DATA_REGISTRY_ENTRIES (v1.20).
-  // M18 is the single source of truth for all structured data series.
-  // Block retained here for reference only. FetchRegistry.fetchAll() pulls from M18.
-
-  DATA_REGISTRY_ENTRIES_LEGACY {
-
-    // Energy
-    REGISTER FetchSpec { id: "BRENT_CRUDE",     source: WEBSEARCH_T1, description: "Brent crude spot BZ=F — verify against EIA or CME settlement", update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "WTI",             source: WEBSEARCH_T1, description: "WTI crude spot CL=F — verify against EIA or CME settlement",   update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "NATURAL_GAS",     source: WEBSEARCH_T1, description: "Henry Hub natural gas front-month",                            update_frequency: DAILY, acceptable_lag_days: 1 }
-
-    // Safe haven / precious metals
-    REGISTER FetchSpec { id: "GOLD_SPOT",       source: WEBSEARCH_T1, description: "Gold spot XAUUSD — verify against LBMA or Kitco",  update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "SILVER",          source: WEBSEARCH_T1, description: "Silver spot XAGUSD — verify against LBMA or Kitco", update_frequency: DAILY, acceptable_lag_days: 1 }
-
-    // Broad equities
-    REGISTER FetchSpec { id: "SP500",           source: WEBSEARCH_T1, description: "S&P 500 closing level — NYSE official",            update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "NASDAQ_COMP",     source: WEBSEARCH_T1, description: "NASDAQ Composite closing level — NASDAQ official", update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "DOW",             source: WEBSEARCH_T1, description: "Dow Jones Industrial Average — NYSE official",    update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "RUSSELL2000",     source: WEBSEARCH_T1, description: "Russell 2000 closing level — NYSE official",      update_frequency: DAILY, acceptable_lag_days: 1 }
-
-    // Volatility (current close — trailing averages registered by M14)
-    REGISTER FetchSpec { id: "VIX",             source: ALLOCATION_SPREADSHEET_OTHER, description: "VIX current daily close", update_frequency: DAILY, acceptable_lag_days: 1 }
-
-    // Fixed income / rates
-    REGISTER FetchSpec { id: "TREASURY_10Y",    source: FRED_SPREADSHEET_TAB, description: "DGS10 — 10-year Treasury yield", update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "TREASURY_2Y",     source: FRED_SPREADSHEET_TAB, description: "DGS2 — 2-year Treasury yield",  update_frequency: DAILY, acceptable_lag_days: 1 }
-
-    // Currency
-    REGISTER FetchSpec { id: "DXY",             source: WEBSEARCH_T1, description: "US Dollar Index DX=F", update_frequency: DAILY, acceptable_lag_days: 1 }
-
-    // Inflation breakevens (FRED)
-    REGISTER FetchSpec { id: "BREAKEVEN_10Y",   source: FRED_SPREADSHEET_TAB, description: "T10YIE — 10-year breakeven inflation rate", update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "BREAKEVEN_5Y",    source: FRED_SPREADSHEET_TAB, description: "T5YIE — 5-year breakeven inflation rate",  update_frequency: DAILY, acceptable_lag_days: 1 }
-
-    // CPI (monthly release — lag reflects BLS release cadence)
-    REGISTER FetchSpec { id: "CPI_YOY",         source: WEBSEARCH_T1, description: "Latest BLS CPI YoY print — check release date",
-                                                 update_frequency: MONTHLY, acceptable_lag_days: 35 }
-
-    // Monetary policy
-    REGISTER FetchSpec { id: "FED_FUNDS_RATE",  source: FRED_SPREADSHEET_TAB, description: "DFF — effective federal funds rate", update_frequency: DAILY, acceptable_lag_days: 1 }
-
-    // Holdings prices — already in allocation sheet (Step 1); registered for manifest completeness
-    REGISTER FetchSpec { id: "HOLDINGS_PRICES", source: GOOGLEFINANCE, description: "Live prices via GOOGLEFINANCE in allocation sheet — no separate fetch needed",
-                                                 update_frequency: DAILY, acceptable_lag_days: 0 }
-  }
-
+  // DATA_REGISTRY_ENTRIES moved to M18_MarketDataFetch (v2.1). @see M18.
 
   // ─── QUALITATIVE GATHER LIST ─────────────────────────────────────────────────────────
   // Items requiring open-ended web search + interpretation. Not representable as FetchSpec
@@ -144,19 +97,7 @@ MODULE IntelGathering {
       // M18 is the single registry; FetchRegistry.fetchAll() iterates M18.DATA_REGISTRY_ENTRIES.
 
       execute_structured:   FetchRegistry.fetchAll()
-      // All entries sourced from M18_MarketDataFetch.DATA_REGISTRY_ENTRIES:
-      //   Energy: BRENT_CRUDE, WTI, NATURAL_GAS
-      //   Metals: GOLD_SPOT, SILVER
-      //   Equities: SP500, NASDAQ_COMP, DOW, RUSSELL2000
-      //   Volatility: VIX, VIX_30D_AVG, VIX_90D_AVG, MOVE, BROAD_EQUITY_TRAILING
-      //   Regional banks: KRE, KBE
-      //   Rates: TREASURY_10Y, TREASURY_2Y, YIELD_CURVE, SOFR, DFF, THREEFYTP10,
-      //          BREAKEVEN_10Y, BREAKEVEN_5Y
-      //   Credit: HY_OAS, CCC_OAS, IG_OAS, BBB_OAS
-      //   FX: DXY
-      //   Macro: CPI_YOY, FED_FUNDS_RATE
-      //   Cascade: FINRA_MARGIN_DEBT, NATGAS_HENRY_HUB, FARM_FILINGS_YOY
-      //   Holdings: HOLDINGS_PRICES (from Step 1 allocation sheet fetch)
+      // All entries from M18_MarketDataFetch.DATA_REGISTRY_ENTRIES. @see M18.
       // RETURN: List<DataReading>   // @see FW_Types.md
 
       execute_qualitative:  QUALITATIVE_GATHER_LIST

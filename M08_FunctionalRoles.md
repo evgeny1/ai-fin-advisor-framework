@@ -3,9 +3,6 @@
 <!-- Cross-references: @see M09_ScenariosABC, @see M10_ScenariosDEF -->
 <!-- Extended by: M14_MarketRegime (EntryExtensionGuard added to ExecutionGuards) -->
 <!-- Extended by: M15_InstrumentClassification (composite decomposition; blendedScenarioReturn replaces direct §4.1 lookups for all allocation computations) -->
-<!-- Updated April 28, 2026: ThematicETF_ClassificationAudit() and MandateImpairmentPropagation() added -->
-<!-- Updated April 28, 2026 (v1.7): M15 integration — classifyRole() remains for constituent analysis; M15.classifyInstrument() + blendedScenarioReturn() used for all allocation computations -->
-<!-- Resolves: PAVE misclassification (April 22–28, 2026) — ETF label applied without constituent analysis -->
 
 ```
 MODULE FunctionalRoles {

@@ -54,37 +54,7 @@ MODULE SystemicCascadeWarning {
   // AdvisoryAction.role_id is always a RoleID — NEVER a ticker symbol.
 
 
-  // ─── FETCH LIST (legacy — superseded by DATA_REGISTRY_ENTRIES below) ──────────────
-  // Phase 2 complete: FetchRegistry.fetchAll() in M02 replaces this list.
-
-  FetchList_LEGACY {
-    yield_curve_full:    FMP_economics.treasury-rates endpoint
-    KRE:                 GOOGLEFINANCE("KRE")
-    KBE:                 GOOGLEFINANCE("KBE")
-    THREEFYTP10:         FRED series THREEFYTP10
-    SOFR:                FRED series SOFR
-    DFF:                 FRED series DFF
-    FINRA_margin_debt:   allocation spreadsheet FINRA tab
-    SOFR_DFF_spread:     computed: SOFR - DFF
-    natgas_henry_hub:    FRED DHHNGSP or web_search
-    farm_credit_stress:  Kansas City Fed quarterly survey (qualitative)
-  }
-
-
-  // ─── DATA REGISTRY ENTRIES (LEGACY — superseded by M18_MarketDataFetch, v1.4) ──────────
-  // Moved to M18_MarketDataFetch.DATA_REGISTRY_ENTRIES. Retained here for reference.
-
-  DATA_REGISTRY_ENTRIES_LEGACY {
-    REGISTER FetchSpec { id: "YIELD_CURVE",       source: FMP_ECONOMICS_TREASURY_RATES, update_frequency: DAILY }
-    REGISTER FetchSpec { id: "KRE",               source: ALLOCATION_SPREADSHEET_OTHER,  update_frequency: DAILY }
-    REGISTER FetchSpec { id: "KBE",               source: ALLOCATION_SPREADSHEET_OTHER,  update_frequency: DAILY }
-    REGISTER FetchSpec { id: "THREEFYTP10",        source: FRED_SPREADSHEET_TAB,          update_frequency: WEEKLY, acceptable_lag_days: 7 }
-    REGISTER FetchSpec { id: "SOFR",              source: FRED_SPREADSHEET_TAB,          update_frequency: DAILY }
-    REGISTER FetchSpec { id: "DFF",               source: FRED_SPREADSHEET_TAB,          update_frequency: DAILY }
-    REGISTER FetchSpec { id: "FINRA_MARGIN_DEBT",  source: ALLOCATION_SPREADSHEET_FINRA,  update_frequency: MONTHLY, acceptable_lag_days: 30 }
-    REGISTER FetchSpec { id: "NATGAS_HENRY_HUB",   source: FRED_OR_WEBSEARCH,             update_frequency: DAILY }
-    REGISTER FetchSpec { id: "FARM_FILINGS_YOY",   source: USDA_OR_AFBF,                  update_frequency: QUARTERLY, acceptable_lag_days: 90 }
-  }
+  // FetchList and DATA_REGISTRY_ENTRIES moved to M18_MarketDataFetch (v1.4). @see M18.
 
 
   // ─── §1 CASCADE CHAIN REGISTRY ───────────────────────────────────────────────

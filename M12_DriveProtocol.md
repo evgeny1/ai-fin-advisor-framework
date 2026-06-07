@@ -1,18 +1,8 @@
 # M12 — File Access Protocol
-<!-- Amendment 3 — June 07, 2026 -->
-<!-- Replaces: M12_DriveProtocol (Amendment 2, April 23, 2026) -->
-<!-- Changes: -->
-<!--   - Google Drive promoted to primary read source for all framework files -->
-<!--   - GitHub demoted to read-only backup (all GitHub write operations removed) -->
-<!--   - All writes (session write-back + framework amendments) via Desktop Commander + git -->
-<!--   - SESSION_TYPE enum added (FULL_DESKTOP / READONLY_MOBILE) -->
-<!--   - CANONICAL_WRITE_WORKFLOW replaces CANONICAL_GITHUB_WRITE_WORKFLOW -->
-<!--   - PATTERN A: Desktop Commander + git (branch/PR workflow removed) -->
-<!--   - PATTERN B: Desktop Commander + git (push_files replaced) -->
-<!--   - Implementation notes and PR_BODY_FORMAT removed -->
-<!-- Google Drive: primary read source (all devices) + Allocation sheet (read only) -->
-<!-- GitHub: read-only backup for all framework files -->
-<!-- Desktop Commander + git: all writes (FULL_DESKTOP sessions only) -->
+<!-- Version: Amendment 3 | Updated: June 07, 2026 -->
+<!-- Sub-project: DATA_INTELLIGENCE -->
+<!-- Reason to change: file access sources, write toolchain, or session type rules change.
+     Full change history: git log M12_DriveProtocol.md -->
 
 ```
 MODULE FileProtocol {

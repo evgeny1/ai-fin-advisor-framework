@@ -1,38 +1,9 @@
 # M18 — Market Data Fetch
-<!-- Version: 1.2 | Adopted: May 25, 2026 | Updated: June 4, 2026 -->
-<!-- Changes v1.2 (June 4, 2026):
-     HARD_GATE NoWebSearchForPriceData added: web_search prohibited for all price/return/level data.
-     FMP_PLAN_TIER_MAP block added: documents confirmed vs ACCESS DENIED endpoints.
-     ALLOCATION_PRICE_CROSSCHECK guard added: allocation sheet prices are T1 gate (>5% discrepancy halts).
-     YFINANCE_MCP added to DataSource constants and FetchSpec source fields.
-     HISTORICAL_INSTRUMENT_PRICES FetchSpec added: market_get_history, on-demand only.
-     BRENT_CRUDE: WEBSEARCH_T1 → FMP_COMMODITY (BZUSD confirmed June 4, 2026).
-     GOLD_SPOT: GOOGLEFINANCE → FMP_COMMODITY (GCUSD confirmed June 4, 2026).
-     SILVER: GOOGLEFINANCE → FMP_COMMODITY (SIUSD confirmed June 4, 2026).
-     SP500: GOOGLEFINANCE → FMP_INDEXES (^GSPC confirmed June 4; ^SPX still blocked).
-     VIX: ALLOCATION_SPREADSHEET_OTHER → FMP_INDEXES (^VIX confirmed June 4).
-     MOVE: ALLOCATION_SPREADSHEET_OTHER → YFINANCE_MCP (^MOVE; FMP blocked).
-     DXY: WEBSEARCH_T1 → YFINANCE_MCP (DX-Y.NYB confirmed June 4).
-     KRE / KBE: ALLOCATION_SPREADSHEET_OTHER → YFINANCE_MCP (primary); allocation secondary.
-     NASDAQ_COMP / DOW / RUSSELL2000: WEBSEARCH_T1 → YFINANCE_MCP.
-     HOLDINGS_PRICES: GOOGLEFINANCE → YFINANCE_MCP primary; allocation sheet is T1 crosscheck gate.
-     BROAD_EQUITY_TRAILING: updated — ^GSPC now works via FMP_INDEXES; SPY proxy no longer needed.
-     instruments.json replaces portfolio.json: written by advisory WriteBack (M12 PATTERN_B);
-       MCP server reads it fresh on each call; fallback list retained in server.py.
-     VIX_30D_AVG / VIX_90D_AVG: YFINANCE_MCP added as fallback source.
-     TREASURY_10Y / TREASURY_2Y: fallback updated — remove web search mention; use YIELD_CURVE FMP fetch.
-     NEVER list: two new entries — web_search prohibition and crosscheck skip prohibition. -->
-<!-- Changes v1.1 (May 26, 2026): VIX_30D_AVG and VIX_90D_AVG source changed from WEBSEARCH_T1 to FMP_CHART.
-     BROAD_EQUITY_TRAILING source changed from WEBSEARCH_T1 to FMP_CHART (SPY proxy).
-     APPROVED_SOURCES block updated with FMP entries and plan-tier caveat. -->
-<!-- Purpose: Centralized financial data retrieval. Single module containing all
-     DATA_REGISTRY_ENTRIES for the framework. Replaces the distributed registration
-     pattern across M02/M11/M14/M17 with one authoritative source. -->
+<!-- Version: 1.2 | Updated: June 4, 2026 -->
 <!-- Sub-project: DATA_INTELLIGENCE -->
-<!-- Reason to change: a new data series is needed, a source changes, or lag tolerance
-     changes. NEVER register DATA_REGISTRY_ENTRIES in any other module — add here. -->
-<!-- Companion: @see FW_Types.md (FetchSpec, DataReading, DataSource types) -->
-<!-- Consumed by: FetchRegistry.fetchAll() — called from M02.GatherIntel STEP 1 -->
+<!-- Reason to change: new data series needed, source changes, or lag tolerance changes.
+     NEVER register DATA_REGISTRY_ENTRIES in any other module — add here only.
+     Full change history: git log M18_MarketDataFetch.md -->
 
 <!-- MODULE MANIFEST
   ID:              M18_MarketDataFetch

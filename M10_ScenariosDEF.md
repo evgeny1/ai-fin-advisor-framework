@@ -4,10 +4,6 @@
 <!-- All protocols apply: @see M08_FunctionalRoles.DeEscalation -->
 <!-- Minimum conviction weight: @see M03_ScenarioFramework.minimumConvictionWeight() -->
 <!-- Scenario D trigger updated by: @see M11_CreditAndCalibration.ScenarioDTrigger -->
-<!-- Updated May 29, 2026: ScenarioE RESPONSES now conditional on YieldCurveSignal.e_pathway_type -->
-<!--   (Finding 2 fix). Two directives branch: rate_sensitive_income_long_duration and -->
-<!--   rate_sensitive_income_short_duration differ between SYSTEMIC_LIQUIDITY and RESERVE_EROSION. -->
-<!--   All other directives and sequences unchanged. -->
 
 ```
 MODULE ScenarioD {  // Deflationary Recession
