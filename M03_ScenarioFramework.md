@@ -1,7 +1,19 @@
 # M03 — Scenario Framework
-<!-- Cross-references: @see M02_IntelGathering.identifyPrimaryDriver, @see CALIBRATION_STATE -->
-<!-- Consumed by: M09_ScenariosABC, M10_ScenariosDEF -->
-<!-- Updated April 23, 2026: scenarioWeightedAllocation() and minimumConvictionWeight() delegate to M13 -->
+<!-- Version: 1.1 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M03_ScenarioFramework
+  Version:         1.1
+  Sub-project:     ANALYSIS_ENGINE
+  Reason to change: scenario definitions, probability derivation rules, B vs C separation, or scoring methodology changes.
+                    scenarioWeightedAllocation() and minimumConvictionWeight() delegate to M13 — changes to those go to M13.
+  Inputs consumed:  List<DataReading>       // from FetchRegistry.fetchAll()
+                    PriorProbabilities      // from Session_Log §8
+  Outputs produced: ScenarioProbabilities, ProbabilityVector
+  Calibration deps: CALIBRATION_STATE §2 (Brent/GDP/CPI trigger thresholds used in scoring)
+                    SESSION_LOG §8 (prior probabilities — 25pp cap enforcement)
+  Types consumed:   @see FW_Types.md — DataReading, ScenarioProbabilities
+-->
 
 ```
 MODULE ScenarioFramework {

@@ -1,5 +1,16 @@
 # M01 — Source Integrity
-<!-- Cross-referenced by: M02_IntelGathering, M09_ScenariosABC, M10_ScenariosDEF -->
+<!-- Version: 1.0 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M01_SourceIntegrity
+  Version:         1.0
+  Sub-project:     DATA_INTELLIGENCE
+  Reason to change: source tier definitions, propaganda scoring methodology, or symmetric skepticism rules change.
+  Inputs consumed:  (none — pure filter applied to any claim or source)
+  Outputs produced: SourceTier (T1 | T2 | T3); propaganda score; Verified | Unverified | AdversarialSignal
+  Calibration deps: none
+  Types consumed:   none (foundational; results consumed by all modules)
+-->
 
 ```
 MODULE SourceIntegrity {

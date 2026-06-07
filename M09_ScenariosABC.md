@@ -1,8 +1,19 @@
 # M09 — Scenario Execution Protocols: A, B, C
-<!-- All protocols apply: @see M08_FunctionalRoles.ExecutionGuards -->
-<!-- All protocols apply: @see M08_FunctionalRoles.ExecutionTaxPlacement -->
-<!-- All protocols apply: @see M08_FunctionalRoles.DeEscalation -->
-<!-- Minimum conviction weight: @see M03_ScenarioFramework.minimumConvictionWeight() -->
+<!-- Version: 1.1 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M09_ScenariosABC
+  Version:         1.1
+  Sub-project:     PORTFOLIO_ADVISOR
+  Reason to change: execution protocol, position responses, or rotation sequence for Scenarios A, B, or C changes.
+  Inputs consumed:  ScenarioProbabilities; current allocations; DataReading (energy, credit)
+  Outputs produced: ExecutionDirective[]
+  Calibration deps: CALIBRATION_STATE §2.1 (Brent thresholds for C trigger/invalidation)
+                    CALIBRATION_STATE §2.2 (DXY threshold for precious metals invalidation)
+  Types consumed:   @see FW_Types.md — ScenarioProbabilities, ExecutionDirective, AllocationTarget
+  Cross-module:     all protocols @see M08.ExecutionGuards, M08.ExecutionTaxPlacement, M08.DeEscalation
+                    minimumConvictionWeight: @see M13_GrowthObjectives.minimumConvictionWeight()
+-->
 
 ```
 MODULE ScenarioA {  // Soft Landing

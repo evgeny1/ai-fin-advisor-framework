@@ -265,6 +265,9 @@ Hard stops drawn from GUARD blocks across the framework. No exceptions, no judgm
 - NEVER score CHAIN_4 without a T1 AACER/PACER source — treat contribution as 0 until available
 - NEVER include a market metric deviating >2× from historical norm without cross-referencing first
 
+**Module file hygiene**
+- NEVER add `<!-- Updated ... -->`, `<!-- Changes ... -->`, or `<!-- Resolves ... -->` comment lines to any module file — increment the Version field in MODULE MANIFEST and put details in the git commit message instead; git log is the changelog
+
 **Data & briefing architecture (M18, M04)**
 - NEVER register a DATA_REGISTRY_ENTRY in any module other than M18
 - NEVER edit M04 to add a new module's briefing section — register BRIEFING_REGISTRY_ENTRY in the owning module

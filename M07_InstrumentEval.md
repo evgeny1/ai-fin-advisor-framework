@@ -1,6 +1,17 @@
 # M07 — Instrument Evaluation
-<!-- Cross-references: @see M06_ClientAndAdvisory.TaxPlacement, @see M08_FunctionalRoles -->
-<!-- Updated April 28, 2026: ThematicETFGate added — M08.ThematicETF_ClassificationAudit() required before policy_driven_thematic_equity finalized for any thematic ETF -->
+<!-- Version: 1.1 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M07_InstrumentEval
+  Version:         1.1
+  Sub-project:     PORTFOLIO_ADVISOR
+  Reason to change: evaluation criteria, AUM/volume/spread thresholds, or disqualification rules change.
+  Inputs consumed:  instrument metadata (AUM, volume, spread, inception date, foreign exposure)
+                    AuditResult (from M08.ThematicETF_ClassificationAudit — if thematic ETF)
+  Outputs produced: AutoDisqualify result; ThematicETFGate classification
+  Calibration deps: CALIBRATION_STATE §10 (audit coverage and materiality thresholds)
+  Types consumed:   @see FW_Types.md — AuditResult
+-->
 
 ```
 MODULE InstrumentEval {

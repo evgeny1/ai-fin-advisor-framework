@@ -1,10 +1,18 @@
 # M13 — Growth Objectives
-<!-- Version: 1.0 | Adopted: April 23, 2026 -->
-<!-- Resolves: idealAllocation() gap in M03_ScenarioFramework.scenarioWeightedAllocation() -->
-<!-- Replaces: M03_ScenarioFramework.minimumConvictionWeight() -->
-<!-- Provides: per-account objective profiles, expected return table, feasibility check, recalibration sequence -->
-<!-- Consumes: M03 (probabilities), M08 (role classification), M09/M10 (directives), Allocation sheet (profiles) -->
-<!-- Companion: @see CALIBRATION_STATE §4 (return table + multipliers — load every session) -->
+<!-- Version: 1.0 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M13_GrowthObjectives
+  Version:         1.0
+  Sub-project:     PORTFOLIO_ADVISOR
+  Reason to change: account objective logic, feasibility methodology, or recalibration sequence changes.
+                    Return table values: go to CALIBRATION_STATE §4 only — not here.
+  Inputs consumed:  ScenarioProbabilities (from M03); BlendedReturn (from M15)
+                    account objective profiles (from Allocation sheet "Objectives" tab)
+  Outputs produced: AllocationTarget, FeasibilityResult
+  Calibration deps: CALIBRATION_STATE §4.1 (return table), §4.2–4.3 (multipliers), §4.4 (floor/cap params)
+  Types consumed:   @see FW_Types.md — ScenarioProbabilities, BlendedReturn, AllocationTarget, FeasibilityResult
+-->
 
 ```
 MODULE GrowthObjectives {

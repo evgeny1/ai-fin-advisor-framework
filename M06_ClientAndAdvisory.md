@@ -1,5 +1,16 @@
 # M06 — Client Profile & Advisory Principles
-<!-- Cross-references: @see M03_ScenarioFramework.scenarioWeightedAllocation, @see M07_InstrumentEval -->
+<!-- Version: 1.0 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M06_ClientAndAdvisory
+  Version:         1.0
+  Sub-project:     PORTFOLIO_ADVISOR
+  Reason to change: client profile, tax placement rules, or advisory principles change.
+  Inputs consumed:  instrument type, account context, proposed allocation
+  Outputs produced: tax placement decision; hold/execute EV assessment; bias guard result
+  Calibration deps: none (all rules are structural)
+  Types consumed:   @see FW_Types.md — AccountID, TaxConstraint
+-->
 
 ```
 MODULE ClientProfile {

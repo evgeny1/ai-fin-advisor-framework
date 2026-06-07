@@ -1,9 +1,21 @@
 # M10 — Scenario Execution Protocols: D, E, F
-<!-- All protocols apply: @see M08_FunctionalRoles.ExecutionGuards -->
-<!-- All protocols apply: @see M08_FunctionalRoles.ExecutionTaxPlacement -->
-<!-- All protocols apply: @see M08_FunctionalRoles.DeEscalation -->
-<!-- Minimum conviction weight: @see M03_ScenarioFramework.minimumConvictionWeight() -->
-<!-- Scenario D trigger updated by: @see M11_CreditAndCalibration.ScenarioDTrigger -->
+<!-- Version: 1.1 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M10_ScenariosDEF
+  Version:         1.1
+  Sub-project:     PORTFOLIO_ADVISOR
+  Reason to change: execution protocol, position responses, or rotation sequence for Scenarios D, E, or F changes.
+                    Scenario E rate directives branch on YieldCurveSignal.e_pathway_type — pathway logic changes go to M17.
+  Inputs consumed:  ScenarioProbabilities; YieldCurveSignal (e_pathway_type for Scenario E)
+                    CreditSignal (from M11 — Scenario D trigger)
+  Outputs produced: ExecutionDirective[]
+  Calibration deps: CALIBRATION_STATE §2.3 (GDP threshold for Scenario F trigger/invalidation)
+  Types consumed:   @see FW_Types.md — ScenarioProbabilities, YieldCurveSignal, CreditSignal, ExecutionDirective
+  Cross-module:     all protocols @see M08.ExecutionGuards, M08.ExecutionTaxPlacement, M08.DeEscalation
+                    Scenario D trigger: @see M11_CreditAndCalibration.ScenarioDTrigger
+                    minimumConvictionWeight: @see M13_GrowthObjectives.minimumConvictionWeight()
+-->
 
 ```
 MODULE ScenarioD {  // Deflationary Recession

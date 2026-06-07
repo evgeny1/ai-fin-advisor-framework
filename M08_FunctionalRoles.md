@@ -1,8 +1,17 @@
 # M08 — Functional Roles (Dynamic Position Classification)
-<!-- Applied at execution time by all Scenario Execution Protocols -->
-<!-- Cross-references: @see M09_ScenariosABC, @see M10_ScenariosDEF -->
-<!-- Extended by: M14_MarketRegime (EntryExtensionGuard added to ExecutionGuards) -->
-<!-- Extended by: M15_InstrumentClassification (composite decomposition; blendedScenarioReturn replaces direct §4.1 lookups for all allocation computations) -->
+<!-- Version: 1.7 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M08_FunctionalRoles
+  Version:         1.7
+  Sub-project:     PORTFOLIO_ADVISOR (primary) | ANALYSIS_ENGINE (classifyRole for constituent analysis only)
+  Reason to change: role classification logic, dual-role conflict rules, execution guards, or mandate impairment logic changes.
+                    New roles: add to CALIBRATION_STATE §11 only — not here.
+  Inputs consumed:  holding metadata; scenario directives (from M09/M10)
+  Outputs produced: Role classification; AuditResult; ImpairmentResult; ExecutionTaxPlacement directive
+  Calibration deps: CALIBRATION_STATE §10 (ThematicETF audit thresholds), §11 (role registry)
+  Types consumed:   @see FW_Types.md — Role, Directive, AuditResult, ImpairmentResult, ExecutionDirective
+-->
 
 ```
 MODULE FunctionalRoles {
