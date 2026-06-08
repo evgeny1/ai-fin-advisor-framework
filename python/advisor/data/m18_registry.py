@@ -1,0 +1,339 @@
+"""
+M18 DATA_REGISTRY_ENTRIES — Python translation of M18_MarketDataFetch.md.
+This is the ONLY file where FetchSpecs are registered. Never add series elsewhere.
+To add a new series: add one FetchSpec block here. Nothing else changes.
+"""
+from __future__ import annotations
+from ..types import DataSource, FetchSpec, UpdateFrequency
+from .fetch_registry import FetchRegistry
+
+
+def register_all(registry: FetchRegistry) -> None:
+    """Register every M18 DATA_REGISTRY_ENTRY into the given FetchRegistry."""
+    for spec in _ALL_SPECS:
+        registry.register(spec)
+
+
+# ── ENERGY ────────────────────────────────────────────────────────────────────
+
+_ALL_SPECS: list[FetchSpec] = [
+
+    FetchSpec(
+        id="BRENT_CRUDE",
+        source=DataSource.FMP_COMMODITY,
+        description="Brent crude futures BZUSD. Fallback: yfinance BZ=F.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M02", "M03", "M17"],
+    ),
+
+    FetchSpec(
+        id="WTI",
+        source=DataSource.YFINANCE,
+        description="WTI crude CL=F. Secondary to Brent; cross-reference only.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M02"],
+    ),
+
+    FetchSpec(
+        id="NATURAL_GAS",
+        source=DataSource.FRED_OR_WEBSEARCH,
+        description="Henry Hub front-month. MANDATORY when FARM_FILINGS_YOY within "
+                    "10pp of +50%. Currently +46% — fetch every session.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=3,
+        consumer=["M02", "M17"],
+        calibration_use="CHAIN_1 §12.1: >=6.00/mmBtu sustained 30 days",
+    ),
+
+    # ── PRECIOUS METALS ───────────────────────────────────────────────────────
+
+    FetchSpec(
+        id="GOLD_SPOT",
+        source=DataSource.FMP_COMMODITY,
+        description="Gold futures GCUSD. Fallback: yfinance GC=F.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M02"],
+    ),
+
+    FetchSpec(
+        id="SILVER",
+        source=DataSource.FMP_COMMODITY,
+        description="Silver futures SIUSD. Fallback: yfinance SI=F.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M02"],
+    ),
+
+    # ── BROAD EQUITIES ────────────────────────────────────────────────────────
+
+    FetchSpec(
+        id="SP500",
+        source=DataSource.FMP_INDEXES,
+        description="S&P 500 ^GSPC. Use ^GSPC not ^SPX (ACCESS DENIED).",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M02", "M14"],
+    ),
+
+    FetchSpec(
+        id="NASDAQ_COMP",
+        source=DataSource.YFINANCE,
+        description="NASDAQ Composite ^IXIC.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M02"],
+    ),
+
+    FetchSpec(
+        id="DOW",
+        source=DataSource.YFINANCE,
+        description="Dow Jones Industrial Average ^DJI.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M02"],
+    ),
+
+    FetchSpec(
+        id="RUSSELL2000",
+        source=DataSource.YFINANCE,
+        description="Russell 2000 ^RUT.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M02"],
+    ),
+
+    # ── VOLATILITY ────────────────────────────────────────────────────────────
+
+    FetchSpec(
+        id="VIX",
+        source=DataSource.FMP_INDEXES,
+        description="VIX daily close ^VIX. Fallback: yfinance ^VIX.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M02", "M14"],
+    ),
+
+    FetchSpec(
+        id="VIX_30D_AVG",
+        source=DataSource.FMP_CHART,
+        description="VIX 30-day rolling average. Computed from 30 trading-day history.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M14"],
+    ),
+
+    FetchSpec(
+        id="VIX_90D_AVG",
+        source=DataSource.FMP_CHART,
+        description="VIX 90-day rolling avg. Also derives VIX_change_90d_pts for M14.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M14"],
+    ),
+
+    FetchSpec(
+        id="MOVE",
+        source=DataSource.YFINANCE,
+        description="ICE BofA MOVE Index ^MOVE. FMP ^MOVE ACCESS DENIED.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M11", "M02"],
+        calibration_use="Watch 80. Alert 100. Formal threshold TBD Q2.",
+    ),
+
+    # ── REGIONAL BANKS ────────────────────────────────────────────────────────
+
+    FetchSpec(
+        id="KRE",
+        source=DataSource.YFINANCE,
+        description="SPDR S&P Regional Banking ETF KRE.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M17"],
+        calibration_use="CHAIN_2 §12.2: KRE vs SPX 90d underperformance >= -15pp",
+    ),
+
+    FetchSpec(
+        id="KBE",
+        source=DataSource.YFINANCE,
+        description="SPDR S&P Bank ETF KBE.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M17"],
+    ),
+
+    # ── RATES & YIELD CURVE ───────────────────────────────────────────────────
+
+    FetchSpec(
+        id="YIELD_CURVE",
+        source=DataSource.FMP_ECONOMICS_TREASURY_RATES,
+        description="Full US Treasury par yield curve (all tenors). Covers 10Y, 2Y, "
+                    "30Y, 10Y-2Y spread. Fallback: treasury.gov.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=2,
+        consumer=["M17", "M02"],
+    ),
+
+    FetchSpec(
+        id="SOFR",
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        description="SOFR — Secured Overnight Financing Rate.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=2,
+        consumer=["M17", "M11"],
+    ),
+
+    FetchSpec(
+        id="DFF",
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        description="DFF — Effective Federal Funds Rate.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=2,
+        consumer=["M17", "M11", "M02"],
+    ),
+
+    FetchSpec(
+        id="THREEFYTP10",
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        description="THREEFYTP10 — 10Y Treasury term premium (ACM). Weekly cadence.",
+        update_frequency=UpdateFrequency.WEEKLY,
+        acceptable_lag_days=7,
+        consumer=["M17", "M02"],
+        calibration_use="§12.5 E_term_premium_warning=100bp; alert=150bp",
+    ),
+
+    # ── CREDIT SPREADS ────────────────────────────────────────────────────────
+
+    FetchSpec(
+        id="HY_OAS",
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        description="ICE BofA US HY OAS — BAMLH0A0HYM2.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M11"],
+        calibration_use="M11 §1.1 HY_STRESS_DELTA and HY_RECESSION_DELTA",
+    ),
+
+    FetchSpec(
+        id="IG_OAS",
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        description="ICE BofA US IG OAS — BAMLC0A0CM.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M11"],
+        calibration_use="M11 §1.2 IG_TRANSMISSION_DELTA",
+    ),
+
+    FetchSpec(
+        id="CCC_OAS",
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        description="ICE BofA CCC & Lower OAS — BAMLH0A3HYC.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M11"],
+    ),
+
+    FetchSpec(
+        id="BBB_OAS",
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        description="ICE BofA BBB US Corporate OAS — BAMLC0A4CBBB.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M11"],
+    ),
+
+    # ── FX ────────────────────────────────────────────────────────────────────
+
+    FetchSpec(
+        id="DXY",
+        source=DataSource.YFINANCE,
+        description="US Dollar Index DX-Y.NYB. FMP forex/indexes both ACCESS DENIED.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M02"],
+        calibration_use="§2.2: DXY >= 105 sustained → SGOL invalidation risk",
+    ),
+
+    # ── INFLATION & MONETARY POLICY ───────────────────────────────────────────
+
+    FetchSpec(
+        id="CPI_YOY",
+        source=DataSource.WEBSEARCH_T1,
+        description="Latest BLS CPI YoY print. BLS.gov official stats exception "
+                    "(not a price series — HARD_GATE does not apply). "
+                    "Current: Apr 2026 = 3.8% YoY. Next: mid-June 2026.",
+        update_frequency=UpdateFrequency.MONTHLY,
+        acceptable_lag_days=35,
+        consumer=["M02", "M03"],
+        calibration_use="§2.3 B-trigger: >= 4.0% YoY, 3+ consecutive prints",
+    ),
+
+    # ── CASCADE CHAIN STRUCTURAL INPUTS ───────────────────────────────────────
+
+    FetchSpec(
+        id="FINRA_MARGIN_DEBT",
+        source=DataSource.ALLOCATION_SPREADSHEET_FINRA,
+        description="FINRA monthly margin debit balances. Current: $1.304T Apr 2026 "
+                    "(all-time nominal record). CHAIN_3_WATCH=TRUE.",
+        update_frequency=UpdateFrequency.MONTHLY,
+        acceptable_lag_days=30,
+        consumer=["M17"],
+        calibration_use="CHAIN_3 §12.3: WATCH on record; FIRES on -5% MoM or gate_count>=3",
+    ),
+
+    FetchSpec(
+        id="NATGAS_HENRY_HUB",
+        source=DataSource.FRED_OR_WEBSEARCH,
+        description="Henry Hub natgas. MANDATORY when FARM_FILINGS within 10pp of +50%.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=3,
+        consumer=["M17"],
+        calibration_use="CHAIN_1 §12.1: >=6.00/mmBtu sustained 30 days",
+    ),
+
+    FetchSpec(
+        id="FARM_FILINGS_YOY",
+        source=DataSource.USDA_OR_AFBF,
+        description="Chapter 12 farm bankruptcy YoY change. Current: +46% (2025 data). "
+                    "Quarterly cadence. Next USDA update may cross +50% threshold.",
+        update_frequency=UpdateFrequency.QUARTERLY,
+        acceptable_lag_days=90,
+        consumer=["M17"],
+        calibration_use="CHAIN_1 §12.1: >=+50% YoY",
+    ),
+
+    # ── HOLDINGS & PORTFOLIO PRICES ───────────────────────────────────────────
+
+    FetchSpec(
+        id="HOLDINGS_PRICES",
+        source=DataSource.YFINANCE,
+        description="All active portfolio instrument prices. List from instruments.json. "
+                    "Crosscheck against allocation sheet (5% discrepancy = HALT).",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=0,
+        consumer=["M02", "M06", "M13"],
+    ),
+
+    FetchSpec(
+        id="BROAD_EQUITY_TRAILING",
+        source=DataSource.FMP_INDEXES,
+        description="S&P 500 ^GSPC 30d and 90d trailing pct-change. "
+                    "Fallback: yfinance ^GSPC history.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M14"],
+    ),
+
+    FetchSpec(
+        id="HISTORICAL_INSTRUMENT_PRICES",
+        source=DataSource.YFINANCE,
+        description="Daily adjusted closes for any instrument, any date range. "
+                    "ON_DEMAND only — not a standard session fetch.",
+        update_frequency=UpdateFrequency.ON_DEMAND,
+        acceptable_lag_days=1,
+        consumer=["M16", "M13", "M07"],
+    ),
+]
