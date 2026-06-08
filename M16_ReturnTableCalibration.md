@@ -1,8 +1,20 @@
 # M16 — Return Table Calibration
-<!-- Added: May 6, 2026 (framework-v2-architecture-split) -->
-<!-- Governs: maintenance, revision, and audit of §4.1 Expected Real Annualized Return Table -->
-<!-- Consumed by: M13_GrowthObjectives (growth objectives), M15_InstrumentClassification (blended returns) -->
-<!-- Precedence: M16 governs revision methodology only; M13 and M15 consumption rules are not overridden -->
+<!-- Version: 1.0 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M16_ReturnTableCalibration
+  Version:         1.0
+  Sub-project:     ANALYSIS_ENGINE
+  Reason to change: §4.1 revision methodology, confidence level definitions, or 4-layer procedure changes.
+                    Governs revision only — M13 and M15 consumption rules are not overridden by M16.
+  Inputs consumed:  CALIBRATION_STATE §4.1 (table being revised)
+                    historical return data (from M18 HISTORICAL_INSTRUMENT_PRICES on demand)
+                    neutral scenario distribution A=35/B=15/C=15/D=10/E=5/F=20 (Layer 4 — always, never current operating)
+  Outputs produced: revised §4.1 entries at HIGH/MEDIUM/LOW confidence; CalibrationLogEntry
+  Calibration deps: CALIBRATION_STATE §4.1 (the table being revised)
+                    CALIBRATION_STATE §3 via Calibration_Log.md (revision history)
+  Types consumed:   @see FW_Types.md — CalibrationLogEntry, ConfidenceLevel
+-->
 
 ```
 MODULE ReturnTableCalibration {

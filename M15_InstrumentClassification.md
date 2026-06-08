@@ -1,9 +1,18 @@
 # M15 — Instrument Classification
-<!-- Version: 1.0 | Adopted: April 28, 2026 -->
-<!-- Extends: M08_FunctionalRoles — composite decomposition; blendedScenarioReturn replaces direct §4.1 lookups -->
-<!-- Provides: extensible role registry, composite decomposition, blended scenario returns, session-start validation -->
-<!-- Companion: @see CALIBRATION_STATE §11 (role registry + instrument classification table) -->
-<!-- Consumed by: M03_ScenarioFramework, M08_FunctionalRoles, M13_GrowthObjectives, M09_ScenariosABC, M10_ScenariosDEF -->
+<!-- Version: 1.0 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M15_InstrumentClassification
+  Version:         1.0
+  Sub-project:     ANALYSIS_ENGINE
+  Reason to change: classification logic, blendedScenarioReturn methodology, or ValidateClassifications() rules change.
+                    Role registry and instrument decomposition: add to CALIBRATION_STATE §11 only — not here.
+  Inputs consumed:  instrument metadata; ComponentVector (§11 decomposition from CALIBRATION_STATE)
+  Outputs produced: ComponentVector; BlendedReturn; ValidateClassifications result; dominantDirective
+  Calibration deps: CALIBRATION_STATE §11 (role registry + instrument classification table)
+                    CALIBRATION_STATE §4.1 (return table — consumed via M13)
+  Types consumed:   @see FW_Types.md — ComponentVector, BlendedReturn, RoleID, Directive
+-->
 
 ```
 MODULE InstrumentClassification {

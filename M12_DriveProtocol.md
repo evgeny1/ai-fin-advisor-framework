@@ -1,8 +1,16 @@
 # M12 — File Access Protocol
-<!-- Version: Amendment 3 | Updated: June 07, 2026 -->
-<!-- Sub-project: DATA_INTELLIGENCE -->
-<!-- Reason to change: file access sources, write toolchain, or session type rules change.
-     Full change history: git log M12_DriveProtocol.md -->
+<!-- Version: Amendment 3 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M12_DriveProtocol
+  Version:         Amendment 3
+  Sub-project:     DATA_INTELLIGENCE
+  Reason to change: file access sources, write toolchain, or session type rules change.
+  Inputs consumed:  (infrastructure — reads and writes framework files; no domain inputs)
+  Outputs produced: fetched file contents; write-back confirmation; instruments.json (local only)
+  Calibration deps: none (infrastructure module)
+  Types consumed:   @see FW_Types.md — FileSpec, SessionType
+-->
 
 ```
 MODULE FileProtocol {

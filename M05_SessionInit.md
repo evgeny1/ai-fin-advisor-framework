@@ -1,16 +1,16 @@
 # M05 — Session Initialization
-<!-- Supersedes: any prior hardcoded file ID references (Amendment 1) -->
-<!-- Updated April 23, 2026: Calibration_State.md now fetched from GitHub; §7/§8 references updated -->
-<!-- Updated May 6, 2026 (v1.12 framework-v2-architecture-split): Step 3 now fetches BOTH -->
-<!--   Calibration_State.md AND Session_Log.md concurrently. Session_Log §8 is the authoritative -->
-<!--   source for prior scenario probabilities and open items. Step 10 WriteBack updated to -->
-<!--   push_files([Calibration_State.md, Session_Log.md]) — single atomic operation. -->
-<!-- Updated May 25, 2026 (Phase 2 registry integration): Step 4 now calls FetchRegistry.fetchAll() -->
-<!--   (M02.GatherIntel STEP 1); Step 8 now calls BriefingRegistry.assemble(readings) -->
-<!--   (M04.IntelligenceBriefing); §12 M17 cascade thresholds added to Step 3 apply list. -->
-<!-- Updated May 29, 2026 (portfolio-state-writeback): Step 10 WriteBack now writes three files -->
-<!--   atomically: Calibration_State.md + Session_Log.md + Portfolio_State.md. -->
-<!-- Cross-references: @see M12_FileProtocol, @see M04_BriefingFormat, @see M03_ScenarioFramework -->
+<!-- Version: 1.4 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              M05_SessionInit
+  Version:         1.4
+  Sub-project:     ORCHESTRATION
+  Reason to change: session start sequence steps, write-back protocol, or session type rules change.
+  Inputs consumed:  (entry point — orchestrates all other modules)
+  Outputs produced: (side effects only: intelligence briefing rendered; write-back committed)
+  Calibration deps: all — session init loads full CALIBRATION_STATE and SESSION_LOG at every session
+  Types consumed:   @see FW_Types.md — all types (orchestration module)
+-->
 
 ```
 MODULE SessionInit {
