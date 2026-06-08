@@ -154,6 +154,21 @@ MODULE MarketRegimeDiscipline {
   // ─── 1. MARKET PRICING DIVERGENCE SIGNAL ─────────────────────────────────────────────
 
   FUNCTION ComputeDivergenceSignal() -> DivergenceSignal {
+    // WINDOW DEFINITIONS (explicit):
+    //   energy_90d:       90 CALENDAR DAYS — anchor = close of 90 calendar days prior to session date
+    //   broad_equity_30d: 30 TRADING DAYS  — anchor = close of 30 trading days prior to session date
+    //                     (approx 6 calendar weeks; ~43 calendar days)
+    //
+    // EXTENDED CONFLICT CAVEAT (⚠ added June 7, 2026):
+    //   When an active discrete supply event (e.g., Hormuz closure) has persisted > 90 calendar days,
+    //   BOTH endpoints of the energy_90d window fall within the conflict period.
+    //   The 90d signal may then understate or fail to detect the sustained war premium
+    //   (both anchor and current price are "war-elevated").
+    //   In this case: ALSO compute energy_180d (same formula, 180 calendar days) for the briefing.
+    //   Report both. Use the higher reading for M14 composite classification.
+    //   REQUIRES: formal M16 adoption at next Q-end audit to make energy_180d the canonical metric.
+    //   Until then: 90d remains the operative metric; 180d is supplemental context.
+    //   FLAG in briefing as: "⚠ Conflict > 90d: energy_90d may understate war premium — 180d: [value%]"
 
     energy_change_90d    = (Brent_current - Brent_90d_prior_close) / Brent_90d_prior_close
     VIX_change_90d_pts   = VIX_current - VIX_90d_avg

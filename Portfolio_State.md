@@ -1,7 +1,7 @@
 # Portfolio State
 <!-- Living snapshot — updated after each advisory session write-back -->
-<!-- Source of truth: Calibration_State.md v1.22 + Session_Log.md (May 29, 2026) -->
-<!-- Last updated: May 29, 2026 (Q2 audit session) -->
+<!-- Source of truth: Calibration_State.md v1.32 + Session_Log.md (June 7, 2026) -->
+<!-- Last updated: June 7, 2026 (audit session — framework gap identification) -->
 <!-- Purpose: context document for the conversational companion project -->
 <!-- Do NOT use for execution decisions — use the advisory project for that -->
 

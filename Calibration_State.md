@@ -2,11 +2,10 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.31  Last updated: June 4, 2026 (M18 v1.2 regime re-verification; M14 re-computed with T1 data.
-# BZ=F Feb 25 actual $70.85 confirmed; prior HIGH tier validated. Today: energy_90d +5.52% — commodity NOT FIRING;
-# equity_scenario_divergence HIGH +6.05%. Composite HIGH (equity-driven). STG B challenge closed — MAGS +4.79% YTD
-# confirms [-2,+4] adoption. PAVE EV -4.03% confirmed. Iran qualitative carry A=7/B=36/C=41/D=5/E=4/F=7.
-# M12 PATTERN_B Step 3b: instruments.json local write added. No Sec 4.1 changes. No probability changes.)
+# Version: 1.32  Last updated: June 7, 2026 (Audit session — framework gap fixes: GAP-06 §11.2 STG B updated;
+# GAP-08 §2.1 C-trigger clock T1-confirmed; §1.x inline session observations pruned (live in §7 Session_Log);
+# GAP-15 B_WATCH_LEVEL_3 protocol added to §2.3. M05 Step 0 added; M12 read hierarchy updated;
+# M14 30d/180d window clarification; M16 Layer 4 reminder added. No §4.1 changes. No probability changes.)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -19,7 +18,7 @@ Persistent framework configuration — load at every session start alongside Ses
 
 At session start, after both files are fetched, the advisor must state in the briefing:
 
-"Calibration State loaded, last update: June 4, 2026 | Session Log loaded"
+"Calibration State loaded, last update: June 7, 2026 | Session Log loaded"
 
 Absence of either confirmation line indicates the respective file was not loaded and the session is invalid for threshold-sensitive decisions.
 
@@ -52,9 +51,7 @@ Note: FRED /data/ endpoint may return HTML wrapper in some fetch contexts. If we
 | D-floor on recession-pricing trigger | 25% | Fixed structural | Not calibration-dated |
 
 Baseline snapshot at instantiation (April 19, 2026): ~285 bps. Trailing 180d median to be computed at Q2 2026 audit.
-
-Session observation (May 22 full session): HY **278 bps** (FRED T1 — BAMLH0A0HYM2, May 21 close, via embedded spreadsheet tab). −4 bps from May 12. HY_StressBeginning ~435 bps; gap 157 bps. Tightening continues. NO THRESHOLD FIRES.
-Session observation (May 25 full session): HY **278 bps** (carry — FRED T1, May 21 close; May 25 = Memorial Day, no new data). Gap 157 bps. NO THRESHOLD FIRES.
+Latest reading (Session_Log.md §7): see most recent §7 row.
 
 ### 1.2 IG Composite - FRED: BAMLC0A0CM
 
@@ -64,8 +61,8 @@ Session observation (May 25 full session): HY **278 bps** (carry — FRED T1, Ma
 | Velocity overlay | +40 bps over prior 60 days | Fixed structural | Not calibration-dated |
 | Sustain period | 10 trading days | Fixed structural | Not calibration-dated |
 
-Session observation (May 22 full session): IG **75 bps** (FRED T1 — BAMLC0A0CM, May 21 close, via embedded spreadsheet tab). −2 bps from May 12. IG_TransmissionReached threshold ~143 bps; gap 68 bps. NOT FIRED. Continued tightening.
-Session observation (May 25 full session): IG **75 bps** (carry). Gap 68 bps. NOT FIRED.
+Baseline at instantiation: Not yet computed. Trailing 180d median to be computed at Q2 2026 audit.
+Latest reading (Session_Log.md §7): see most recent §7 row.
 
 ### 1.3 CCC Tail - FRED: BAMLH0A3HYC
 
@@ -74,8 +71,7 @@ Session observation (May 25 full session): IG **75 bps** (carry). Gap 68 bps. NO
 | Ratio divergence | CCC widens 3x composite over 30d | Fixed structural | Not calibration-dated |
 | Absolute divergence floor | CCC +200 bps while composite +<50 bps over 30d | Calibration-dated | Provisional - audit pending June 30, 2026 |
 
-Session observation (May 22 full session): CCC **939 bps** (FRED T1 — BAMLH0A3HYC, May 21 close, via embedded spreadsheet tab). +2 bps from May 12. 30d divergence: CCC +2 bps vs HY −4 bps (HY tightening; ratio check moot when HY tightening). Absolute divergence floor: NOT fired (+200 bps required). CCC_TailFirstWidening NOT triggered.
-Session observation (May 25 full session): CCC **939 bps** (carry). NOT triggered. ⚠ Quiet re-widening noted: +2 bps while HY tightening — watch for divergence acceleration.
+Latest reading (Session_Log.md §7): see most recent §7 row. CCC divergence watch: active since May 2026 (quiet re-widening while HY tightening). No formal threshold fires.
 
 ---
 
@@ -89,14 +85,20 @@ Session observation (May 25 full session): CCC **939 bps** (carry). NOT triggere
 | Brent trigger - Scenario C | $110 nominal OR 40% above 90d trailing Brent avg | Calibration-dated | Pending June 30 |
 | Brent invalidation - Scenario C | $80 nominal OR 20% below 90d trailing Brent avg | Calibration-dated | Pending June 30 |
 
-**Canonical Brent price source (established v1.17): BZ=F (ICE front-month futures, Yahoo Finance). Fortune T2 daily spot references rejected as clock reference after source discrepancy confirmed May 13 (Fortune $110+ vs BZ=F $105.71 for May 12 close). All future C-trigger clock determinations use BZ=F closing price.**
+**Canonical Brent price source (established v1.17): BZ=F (ICE front-month futures, market_data MCP or Yahoo Finance). Fortune T2 daily spot references rejected after source discrepancy confirmed May 13.**
 
-Session observations:
-- April 19–May 12: [See prior entries in §3 calibration log]
-- May 22 full session: BZ=F pre-market ~$109.11 (T2, Yahoo Finance, 6:10am EDT, declining −1.95%). C-TRIGGER CLOCK STATUS UNRESOLVED at session close. Brent 52-week high = $126.41 confirmed (Investing.com); achieved between May 13 and May 22. BZ=F daily closes May 14-21 not confirmed from approved source.
-- May 25 full session: **C-TRIGGER CLOCK: DAY 0 — RESOLVED (T2).** Reconstruction of BZ=F trajectory using Trading Economics CFD differential and Yahoo Finance pre-market: max consecutive days at or above $110 ≈ 5–6 (approx. May 13–19); price dropped below $110 around May 20 when CFD fell 5.66% to ~$105. 10-day requirement NOT met. BZ=F Sunday night pre-market (Memorial Day): **~$107.60** (Yahoo Finance T2, 1:32am EDT). Day 0 confirmed. ⚠ BZ=F daily closes May 14–19 remain T2-estimated; not confirmed from approved source; flag for T1 confirmation if clock restarts near $110.
-- May 26 full session: BZ=F ~$97 (recovering from Memorial Day plunge of ~6% on US-Iran deal optimism). C-trigger clock restart requires close ≥$110 — not imminent under current deal trajectory.
-- SGOL WTI floor ($55): WTI ~$91 (May 26). Comfortably clear. DXY ~99 carry, below 105. No SGOL invalidation risk.
+**C-trigger clock history — T1 CONFIRMED (June 7, 2026, market_data MCP BZ=F historical):**
+BZ=F daily close data March–June 2026 fetched from market_data MCP (T1). Maximum consecutive closes at or above $110:
+- **3 consecutive closes: March 27 ($112.57), March 30 ($112.78), March 31 ($118.35).**
+  Broken April 1 ($101.16).
+- Other runs: April 28–30 = 3 days ($111.26, $118.03, $114.01); May 4 alone ($114.44); May 18–19 = 2 days ($112.10, $111.28).
+- Maximum run observed: **3 consecutive closes** — far below the 10-close C-trigger requirement.
+- **Prior T2 estimate (May 25 session) of "~5–6 consecutive closes" was INCORRECT.** Corrected to max 3 T1-confirmed.
+- 52-week BZ=F intraday high: $126.41 (Investing.com, between May 13 and May 22 — may have occurred intraday without sustained closing basis).
+- **C-trigger clock: INACTIVE, Day 0. Has never been triggered.**
+
+Current status (June 7, 2026): BZ=F $93.09 (June 5 close). Well below $110 restart threshold. Clock will only restart on a BZ=F close ≥$110; requires 10 consecutive closes to fire.
+SGOL WTI floor ($55): WTI ~$87–90 (carry). DXY ~99 (carry). No invalidation risk.
 
 ### 2.2 Currency
 
@@ -116,7 +118,13 @@ DXY ~99 (carry). Below 105. No SGOL invalidation risk.
 | GDP invalidation - Scenario F | below 2% on BEA advance estimate | Pending June 30 |
 | Unemployment trigger - Scenario D | +0.5% over any 3-month window | Pending June 30 |
 
-May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8%). May CPI print mid-June is the binary event: if ≥4.0% → B formal trigger fires (3rd print).** FOMC holding 3.50–3.75% (Kevin Warsh confirmed as Fed Chair May 22; FOMC hawkish; rate hike risk discussed for 2027). Q1 GDP +2.0% (positive). Sahm Rule 0.20. Term premium (THREEFYTP10): 0.8117% (May 15 — 14-yr high, rising). 30Y yield: 5.07% (approaching M17 §12.5 warning level). Yield curve 10Y–2Y +43bp; 10Y–3M +88bp — post-inversion re-steepening = D_timing_signal RECESSION_ONSET_PATTERN.
+May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8%). May CPI print June 10 is the binary event: if ≥4.0% → B formal trigger fires (3rd print).** FOMC holding 3.50–3.75% (Kevin Warsh confirmed as Fed Chair May 22; FOMC hawkish; rate hike risk discussed for 2027). Q1 GDP +2.0% (positive). Sahm Rule 0.20. Term premium (THREEFYTP10): 0.8117% (May 15 — 14-yr high, rising). 30Y yield: 5.07% (approaching M17 §12.5 warning level). Yield curve 10Y–2Y +43bp; 10Y–3M +88bp — post-inversion re-steepening = D_timing_signal RECESSION_ONSET_PATTERN.
+
+**B_WATCH_LEVEL_3 protocol (added June 7, 2026 — GAP-15 fix):**
+For the 3rd CPI print (the formal trigger gate), graduated response by print level:
+- **≥4.0%**: B formal trigger FIRES. Run DeriveScenarioProbabilities() immediately. EXIT PAVE (Trigger 1). Revise B/C split.
+- **3.5–3.9%**: B_WATCH_LEVEL_3. Document in §8 as `b_watch_level_3: active`. Prepare PAVE exit parameters. Do NOT execute exit yet — trigger has not fired. Note acceleration trend. Run DeriveScenarioProbabilities() to assess forward B probability shift.
+- **<3.5%**: B trigger concern receding. Carry probabilities; update §7 credit readings; note deceleration vs prior prints.
 
 ---
 
@@ -717,17 +725,18 @@ VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v
 
 ### 11.2 secular_technology_growth - Return Estimates
 
-Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit June 30, 2026.
-⚠ Vanguard VCMM (Mar 2026): 2.3%-4.3% nominal (0%-2% real) for U.S. growth equities over 10yr — unconditional pessimistic anchor. Research Affiliates: 3.1% nominal U.S. large cap. GMO: -6% real U.S. large cap 7yr. Secular_tech B value revised Apr 30 upward to [-6,-1] based on AI revenue resilience — reassess at June 30 with additional B-environment quarters; proposed revision to [-12,-3] pending (§6 item 23).
+CURRENT OPERATIVE VALUES: B=[-2,+4]★ ADOPTED HIGH confidence (v1.27, June 1, 2026). See §4.1 table for full row.
+⚠ Vanguard VCMM (Mar 2026): 2.3%-4.3% nominal (0%-2% real) for U.S. growth equities over 10yr — unconditional pessimistic anchor. Research Affiliates: 3.1% nominal U.S. large cap. GMO: -6% real U.S. large cap 7yr.
+NOTE: §4.1 is authoritative for return values. This table shows operative values only; refer to §4.1 footnotes for full M16 derivation.
 
-| Scenario | Conservative | Upside | Rationale |
-| --- | --- | --- | --- |
-| A | 6% | 16% | Fed cuts; AI capex expands; multiple expansion |
-| B | -6% | -1% | REVISED Apr 30. Multiple compression under elevated rates, partially offset by AI earnings growth. PENDING REVISION to [-12,-3] at June 30. |
-| C | +2% | +8% | REVISED Apr 30. Q1 2026 empirical: Azure +40%, AWS +28%, META +33%. AI enterprise contracts multi-year. LOW CONFIDENCE — single data point; empirical audit June 30. |
-| D | -14% | -5% | Capex collapse in demand destruction. PENDING REVISION to [-20,-8] at June 30. |
-| E | -10% | -4% | Growth multiples collapse in systemic stress. PENDING REVISION to [-18,-6] at June 30. |
-| F | 4% | 11% | Strong nominal demand supports AI capex; rising rates partially compress multiples |
+| Scenario | Conservative | Upside | Status | Rationale |
+| --- | --- | --- | --- | --- |
+| A | 6% | 16% | ⚑ provisional | Fed cuts; AI capex expands; multiple expansion |
+| B | -2% | +4% | ★ ADOPTED HIGH (v1.27) | Q1 2026 as sustained B analogue confirmed; contract lock-in; [-12,-3] REJECTED. |
+| C | +2% | +8% | ⚑ provisional | Q1 2026 empirical: Azure +40%, AWS +28%, META +33%. AI enterprise contracts multi-year. Single data point; audit June 30. |
+| D | -6% | 0% | ⚑ PENDING June 30 | 2008-09 2yr annualized NDX -5.1% real. 1 analogue. Rederived from [-20,-8] (was 1yr acute — wrong convention). |
+| E | -12% | -3% | ⚑ PENDING June 30 | 2008 Q4 acute annualized. 1 analogue. Rederived from [-18,-6]. |
+| F | 4% | 11% | ⚑ provisional | Strong nominal demand; rising rates partially compress multiples |
 
 ### 11.3 Instrument Classification Table
 
@@ -973,6 +982,14 @@ Provisional. Added Apr 28. B and C revised Apr 30 (v1.8). Full empirical audit J
 - TAX PLACEMENT: ALL ACCOUNTS.
 - ENTRY EXTENSION GUARD: N/A.
 - Target allocation (v1.13): 7% Primary Taxable.
+
+---
+
+### 11.4 Candidate Instruments (Not Currently Allocated)
+<!-- These instruments have registered roles and §11 classification entries but no active target allocations.
+     They are distinct from §11.3 active instruments. Do NOT include in ValidateClassifications() HARD_STOP check.
+     Do NOT include in EV rank tables or FeasibilityCheck() computations unless specifically evaluating for addition.
+     Adoption triggers are listed per instrument. M07 screens and §4.1 calibration may be incomplete. -->
 
 #### VNQ
 - Components: real_estate_equity_income (0.60) + rate_sensitive_income_long_duration (0.22) + secular_technology_growth (0.12) + broad_market_equity_domestic (0.06)

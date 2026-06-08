@@ -29,48 +29,48 @@ MODULE FileProtocol {
   }
 
   // ─── SOURCE MAP ───────────────────────────────────────────────────────────────
+  // READ HIERARCHY for framework .md files:
+  //   1st: Desktop Commander (local git path) — FULL_DESKTOP sessions, fast, no decode
+  //   2nd: GitHub MCP — backup for READONLY_MOBILE or local read failure
+  //   NOT used for .md reads: Google Drive (Drive is for Allocation sheet only)
 
   SOURCE_MAP {
     drive: {
-      framework_folder: {
-        id:     "1xGHBLw-wzsJOxzm0rFpuHsBhx0PFhZzQ"
-        owner:  "evgeny.shatalov@gmail.com"
-        files:  [all M01–M18 .md files, Calibration_State.md, Session_Log.md,
-                 Portfolio_State.md, Calibration_Log.md, FW_Types.md, 00_INDEX.md,
-                 Archive_*.md]
-        access: read (all devices)
-        note:   .md files return base64 via download_file_content — decode before use
-        // Individual file IDs are NOT hardcoded — search by title within folder_id each call
-      }
       allocation_sheet: {
         file:   "Allocation"
         type:   Google_Sheets
         access: read_only
-        search: by title in Drive root (not in framework_folder)
+        search: by title in Drive root — NEVER hardcode file ID
         // Prices live via GOOGLEFINANCE — treat as current at time of fetch
         // Framework never writes to Allocation sheet
       }
+      // NOTE: framework .md files live in Drive but are read via local Desktop Commander,
+      // not via Drive API. Drive syncs the local folder bidirectionally.
     }
     github: {
       owner:  "evgeny1"
       repo:   "ai-fin-advisor-framework"
       branch: "master"
-      access: read_only — fallback if Drive call fails
+      access: read_only — fallback if Desktop Commander unavailable (READONLY_MOBILE)
       // NEVER use GitHub connector for any write operation
     }
     local: {
       path:   "/Users/evgeny/Library/CloudStorage/GoogleDrive-evgeny.shatalov@gmail.com/My Drive/dev/AI Financial Advisor Framework/"
       access: read + write via Desktop Commander
-      note:   syncs bidirectionally with drive.framework_folder via Google Drive desktop client
-      // Desktop Commander:read_file = faster local alternative to Drive download (no base64)
-      // Desktop Commander write tools = the write method for all sessions
+      note:   syncs bidirectionally with Google Drive framework folder via Drive desktop client
+      // Desktop Commander:read_file = PRIMARY read path for all .md framework files
+      // Desktop Commander write tools = the ONLY write method for all sessions
+      files:  [Calibration_State.md, Session_Log.md, Portfolio_State.md, Calibration_Log.md,
+               M01–M18.md, FW_Types.md, 00_INDEX.md, Archive_*.md]
     }
   }
 
   GUARD CoreRules {
     NEVER:  use web_fetch for any GitHub or Google Drive file
-    NEVER:  hardcode individual Drive file IDs — search by title within framework_folder.id
-    ALWAYS: resolve Allocation file ID via Drive root title search at session start
+    NEVER:  hardcode any Google Drive file ID — search by title for Allocation sheet; use local path for framework files
+    ALWAYS: resolve Allocation sheet via Drive root title search at session start (never hardcode its ID)
+    ALWAYS: read framework .md files via Desktop Commander local path (FULL_DESKTOP) or GitHub MCP (READONLY_MOBILE)
+    NEVER:  use Google Drive API to read framework .md files (Drive syncs locally; read the local copy)
     NEVER:  use github:push_files, github:create_or_update_file, github:create_branch,
             or github:create_pull_request for any operation
     ALWAYS: all writes go via Desktop Commander + local git
@@ -82,23 +82,21 @@ MODULE FileProtocol {
 
   // ─── SHARED READ FUNCTION ─────────────────────────────────────────────────────
   // Used by fetchCalibrationState(), fetchSessionLog(), fetchFrameworkFile().
+  // Desktop Commander is PRIMARY for all .md framework files (no base64 decode needed).
+  // GitHub MCP is the backup when Desktop Commander is unavailable (READONLY_MOBILE session).
+  // Google Drive is NOT used for framework .md files — only for the Allocation sheet.
 
   FUNCTION readFrameworkFile(filename: String) -> String {
 
-    TRY {  // Primary: Google Drive
-      result = Google_Drive:search_files(
-        query:                  "title = '[filename]' and parentId = '[SOURCE_MAP.drive.framework_folder.id]'",
-        pageSize:               2,
-        excludeContentSnippets: true
+    TRY {  // Primary: Desktop Commander (local git path)
+      RETURN Desktop_Commander:read_file(
+        path: SOURCE_MAP.local.path + filename
       )
-      IF result.files.length == 0 { THROW "not found in Drive" }
-      IF result.files.length > 1  { THROW "duplicate filename in Drive folder" }
-
-      raw = Google_Drive:download_file_content(fileId: result.files[0].id)
-      RETURN base64_decode(raw.content)
+      // Returns plain text — no base64 decode needed.
+      // Works only in FULL_DESKTOP sessions.
     }
-    CATCH {  // Backup: GitHub
-      WARN: "Drive read failed for [filename] — falling back to GitHub"
+    CATCH {  // Backup: GitHub MCP (READONLY_MOBILE or if local read fails)
+      WARN: "Desktop Commander read failed for [filename] — falling back to GitHub MCP"
       RETURN github:get_file_contents(
         owner:  SOURCE_MAP.github.owner,
         repo:   SOURCE_MAP.github.repo,

@@ -99,6 +99,13 @@ MODULE ReturnTableCalibration {
 
     // ── Layer 4: Consistency Check ────────────────────────────────────────────
     LAYER_4 ConsistencyCheck {
+      // ⚠ MANDATORY REMINDER — READ BEFORE COMPUTING:
+      // Layer 4 MUST use NEUTRAL_DISTRIBUTION { A=35, B=15, C=15, D=10, E=5, F=20 }.
+      // NEVER use the current operating distribution (e.g., A=7/B=36/C=41/D=5/E=4/F=7).
+      // Using the operating distribution would bias the check toward the current dominant
+      // scenario, making every revision appear consistent — defeating the purpose.
+      // Confirm explicitly: "L4 using neutral distribution A=35/B=15/C=15/D=10/E=5/F=20" before computing.
+
       APPLY NEUTRAL_DISTRIBUTION { A=35, B=15, C=15, D=10, E=5, F=20 }
       COMPUTE: scenario-probability-weighted average of revised [conservative]
                values across all 6 scenarios for this role

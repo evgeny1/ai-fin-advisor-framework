@@ -33,7 +33,8 @@ MODULE SessionInit {
 
   INPUT_3: FrameworkFiles {
     // Framework modules (M01–M18) are Project Knowledge — always in context, no fetch needed.
-    // CALIBRATION_STATE and Session_Log.md live in GitHub — fetch every session.
+    // CALIBRATION_STATE and Session_Log.md are fetched every session via Desktop Commander.
+    // @see M12_FileProtocol.readFrameworkFile() — Desktop Commander local path primary; GitHub MCP backup.
 
     fetch_via:        @see M12_FileProtocol.fetchCalibrationState()
                       @see M12_FileProtocol.fetchSessionLog()
@@ -70,6 +71,18 @@ MODULE SessionInit {
 
   SEQUENCE SessionStartSequence {
 
+    0: declare_session_type {
+       // REQUIRED before any other step. Declare one of:
+       //   FULL_DESKTOP    — Desktop Commander available + local git accessible
+       //   READONLY_MOBILE — no Desktop Commander (Android / web-only)
+       // Detection: if Desktop Commander tools are present in the tool list → FULL_DESKTOP
+       //            if absent or unreachable → READONLY_MOBILE
+       // State explicitly in session header before Step 1 runs.
+       // FULL_DESKTOP: all steps including WriteBack (Step 10) execute normally.
+       // READONLY_MOBILE: skip Step 10 entirely; advisory only; note this in briefing header.
+       // @see M12_FileProtocol.SessionType
+    }
+
     1: confirm_allocation_file_loaded
        // INPUT_1 — hard gate; STOP if fails
        // Google Drive — @see M12_FileProtocol.fetchAllocation()
@@ -79,8 +92,9 @@ MODULE SessionInit {
        // INPUT_2
        // Steps 2 and 3 may run concurrently — only after Step 1 confirmed successful
 
-    3: fetch_calibration_state_AND_session_log_from_github
-       // INPUT_3 — TWO concurrent GitHub fetches (only after Step 1 confirmed)
+    3: fetch_calibration_state_AND_session_log
+       // INPUT_3 — TWO concurrent fetches (only after Step 1 confirmed)
+       // @see M12_FileProtocol.readFrameworkFile() — Desktop Commander primary; GitHub backup
        //
        // From Calibration_State.md: apply §1, §2 thresholds; §4 return table + multipliers (M13);
        //   §9 M14 market regime thresholds; §11 role registry + instrument classification (M15);

@@ -13,6 +13,32 @@
 - Archive file naming: `Archive_[Year]Q[N].md` (e.g., `Archive_2026Q2.md` created June 30, 2026)
 - Archive contains: all §7 rows and §8 entries prior to the Q-end compaction cutoff
 
+### §8 Canonical Schema (added June 7, 2026 — required fields for every full-session entry)
+
+```
+date: YYYY-MM-DD (session type — e.g., "full M05" or "ad-hoc")
+scenario_probabilities: { A: X%, B: X%, C: X%, D: X%, E: X%, F: X% }
+  // VERIFY sum == 100%. Include derivation comments.
+primary_driver: [current dominant driver one-liner]
+session_type: [full M05 | ad-hoc | audit | READONLY_MOBILE]
+
+# Required for full sessions:
+credit_readings (date, T1 source):
+  HY: Xbps | IG: Xbps | CCC: Xbps | MOVE: X | VIX: X | S&P: X | KRE: $X | BZ=F: $X
+cascade_signals:
+  sectorStressScore: X. CascadeLevel: [MONITORING|WATCH|ALERT|WARNING|CRITICAL].
+  D_timing_signal: [value].
+open_triggers: [list with status]
+open_decisions: [numbered list]
+next_session_flags: [list]
+
+# Optional (include when relevant):
+calibration_changes_this_session: [list with version bumps]
+work_completed: [list for audit/ad-hoc sessions]
+m14_recomputation_results: [M14 session computation if run]
+b_watch_level_3: [active | inactive] (include when CPI print 3 is 3.5–3.9%)
+```
+
 ---
 
 ## Section 7 - Session Observations Log (Credit Readings)
@@ -30,6 +56,7 @@
 | 2026-06-02 (full M05 session — v1.29) | **274** | **74** | **941** | **FRED T1 — embedded allocation spreadsheet tab.** May 31 close (most recent). BZ=F: ~$95.30 (Yahoo Finance T1 close, +3.5% on Iran escalation). DXY: 99.19 (Trading Economics T1). 10Y: 4.51%; 2Y: 4.04%; 30Y: 4.98%; 10Y-2Y: +42bp. S&P open 7,599.96; close 7,609.78 (+0.13%). AIPO: $34.01 (+3.59%); COPX: $93.66 (+4.00%); MLPX: $73.50 (+2.03%). MOVE: 73.33 session-start. All credit thresholds CLEAR. CCC divergence watch active. | **T1 (credit) — spreadsheet tab; T2 (BZ=F, DXY, instruments)** |
 | 2026-06-02 (AIPO classification audit — v1.30) | 274 (carry) | 74 (carry) | 941 (carry) | Carry — ad-hoc classification correction session. No new market data fetched. AIPO ThematicETF_ClassificationAudit() re-run from T1 source (Defiance ETFs official page, 77 holdings, $750.87M AUM). | T1 carry |
 | 2026-06-04 (full M05 — M18 v1.2 re-verification) | 274 (carry) | 74 (carry) | 941 (carry) | FRED T1 via allocation spreadsheet — May 31 close (most recent). MOVE: 71.16 (GOOGLEFINANCE T1 live). VIX: 15.40 (T1 live). S&P: 7,584.31. DXY: 99.43. 10Y: 4.47%; 2Y: 4.05%; 30Y: 4.97%; 10Y-2Y: +42bp. BZ=F: $97.81 (Jun 3 close T1 market_data). KRE: $69.98. All credit thresholds CLEAR. MOVE NORMAL (71.16 < 80). M14 composite HIGH (equity-driven; commodity NOT FIRING — energy_90d +5.52%). | T1 carry (credit); T1 live (MOVE, VIX, S&P, DXY, rates) |
+| 2026-06-07 (audit — framework gap session) | **274** | **74** | **946** | **FRED T1 — embedded allocation spreadsheet tab.** June 4 close: HY BAMLH0A0HYM2 2.74%, IG BAMLC0A0CM 0.74%, CCC BAMLH0A3HYC 9.46%. MOVE: 75.2 (GOOGLEFINANCE). VIX: 21.51 (June 5/7 live). S&P: 7,383.74 (June 5 close — S&P -2.64% on strong May jobs +172k vs +80k expected + semi selloff). KRE: $70.17 (stable). BZ=F: $93.09 (June 5 close, T1 market_data MCP — C-trigger INACTIVE). BBB OAS: 93 bps. SOFR: 3.62%. DFF: 3.62%. NatGas: $3.07 (June 1 latest). THREEFYTP10: 0.7541% (May 29 — latest in spreadsheet). M14 composite MODERATE (energy_90d −5.93% NOT FIRING; broad_equity_30d ~+3.7% MODERATE). CCC +5bps from last reading: divergence watch continues. | **T1 — spreadsheet tab (credit); T1 market_data (BZ=F)** |
 
 ---
 
@@ -472,3 +499,89 @@ next_session_flags:
   - June 30 Q2 audit: 26 days; STG B/D/E joint adoption; IHP row review; all Sec 5/6 items
   - M12 PATTERN_A amendment artifact: merge at client discretion
   - Sec 11.2 descriptor update (editorial only): queue for June 30
+
+---
+
+date: 2026-06-07 (audit — framework gap identification, v1.32)
+scenario_probabilities: { A: 7%, B: 36%, C: 41%, D: 5%, E: 4%, F: 7% }
+  // UNCHANGED. No T1 binary events. Iran MOU unsigned; talks fragile. CPI June 10 pending.
+  // derivation_method: carry from 2026-06-04
+primary_driver: US-Iran War Day ~100. BZ=F $93.09 (Jun 5 close T1). C-trigger INACTIVE. May jobs +172k (vs +80k expected) drove June 5 S&P -2.64%. VIX spiked to 21.51. CPI May prints June 10 — BINARY GATE.
+session_type: audit (framework gap identification — test run; write-back executed)
+
+calibration_changes_this_session:
+  - Calibration_State.md v1.32:
+  - GAP-08: §2.1 C-trigger clock T1-confirmed — max 3 consecutive closes ≥$110 (Mar 27/30/31). Prior T2 estimate of 5–6 was WRONG. Clock has never triggered.
+  - GAP-06: §11.2 STG B table updated to show [-2,+4]★ ADOPTED (v1.27). Prior stale text showed [-6,-1] with "pending revision to [-12,-3]" — both incorrect.
+  - GAP-15: B_WATCH_LEVEL_3 graduated protocol added to §2.3 (3.5–3.9% = prepare PAVE exit; ≥4.0% = trigger fires).
+  - §1.1/§1.2/§1.3: Inline session observations pruned. Live readings live in §7 only.
+  - §11.4: CANDIDATE INSTRUMENTS subsection created (VNQ, VEA, XLV, FLOT separated from active §11.3).
+  - M05: Step 0 (session type declaration) added before hard gate.
+  - M12: readFrameworkFile() updated — Desktop Commander primary (no base64), GitHub MCP backup; SOURCE_MAP cleaned (no hardcoded folder ID); GUARD CoreRules updated.
+  - M14: Explicit window definitions added (energy_90d = 90 CALENDAR DAYS; broad_equity_30d = 30 TRADING DAYS); extended-conflict 180d caveat added (compute supplemental energy_180d when war > 90d).
+  - M16: Layer 4 mandatory reminder added — never use current operating distribution; confirm neutral A=35/B=15/C=15/D=10/E=5/F=20 explicitly before computing.
+  - No §4.1 table changes. No probability changes.
+
+credit_readings (June 4 close T1 via allocation spreadsheet + June 5 market_data T1):
+  HY: 274bps | IG: 74bps | CCC: 946bps | MOVE: 75.2 | VIX: 21.51 | S&P: 7,383.74
+  KRE: $70.17 | BZ=F: $93.09 (Jun 5 T1) | BBB OAS: 93bps | SOFR: 3.62% | DFF: 3.62%
+  NatGas: $3.07 (Jun 1). THREEFYTP10: 0.7541% (May 29 carry).
+  All credit thresholds CLEAR. MOVE approaching 80 ELEVATED threshold (was 71.16 on Jun 4).
+  CCC divergence watch: +5bps from last reading (941→946); quiet widening continues.
+
+m14_recomputation_results:
+  energy_90d: BZ=F $93.09 (Jun 5) vs $98.96 (Mar 9, 90d anchor) = −5.93% → NOT FIRING.
+  ⚠ Extended conflict caveat ACTIVE: conflict > 90d; 180d anchor (Dec 2025 ~$70-72) would show +29%.
+  broad_equity_30d: SPY ~+3.7% (Jun 5 vs Apr 22–24 implied, 30 trading days) → MODERATE.
+  M14 composite: MODERATE (step down from Jun 4 HIGH; equity-driven only).
+  Note: June 5 semi selloff (-2.64% SPX) compressed the 30d equity return from +6% to ~+3.7%.
+
+cascade_signals:
+  sectorStressScore: 0. CascadeLevel: MONITORING.
+  CHAIN_3_WATCH: FINRA $1.304T Apr record (May data pending).
+  D_timing_signal: RECESSION_ONSET_PATTERN (carry — 10Y-2Y +42bp post-inversion re-steepening).
+  THREEFYTP10: 0.7541% vs 100bp E_term_premium_warning — below by ~24.6bp.
+
+open_triggers:
+  - CPI May (June 10, 8:30 AM ET): BINARY EVENT — PRINT 3/3 FOR B FORMAL TRIGGER.
+    ≥4.0%: B formal trigger fires → EXIT PAVE (Trigger 1); run DeriveScenarioProbabilities() immediately.
+    3.5–3.9%: B_WATCH_LEVEL_3 → prepare PAVE exit parameters; document in §8.
+    <3.5%: carry; assess deceleration. Calendar event created with reminders.
+  - US-Iran deal: MOU unsigned at negotiator level. Talks fragile (Iran comms suspended T2 Jun 1; Trump frustrated T2). A=7% unchanged.
+  - Bab el-Mandeb threat: T2 adversarial (Jun 2). WATCH for T1 confirmation.
+  - BZ=F $93.09: C-trigger INACTIVE. T1-confirmed max consecutive run was 3 closes (Mar 27/30/31), never 10.
+  - MOVE 75.2: approaching 80 ELEVATED threshold. Monitor post-CPI.
+  - THREEFYTP10: 0.7541% vs 100bp warning (~24.6bp gap). Rising trend.
+  - CHAIN_3_WATCH: $1.304T Apr record. May FINRA data pending. No FIRE condition.
+  - CHAIN_4: Q1 2026 188/qtr vs WATCH ≥220. Q2 data pending.
+  - IIJA reauthorization: Sep 30, 2026 (PAVE Aug 15 exit trigger).
+  - Q2 audit: June 30, 2026 (23 days).
+
+open_decisions:
+  1. PAVE: HOLD with exit triggers (v1.23). EV -4.03%. CascadeLevel MONITORING. June 10 CPI = Trigger 1 gate.
+     EXIT on: CPI ≥4.0% mid-June; no IIJA action by Aug 15; IIJA reduced; CascadeLevel ALERT.
+  2. MAGS: HOLD-only override. EV -0.94%. Targets IRA 3%, Roth 4%. Sheet shows 5%/6% — pending URA trade execution.
+  3. URA ADD: IRA 3%, Roth 3%. Guard CLEARED (v1.29). Sheet shows IRA 1% (discrepancy — clarify before executing).
+     Fund via: MAGS IRA 5%→3%, Roth 6%→4%; AIPO IRA 8%→7%, Roth 8%→7%.
+  4. AIPO target reduction: UNDER CLIENT DELIBERATION. IRA/Roth 7%→3% + DBMF +4pp. EV differential DBMF vs AIPO = +7.74pp.
+  5. §6 item 23: 5 blocked proposals pending June 30 (STG D/E joint with B; IHP A/D full row; GP A MEDIUM→HIGH).
+  6. XOM post-Hormuz ramp-up lag (~2mo): not encoded. Monitor if deal signed.
+  7. Bitcoin miners Q3: create bitcoin_mining_hpc role + M16 calibration (AIPO UNCLASSIFIED 7%).
+  8. PAVE exit timeline: ask client at session start when trigger fires — define "next rebalancing" timeframe.
+
+next_session_flags:
+  - LOAD: "Calibration State loaded, last update: June 7, 2026 | Session Log loaded"
+  - LOAD via Desktop Commander local path — NOT GitHub MCP, NOT Google Drive for .md files
+  - DECLARE session type (Step 0): FULL_DESKTOP or READONLY_MOBILE before Step 1
+  - FIRST: CPI May status — if released, run DeriveScenarioProbabilities() IMMEDIATELY
+    → ≥4.0%: B formal trigger → EXIT PAVE → ask client about exit timeline
+    → 3.5–3.9%: B_WATCH_LEVEL_3 → prepare exit parameters; document in §8
+  - FIRST: US-Iran deal status — T1 signing gates A probability move
+  - FIRST: BZ=F current close — C-trigger clock ($110 restart threshold; T1-confirmed max was 3 closes)
+  - MOVE at 75.2: approaching 80 ELEVATED; check in next session briefing
+  - URA: clarify 1% vs 3% sheet discrepancy; then execute ADD (IRA +2pp, Roth +3pp remaining)
+  - AIPO: client decision pending on 7%→3% reduction + DBMF bump
+  - COPX: $80.64 Jun 5 (down 10.54%) — re-verify entry guard before any ADD (90d window shifted)
+  - June 30 Q2 audit: 23 days; STG B/D/E joint; IHP A/D row; GP A MEDIUM→HIGH; all §5/§6 items
+  - M14 energy_180d: flag for June 30 formal M16 calibration (conflict > 90d → 180d lookback as canonical)
+  - Framework gaps deferred to June 30: GAP-11 (M07 EV floor); GAP-07 (§8 compaction annotation)
