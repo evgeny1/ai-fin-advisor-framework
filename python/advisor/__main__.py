@@ -70,7 +70,7 @@ def cmd_fetch_market_data() -> None:
     registry = _build_registry()
     readings = registry.fetch_all()
     output = {
-        "fetched_at": datetime.utcnow().isoformat() + "Z",
+        "fetched_at": datetime.now(datetime.UTC).isoformat() + "Z",
         "count": len(readings),
         "readings": [r.to_dict() for r in readings],
         "valid": sum(1 for r in readings if r.is_valid),
