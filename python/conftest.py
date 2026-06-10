@@ -19,7 +19,12 @@ is invoked from.
 """
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
 _PYTHON_ROOT = Path(__file__).parent
 if str(_PYTHON_ROOT) not in sys.path:
     sys.path.insert(0, str(_PYTHON_ROOT))
+
+# Load .env so os.environ.get() sees FMP_API_KEY etc. in both terminal and VS Code.
+# override=False means already-set shell variables take precedence over .env.
+load_dotenv(_PYTHON_ROOT / ".env", override=False)
