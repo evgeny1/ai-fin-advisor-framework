@@ -100,13 +100,37 @@ class TestYfinanceFetcher:
 # ── FMP fetcher ───────────────────────────────────────────────────────────────
 
 class TestFmpFetcher:
+    """
+    FMP REST API integration tests.
+    These require FMP_API_KEY AND a plan tier that allows the endpoint.
+    FMP REST returns 403 for commodity/indexes/chart with a free/starter key —
+    those endpoints work via the FMP MCP connector (higher-tier account) but
+    not via a standalone API key. Tests skip gracefully on 403 so they
+    automatically activate when the plan is upgraded.
+    """
+
+    @staticmethod
+    def _skip_if_403(exc: Exception) -> None:
+        """Call inside except block: skip the test if it's a plan-tier 403."""
+        import requests
+        if isinstance(exc, requests.exceptions.HTTPError) and "403" in str(exc):
+            pytest.skip(
+                "FMP REST returned 403 — endpoint requires higher plan tier than "
+                "the current standalone API key. Works via FMP MCP connector. "
+                "Will activate automatically when plan is upgraded."
+            )
+
     @pytest.mark.integration
     @pytest.mark.skipif(not os.environ.get("FMP_API_KEY"), reason="FMP_API_KEY not set")
     def test_fetch_brent(self):
         from advisor.data.fetchers.fmp_fetcher import fetch_commodity
         spec = FetchSpec("BRENT_CRUDE", DataSource.FMP_COMMODITY, "test",
                          UpdateFrequency.DAILY, 1)
-        readings = fetch_commodity(spec)
+        try:
+            readings = fetch_commodity(spec)
+        except Exception as e:
+            self._skip_if_403(e)
+            raise
         assert readings[0].is_valid
         price = readings[0].value["price"]
         assert 50 < price < 300, f"Brent price {price} outside plausible range"
@@ -117,7 +141,11 @@ class TestFmpFetcher:
         from advisor.data.fetchers.fmp_fetcher import fetch_yield_curve
         spec = FetchSpec("YIELD_CURVE", DataSource.FMP_ECONOMICS_TREASURY_RATES, "test",
                          UpdateFrequency.DAILY, 2)
-        readings = fetch_yield_curve(spec)
+        try:
+            readings = fetch_yield_curve(spec)
+        except Exception as e:
+            self._skip_if_403(e)
+            raise
         assert readings[0].is_valid
         val = readings[0].value
         assert "year10" in val
