@@ -59,7 +59,7 @@ class TestM18Registry:
         def mock_fetcher(spec: FetchSpec):
             called_ids.append(spec.id)
             return [DataReading(spec_id=spec.id, value=1.0,
-                                source=spec.source, fetched_at=datetime.now(datetime.UTC))]
+                                source=spec.source, fetched_at=datetime.utcnow())]
 
         for src in DataSource:
             registry.register_fetcher(src, mock_fetcher)
@@ -74,20 +74,16 @@ class TestYfinanceFetcher:
     """Integration tests — require network access. Skip with -m 'not integration'."""
 
     @pytest.mark.integration
-    def test_fetch_macro_vix(self):
-        from advisor.data.fetchers.yfinance_fetcher import fetch_macro
+    def test_dispatcher_vix(self):
+        """Integration: yfinance_dispatcher fetches a live VIX quote via _fetch_single."""
+        from advisor.data.fetchers.yfinance_fetcher import yfinance_dispatcher
         spec = FetchSpec("VIX", DataSource.YFINANCE, "test", UpdateFrequency.DAILY, 1)
-        # Temporarily set id to match _MACRO_SYMBOLS
-        spec_vix = FetchSpec("VIX", DataSource.YFINANCE, "test", UpdateFrequency.DAILY, 1)
-        # patch _MACRO_SYMBOLS lookup
-        import advisor.data.fetchers.yfinance_fetcher as m
-        original = m._MACRO_SYMBOLS.copy()
-        m._MACRO_SYMBOLS["VIX"] = "^VIX"
-        readings = fetch_macro(spec_vix)
-        m._MACRO_SYMBOLS.update(original)
-        assert readings
-        assert readings[0].is_valid
-        assert isinstance(readings[0].value["price"], float)
+        readings = yfinance_dispatcher(spec)
+        assert len(readings) == 1
+        assert readings[0].is_valid, f"VIX reading invalid: {readings[0].quality_flags}"
+        price = readings[0].value["price"]
+        assert isinstance(price, float)
+        assert 5 < price < 100, f"VIX={price} outside plausible range (5–100)"
 
     @pytest.mark.integration
     def test_fetch_holdings_prices(self):
