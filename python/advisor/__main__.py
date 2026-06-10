@@ -48,9 +48,17 @@ def _build_registry():
     registry.register_fetcher(DataSource.FMP_ECONOMICS_TREASURY_RATES, fmp.fetch_yield_curve)
     registry.register_fetcher(DataSource.FMP_CHART,                 fmp.fetch_vix_history_fmp)
 
-    # ── Allocation sheet fetchers ──────────────────────────────────────
-    registry.register_fetcher(DataSource.FRED_SPREADSHEET_TAB,     sheet.fetch_fred_series)
-    registry.register_fetcher(DataSource.ALLOCATION_SPREADSHEET_FINRA, sheet.fetch_finra_margin)
+    # ── Allocation sheet fetchers (Stage 5 / Pattern A only) ──────────
+    # In Pattern B Claude's Google Drive MCP connector handles the FRED
+    # tab and FINRA tab. Register these only when credentials exist.
+    from pathlib import Path as _Path
+    _cred_paths = (
+        _Path.home() / ".advisor" / "google_service_account.json",
+        _Path.home() / ".advisor" / "google_token.json",
+    )
+    if any(p.exists() for p in _cred_paths) or os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON"):
+        registry.register_fetcher(DataSource.FRED_SPREADSHEET_TAB,        sheet.fetch_fred_series)
+        registry.register_fetcher(DataSource.ALLOCATION_SPREADSHEET_FINRA, sheet.fetch_finra_margin)
 
     return registry
 

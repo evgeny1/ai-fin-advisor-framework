@@ -74,19 +74,21 @@ cd "AI Financial Advisor Framework/python"
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Create .env
+# 2. Create .env with your FMP API key
 cp .env.example .env
-# Edit .env: add FMP_API_KEY=your_key
+# Edit .env → add FMP_API_KEY=your_key
 
-# 3. Google Sheets auth (for FRED credit series from allocation sheet)
-python -m advisor setup google
-# Follow browser flow; saves token to ~/.advisor/google_token.json
-
-# 4. Load .env and run smoke tests
-source .env  # or: set -a; source .env; set +a
+# 3. Load .env and verify
+source .env
 python -m pytest tests/test_stage1/ -v -m "not integration"   # fast (no network)
-python -m pytest tests/test_stage1/ -v                        # full (requires network + API key)
+python -m pytest tests/test_stage1/ -v                        # full (requires network + FMP_API_KEY)
 ```
+
+**Google credentials are NOT needed for Stage 1.**
+In Pattern B (Claude orchestrates), Claude's Google Drive MCP connector handles the
+allocation spreadsheet (FRED credit series tab, FINRA tab). The Python `allocation_sheet.py`
+fetcher is only activated when Google credentials are present, and is only needed in
+Stage 5 (Pattern A) when Python runs as a standalone process with no Claude MCP runtime.
 
 ### Verification before proceeding to Stage 2
 
