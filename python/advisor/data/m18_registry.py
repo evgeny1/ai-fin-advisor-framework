@@ -20,8 +20,9 @@ _ALL_SPECS: list[FetchSpec] = [
 
     FetchSpec(
         id="BRENT_CRUDE",
-        source=DataSource.FMP_COMMODITY,
-        description="Brent crude futures BZUSD. Fallback: yfinance BZ=F.",
+        source=DataSource.YFINANCE,
+        description="Brent crude BZ=F via yfinance. FMP BZUSD returns 403 with standalone API key "
+                    "(FMP MCP uses a higher-tier account). Confirmed yfinance path works.",
         update_frequency=UpdateFrequency.DAILY,
         acceptable_lag_days=1,
         consumer=["M02", "M03", "M17"],
@@ -51,8 +52,8 @@ _ALL_SPECS: list[FetchSpec] = [
 
     FetchSpec(
         id="GOLD_SPOT",
-        source=DataSource.FMP_COMMODITY,
-        description="Gold futures GCUSD. Fallback: yfinance GC=F.",
+        source=DataSource.YFINANCE,
+        description="Gold futures GC=F via yfinance. FMP GCUSD returns 403 with standalone API key.",
         update_frequency=UpdateFrequency.DAILY,
         acceptable_lag_days=1,
         consumer=["M02"],
@@ -60,8 +61,8 @@ _ALL_SPECS: list[FetchSpec] = [
 
     FetchSpec(
         id="SILVER",
-        source=DataSource.FMP_COMMODITY,
-        description="Silver futures SIUSD. Fallback: yfinance SI=F.",
+        source=DataSource.YFINANCE,
+        description="Silver futures SI=F via yfinance. FMP SIUSD returns 403 with standalone API key.",
         update_frequency=UpdateFrequency.DAILY,
         acceptable_lag_days=1,
         consumer=["M02"],
@@ -71,8 +72,8 @@ _ALL_SPECS: list[FetchSpec] = [
 
     FetchSpec(
         id="SP500",
-        source=DataSource.FMP_INDEXES,
-        description="S&P 500 ^GSPC. Use ^GSPC not ^SPX (ACCESS DENIED).",
+        source=DataSource.YFINANCE,
+        description="S&P 500 ^GSPC via yfinance. FMP indexes ^VIX/^GSPC return 403 with standalone key.",
         update_frequency=UpdateFrequency.DAILY,
         acceptable_lag_days=1,
         consumer=["M02", "M14"],
@@ -109,8 +110,8 @@ _ALL_SPECS: list[FetchSpec] = [
 
     FetchSpec(
         id="VIX",
-        source=DataSource.FMP_INDEXES,
-        description="VIX daily close ^VIX. Fallback: yfinance ^VIX.",
+        source=DataSource.YFINANCE,
+        description="VIX daily close ^VIX via yfinance. FMP ^VIX returns 403 with standalone key.",
         update_frequency=UpdateFrequency.DAILY,
         acceptable_lag_days=1,
         consumer=["M02", "M14"],
@@ -118,8 +119,8 @@ _ALL_SPECS: list[FetchSpec] = [
 
     FetchSpec(
         id="VIX_30D_AVG",
-        source=DataSource.FMP_CHART,
-        description="VIX 30-day rolling average. Computed from 30 trading-day history.",
+        source=DataSource.YFINANCE,
+        description="VIX 30-day rolling average from yfinance ^VIX history.",
         update_frequency=UpdateFrequency.DAILY,
         acceptable_lag_days=1,
         consumer=["M14"],
@@ -127,8 +128,8 @@ _ALL_SPECS: list[FetchSpec] = [
 
     FetchSpec(
         id="VIX_90D_AVG",
-        source=DataSource.FMP_CHART,
-        description="VIX 90-day rolling avg. Also derives VIX_change_90d_pts for M14.",
+        source=DataSource.YFINANCE,
+        description="VIX 90-day rolling avg from yfinance ^VIX history. Also derives VIX_change_90d_pts.",
         update_frequency=UpdateFrequency.DAILY,
         acceptable_lag_days=1,
         consumer=["M14"],
@@ -169,9 +170,11 @@ _ALL_SPECS: list[FetchSpec] = [
 
     FetchSpec(
         id="YIELD_CURVE",
-        source=DataSource.FMP_ECONOMICS_TREASURY_RATES,
-        description="Full US Treasury par yield curve (all tenors). Covers 10Y, 2Y, "
-                    "30Y, 10Y-2Y spread. Fallback: treasury.gov.",
+        source=DataSource.YFINANCE,
+        description="Partial yield curve via yfinance: 10Y (^TNX), 30Y (^TYX), 3M (^IRX). "
+                    "2Y unavailable from yfinance — 10Y-2Y spread will be None. "
+                    "FMP:economics treasury-rates (full curve) works via MCP but returns 403 "
+                    "with standalone API key. Use FMP MCP for 2Y and full spread.",
         update_frequency=UpdateFrequency.DAILY,
         acceptable_lag_days=2,
         consumer=["M17", "M02"],
@@ -319,9 +322,8 @@ _ALL_SPECS: list[FetchSpec] = [
 
     FetchSpec(
         id="BROAD_EQUITY_TRAILING",
-        source=DataSource.FMP_INDEXES,
-        description="S&P 500 ^GSPC 30d and 90d trailing pct-change. "
-                    "Fallback: yfinance ^GSPC history.",
+        source=DataSource.YFINANCE,
+        description="S&P 500 ^GSPC 30d and 90d trailing pct-change via yfinance history.",
         update_frequency=UpdateFrequency.DAILY,
         acceptable_lag_days=1,
         consumer=["M14"],

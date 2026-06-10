@@ -36,16 +36,18 @@ def _build_registry():
     registry = FetchRegistry()
     register_all(registry)
 
-    # ── yfinance fetchers ──────────────────────────────────────────────
-    for spec_id in ("DXY", "MOVE", "KRE", "KBE", "NASDAQ_COMP", "DOW", "RUSSELL2000"):
-        registry.register_fetcher(DataSource.YFINANCE,
-                                  lambda s, _sid=spec_id: yf.fetch_macro(s))
-    registry.register_fetcher(DataSource.YFINANCE, yf.fetch_holdings_prices)
+    # ── yfinance: single dispatcher handles all YFINANCE specs by spec.id ─────
+    # One registration — no loop, no overwrite bug.
+    registry.register_fetcher(DataSource.YFINANCE, yf.yfinance_dispatcher)
 
-    # ── FMP fetchers ───────────────────────────────────────────────────
+    # ── FMP: only kept for future use when plan tier is upgraded ──────────────
+    # All FMP-sourced specs moved to YFINANCE after shadow session (June 10)
+    # confirmed FMP REST returns 403 for commodity/indexes/chart endpoints
+    # with a standalone API key (FMP MCP uses a higher-tier account).
+    # These registrations are harmless (no active specs use these sources now)
+    # and will become active when FMP plan is upgraded.
     registry.register_fetcher(DataSource.FMP_COMMODITY,             fmp.fetch_commodity)
     registry.register_fetcher(DataSource.FMP_INDEXES,               fmp.fetch_index)
-    registry.register_fetcher(DataSource.FMP_ECONOMICS_TREASURY_RATES, fmp.fetch_yield_curve)
     registry.register_fetcher(DataSource.FMP_CHART,                 fmp.fetch_vix_history_fmp)
 
     # ── Allocation sheet fetchers (Stage 5 / Pattern A only) ──────────
