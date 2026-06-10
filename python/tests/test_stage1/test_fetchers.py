@@ -59,7 +59,7 @@ class TestM18Registry:
         def mock_fetcher(spec: FetchSpec):
             called_ids.append(spec.id)
             return [DataReading(spec_id=spec.id, value=1.0,
-                                source=spec.source, fetched_at=datetime.utcnow())]
+                                source=spec.source, fetched_at=datetime.now(datetime.UTC))]
 
         for src in DataSource:
             registry.register_fetcher(src, mock_fetcher)
