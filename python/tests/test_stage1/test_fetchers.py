@@ -29,9 +29,9 @@ class TestM18Registry:
         assert len(ids) == len(set(ids)), "Duplicate FetchSpec IDs in M18 registry"
 
     def test_expected_spec_count(self):
-        # 28 specs defined in M18 (update this when adding new series)
-        assert len(_ALL_SPECS) == 28, (
-            f"Expected 28 specs, found {len(_ALL_SPECS)}. "
+        # 31 specs defined in M18 (update this when adding new series)
+        assert len(_ALL_SPECS) == 31, (
+            f"Expected 31 specs, found {len(_ALL_SPECS)}. "
             "Update this count when adding/removing series."
         )
 
