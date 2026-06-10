@@ -1,7 +1,7 @@
 # Portfolio State
 <!-- Living snapshot — updated after each advisory session write-back -->
-<!-- Source of truth: Calibration_State.md v1.32 + Session_Log.md (June 7, 2026) -->
-<!-- Last updated: June 7, 2026 (audit session — framework gap identification) -->
+<!-- Source of truth: Calibration_State.md v1.33 + Session_Log.md (June 10, 2026) -->
+<!-- Last updated: June 10, 2026 (B formal trigger session — PAVE exit executed) -->
 <!-- Purpose: context document for the conversational companion project -->
 <!-- Do NOT use for execution decisions — use the advisory project for that -->
 
@@ -11,142 +11,135 @@
 
 | Scenario | Label | Probability | One-line rationale |
 |---|---|---|---|
-| A | Soft Landing | 7% | No signed US-Iran deal; Hormuz not systematically open; no T1 basis for upgrade |
-| B | Stagflation Lock | 36% | CPI at print 2/3 toward formal trigger (3.3%, 3.8%); Fed on hold at 3.62%; growth positive but slowing |
-| C | Inflationary Shock | 41% | Active Hormuz closure Day ~90; structural C escalation (Iran Strait Authority proposal); BZ=F ~$91-92 (deal optimism, not resolved) |
-| D | Deflationary Recession | 5% | Client-approved qualitative basis; yield curve RECESSION_ONSET_PATTERN; CHAIN_3 WATCH; no M11 formal trigger |
-| E | Structural Rupture | 4% | THREEFYTP10 at 14-year high (0.83%); 30Y at 5.07%; sovereign fiscal stress building |
-| F | Growth Overheat | 7% | Q1 GDP +2.0%; no supply shock qualifying conditions |
+| A | Soft Landing | 5% | Deal track broken — T1 mutual airstrikes June 9-10; Trump escalation. No T1 signed agreement. |
+| B | Stagflation Lock | 41% | B formal trigger FIRED June 10 — May CPI 4.2% YoY (Print 3/3: Mar 3.3%, Apr 3.8%, May 4.2%). |
+| C | Inflationary Shock | 38% | Active Hormuz conflict Day ~103; no resolution; Iran escalation reinforces C persistence. BZ=F $91.45. |
+| D | Deflationary Recession | 5% | Yield curve RECESSION_ONSET_PATTERN; CHAIN_3 WATCH; no M11 formal trigger. KRE rising. |
+| E | Structural Rupture | 4% | THREEFYTP10 at 0.75% (below 100bp warning); 30Y 4.97%; sovereign stress building. |
+| F | Growth Overheat | 7% | Core CPI 2.9% contained; Q1 GDP +2.0%; F-type supply-side resilience. |
 
-**Sum: 100%. Last formally derived: May 25, 2026. Unchanged May 29 (Iran MOU not signed).**
+**Sum: 100%. Updated June 10, 2026. Prev: A=7/B=36/C=41/D=5/E=4/F=7 (June 7).**
+**VERIFY: 5+41+38+5+4+7 = 100 ✓**
 
-Primary driver: US-Iran War / Hormuz closure, Day ~90
-Challenger driver (A): Iran-US MOU agreed at negotiator level (Axios May 28, T1). Trump NOT signed as of May 29. Closest pre-signing state observed. A-update fires immediately on T1 signed agreement — expected +8 to +15pp shift.
+Primary driver: B formal trigger (May CPI 4.2% T1 BLS) + Iran military escalation (June 9-10 airstrikes)
+EV recomputation under new vector: DEFERRED to June 30 audit (prior EVs computed at A=7/B=36/C=41)
 
 ---
 
 ## Regime Context
 
-**What B and C mean in plain terms:** The portfolio is positioned for a world where inflation stays elevated (B) and/or gets periodically worse from geopolitical supply shocks (C). These two scenarios together hold 77% probability. The core positioning logic: own things that thrive when real purchasing power is being eroded by inflation — hard assets (gold, silver, copper), contracted real infrastructure (pipelines), systematic trend-following (profits from commodity trends), and uranium (structural demand from AI nuclear PPAs). Actively underweight or absent from things that suffer in inflation: broad equities, long-duration bonds, REITs.
+**B+C combined: 79% (up from 77%).** B now dominant at 41%. The portfolio's core positioning — hard assets, contracted infrastructure, trend-following, SGOV — is directly aligned with this regime.
 
-**The D tail (5%):** Yield curve has re-steepened after a sustained inversion — a pattern that has preceded recession in 5 of 6 historical occurrences. This isn't a probability driver yet (no M11 credit stress, no unemployment spike) but it sets the timing context. If B deepens into demand destruction, D probability would rise sharply. DBMF is the main D hedge — managed futures historically perform well in deflationary recessions as commodity trends reverse and equity shorts contribute.
+**What shifted today:** The B formal trigger firing resolves the CPI watch sequence that has been building since April. This is not a marginal update — it is a protocol event that required the exit of PAVE, a reallocation of ~11% of Acc4, and an upward revision of B by 5pp. The three prints (3.3% → 3.8% → 4.2%) confirm that Iran-war energy pass-through is sufficiently entrenched to clear the B threshold, even though core CPI at 2.9% remains contained. The B scenario is energy-mediated inflation hardening, not yet broad demand-driven inflation.
 
-**The A scenario (7%):** A peace deal would be the biggest single regime shift. BZ=F would likely drop to $75-85 (already pricing deal optimism at ~$91). Scenario A favors broad equities, long-duration bonds, REITs — all of which are currently underweight or absent. Portfolio would need rebalancing: reduce commodity hedges, add VNQ/VEA (both have A > 25% adoption triggers). DBMF would lose ~12% in A (trend reversal).
+**Iran escalation concurrent:** On June 9, the US and Iran traded airstrikes following the downing of a US Army helicopter. Trump issued explicit escalation rhetoric June 10. The deal track that had been building since late May (MOU at negotiator level) appears broken. A reduced to 5%. C structurally persistent. BZ=F fell despite the escalation ($91.45) — market not pricing Hormuz re-closure. C-trigger clock remains inactive (10 consecutive closes ≥$110 required; max observed run was 3).
+
+**FOMC June 17-18:** Next controlling event. 4.2% CPI makes rate hike in 2026/27 more likely. MOVE at 77.03 is approaching 80 ELEVATED. If MOVE crosses 80 post-FOMC, that becomes a formal signal to review rate-sensitive exposure.
 
 ---
 
-## Credit & Market Signals (May 28-29, 2026 — T1)
+## Credit & Market Signals (June 10, 2026 — T1)
 
 | Signal | Value | Status | Notes |
 |---|---|---|---|
-| HY OAS (BAMLH0A0HYM2) | 272 bps | NORMAL | Far below stress threshold (~435 bps). Tightening on deal optimism. |
-| IG OAS (BAMLC0A0CM) | 73 bps | NORMAL | Below transmission threshold (~143 bps). Tightening. |
-| CCC OAS (BAMLH0A3HYC) | 935 bps | NORMAL | No divergence vs HY. Both tightening. |
-| MOVE Index | 70.22 | NORMAL (<80) | Retreating from 79.72 peak. Bond volatility low. |
-| VIX | 15.32 | LOW | Risk-on environment. |
-| S&P 500 | 7,580 | — | Near highs. M14 equity divergence HIGH — market pricing more A than scenario weights suggest. |
-| DFF (Fed Funds) | 3.62% | ON HOLD | Kevin Warsh as Chair; hawkish stance; rate hike risk discussed for 2027. |
-| SOFR | 3.62% | NORMAL | SOFR-DFF spread: essentially flat. No interbank stress. |
-| THREEFYTP10 | 0.83% | WATCH | 14-year high. Rising toward 100bp E_term_premium_warning. ~17bp gap. |
-| 30Y Treasury | ~5.07% | WATCH | Approaching 5.50% E_watch level (~43bp gap). |
-| Yield curve 10Y-2Y | +43 bp | RE-STEEPENING | Post-inversion re-steepening = D_timing_signal RECESSION_ONSET_PATTERN. Informational only. |
-| BZ=F (Brent crude) | ~$91-92 | DECLINING | Down ~19% in May on deal optimism. C-trigger clock INACTIVE (well below $110 restart). |
-| WTI | ~$87-88 | DECLINING | Comfortably above SGOL invalidation floor ($55). No risk. |
-| DXY | ~99 | BELOW THRESHOLD | Well below 105 SGOL invalidation level. |
-| FINRA Margin Debt | $1.304T | CHAIN_3 WATCH | Apr 2026 all-time record. No cascade yet — requires ≥−5% MoM decline to FIRE. |
-| KRE | $69.61 | NORMAL | Not underperforming SPX by 15% over 90 days. CHAIN_2 not fired. |
+| HY OAS (BAMLH0A0HYM2) | 274 bps | CLEAR | June 4 T1 carry. Far below stress threshold. |
+| IG OAS (BAMLC0A0CM) | 74 bps | CLEAR | June 4 T1 carry. |
+| CCC OAS (BAMLH0A3HYC) | 946 bps | WATCH | 5th consecutive session quiet widening. HY flat. Divergence active. |
+| BBB OAS (BAMLC0A4CBBB) | 93 bps | CLEAR | June 4 carry. |
+| MOVE Index | 77.03 | NORMAL → WATCH | Approaching ELEVATED threshold (80). FOMC June 17-18 catalyst. |
+| VIX | 20.43 | NORMAL | +2.82% today on CPI print. In-line print = limited panic. |
+| S&P 500 | 7,362.65 | — | −0.32% today. Markets unshocked by in-line 4.2% CPI. |
+| KRE | 72.10 | NORMAL | +1.46% — banks rallying on higher-for-longer. Not a recession signal. |
+| DFF | 3.62% | ON HOLD | Kevin Warsh hawkish. Rate hike Dec 2026/2027 odds rising post CPI. |
+| SOFR | 3.62% | NORMAL | Flat vs DFF. No interbank stress. |
+| THREEFYTP10 | 0.7541% | WATCH | Below 100bp E_term_premium_warning by ~24.6bp. Rising trend. |
+| Yield curve 10Y-2Y | +42 bp | RE-STEEPENING | D_timing_signal: RECESSION_ONSET_PATTERN. Informational only. |
+| BZ=F (Brent crude) | $91.45 | DECLINING | Jun 9 T1. C-trigger clock INACTIVE (Day 0). 20% below $110 restart. |
+| DXY | 99.85 | BELOW THRESHOLD | Below 105 SGOL invalidation level. No SGOL risk. |
+| FINRA Margin Debt | $1.304T | CHAIN_3 WATCH | Apr 2026 record. May data pending. MoM +6.8% — no FIRE condition. |
 
-M14 composite regime signal: **HIGH** (commodity_fear_divergence HIGH + equity_scenario_divergence HIGH). Market is pricing more optimism than scenario probabilities reflect. No underweight trigger fired (max drift ≤2pp across accounts).
-
-Cascade level: **MONITORING** (sectorStressScore = 0 formal). D_precursor_binding = 0.
+M14 composite: **MODERATE** (broad_equity_30d +3.56%; energy_90d −0.58% NOT FIRING).
+Cascade level: **MONITORING** (sectorStressScore = 0. D_precursor_binding = 0).
 
 ---
 
 ## Portfolio Positions
 
-### Portfolio Total: ~$767k
-Primary accounts: ~$595k | Relative accounts: ~$172k
+### Portfolio Total: ~$748k (approximate)
+Primary accounts: ~$582k | Relative accounts: ~$167k
 
-### Live Prices (from allocation sheet, May 29)
-MLPX $71.93 | DBMF $31.00 | SGOL $43.28 | AIPO $32.83 | XAR $288.00 | SIVR $71.79 | COPX $88.14 | VTIP $50.43 | SGOV $100.67 | MAGS $70.71 | XLP $82.91 | PAVE $56.31
+### Live Prices (T1 Schwab screenshot + market_data, June 10)
+MLPX $74.37 | DBMF $30.85 | SGOL $39.28 | AIPO $29.71 | XAR $269.27 | SIVR $61.29
+COPX $78.64 | VTIP $50.36 | SGOV $100.475 | MAGS $64.80 | XLP $85.17 | URA $43.19
+PAVE: EXITED June 10, 2026 (502sh Acc4, ~$56.095)
 
-### Position Summary (EV ranked)
+### Acc4 (Taxable 6668-9768) — Post-Trade Targets
 
-| Ticker | Role(s) | EV | Scenario verdict | Target | Status |
+| Ticker | Old Target | New Target | Δ | Note |
+|---|---|---|---|---|
+| MLPX | 30% | 30% | — | |
+| SGOV | 15% | **21%** | +6pp | ADD executed |
+| XAR | 12% | 12% | — | |
+| DBMF | 10% | **15%** | +5pp | ADD executed |
+| AIPO | 8% | 8% | — | |
+| XLP | 7% | 7% | — | |
+| COPX | 7% | 7% | — | |
+| PAVE | 11% | **0%** | −11pp | SOLD — B trigger Trigger 1 |
+
+⚠ Allocation spreadsheet not yet updated — client to set new targets in Google Sheets.
+
+### Position Summary (EV ranked — prior vector A=7/B=36/C=41; recomputation pending June 30)
+
+| Ticker | Role(s) | EV | Verdict | Acc4 Target | Other Accounts |
 |---|---|---|---|---|---|
-| DBMF | systematic_trend_following | +11.02% | Loves B/C (+15%, +18%); hurts in A (−12%) | Primary: 10-17%, Relative: 15-20% | At target. #1 EV. Core B/C hedge. |
-| MLPX | real_asset_contracted_revenue (65%) + commodity_linked (35%) | +5.67% | Thrives in B and C; holds in D/E | Primary: 28-30%, Relative: 24-32% | At target. #2 EV. Largest position. |
-| URA | real_asset_contracted (50%) + commodity_linked (30%) + secular_tech (20%) | +4.17% | Strong B/C; modest in A/F; negative D | Primary IRA/Roth: 3% | NEW — added Q2 audit. Targets not yet executed. |
-| SIVR | precious_metals (55%) + commodity_linked (45%) | +3.03% | Strong B; positive C; shines in E | Primary: 4-5%, Relative: 4-6% | At target. Silver adds commodity dimension to gold. |
-| COPX | commodity_linked (75%) + international (25%) | +2.60% | Strong B/C; down hard in D | Primary IRA: 2%, Primary Taxable: 7% | At target. Copper = AI/green transition demand + B/C hedge. |
-| AIPO | real_asset_contracted (45%) + secular_tech (30%) + policy_thematic (20%) + commodity (5%) | +2.16% | Strong C (+4.35%); breakeven B (+0.60%); positive A/F | Primary: 7-8%, Relative: 6-10% | At target. AI power infrastructure. Thin track record (inception Jul 2025) — flag. |
-| XAR | geopolitical_premium (90%) + domestic_equity (10%) | +1.46% | Strong C; weak A | Primary: 12%, Taxable: 12% | At target. Defense ETF. Hold justified: break-even peace probability <5.6%. |
-| SGOL | precious_metals (1.00) | +1.43% | Strong B and E; hurt in C/F | Primary: 14-16%, Relative: 16-20% | At target. Gold. Core inflation/E hedge. |
-| SGOV | short_duration_income (1.00) | +0.76% | Stable across B/C; small drag in E | Primary Taxable: 15%, Taxable Pres: 100%, Relative IRA: 14% | At target. Capital preservation + optionality. |
-| XLP | consumer_defensive_equity (1.00) | +0.14% | Positive B (+2%); flat C (now +2% revised); negative D/E/F | Primary Taxable: 7% | At target. Consumer staples — defensive floor in B. |
-| VTIP | inflation_linked_sovereign (1.00) | +0.52% | Mild positive B/C; flat D | Primary: 8-10%, Relative: 10-12% | At target. Short TIPS — inflation accrual hedge. |
-| PAVE | domestic_equity (82%) + policy_thematic (18%) | −4.03% | Negative B/C/D/E; only positive A/F | Primary Taxable: 11% | WATCH. Negative EV. IIJA Sep 30 reauthorization risk. Override: essentially breakeven cost basis. |
-| MAGS | secular_tech (85%) + domestic_equity (15%) | −2.17% | Deeply negative B/D; positive only A/F | Primary: 3-5%, Relative: 3-8% | Targets reduced Q2 (−2pp IRA, −2pp Roth vs v1.19) to fund URA. Override maintained. EV worsening. |
+| DBMF | systematic_trend_following | +11.02% | #1 EV. Loves B/C; profitable in D/E. DBMF +0.23% today (B-consistent). | **15%** (raised) | Primary IRA 15%, Roth 17% |
+| MLPX | real_asset_contracted (65%) + commodity_linked (35%) | +5.10% | #2 EV. Contracted revenue + inflation-linked distribution. | 30% | Primary IRA 30%, Roth 28% |
+| URA | real_asset_contracted (50%) + commodity_linked (30%) + secular_tech (20%) | +4.02% | #3 EV. Nuclear demand + AI PPAs. ADD pending (guard cleared). | — | IRA 3%, Roth 3% (not yet executed) |
+| AIPO | real_asset_contracted (55%) + secular_tech (16%) + IHC (11%) + PDT (4%) + UNCLASSIFIED_bitcoin (7%) | +3.28% | #3 EV. AI power infrastructure. AIPO −3.94% today (risk-off). | 8% | IRA 7-8%, Roth 7-8% |
+| SIVR | inflation_hedge_precious_metals (55%) + commodity_linked (45%) | +2.93% | Silver adds commodity/inflation dimension. | — | IRA 4%, Roth 5% |
+| COPX | commodity_linked (75%) + international (25%) | +2.60% | Copper = AI/green demand + B/C hedge. −1.87% today. Cost basis: −$1,490 loss. | 7% | IRA 2% |
+| XAR | geopolitical_premium (90%) + domestic_equity (10%) | +1.46% | Defense ETF. Hold justified by war premium. −1.50% today. | 12% | IRA 12%, Roth 12% |
+| SGOL | inflation_hedge_precious_metals (1.00) | +1.24% | Gold. −2.08% today (rate expectations pressuring gold vs geopolitical bid). | — | IRA 15%, Roth 14% |
+| SGOV | short_duration_income (1.00) | +0.89% | Cash equivalent. Benefits from higher-for-longer. Flat today. | **21%** (raised) | IRA 15%, Roth/Relative 14% |
+| XLP | consumer_defensive_equity (1.00) | +0.76% | Consumer staples. +1.27% today — B-scenario consistency confirmed. | 7% | — |
+| VTIP | inflation_linked_sovereign (1.00) | +0.52% | Short TIPS. Inflation accrual hedge. Flat today. | — | IRA 8%, Roth 10% |
+| MAGS | secular_tech (85%) + domestic_equity (15%) | −0.94% | HOLD-only override. Targets IRA 3%, Roth 4%. Sheet shows 5%/6% pending URA trade. | — | IRA 3-5%, Roth 4-6% |
+| PAVE | policy_thematic (82%) + domestic_equity (18%) | −4.03% | **EXITED June 10, 2026.** B trigger Trigger 1. Proceeds → DBMF +5pp / SGOV +6pp. | **0%** | — |
 
 **Not currently held (adoption-triggered):**
-- VNQ (REITs): adopt if A > 25% on T1 deal signing
-- VEA (international developed): adopt if A > 25% on T1 deal signing
-- XLV (healthcare): pending full calibration (§4.1 all PENDING)
-- FLOT (floating rate): pending full M07 screen + calibration
+- VNQ (REITs): adopt if A > 25% on T1 signed deal
+- VEA (international developed): adopt if A > 25% on T1 signed deal
+- XLV (healthcare): pending §4.1 calibration
+- FLOT (floating rate): pending M07 screen + calibration
 
 ---
 
 ## Open Triggers
 
-| Trigger | Status | What fires if triggered |
+| Trigger | Status | Next Action |
 |---|---|---|
-| US-Iran deal signing | ELEVATED WATCH — MOU text agreed at negotiator level (Axios May 28); Trump NOT signed | A update +8 to +15pp immediately on T1 signing; run DeriveScenarioProbabilities(); VNQ/VEA adoption review; DBMF/XAR reduction |
-| CPI mid-June (May data) | BINARY EVENT — print 2/3; need ≥4.0% for 3rd | B formal trigger fires if ≥4.0%; run DeriveScenarioProbabilities() immediately at 8:30am ET release |
-| Brent C-trigger clock | INACTIVE — BZ=F ~$91-92, well below $110 restart | Clock restarts only if BZ=F closes ≥$110 for 10 consecutive trading days |
-| CHAIN_1 (Agriculture) | Farm filings +46% YoY vs +50% threshold; NatGas $3.10 vs $6 | Next USDA quarterly data could cross threshold; natgas well clear |
-| CHAIN_3 (Private/Margin) | WATCH — $1.304T margin debt all-time record | FIRES on ≥−5% MoM decline or 3+ fund gate events (2 observed) |
-| THREEFYTP10 | 0.83% — 14yr high, ~17bp from 100bp E_term_premium_warning | E watch flag escalates to E_PATHWAY_WATCH at 100bp |
-| IIJA reauthorization | September 30, 2026 — PAVE watch | If reauthorization fails or materially cut → PAVE thesis impaired |
-| secular_tech B calibration | PENDING June 30 — two competing proposals: [-2,+4] vs [-12,-3] | Adopted value affects MAGS and AIPO EVs; MAGS override assessment |
+| FOMC June 17-18 | 7 days | Watch MOVE crossing 80; watch rate hike language |
+| US-Iran airstrikes (June 9-10) | ACTIVE — T1 confirmed | Watch for T1 ceasefire or Hormuz closure |
+| BZ=F C-trigger clock | INACTIVE, Day 0 ($91.45) | Restarts on close ≥$110; needs 10 consecutive |
+| MOVE approaching ELEVATED | 77.03 (< 80) | FOMC catalyst; formal ELEVATED if crosses 80 |
+| Bab el-Mandeb | T2 WATCH | T1 confirmation → immediate C reassess |
+| THREEFYTP10 | 0.7541% (24.6bp gap) | E_term_premium_warning at 100bp |
+| CHAIN_3_WATCH | $1.304T record | May FINRA data pending |
+| CHAIN_4 | 188/qtr (< 220 WATCH) | Q2 AACER/PACER pending |
+| CCC divergence | 946bps, 5th session | Monitor acceleration post-FOMC |
+| Q2 audit | June 30, 2026 (20 days) | 12-item decision list |
 
 ---
 
 ## Open Decisions
 
-1. **PAVE exit:** EV −4.03%, essentially breakeven cost basis. CascadeLevel MONITORING — no formal exit trigger. IIJA Sep 30 approaching. Low urgency unless CascadeLevel rises or IIJA at risk.
-2. **MAGS override:** EV −2.17% and worsening. Targets reduced Q2 (IRA: 5%→3%, Roth: 6%→4%). Override still maintained. Review again at secular_tech B calibration resolution (June 30).
-3. **URA execution:** Targets set (IRA 3%, Roth 3%) but trades not yet executed per allocation sheet. Funded by MAGS and AIPO reductions. EntryExtensionGuard: verify 90d trailing avg before executing (URA ~$50.75, mid-range).
-4. **§4.1 remaining PENDING cells:** 14 pending revision proposals + remaining MEDIUM/LOW confidence cells (healthcare, floating_rate, emerging_market, real_estate, secular_tech B) — all deferred to June 30 formal audit.
-5. **CHAIN_4 T1 count:** Corporate bankruptcies at 14-year high qualitatively, but formal AACER/PACER count pending. Score = 0 until T1 confirmed.
-
----
-
-## Account Feasibility
-
-| Account | Type | Required EV | Achieved EV | Gap | Status |
-|---|---|---|---|---|---|
-| Primary IRA | TARGET_THEN_RETURN (10yr) | ~3.38% | +4.18% | +0.80pp | ✅ Closed |
-| Primary Roth | TARGET_THEN_RETURN (15yr) | ~3.05% | +4.23% | +1.18pp | ✅ Closed |
-| Primary Taxable | RETURN_THEN_TARGET (5yr) | advisory | +3.04% | — | ✅ |
-| Taxable Preservation | PRESERVATION | 0% nominal | SGOV 100% | — | ✅ |
-| Relative IRA | FLOOR_THEN_RETURN (10yr) | hard floor | +3.72% | — | ✅ |
-| Relative Roth | TARGET_THEN_RETURN (15yr) | ~3.05% | +4.46% | +1.41pp | ✅ |
-
-All accounts at or above required return. Primary IRA/Roth improved by +0.13pp/+0.15pp from URA addition.
-
----
-
-## Next Session Priorities
-
-1. Confirm US-Iran deal status (T1) — gates all A-probability discussion
-2. Confirm BZ=F current close — C-trigger clock status
-3. CPI mid-June event: run DeriveScenarioProbabilities() immediately on release
-4. Execute URA trades (IRA/Roth 3%) + MAGS/AIPO reductions — verify URA EntryExtensionGuard first
-5. Remaining Q2 audit items: §6 items 6-7, 9-10, 13-17, 19-24, 26, 29-39
-
----
-
-## Framework Version
-Calibration_State: v1.22 (last updated May 29, 2026)
-Session_Log: last entry May 29, 2026 (Q2 audit session)
-Framework modules: M01–M18 + FW_Types v1.1 + 00_INDEX (PR #17 + PR #18 merged)
+1. **MAGS** — HOLD-only override. EV −0.94%. Sheet shows 5%/6% (IRA/Roth); correct to 3%/4% when URA trade executes.
+2. **URA ADD** — Guard CLEARED (v1.29). IRA 3%, Roth 3%. Sheet discrepancy IRA 1% vs 3% — clarify then execute. Fund via MAGS −2pp + AIPO −1pp each account.
+3. **Acc4 sheet update** — Set PAVE 0%, DBMF 15%, SGOV 21% in Google Sheets (trades already executed June 10).
+4. **AIPO target reduction** — UNDER CLIENT DELIBERATION. IRA/Roth 7%→3% + DBMF +4pp. EV +3.28% (#3). Not adopted.
+5. **§6 item 23 blocked** — 5 proposals pending June 30 (STG D/E; IHP A/D; GP A).
+6. **EV recomputation** — Under new vector A=5/B=41/C=38: deferred to June 30.
+7. **Bitcoin miners Q3** — AIPO UNCLASSIFIED 7%; create bitcoin_mining_hpc role + M16 calibration.
+8. **Primary IRA buffer** — +0.48pp above req; monitor at June 30 after STG D/E + IHP revisions.
+9. **AIPO track record** — Inception Jul 2025; 12-month milestone ~Jul 24, 2026.
+10. **M14 energy_180d** — Formal calibration at June 30 (conflict >90d; 180d lookback as canonical).

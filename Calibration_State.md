@@ -2,10 +2,9 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.32  Last updated: June 7, 2026 (Audit session — framework gap fixes: GAP-06 §11.2 STG B updated;
-# GAP-08 §2.1 C-trigger clock T1-confirmed; §1.x inline session observations pruned (live in §7 Session_Log);
-# GAP-15 B_WATCH_LEVEL_3 protocol added to §2.3. M05 Step 0 added; M12 read hierarchy updated;
-# M14 30d/180d window clarification; M16 Layer 4 reminder added. No §4.1 changes. No probability changes.)
+# Version: 1.33  Last updated: June 10, 2026 (B formal trigger FIRED — May CPI 4.2% YoY T1 BLS;
+# scenario probabilities revised A=5/B=41/C=38/D=5/E=4/F=7; PAVE exit executed 502sh Acc4;
+# proceeds → Acc4 DBMF 10%→15% / SGOV 15%→21%. No §4.1 changes.)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -118,7 +117,7 @@ DXY ~99 (carry). Below 105. No SGOL invalidation risk.
 | GDP invalidation - Scenario F | below 2% on BEA advance estimate | Pending June 30 |
 | Unemployment trigger - Scenario D | +0.5% over any 3-month window | Pending June 30 |
 
-May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8%). May CPI print June 10 is the binary event: if ≥4.0% → B formal trigger fires (3rd print).** FOMC holding 3.50–3.75% (Kevin Warsh confirmed as Fed Chair May 22; FOMC hawkish; rate hike risk discussed for 2027). Q1 GDP +2.0% (positive). Sahm Rule 0.20. Term premium (THREEFYTP10): 0.8117% (May 15 — 14-yr high, rising). 30Y yield: 5.07% (approaching M17 §12.5 warning level). Yield curve 10Y–2Y +43bp; 10Y–3M +88bp — post-inversion re-steepening = D_timing_signal RECESSION_ONSET_PATTERN.
+May 26 full session: **CPI B trigger status: print 2 of 3 (March 3.3%, April 3.8%). May CPI print June 10 is the binary event: if ≥4.0% → B formal trigger fires (3rd print). ⚑ FIRED June 10, 2026 — May CPI 4.2% YoY (T1 BLS USDL-26-0824). PAVE exit (Trigger 1) executed same session. New probability vector A=5/B=41/C=38/D=5/E=4/F=7. See Session_Log §8 June 10, 2026.** FOMC holding 3.50–3.75% (Kevin Warsh confirmed as Fed Chair May 22; FOMC hawkish; rate hike risk discussed for 2027). Q1 GDP +2.0% (positive). Sahm Rule 0.20. Term premium (THREEFYTP10): 0.8117% (May 15 — 14-yr high, rising). 30Y yield: 5.07% (approaching M17 §12.5 warning level). Yield curve 10Y–2Y +43bp; 10Y–3M +88bp — post-inversion re-steepening = D_timing_signal RECESSION_ONSET_PATTERN.
 
 **B_WATCH_LEVEL_3 protocol (added June 7, 2026 — GAP-15 fix):**
 For the 3rd CPI print (the formal trigger gate), graduated response by print level:
@@ -129,6 +128,30 @@ For the 3rd CPI print (the formal trigger gate), graduated response by print lev
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-10 - Framework v1.33 (B formal trigger FIRED; probability revision; PAVE exit executed).
+May CPI 4.2% YoY (T1 BLS USDL-26-0824) — Print 3/3 (Mar 3.3%, Apr 3.8%, May 4.2%). §2.3 B formal
+trigger fires per protocol. Iran T1 escalation (AP/Britannica June 9-10): US Army helicopter downed,
+mutual airstrikes, Trump "will pay the price." DeriveScenarioProbabilities() run.
+Probabilities: A: 7%→5% (deal track broken, T1-confirmed airstrikes); B: 36%→41% (formal trigger);
+C: 41%→38% (B/C split per protocol; BZ=F $91.45 no Hormuz re-closure confirmed). D/E/F unchanged.
+Sum=100% ✓. Session cap: 5pp max shift (B) << 25pp ✓.
+PAVE exit: 502sh Acc4 @~$56.095. Realized gain ~+$984 absorbed by −$2,778 YTD realized losses. Tax zero.
+Proceeds redeployed: Acc4 DBMF 10%→15%, SGOV 15%→21%. M14: energy_90d −0.58% NOT FIRING;
+broad_equity_30d +3.56% MODERATE. M14 composite MODERATE. BZ=F $91.45 (Jun 9 T1). C-trigger INACTIVE.
+MOVE 77.03 (approaching ELEVATED 80). CCC divergence watch: 946bps. EV recomputation under new vector
+deferred to June 30 audit. No §4.1 changes this session.
+
+2026-06-07 - Framework v1.32 (audit — framework gap identification and fixes; no probability changes).
+GAP-08: §2.1 C-trigger clock T1-confirmed (max 3 consecutive closes ≥$110: Mar 27/30/31). Prior T2 ~5-6 WRONG.
+GAP-06: §11.2 STG B updated to [-2,+4]★ ADOPTED. Prior stale [-6,-1] + pending [-12,-3] both incorrect.
+GAP-15: B_WATCH_LEVEL_3 graduated protocol added to §2.3 (<3.5% / 3.5-3.9% / ≥4.0% branches).
+§1.1/§1.2/§1.3: Inline session observations pruned (live readings in §7 only).
+§11.4: CANDIDATE INSTRUMENTS subsection created (VNQ, VEA, XLV, FLOT separated from §11.3).
+M05 Step 0 added. M12 SOURCE_MAP cleaned (no hardcoded folder ID).
+M14: Explicit window definitions (energy_90d=90 calendar days; broad_equity_30d=30 trading days).
+M16: Layer 4 neutral distribution reminder (A=35/B=15/C=15/D=10/E=5/F=20 mandatory).
+BZ=F Jun 5 T1: $93.09. M14 composite MODERATE (step-down from HIGH). No §4.1 changes.
 
 2026-06-04 - Framework v1.31 (M18 v1.2 regime re-verification; M14 re-computation; STG B challenge closed).
 BZ=F Feb 25 2026 actual $70.85 T1 (estimate $70 accurate, +$0.85). energy_90d May 26 corrected +36.9%

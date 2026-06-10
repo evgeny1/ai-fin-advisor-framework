@@ -57,6 +57,7 @@ b_watch_level_3: [active | inactive] (include when CPI print 3 is 3.5–3.9%)
 | 2026-06-02 (AIPO classification audit — v1.30) | 274 (carry) | 74 (carry) | 941 (carry) | Carry — ad-hoc classification correction session. No new market data fetched. AIPO ThematicETF_ClassificationAudit() re-run from T1 source (Defiance ETFs official page, 77 holdings, $750.87M AUM). | T1 carry |
 | 2026-06-04 (full M05 — M18 v1.2 re-verification) | 274 (carry) | 74 (carry) | 941 (carry) | FRED T1 via allocation spreadsheet — May 31 close (most recent). MOVE: 71.16 (GOOGLEFINANCE T1 live). VIX: 15.40 (T1 live). S&P: 7,584.31. DXY: 99.43. 10Y: 4.47%; 2Y: 4.05%; 30Y: 4.97%; 10Y-2Y: +42bp. BZ=F: $97.81 (Jun 3 close T1 market_data). KRE: $69.98. All credit thresholds CLEAR. MOVE NORMAL (71.16 < 80). M14 composite HIGH (equity-driven; commodity NOT FIRING — energy_90d +5.52%). | T1 carry (credit); T1 live (MOVE, VIX, S&P, DXY, rates) |
 | 2026-06-07 (audit — framework gap session) | **274** | **74** | **946** | **FRED T1 — embedded allocation spreadsheet tab.** June 4 close: HY BAMLH0A0HYM2 2.74%, IG BAMLC0A0CM 0.74%, CCC BAMLH0A3HYC 9.46%. MOVE: 75.2 (GOOGLEFINANCE). VIX: 21.51 (June 5/7 live). S&P: 7,383.74 (June 5 close — S&P -2.64% on strong May jobs +172k vs +80k expected + semi selloff). KRE: $70.17 (stable). BZ=F: $93.09 (June 5 close, T1 market_data MCP — C-trigger INACTIVE). BBB OAS: 93 bps. SOFR: 3.62%. DFF: 3.62%. NatGas: $3.07 (June 1 latest). THREEFYTP10: 0.7541% (May 29 — latest in spreadsheet). M14 composite MODERATE (energy_90d −5.93% NOT FIRING; broad_equity_30d ~+3.7% MODERATE). CCC +5bps from last reading: divergence watch continues. | **T1 — spreadsheet tab (credit); T1 market_data (BZ=F)** |
+| 2026-06-10 (full M05 — B formal trigger session; v1.33) | **274** | **74** | **946** | **FRED T1 — embedded allocation spreadsheet tab.** June 4 close (most recent; no new FRED push): HY BAMLH0A0HYM2 2.74%, IG BAMLC0A0CM 0.74%, CCC BAMLH0A3HYC 9.46% (carry). MOVE: 77.03 (T1 market_data live). VIX: 20.43 (+2.82% on CPI; prev 19.87). S&P: 7,362.65 (−0.32%). KRE: $72.10 (+1.46% — hawkish). BZ=F: $91.45 (Jun 9 T1 market_data). DXY: 99.85. BBB OAS: 93bps (carry). SOFR: 3.62% (carry). KBE: $65.73 (+1.12%). Schwab T1 screenshot: PAVE $56.095 (SOLD 502sh, gain +$984 absorbed by −$2,778 YTD losses), MLPX $74.37 (+1.46%), DBMF $30.85 (+0.23%), SGOV $100.475 (flat), AIPO $29.71 (−3.94%), XLP $85.17 (+1.27%), COPX $78.64 (−1.87%). All credit thresholds CLEAR. MOVE approaching ELEVATED (77.03 < 80). CCC divergence watch: 5th consecutive session quiet widening. | **T1 — spreadsheet tab (credit, June 4 carry); T1 market_data (MOVE, VIX, S&P, KRE, BZ=F live); T1 Schwab screenshot (position prices)** |
 
 ---
 
@@ -584,4 +585,103 @@ next_session_flags:
   - COPX: $80.64 Jun 5 (down 10.54%) — re-verify entry guard before any ADD (90d window shifted)
   - June 30 Q2 audit: 23 days; STG B/D/E joint; IHP A/D row; GP A MEDIUM→HIGH; all §5/§6 items
   - M14 energy_180d: flag for June 30 formal M16 calibration (conflict > 90d → 180d lookback as canonical)
+  - Framework gaps deferred to June 30: GAP-11 (M07 EV floor); GAP-07 (§8 compaction annotation)
+
+---
+
+date: 2026-06-10 (full M05 — B formal trigger execution session; v1.33)
+scenario_probabilities: { A: 5%, B: 41%, C: 38%, D: 5%, E: 4%, F: 7% }
+  // UPDATED from June 7 carry (A=7/B=36/C=41/D=5/E=4/F=7)
+  // B formal trigger FIRES: May CPI 4.2% YoY (T1 BLS USDL-26-0824) — Print 3/3
+  //   Sequential: Mar 3.3%, Apr 3.8%, May 4.2%. Monthly decel: +0.5% vs +0.6% Apr (B-limiting).
+  //   Core CPI +2.9% (contained); energy >60% of monthly increase (C-consistent overlap).
+  // A: 7%→5% (−2pp): T1-confirmed mutual US-Iran airstrikes June 9 (AP/Britannica).
+  //   Trump "will pay the price" June 10 (T1 AP). Deal track broken.
+  //   BZ=F fell to $91.45 on June 9 despite escalation — market sees limited/posturing.
+  // B: 36%→41% (+5pp): B formal trigger fires per §2.3 protocol.
+  // C: 41%→38% (−3pp): B/C split per protocol; Iran escalation partially protects C.
+  //   BZ=F $91.45 — no confirmed Hormuz closure limits C upward repricing.
+  // D: 5% unchanged. KRE +1.46% today; credit clear; no new recession evidence.
+  // E: 4% unchanged. THREEFYTP10 0.7541% vs 100bp — below by ~24.6bp.
+  // F: 7% unchanged. Core CPI 2.9% consistent with F-type resilience.
+  // Sum: 5+41+38+5+4+7 = 100% ✓
+  // Session cap: 5pp max shift (B) << 25pp ✓ (§8 June 7 = 3 days ago, within 7-day window)
+  // derivation_method: DeriveScenarioProbabilities() — §2.3 B formal trigger + Iran T1 evidence
+primary_driver: May CPI 4.2% YoY (T1 BLS) — B formal trigger fires (Print 3/3). Iran escalation:
+  US helicopter downed June 9 + mutual airstrikes + Trump "will pay the price" June 10 (T1 AP/Britannica).
+session_type: full M05 (B formal trigger execution)
+
+calibration_changes_this_session:
+  - Calibration_State.md v1.33:
+  - §2.3: CPI B trigger status updated to FIRED (June 10, 2026; May CPI 4.2% T1 BLS)
+  - §3: v1.32 retroactive entry added (June 7 session had no §3 entry); v1.33 entry added
+  - Version header 1.32→1.33, date June 7→June 10
+
+credit_readings (June 4 T1 via spreadsheet — most recent FRED; live T1 market_data + Schwab screenshot):
+  HY: 274bps | IG: 74bps | CCC: 946bps | MOVE: 77.03 | VIX: 20.43 | S&P: 7,362.65 | KRE: $72.10
+  BZ=F: $91.45 (Jun 9 T1). DXY: 99.85. BBB OAS: 93bps. SOFR: 3.62%. DFF: 3.62%. KBE: $65.73.
+  All credit thresholds CLEAR. MOVE approaching ELEVATED (<80). CCC divergence: 5th session quiet widening.
+  Schwab T1: MLPX $74.37 (+1.46%), XLP $85.17 (+1.27%), DBMF $30.85 (+0.23%) — B-scenario consistent.
+  AIPO $29.71 (−3.94%), COPX $78.64 (−1.87%), XAR $269.27 (−1.50%) — risk-off in growth/commodity.
+
+m14_recomputation_results:
+  energy_90d: BZ=F $91.45 (Jun 9) vs $91.98 (Mar 11, 90d anchor) = −0.58% → NOT FIRING.
+  ⚠ Extended conflict >90d: 180d BZ=F anchor ~$71 (Dec 2025) → supplemental +29% informational only.
+  broad_equity_30d: SPY $737.05 (Jun 9) vs $711.69 (Apr 28, 30 trading days) = +3.56% → MODERATE.
+  M14 composite: MODERATE. UnderweightReviewTrigger: NOT fired (all positions ≤2pp of targets).
+
+cascade_signals:
+  sectorStressScore: 0. CascadeLevel: MONITORING.
+  CHAIN_3_WATCH: $1.304T FINRA record (Apr). May data pending. No FIRE condition.
+  CHAIN_4: Q1 188/qtr vs WATCH ≥220. T1 AACER/PACER pending → score=0.
+  D_timing_signal: RECESSION_ONSET_PATTERN (carry — 10Y-2Y +42bp post-inversion re-steepening).
+  THREEFYTP10: 0.7541% (May 29 carry) vs 100bp E_term_premium_warning (~24.6bp gap).
+
+trades_executed:
+  PAVE: SOLD 502sh Acc4 at ~$56.095. Cost basis $27,175.63; realized gain ~+$984.
+  Gain absorbed by −$2,778 YTD realized losses. Tax cost: zero.
+  DBMF Acc4: ADD executed. Target 10%→15%.
+  SGOV Acc4: ADD executed. Target 15%→21%.
+
+open_triggers:
+  - FOMC June 17-18 (7 days): rate decision + dot plot. 4.2% CPI reinforces hawkish path. Key MOVE catalyst.
+  - US-Iran escalation: helicopter downed June 9, mutual airstrikes June 10 (T1 AP). Deal track broken.
+    A=5%. Update immediately on T1 ceasefire resumption or signed agreement.
+  - Bab el-Mandeb: T2 adversarial (June 2). WATCH for T1 confirmation.
+  - BZ=F $91.45: C-trigger INACTIVE (<$110 restart threshold). If Hormuz physically re-closes → reassess C.
+  - MOVE 77.03: approaching ELEVATED threshold (80). Post-FOMC catalyst. Monitor.
+  - THREEFYTP10: 0.7541% vs 100bp E_term_premium_warning (~24.6bp gap). Rising trend.
+  - CHAIN_3_WATCH: $1.304T April record. May FINRA data pending.
+  - CHAIN_4: Q1 188/qtr vs WATCH ≥220. Q2 data pending (AACER/PACER T1).
+  - Q2 audit: June 30, 2026 (20 days).
+  - CCC divergence: 946bps, 5th consecutive session quiet widening. Monitor post-FOMC.
+
+open_decisions:
+  1. MAGS: HOLD-only override. EV −0.94%. Targets IRA 3%, Roth 4%. Sheet shows 5%/6% — update with URA trade.
+  2. URA ADD: IRA 3%, Roth 3%. Guard CLEARED (v1.29). Sheet shows IRA 1% (discrepancy — clarify before executing).
+     Fund via: MAGS IRA 5%→3%, Roth 6%→4%; AIPO IRA 8%→7%, Roth 8%→7%.
+  3. Acc4 allocation sheet update: Client to set PAVE→0%, DBMF→15%, SGOV→21% (trades already executed).
+  4. AIPO target reduction: UNDER CLIENT DELIBERATION. IRA/Roth 7%→3% + DBMF +4pp. EV +3.28% (#3 rank).
+  5. §6 item 23: 5 blocked proposals pending June 30 (STG D/E joint; IHP A/D full row; GP A MEDIUM→HIGH).
+  6. XOM post-Hormuz ramp-up lag (~2mo): not encoded. Monitor if deal signed.
+  7. Bitcoin miners Q3: create bitcoin_mining_hpc role + M16 calibration (AIPO UNCLASSIFIED 7%).
+  8. §11.2 STG B descriptor: editorial update to [-2,+4]★ at June 30.
+  9. EV recomputation under new vector (A=5/B=41/C=38): deferred to June 30 audit.
+  10. Primary IRA EV buffer: monitor at June 30 after STG D/E and IHP revisions (+0.48pp above req).
+  11. AIPO track record flag: inception Jul 2025; 12-month milestone ~Jul 24. Re-verify at June 30.
+  12. M14 energy_180d formal calibration: June 30 (conflict >90d; 180d lookback as canonical supplemental).
+
+next_session_flags:
+  - LOAD: "Calibration State loaded, last update: June 10, 2026 | Session Log loaded"
+  - LOAD via Desktop Commander local path — NOT GitHub MCP, NOT Google Drive for .md files
+  - DECLARE session type (Step 0) before Step 1
+  - FIRST: Iran deal status — T1 confirmation of resumed talks or further escalation; gates A probability
+  - FIRST: BZ=F current close — C-trigger clock ($110 restart); Iran escalation = watch closely
+  - FOMC June 17-18: rate decision + dot plot; watch for MOVE crossing 80 ELEVATED threshold
+  - URA: clarify 1% vs 3% sheet discrepancy; execute ADD (IRA +2pp, Roth +3pp remaining)
+  - AIPO: client decision pending on 7%→3% + DBMF bump
+  - Acc4 sheet: confirm PAVE→0%, DBMF→15%, SGOV→21% reflected in allocation spreadsheet
+  - COPX: $78.64, −7.93% unrealized loss; entry guard re-verify before any ADD
+  - June 30 Q2 audit: STG B/D/E joint; IHP A/D row; GP A MEDIUM→HIGH; EV recomputation new vector;
+    all §5/§6 items; AIPO formal target review; bitcoin_mining role design; M14 energy_180d calibration
   - Framework gaps deferred to June 30: GAP-11 (M07 EV floor); GAP-07 (§8 compaction annotation)
