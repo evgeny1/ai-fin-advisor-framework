@@ -170,11 +170,11 @@ _ALL_SPECS: list[FetchSpec] = [
 
     FetchSpec(
         id="YIELD_CURVE",
-        source=DataSource.YFINANCE,
-        description="Partial yield curve via yfinance: 10Y (^TNX), 30Y (^TYX), 3M (^IRX). "
-                    "2Y unavailable from yfinance — 10Y-2Y spread will be None. "
-                    "FMP:economics treasury-rates (full curve) works via MCP but returns 403 "
-                    "with standalone API key. Use FMP MCP for 2Y and full spread.",
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        description="Full US Treasury yield curve. FRED REST preferred (DGS2/DGS5/DGS10/DGS30/DGS3MO "
+                    "— requires FRED_API_KEY, free from fred.stlouisfed.org). "
+                    "Fallback: yfinance ^TNX/^TYX/^IRX (partial — year2=None, spread_10y_2y=None). "
+                    "FMP:economics treasury-rates works via FMP MCP but returns 403 with standalone key.",
         update_frequency=UpdateFrequency.DAILY,
         acceptable_lag_days=2,
         consumer=["M17", "M02"],

@@ -30,6 +30,7 @@ def _build_registry():
     from .data.m18_registry import register_all
     from .data.fetchers import yfinance_fetcher as yf
     from .data.fetchers import fmp_fetcher as fmp
+    from .data.fetchers import fred_fetcher as fred
     from .data.fetchers import allocation_sheet as sheet
     from .types import DataSource
 
@@ -37,18 +38,24 @@ def _build_registry():
     register_all(registry)
 
     # ── yfinance: single dispatcher handles all YFINANCE specs by spec.id ─────
-    # One registration — no loop, no overwrite bug.
     registry.register_fetcher(DataSource.YFINANCE, yf.yfinance_dispatcher)
 
-    # ── FMP: only kept for future use when plan tier is upgraded ──────────────
-    # All FMP-sourced specs moved to YFINANCE after shadow session (June 10)
-    # confirmed FMP REST returns 403 for commodity/indexes/chart endpoints
-    # with a standalone API key (FMP MCP uses a higher-tier account).
-    # These registrations are harmless (no active specs use these sources now)
-    # and will become active when FMP plan is upgraded.
-    registry.register_fetcher(DataSource.FMP_COMMODITY,             fmp.fetch_commodity)
-    registry.register_fetcher(DataSource.FMP_INDEXES,               fmp.fetch_index)
-    registry.register_fetcher(DataSource.FMP_CHART,                 fmp.fetch_vix_history_fmp)
+    # ── FRED REST: full yield curve including 2Y (required for 10Y-2Y spread) ──
+    # FRED_API_KEY is free from fred.stlouisfed.org. Without the key the fetcher
+    # returns a graceful UNAVAILABLE reading and yfinance fills in partial data.
+    # FRED_SPREADSHEET_TAB is shared with the allocation-sheet fetcher below;
+    # FRED REST is registered first and handles YIELD_CURVE specifically via
+    # the dispatcher in yfinance_fetcher for the YFINANCE specs. The FRED fetcher
+    # here handles the FRED_SPREADSHEET_TAB source specs not covered by yfinance.
+    registry.register_fetcher(DataSource.FRED_SPREADSHEET_TAB, fred.fetch_yield_curve_fred)
+
+    # ── FMP: registered for future use when plan tier is upgraded ─────────────
+    # Currently no active FetchSpecs use FMP sources (all moved to yfinance after
+    # shadow session June 10 confirmed 403 with standalone key). These become
+    # active automatically if specs are moved back to FMP_* sources.
+    registry.register_fetcher(DataSource.FMP_COMMODITY,            fmp.fetch_commodity)
+    registry.register_fetcher(DataSource.FMP_INDEXES,              fmp.fetch_index)
+    registry.register_fetcher(DataSource.FMP_CHART,                fmp.fetch_vix_history_fmp)
 
     # ── Allocation sheet fetchers (Stage 5 / Pattern A only) ──────────
     # In Pattern B Claude's Google Drive MCP connector handles the FRED
