@@ -135,6 +135,8 @@ def fetch_vix_history(spec: FetchSpec) -> List[DataReading]:
     today = datetime.date.today()
     start = today - datetime.timedelta(days=110)
     df = yf.download("^VIX", start=start.isoformat(), progress=False, auto_adjust=True)
+    if df.empty or "Close" not in df.columns:
+        raise RuntimeError("^VIX history returned empty")
     closes_raw = df["Close"].dropna()
     closes = closes_raw.values.tolist() if hasattr(closes_raw, "values") else list(closes_raw)
     if not closes:
@@ -158,6 +160,8 @@ def fetch_broad_equity_trailing(spec: FetchSpec) -> List[DataReading]:
     today = datetime.date.today()
     start = today - datetime.timedelta(days=110)
     df = yf.download("^GSPC", start=start.isoformat(), progress=False, auto_adjust=True)
+    if df.empty or "Close" not in df.columns:
+        raise RuntimeError("^GSPC history returned empty")
     raw = df["Close"].dropna()
     closes = raw.values.flatten().tolist()
     if not closes:
