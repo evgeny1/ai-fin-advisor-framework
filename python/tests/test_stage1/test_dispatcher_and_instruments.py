@@ -44,7 +44,7 @@ def _spec(spec_id: str, source: DataSource = DataSource.YFINANCE) -> FetchSpec:
 def _reading(spec_id: str) -> DataReading:
     return DataReading(
         spec_id=spec_id, value={"price": 1.0},
-        source=DataSource.YFINANCE, fetched_at=datetime.now(datetime.UTC),
+        source=DataSource.YFINANCE, fetched_at=datetime.utcnow(),
     )
 
 
