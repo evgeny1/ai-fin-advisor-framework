@@ -7,5 +7,5 @@ python/.pytest_cache/
 python/*.egg-info/
 python/dist/
 python/build/
-~/.advisor/google_token.json
-~/.advisor/google_service_account.json
+python/.coverage
+python/htmlcov/
