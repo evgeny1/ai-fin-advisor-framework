@@ -1,5 +1,5 @@
 # Migration Plan: Pseudo-Code Framework → Python
-<!-- Created: 2026-06-08 | Status: Stage 1 COMPLETE -->
+<!-- Created: 2026-06-08 | Status: Stage 2 COMPLETE -->
 
 ## Overview
 
@@ -110,54 +110,60 @@ If any mismatch: debug the fetcher before advancing to Stage 2.
 
 ---
 
-## Stage 2 — Config Migration (NEXT)
+## ✅ Stage 2 — Config Migration (COMPLETE)
 
-**Goal:** Calibration_State.md and Session_Log.md as structured data.
-Unblocks Stages 3 and 4 (both need typed access to §1/§2/§4/§9/§11/§12 values).
+**Date completed:** 2026-06-10
 
-### What to build
+### What was built
 
-**`config/calibration.py`** — Parse Calibration_State.md into `CalibrationState` dataclass:
+| File | Purpose |
+|---|---|
+| `advisor/types.py` | Stage 2 types added: `ReturnRange`, `ComponentWeight`, `InstrumentEntry`, `ThresholdBlock`, `MultiplierBlock`, `FloorParams`, `RegimeBlock`, `CascadeBlock`, `CalibrationState`, `CreditReading`, `SessionStateEntry`, `SessionLogState` |
+| `advisor/config/__init__.py` | Package exposing `parse_calibration_state`, `parse_session_log` |
+| `advisor/config/calibration.py` | Markdown parser: Calibration_State.md → `CalibrationState` (all 10 sections: §1 thresholds, §4.1 return table, §4.2/§4.3 multipliers, §4.4 floor params, §9 regime, §11.1 roles, §11.3/§11.4 instruments, §12 cascade) |
+| `advisor/config/session_log.py` | Markdown parser: Session_Log.md → `SessionLogState` (§7 credit readings table, §8 session state blocks; `.latest_probs` and `.prior_probs` properties) |
+| `tests/test_stage2/test_calibration_parser.py` | 47 unit tests with inline fixture |
+| `tests/test_stage2/test_session_log_parser.py` | 28 unit tests with inline fixture |
+| `tests/test_stage2/test_integration.py` | 43 integration tests against live Calibration_State.md and Session_Log.md |
+
+**Test results:** 118/118 passing (unit + integration).
+
+### AI work eliminated
+
+Before Stage 2: Claude manually read and interpreted Calibration_State.md values each session
+(thresholds, return table, instrument classifications).
+After Stage 2: One `parse_calibration_state(text)` call → fully typed `CalibrationState`.
+`session_log.latest_probs` provides the AUTHORITATIVE §8 probability vector in one attribute access.
+
+### How Claude uses Stage 2 (Pattern B)
+
+In M05 Steps 2–3, after fetching the file text via Desktop Commander:
 ```python
-@dataclass
-class CalibrationState:
-    thresholds:  ThresholdBlock      # §1 credit, §2 energy/macro
-    return_table: ReturnTable        # §4.1 role × scenario → {conservative, upside}
-    multipliers:  MultiplierBlock    # §4.2 IRA, §4.3 Roth
-    floor_params: FloorParams        # §4.4 base_floor, min_floor, conc_cap
-    regime:       RegimeBlock        # §9 M14 VIX/equity thresholds
-    roles:        RoleRegistry       # §11.1 role list
-    instruments:  InstrumentTable    # §11.2 {ticker: [{role, weight}]}
-    cascade:      CascadeBlock       # §12 M17 thresholds
-    last_updated: date
+from advisor.config import parse_calibration_state, parse_session_log
+
+cal   = parse_calibration_state(cal_text)   # all §1/§4/§9/§11/§12 values
+log   = parse_session_log(log_text)          # §8 prior probs, open items
+
+# AUTHORITATIVE prior probabilities (M05 rule — never from memory):
+prior = log.latest_probs   # ScenarioProbabilities(A=5, B=41, C=38, D=5, E=4, F=7)
+
+# Credit signal check:
+hy_threshold = cal.thresholds.hy_stress_delta   # 150 bps
 ```
 
-**`config/session_log.py`** — Parse Session_Log.md §7/§8 into typed structures:
-```python
-@dataclass
-class SessionLogState:
-    credit_readings: List[CreditReading]      # §7
-    scenario_state:  List[ScenarioStateEntry] # §8
-    latest_probs:    Optional[ScenarioProbabilities]  # from §8 most recent entry
-    open_triggers:   List[str]
-    open_decisions:  List[str]
-    next_flags:      List[str]
-```
+### Design choice
 
-**Recommended format:** Keep Markdown as the human-readable layer.
-Add a YAML companion file (`calibration_state.yaml`, `session_log.yaml`) that
-Python reads. The advisory session writes Markdown + YAML together at session end.
-The YAML is the machine-readable layer; the Markdown is the human/AI-readable layer.
+Direct Markdown parser (no YAML companion) — the §1/§4/§9/§11/§12 sections have
+well-defined pipe-table and header structure that admits robust regex-based parsing.
+No dual-format maintenance burden. Parser produces deterministic output verified by
+118 tests including integration tests against the live file.
 
-Alternatively (simpler): write a Markdown parser for the specific section formats.
-The Markdown structure is well-defined enough for a targeted parser.
+### Unblocked by Stage 2 completion
 
-**Verification:** Load CalibrationState, assert exact values for known thresholds:
-```python
-assert state.thresholds.hy_stress_delta == 150
-assert state.floor_params.base_floor == 0.25
-assert state.instruments["MAGS"][0].role == "secular_technology_growth"
-```
+- **Stage 3** — analysis modules (`M03.DeriveScenarioProbabilities()`, credit signal evaluation,
+  `M14.ComputeDivergenceSignal()`, `M17.sectorStressScore()`): all consume `CalibrationState`.
+- **Stage 4** — portfolio math (`M15.blendedScenarioReturn()`, `M13.idealAllocation()`,
+  EV computation): consumes `CalibrationState.return_table` and `CalibrationState.instruments`.
 
 ---
 
