@@ -314,3 +314,56 @@ All other work is Python after Stage 5 is complete.
 - Then proceed to Stage 2 (config migration) — start with `CalibrationState` parser.
 - The YAML companion approach (keep Markdown + add YAML) is recommended over a pure parser.
 - FetchSpec count (28) is a regression test anchor — update `test_expected_spec_count` when adding series.
+
+SESSION CLOSE — June 10, 2026
+
+STAGE 2: COMPLETE ✅  commit 4feb07d
+──────────────────────────────────────────────────────────────────────
+FILES COMMITTED (9 files, +1700 lines):
+  advisor/types.py                             — Stage 2 types (13 new dataclasses)
+  advisor/config/__init__.py                   — package entry point
+  advisor/config/calibration.py               — Calibration_State.md parser
+  advisor/config/session_log.py               — Session_Log.md parser
+  tests/test_stage2/__init__.py
+  tests/test_stage2/test_calibration_parser.py — 47 unit tests
+  tests/test_stage2/test_session_log_parser.py — 28 unit tests
+  tests/test_stage2/test_integration.py        — 43 integration tests
+  MIGRATION_PLAN.md                            — Stage 2 marked COMPLETE
+
+TEST RESULTS: 118/118 passing (1.25s total)
+  Unit tests:        all against inline fixtures, no file I/O
+  Integration tests: all against live v1.33 files, auto-skip in CI
+
+KEY ENTRY POINTS:
+  from advisor.config import parse_calibration_state, parse_session_log
+  cal  = parse_calibration_state(text)   → CalibrationState
+  log  = parse_session_log(text)         → SessionLogState
+  log.latest_probs                       → ScenarioProbabilities (§8 AUTHORITATIVE)
+  log.prior_probs                        → previous vector (25pp cap enforcement)
+
+NEXT STEP: Stage 3 — Analysis Arithmetic
+  Unblocked by Stage 2. Next session can start directly on:
+  advisor/analysis/credit.py        M11 credit signal
+  advisor/analysis/regime.py        M14 divergence + entry guard
+  advisor/analysis/cascade.py       M17 sector stress score + yield curve
+  advisor/analysis/instruments.py   M15 blendedScenarioReturn()
+  All consume CalibrationState — typed input now available.
+
+CURRENT FRAMEWORK STATE (unchanged this session):
+  Calibration_State.md v1.33  |  Session_Log.md (8 §8 entries)
+  Probs: A=5 / B=41 / C=38 / D=5 / E=4 / F=7
+  M14 regime: MODERATE  |  CascadeLevel: MONITORING
+  Acc4 active: AIPO(663) XLP(215) DBMF(854) XAR(119) MLPX(1065) SGOV(384) COPX(220)
+  PAVE: SOLD (B trigger fired June 10, May CPI 4.2%)
+  Open: URA ADD (IRA+2/Roth+3, guard cleared), AIPO target reduction under deliberation
+  Q2 audit: June 30, 2026
+
+SESSION CLOSE — June 12, 2026
+
+SESSION HAND-OFF
+Stage 3: COMPLETE ✅ commit 144e50c
+Stage 4 is next: portfolio/directives.py, portfolio/allocation.py, portfolio/evaluation.py
+  - directives.py: M09/M10 RESPONSES table encoded as Dict[(role_id, scenario), Directive]
+  - allocation.py: ideal_allocation(), scenario_weighted_allocation(), feasibility_check()
+  - evaluation.py: auto_disqualify(), dual_role_conflict()
+  All Stage 4 modules consume CalibrationState + Stage 3 signals.
