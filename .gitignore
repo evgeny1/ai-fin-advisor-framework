@@ -9,3 +9,4 @@ python/dist/
 python/build/
 python/.coverage
 python/htmlcov/
+.coverage
