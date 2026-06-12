@@ -137,7 +137,8 @@ class InstrumentEntry:
     ticker: str
     components: List[ComponentWeight]
     tax_placement: str    # "ALL" | "RETIREMENT_ONLY"
-    is_candidate: bool = False  # True for §11.4 instruments not yet allocated
+    is_candidate: bool = False    # True for §11.4 instruments not yet allocated
+    last_reviewed: Optional[str] = None  # ISO date string; M15 Check 5 staleness check
 
 
 @dataclass
@@ -274,3 +275,160 @@ class SessionLogState:
     @property
     def latest_next_flags(self) -> List[str]:
         return self.scenario_states[-1].next_session_flags if self.scenario_states else []
+
+
+# ── Stage 3 Signal Types ───────────────────────────────────────────────────────
+# Produced by analysis/ modules; consumed by portfolio/ and orchestrator/.
+
+
+class DivergenceLevel(Enum):
+    """M14 market regime divergence strength."""
+    NONE           = "NONE"
+    MODERATE       = "MODERATE"
+    HIGH           = "HIGH"
+    NOT_APPLICABLE = "NOT_APPLICABLE"   # equity check skipped (directive not reductive)
+
+
+class CurveState(Enum):
+    """M17 yield curve shape classification."""
+    INVERTED         = "INVERTED"           # both 10Y-2Y and 10Y-3M negative
+    PARTIAL_INVERSION = "PARTIAL_INVERSION" # one negative, one positive
+    NORMAL_OR_STEEP  = "NORMAL_OR_STEEP"    # both positive
+
+
+class DTimingSignal(Enum):
+    """M17 D-scenario timing signal derived from yield curve shape."""
+    MONITORING              = "MONITORING"
+    CURVE_INVERTED          = "CURVE_INVERTED"
+    RECESSION_ONSET_PATTERN = "RECESSION_ONSET_PATTERN"  # post-inversion re-steepening
+
+
+class CascadeLevel(Enum):
+    """M17 §5 pre-positioning rung."""
+    MONITORING   = "MONITORING"
+    ALERT        = "ALERT"
+    PRE_POSITION = "PRE_POSITION"
+
+
+class EWatchFlag(Enum):
+    """M17 Scenario-E long-end elevation signal."""
+    CLEAR                  = "CLEAR"
+    FISCAL_STRESS_BUILDING = "FISCAL_STRESS_BUILDING"
+    E_PATHWAY_WATCH        = "E_PATHWAY_WATCH"
+
+
+class EPathwayType(Enum):
+    """M17 v1.4: routes M10.ScenarioE directive conditional branch. Never feeds M03."""
+    SYSTEMIC_LIQUIDITY = "SYSTEMIC_LIQUIDITY"   # 2008/LTCM analog — DXY strengthens
+    RESERVE_EROSION    = "RESERVE_EROSION"       # de-dollarization analog — DXY weakens
+
+
+class GuardResult(Enum):
+    """M14 EntryExtensionGuard outcome for one (ticker, account) pair."""
+    PASS   = "PASS"    # appreciation below threshold — ADD may proceed
+    HALT   = "HALT"    # appreciation at or above threshold — STOP and show adjusted EVs
+    EXEMPT = "EXEMPT"  # role has no entry extension threshold (N/A in §9.3)
+
+
+@dataclass
+class CreditSignal:
+    """M11 credit spread analysis result. Produced by analysis/credit.py."""
+    hy_oas:                  Optional[float]   # current bps; None if fetch failed
+    hy_median_180d:          Optional[float]   # trailing 180d median bps; None if history absent
+    ig_oas:                  Optional[float]
+    ig_median_180d:          Optional[float]
+    ccc_oas:                 Optional[float]
+    move:                    Optional[float]
+    # Threshold flags — False when data is insufficient to confirm True
+    hy_stress_beginning:     bool              # M11 HY_StressBeginning threshold
+    hy_recession_pricing:    bool              # M11 HY_RecessionPricing (→ D floor 25%)
+    ig_transmission_reached: bool              # M11 IG_TransmissionReached
+    ccc_tail_first_widening: bool              # M11 CCC_TailFirstWidening (monitoring)
+    convergence_text:        str               # one-sentence SignalConvergenceTest summary
+    quality_flags:           List[str]         # data gaps, partial evaluations
+
+
+@dataclass
+class DivergenceSignal:
+    """M14 market regime divergence signal. Produced by analysis/regime.py."""
+    commodity_fear_divergence:  DivergenceLevel
+    equity_scenario_divergence: DivergenceLevel
+    composite:                  DivergenceLevel
+    energy_90d_change:          Optional[float]  # fraction (0.12 = +12% over 90 cal days)
+    vix_change_90d_pts:         Optional[float]  # pts (VIX current − VIX 90d rolling avg)
+    broad_equity_30d:           Optional[float]  # fraction (30 trading-day SPX/VTI return)
+    quality_flags:              List[str]
+
+
+@dataclass
+class GuardStatus:
+    """M14 EntryExtensionGuard result for one ticker. Produced by analysis/regime.py."""
+    result:          GuardResult
+    ticker:          str
+    role_id:         Optional[str]
+    appreciation:    Optional[float]              # fraction above 90d trailing avg
+    threshold:       Optional[float]              # role threshold from §9.3 (as fraction)
+    adjusted_returns: Optional[Dict[str, float]]  # scenario → (published_conservative − appreciation)
+    flags:           List[str]
+
+
+@dataclass
+class YieldCurveSignal:
+    """M17 §3 yield curve protocol result. Produced by analysis/cascade.py."""
+    spread_10y_2y:    Optional[float]    # bps; positive = normal, negative = inverted
+    spread_10y_3m:    Optional[float]    # bps
+    curve_state:      Optional[CurveState]
+    d_timing_signal:  DTimingSignal
+    d_timing_estimate: Optional[str]     # narrative e.g. "0–12 months from re-steepening onset"
+    term_premium:     Optional[float]    # THREEFYTP10 as percent (0.81 = 0.81%)
+    e_watch_flag:     EWatchFlag
+    yield_30y:        Optional[float]    # percent (5.07 = 5.07%)
+    e_pathway_type:   EPathwayType
+    quality_flags:    List[str]
+
+
+@dataclass
+class CascadeSignal:
+    """M17 systemic cascade early warning result. Produced by analysis/cascade.py."""
+    level:               CascadeLevel
+    sector_stress_score: int                 # 0–3 (M17 §2 formal sectorStressScore)
+    chain_fires:         Dict[str, bool]     # "CHAIN_1".."CHAIN_4" → firing (score +1)
+    chain_watch:         Dict[str, bool]     # "CHAIN_3" → WATCH (precursor loaded; score 0)
+    active_chains_count: int                 # count of chains at FIRES level
+    yield_curve:         "YieldCurveSignal"
+    quality_flags:       List[str]
+
+
+# ── M03 AI Boundary Contract (Stage 3) ────────────────────────────────────────
+# Python builds ScoringQuestion list from M03 check definitions + DataReadings.
+# AI fills ScoringAnswers. Python runs all arithmetic from there.
+
+@dataclass
+class ScoringQuestion:
+    """One AI scoring prompt unit for M03.DeriveScenarioProbabilities."""
+    id:           str        # e.g. "A_check_fed", "B_check_cpi"
+    scenario:     str        # "A".."F"
+    question:     str        # natural-language question for AI
+    evidence:     str        # pre-rendered from DataReadings
+    valid_scores: List[int]  # valid integer answers e.g. [0,1,2] or [0,3]
+
+
+@dataclass
+class ScoringAnswers:
+    """AI-filled scores corresponding to a ScoringQuestion list."""
+    answers:   Dict[str, int]   # question_id → score integer
+    reasoning: Dict[str, str]   # question_id → one-sentence rationale
+
+
+@dataclass
+class RawScores:
+    """Unprocessed scenario scores from M03 before normalization."""
+    A: float; B: float; C: float; D: float; E: float; F: float
+
+    def as_dict(self) -> Dict[str, float]:
+        return {"A": self.A, "B": self.B, "C": self.C,
+                "D": self.D, "E": self.E, "F": self.F}
+
+    @property
+    def total(self) -> float:
+        return self.A + self.B + self.C + self.D + self.E + self.F
