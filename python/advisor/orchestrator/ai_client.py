@@ -24,6 +24,42 @@ _API_URL       = "https://api.anthropic.com/v1/messages"
 _MAX_TOKENS    = 4096
 
 
+def _recover_partial_json(raw: str) -> Optional[Dict]:
+    """
+    Attempt to recover a truncated JSON response from answer_scoring.
+
+    Strategy: if the response was cut mid-string (common with token limits),
+    try to salvage the 'answers' dict by finding the integer scores before
+    the truncation point using a regex scan.
+
+    Returns a dict with at least {"answers": {...}} on success, None on failure.
+    """
+    import re
+
+    # Strategy 1: close the open JSON object and retry
+    for closing in ('}}', '"}}}', '"}}'):
+        try:
+            return json.loads(raw + closing)
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Strategy 2: extract "answers" block only via regex
+    answers_block = re.search(r'"answers"\s*:\s*(\{[^}]*\})', raw)
+    if answers_block:
+        try:
+            answers = json.loads(answers_block.group(1))
+            return {"answers": answers, "reasoning": {}}
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Strategy 3: scan for "question_id": integer pairs directly
+    pairs = re.findall(r'"([A-Za-z_][A-Za-z0-9_]*)"\s*:\s*(-?\d+)', raw)
+    if pairs:
+        return {"answers": {k: int(v) for k, v in pairs}, "reasoning": {}}
+
+    return None
+
+
 class AIClient:
     """
     Thin wrapper around the Anthropic messages API.
@@ -109,64 +145,75 @@ class AIClient:
         if not questions:
             return ScoringAnswers(answers={}, reasoning={})
 
+        # Build compact prompt — keep evidence brief to leave room for response
         question_blocks = []
         for q in questions:
             valid_str = "/".join(str(s) for s in q.valid_scores)
+            # Truncate long evidence strings to keep prompt manageable
+            evidence = q.evidence[:300] if len(q.evidence) > 300 else q.evidence
             question_blocks.append(
-                f"ID: {q.id}\n"
-                f"Scenario: {q.scenario}\n"
-                f"Question: {q.question}\n"
-                f"Evidence: {q.evidence}\n"
-                f"Valid scores: [{valid_str}]\n"
+                f"ID: {q.id} | Scenario: {q.scenario} | Scores: [{valid_str}]\n"
+                f"Q: {q.question}\n"
+                f"Evidence: {evidence}"
             )
 
         prompt = (
-            "You are scoring macro scenario checks for an investment framework (M03). "
-            "For each question, return the appropriate integer score from the valid_scores list. "
-            "Base your score only on the evidence provided and current macroeconomic facts. "
-            "Do NOT infer or embellish. If evidence is insufficient, score conservatively (lowest valid).\n\n"
+            "You are scoring macro scenario checks for an investment framework (M03).\n"
+            "For each question return the integer score from the valid_scores list.\n"
+            "Score only from the evidence + current macro knowledge. Conservative if uncertain.\n\n"
             "Questions:\n\n"
-            + "\n---\n".join(question_blocks)
-            + "\n\nRespond ONLY with a JSON object in this exact format:\n"
-            '{"answers": {"question_id": score_integer, ...}, '
-            '"reasoning": {"question_id": "one sentence", ...}}\n'
-            "No preamble, no markdown fences."
+            + "\n\n".join(question_blocks)
+            + '\n\nReturn ONLY valid JSON — no preamble, no markdown:\n'
+            '{"answers":{"ID":score,...},"reasoning":{"ID":"brief rationale",...}}'
         )
 
-        raw = self._call(prompt, max_tokens=2000)
+        raw = self._call(prompt, max_tokens=_MAX_TOKENS)
+
+        # Primary parse
         try:
             data = json.loads(raw)
-            answers_raw  = data.get("answers", {})
-            reasoning    = data.get("reasoning", {})
-            answers: Dict[str, int] = {}
-            for q in questions:
-                raw_val = answers_raw.get(q.id)
-                if raw_val is not None:
-                    try:
-                        score = int(raw_val)
-                        if score in q.valid_scores:
-                            answers[q.id] = score
-                        else:
-                            # Clamp to nearest valid score
-                            nearest = min(q.valid_scores, key=lambda x: abs(x - score))
-                            logger.warning(
-                                f"answer_scoring: {q.id} score {score} not in {q.valid_scores} "
-                                f"— clamped to {nearest}"
-                            )
-                            answers[q.id] = nearest
-                    except (ValueError, TypeError):
-                        logger.warning(f"answer_scoring: {q.id} non-integer response — defaulting to 0")
-                        answers[q.id] = 0
-            return ScoringAnswers(
-                answers=answers,
-                reasoning={k: str(v) for k, v in reasoning.items()},
-            )
-        except (json.JSONDecodeError, ValueError) as e:
-            logger.error(f"answer_scoring: JSON parse failed ({e}) — returning zero scores")
-            return ScoringAnswers(
-                answers={q.id: 0 for q in questions},
-                reasoning={q.id: "parse error — defaulted to 0" for q in questions},
-            )
+        except (json.JSONDecodeError, ValueError):
+            # Truncated response — attempt recovery
+            data = _recover_partial_json(raw)
+            if data is None:
+                logger.error(
+                    "answer_scoring: JSON parse failed and recovery unsuccessful — "
+                    f"returning zero scores. Raw[:200]: {raw[:200]}"
+                )
+                return ScoringAnswers(
+                    answers={q.id: 0 for q in questions},
+                    reasoning={q.id: "parse error — conservative default" for q in questions},
+                )
+
+        answers_raw = data.get("answers", {})
+        reasoning   = data.get("reasoning", {})
+        answers: Dict[str, int] = {}
+
+        for q in questions:
+            raw_val = answers_raw.get(q.id)
+            if raw_val is not None:
+                try:
+                    score = int(raw_val)
+                    if score in q.valid_scores:
+                        answers[q.id] = score
+                    else:
+                        nearest = min(q.valid_scores, key=lambda x: abs(x - score))
+                        logger.warning(
+                            f"answer_scoring: {q.id} score {score} not in "
+                            f"{q.valid_scores} — clamped to {nearest}"
+                        )
+                        answers[q.id] = nearest
+                except (ValueError, TypeError):
+                    logger.warning(f"answer_scoring: {q.id} non-integer — defaulting to 0")
+                    answers[q.id] = 0
+            else:
+                logger.warning(f"answer_scoring: {q.id} missing from response — defaulting to 0")
+                answers[q.id] = 0
+
+        return ScoringAnswers(
+            answers=answers,
+            reasoning={k: str(v) for k, v in reasoning.items()},
+        )
 
     # ── Call 3: Briefing Generation ────────────────────────────────────────────
 
