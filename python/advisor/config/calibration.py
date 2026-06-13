@@ -170,7 +170,17 @@ def _parse_multipliers(text: str) -> MultiplierBlock:
                     pass
         return result
 
-    return MultiplierBlock(ira=_mults(s42), roth=_mults(s43))
+    def _floor(section: str) -> float:
+        """Extract floor multiplier from 'Floor: 1.3x' line; default 1.3 if absent."""
+        m = re.search(r"Floor:\s*(\d+(?:\.\d+)?)x", section)
+        return float(m.group(1)) if m else 1.3
+
+    return MultiplierBlock(
+        ira=_mults(s42),
+        roth=_mults(s43),
+        ira_floor=_floor(s42),
+        roth_floor=_floor(s43),
+    )
 
 
 def _parse_floor_params(text: str) -> FloorParams:

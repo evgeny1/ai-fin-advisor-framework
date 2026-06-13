@@ -1,5 +1,5 @@
 # Migration Plan: Pseudo-Code Framework → Python
-<!-- Created: 2026-06-08 | Status: Stage 3 COMPLETE -->
+<!-- Created: 2026-06-08 | Status: Stage 4 COMPLETE -->
 
 ## Overview
 
@@ -367,3 +367,50 @@ Stage 4 is next: portfolio/directives.py, portfolio/allocation.py, portfolio/eva
   - allocation.py: ideal_allocation(), scenario_weighted_allocation(), feasibility_check()
   - evaluation.py: auto_disqualify(), dual_role_conflict()
   All Stage 4 modules consume CalibrationState + Stage 3 signals.
+
+SESSION CLOSE — June 12, 2026
+
+STAGE 4: COMPLETE ✅
+──────────────────────────────────────────────────────────────────────
+FILES COMMITTED (this session, +~1100 lines):
+  advisor/types.py                               — MultiplierBlock + 8 Stage 4 types
+  advisor/config/calibration.py                  — _parse_multipliers now extracts ira_floor/roth_floor
+  advisor/portfolio/__init__.py                  — package public API
+  advisor/portfolio/directives.py (266 lines)    — 9-role × 6-scenario DIRECTIVES dict; get_directive();
+                                                    resolve_e_pathway_directive(); is_covered_role()
+  advisor/portfolio/allocation.py (518 lines)    — compute_floor(); compute_target_multiplier();
+                                                    required_real_return(); ideal_allocation();
+                                                    scenario_weighted_allocation(); feasibility_check()
+  advisor/portfolio/evaluation.py (206 lines)    — auto_disqualify() (4 M07 guards);
+                                                    dual_role_conflict()
+  tests/test_stage4/__init__.py
+  tests/test_stage4/conftest.py (285 lines)      — CalibrationState fixture + 5 account profiles
+  tests/test_stage4/test_directives.py (189 lines) — 37 tests
+  tests/test_stage4/test_allocation.py (363 lines) — 30 tests
+  tests/test_stage4/test_evaluation.py (277 lines) — 30 tests
+  MIGRATION_PLAN.md                              — Stage 4 marked COMPLETE
+
+TEST RESULTS: 457/457 passing, 4 skipped (22.5s total)
+  All prior stages green: Stage 1 (unit+integration), Stage 2, Stage 3.
+  Stage 4 new tests: 97 tests, 0 failures, first-run clean.
+
+KEY DESIGN DECISIONS:
+  REDUCE_TO_MIN → bounds=[floor, floor] (non-circular per M13 amendment)
+  REDUCE_50PCT  → bounds=[0.5×current, 0.5×current] (fixed point)
+  PATHWAY_CONDITIONAL → bounds=[current, current] + quality_flag (resolve via
+    resolve_e_pathway_directive() before acting)
+  Newer §11 roles (STG, STF, CDE, ILS, etc.) → HOLD + quality_flag (no M09/M10 entry)
+  required_real_return() returns percent (e.g. 4.6) — consistent with blended_scenario_return()
+  MultiplierBlock gains ira_floor/roth_floor fields; defaults=1.3 keep all Stage 2 tests green
+
+KEY ENTRY POINTS:
+  from advisor.portfolio import get_directive, scenario_weighted_allocation, feasibility_check
+  from advisor.portfolio import auto_disqualify, dual_role_conflict
+  get_directive("geopolitical_premium", "B")           → DirectiveResult(code=HOLD, ...)
+  scenario_weighted_allocation("XAR", account, probs, weights, cal) → AllocationTarget
+  feasibility_check(account, proposed_allocations, probs, cal)      → FeasibilityResult
+  auto_disqualify(InstrumentSpec(...))                               → AutoDisqualifyResult
+
+NEXT STEP: Stage 5 — SessionPipeline (orchestrator/)
+  Three AI calls in the entire pipeline (qualitative gather, scoring, briefing narrative).
+  All arithmetic is now Python. Stage 5 wires it together into a single runnable process.

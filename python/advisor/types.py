@@ -159,8 +159,10 @@ class ThresholdBlock:
 @dataclass
 class MultiplierBlock:
     """§4.2 IRA and §4.3 Roth scenario target multipliers."""
-    ira: Dict[str, float]   # scenario → multiplier (10-year horizon)
-    roth: Dict[str, float]  # scenario → multiplier (15-year horizon)
+    ira:        Dict[str, float]   # scenario → multiplier (10-year horizon)
+    roth:       Dict[str, float]   # scenario → multiplier (15-year horizon)
+    ira_floor:  float = 1.3        # floor — parsed from §4.2 "Floor: Nx" line
+    roth_floor: float = 1.3        # floor — parsed from §4.3 "Floor: Nx" line
 
 
 @dataclass
@@ -432,3 +434,112 @@ class RawScores:
     @property
     def total(self) -> float:
         return self.A + self.B + self.C + self.D + self.E + self.F
+
+
+# ── Stage 4 Portfolio Types ────────────────────────────────────────────────────
+# Produced by portfolio/ modules; consumed by orchestrator/.
+
+
+class ObjectiveType(Enum):
+    """M13 account objective type — determines FeasibilityCheck() branch."""
+    TARGET_THEN_RETURN = "TARGET_THEN_RETURN"  # IRA, Roth — feasibility is primary gate
+    RETURN_THEN_TARGET = "RETURN_THEN_TARGET"  # Taxable — maximize return/drawdown (no gate)
+    FLOOR_THEN_RETURN  = "FLOOR_THEN_RETURN"   # Relative IRAs — hard nominal floor primary
+    PRESERVATION       = "PRESERVATION"         # Taxable preservation — no nominal loss
+
+
+@dataclass
+class AccountProfile:
+    """M13 account objective profile. Loaded from Allocation sheet 'Objectives' tab."""
+    account_id:             str
+    owner:                  str           # "primary" | "relative"
+    planning_horizon_years: int
+    objective_type:         ObjectiveType
+    floor_nominal_loss:     bool          # True = no nominal loss constraint active
+    concentration_cap:      float         # max single-position fraction (§4.4)
+    drawdown_tolerance:     float         # 0.30 – 0.40 per M06
+
+
+class DirectiveCode(Enum):
+    """M09/M10 RESPONSES directive codes. Applied per (role_id, scenario) pair."""
+    ADD               = "ADD"               # Add if below scenario-weighted target
+    ADD_AGGRESSIVE    = "ADD_AGGRESSIVE"    # Add aggressively to scenario-weighted target
+    HOLD              = "HOLD"              # Hold at current weight
+    HOLD_EVALUATE     = "HOLD_EVALUATE"     # Hold OR Add — requires EV calc per M06
+    HOLD_WATCH        = "HOLD_WATCH"        # Hold with monitoring; downgrade to watch
+    REDUCE            = "REDUCE"            # Reduce toward floor (direction only)
+    REDUCE_TO_MIN     = "REDUCE_TO_MIN"     # Reduce to floor (minimumConvictionWeight)
+    REDUCE_50PCT      = "REDUCE_50PCT"      # Reduce to 50% of current weight
+    EXIT              = "EXIT"              # Exit position fully
+    EVALUATE          = "EVALUATE"          # No move; requires explicit EV calculation first
+    PATHWAY_CONDITIONAL = "PATHWAY_CONDITIONAL"  # M10 Scenario E — branch on e_pathway_type
+
+
+@dataclass
+class DirectiveResult:
+    """Resolved directive for one (ticker, scenario) pair."""
+    code:          DirectiveCode
+    role_id:       str
+    conflict_flag: Optional[str] = None   # set when multi-role directives conflict
+    pathway_note:  Optional[str] = None   # set for PATHWAY_CONDITIONAL entries
+    quality_flags: List[str] = field(default_factory=list)
+
+
+@dataclass
+class FeasibilityResult:
+    """M13.FeasibilityCheck() output — per account per proposed allocation set."""
+    feasible:                 bool
+    portfolio_return:         float    # scenario-weighted conservative portfolio return (%)
+    objective_type:           str      # ObjectiveType.value
+
+    # TARGET_THEN_RETURN fields
+    required_return:          Optional[float] = None   # annualized real return needed (%)
+    target_multiplier:        Optional[float] = None   # probability-weighted multiplier
+    shortfall_pp:             Optional[float] = None   # pp below required (if infeasible)
+
+    # RETURN_THEN_TARGET fields
+    drawdown_adjusted_return: Optional[float] = None   # portfolio_return / drawdown_tolerance
+    target_met:               Optional[bool]  = None   # advisory note only
+
+    # FLOOR_THEN_RETURN fields
+    floor_breached:           Optional[bool]  = None
+    worst_scenario:           Optional[str]   = None
+    worst_return:             Optional[float] = None
+
+    recalibration_notes: List[str] = field(default_factory=list)
+    quality_flags:       List[str] = field(default_factory=list)
+
+
+@dataclass
+class AllocationTarget:
+    """Computed allocation recommendation for one ticker in one account."""
+    ticker:                     str
+    account_id:                 str
+    scenario_weighted_weight:   float             # scenarioWeightedAllocation() result
+    per_scenario:               Dict[str, float]  # scenario → idealAllocation() result
+    blended_conservative_return: float            # scenario-weighted blended conservative return (%)
+    directive:                  DirectiveCode     # dominant directive in current scenario distribution
+    floor:                      float             # ComputeFloor() value
+    quality_flags:              List[str] = field(default_factory=list)
+
+
+@dataclass
+class InstrumentSpec:
+    """M07 required metrics for instrument evaluation and auto-disqualification."""
+    ticker:                    str
+    aum_millions:              Optional[float]   # fund AUM in $M; None if unknown
+    track_record_years:        Optional[float]   # years since inception; None if unknown
+    foreign_concentration_pct: Optional[float]   # single-country concentration 0–100; None if unknown
+    instrument_type:           str   # "active_fund" | "sector_ETF" | "passive_broad" | "single_stock"
+    revenue_type:              str   # "fee_based" | "commodity_dependent" | "mixed"
+    has_contract_backstop:     bool = True   # for commodity_dependent: contract backstop present?
+    hold_horizon_years:        int  = 10     # intended hold horizon in years
+
+
+@dataclass
+class AutoDisqualifyResult:
+    """M07.AutoDisqualify() output."""
+    ticker:        str
+    disqualified:  bool
+    reason:        Optional[str] = None
+    quality_flags: List[str] = field(default_factory=list)
