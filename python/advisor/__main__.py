@@ -9,6 +9,11 @@ Commands (Stage 1):
   fetch session-log    Read Session_Log.md → raw text
   status               Show FetchRegistry summary (registered specs + fetchers)
   setup google         Interactive Google credentials setup wizard
+
+Commands (Stage 5):
+  session              Run full SessionPipeline → briefing to stdout
+  session --dry-run    Run pipeline without write-back
+  validate             Run ValidateClassifications only (fast session-start check)
 """
 from __future__ import annotations
 
@@ -124,6 +129,73 @@ def cmd_setup_google() -> None:
     print("Set GOOGLE_OAUTH_TOKEN={out} in your .env if needed.")
 
 
+def cmd_session() -> None:
+    """
+    Run full SessionPipeline (Stage 5 Pattern A).
+    Outputs the M04 briefing to stdout.
+    Pass --dry-run to skip write-back.
+    """
+    import os
+    from .orchestrator import SessionPipeline, AIClient, StubAIClient
+    from .types import SessionType
+
+    dry_run = "--dry-run" in sys.argv
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    ai = AIClient(api_key=api_key) if api_key else StubAIClient()
+    if not api_key:
+        print("ℹ ANTHROPIC_API_KEY not set — running with StubAIClient (offline mode)", file=sys.stderr)
+
+    pipeline = SessionPipeline(
+        session_type=SessionType.FULL_DESKTOP,
+        ai=ai,
+        dry_run=dry_run,
+    )
+    ctx = pipeline.run()
+
+    print("\n" + "=" * 70)
+    print("INTELLIGENCE BRIEFING")
+    print("=" * 70 + "\n")
+    print(ctx.briefing or "[No briefing generated]")
+
+    if ctx.scenario_probs:
+        p = ctx.scenario_probs
+        print(
+            f"\nPROBABILITIES: A={p.A:.0f}% B={p.B:.0f}% C={p.C:.0f}% "
+            f"D={p.D:.0f}% E={p.E:.0f}% F={p.F:.0f}%"
+        )
+
+    if ctx.write_back_commit:
+        print(f"\n✅ Write-back committed: {ctx.write_back_commit}", file=sys.stderr)
+    elif dry_run:
+        print("\nℹ Dry-run — no write-back.", file=sys.stderr)
+
+    if ctx.all_flags:
+        print("\n--- SESSION FLAGS ---", file=sys.stderr)
+        for flag in ctx.all_flags:
+            print(f"  {flag}", file=sys.stderr)
+
+
+def cmd_validate() -> None:
+    """Run ValidateClassifications against current §11. Fast session-start check."""
+    from .data.file_protocol import read_calibration_state
+    from .config import parse_calibration_state
+    from .analysis import validate_classifications
+
+    cal_text = read_calibration_state()
+    cal = parse_calibration_state(cal_text)
+
+    allocation_tickers = [t for t, e in cal.instruments.items() if not e.is_candidate]
+    try:
+        warnings = validate_classifications(allocation_tickers, cal)
+        print(f"✅ ValidateClassifications PASSED — {len(allocation_tickers)} instruments checked")
+        if warnings:
+            for w in warnings:
+                print(f"  ⚠ {w}")
+    except Exception as e:
+        print(f"HARD_STOP: {e}")
+        sys.exit(1)
+
+
 def main() -> None:
     args = sys.argv[1:]
     if not args:
@@ -138,6 +210,8 @@ def main() -> None:
         "fetch session-log":  cmd_fetch_session_log,
         "status":             cmd_status,
         "setup google":       cmd_setup_google,
+        "session":            cmd_session,
+        "validate":           cmd_validate,
     }
 
     fn = dispatch.get(cmd) or dispatch.get(args[0])

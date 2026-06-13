@@ -413,6 +413,7 @@ class ScoringQuestion:
     question:     str        # natural-language question for AI
     evidence:     str        # pre-rendered from DataReadings
     valid_scores: List[int]  # valid integer answers e.g. [0,1,2] or [0,3]
+    auto_score:   Optional[int] = None  # if set: Python scored this — skip AI for this question
 
 
 @dataclass

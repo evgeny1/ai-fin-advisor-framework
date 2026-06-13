@@ -69,19 +69,48 @@ class TestValidateClassifications:
         del cal.instruments["ORPHAN"]
         del cal.roles["orphan_role"]
 
-    def test_weight_sum_not_one_raises_hard_stop(self, cal: CalibrationState):
-        # Component weights sum to 0.8 — must fail Check 4
-        cal.instruments["BADWT"] = InstrumentEntry(
-            ticker="BADWT",
+    def test_weight_sum_below_one_produces_warning_not_hard_stop(
+        self, cal: CalibrationState
+    ):
+        """Weights < 1.0 allowed when UNCLASSIFIED components are excluded (e.g. AIPO bitcoin miners).
+        ValidateClassifications now issues a non-blocking warning, not a HardStop."""
+        cal.instruments["PARTIAL"] = InstrumentEntry(
+            ticker="PARTIAL",
             components=[
                 ComponentWeight(role_id="consumer_defensive_equity", weight=0.5),
                 ComponentWeight(role_id="systematic_trend_following", weight=0.3),
             ],
             tax_placement="ALL",
         )
+        # Should NOT raise — should produce a warning about partial weights
+        warnings = validate_classifications(["PARTIAL"], cal)
+        assert any("PARTIAL" in w or "0.8" in w for w in warnings)
+        del cal.instruments["PARTIAL"]
+
+    def test_weight_sum_above_one_raises_hard_stop(self, cal: CalibrationState):
+        """Weights > 1.0 always raises HardStopException (data entry error)."""
+        cal.instruments["OVERFLOW"] = InstrumentEntry(
+            ticker="OVERFLOW",
+            components=[
+                ComponentWeight(role_id="consumer_defensive_equity", weight=0.7),
+                ComponentWeight(role_id="systematic_trend_following", weight=0.5),
+            ],
+            tax_placement="ALL",
+        )
         with pytest.raises(HardStopException, match="weights sum to"):
-            validate_classifications(["BADWT"], cal)
-        del cal.instruments["BADWT"]
+            validate_classifications(["OVERFLOW"], cal)
+        del cal.instruments["OVERFLOW"]
+
+    def test_weight_sum_zero_raises_hard_stop(self, cal: CalibrationState):
+        """Zero-weight instrument (all UNCLASSIFIED removed) always raises HardStopException."""
+        cal.instruments["EMPTY"] = InstrumentEntry(
+            ticker="EMPTY",
+            components=[],   # no classified components at all
+            tax_placement="ALL",
+        )
+        with pytest.raises(HardStopException):
+            validate_classifications(["EMPTY"], cal)
+        del cal.instruments["EMPTY"]
 
     def test_staleness_warning_produced_when_last_reviewed_set(
         self, cal: CalibrationState

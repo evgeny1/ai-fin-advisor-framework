@@ -320,7 +320,8 @@ def _parse_instruments(text: str) -> Dict[str, InstrumentEntry]:
                 continue
             lines  = part.splitlines()
             ticker = lines[0].strip()
-            if not ticker or ticker.startswith("#"):
+            # Skip section header fragments (contain spaces) or empty / comment lines
+            if not ticker or ticker.startswith("#") or " " in ticker:
                 continue
             block = "\n".join(lines[1:])
 

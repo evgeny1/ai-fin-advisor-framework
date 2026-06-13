@@ -106,11 +106,26 @@ def validate_classifications(
                 )
 
         # Check 4: component weights must sum to 1.0 (tolerance 0.001)
+        # Weights may be < 1.0 when UNCLASSIFIED components are excluded from the
+        # ComponentVector (e.g. AIPO bitcoin miners 7%). Warn but do not hard-stop
+        # when weights are in (0, 1.0). Hard-stop only on zero or overflow.
         total_weight = sum(c.weight for c in entry.components)
-        if abs(total_weight - 1.0) > _WEIGHT_SUM_TOLERANCE:
+        if total_weight == 0.0:
+            raise HardStopException(
+                f"HARD_STOP — ValidateClassifications: {ticker} has no classified "
+                "components (weights sum to 0.0). Instrument cannot be used in "
+                "EV computations. Add at least one registered role to §11."
+            )
+        elif total_weight > 1.0 + _WEIGHT_SUM_TOLERANCE:
             raise HardStopException(
                 f"HARD_STOP — ValidateClassifications: {ticker} component weights sum to "
-                f"{total_weight:.4f} (expected 1.0). Correct §11.INSTRUMENT_CLASSIFICATION_TABLE."
+                f"{total_weight:.4f} (expected ≤ 1.0). Correct §11.INSTRUMENT_CLASSIFICATION_TABLE."
+            )
+        elif abs(total_weight - 1.0) > _WEIGHT_SUM_TOLERANCE:
+            warnings.append(
+                f"⚠ {ticker}: component weights sum to {total_weight:.4f} — "
+                "UNCLASSIFIED portion excluded from EV computation. "
+                "Verify classified weights at next §11 audit."
             )
 
         # Check 5: staleness warning (non-blocking)

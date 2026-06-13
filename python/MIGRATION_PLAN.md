@@ -1,5 +1,5 @@
 # Migration Plan: Pseudo-Code Framework → Python
-<!-- Created: 2026-06-08 | Status: Stage 4 COMPLETE -->
+<!-- Created: 2026-06-08 | Status: Stage 5 COMPLETE -->
 
 ## Overview
 
@@ -414,3 +414,62 @@ KEY ENTRY POINTS:
 NEXT STEP: Stage 5 — SessionPipeline (orchestrator/)
   Three AI calls in the entire pipeline (qualitative gather, scoring, briefing narrative).
   All arithmetic is now Python. Stage 5 wires it together into a single runnable process.
+
+SESSION CLOSE — June 12, 2026
+
+STAGE 5: COMPLETE ✅
+──────────────────────────────────────────────────────────────────────
+FILES COMMITTED (this session, +~1600 lines):
+
+advisor/types.py                               — ScoringQuestion.auto_score field added
+advisor/config/calibration.py                  — _parse_block: skip section-header fragments as tickers
+advisor/analysis/instruments.py               — ValidateClassifications Check 4 revised:
+                                                  < 1.0 → non-blocking warning (UNCLASSIFIED exclusion)
+                                                  > 1.0 or = 0.0 → HardStopException (data error)
+advisor/orchestrator/__init__.py               — package public API
+advisor/orchestrator/context.py (101 lines)    — SessionContext dataclass (all pipeline state)
+advisor/orchestrator/scoring_questions.py (493) — 20 M03 checks → ScoringQuestion; auto-scores
+                                                  quantitative checks; aggregates raw scores
+advisor/orchestrator/ai_client.py (259 lines)  — AIClient (3 Claude API calls) + StubAIClient
+advisor/orchestrator/session.py (494 lines)    — SessionPipeline.run() (M05 Steps 1-10)
+advisor/__main__.py                            — session, session --dry-run, validate commands
+tests/test_stage3/test_instruments.py         — Check 4 tests updated for new weight policy
+tests/test_stage5/__init__.py
+tests/test_stage5/test_scoring_questions.py   — 28 unit tests
+tests/test_stage5/test_session.py             — 18 tests (unit + integration)
+MIGRATION_PLAN.md                             — Stage 5 marked COMPLETE
+
+TEST RESULTS: 497/497 passing, 4 skipped (150s total)
+  All prior stages green. Stage 5 integration tests run with StubAIClient + live files.
+
+KEY DESIGN DECISIONS:
+  20 scoring questions total: A:3 B:3 C:3 D:4 E:3 F:4
+  auto_score set by Python for: A_check_credit, A_check_energy (partial),
+    C_check_brent (when well below nominal $110 trigger), D_check_credit,
+    E_check_ig — all from computed CreditSignal (zero AI tokens for thresholds)
+  AI Call 1: gather_qualitative → Dict[topic, summary] for 7 qualitative targets
+  AI Call 2: answer_scoring → ScoringAnswers (integer scores + reasoning)
+  AI Call 3: generate_briefing → M04-ordered narrative
+  StubAIClient: deterministic offline mode; conservative scores; safe for CI
+  Parser bug fixed: section header "Instrument Classification Table" treated as ticker
+    → fixed by requiring ticker to be space-free
+  ValidateClassifications Check 4 policy change: partial weights (AIPO 0.86)
+    → non-blocking warning; zero or overflow → HardStop
+
+KEY ENTRY POINTS:
+  python3 -m advisor session --dry-run       # full pipeline, no write-back
+  python3 -m advisor session                 # full pipeline + write-back (FULL_DESKTOP)
+  python3 -m advisor validate                # ValidateClassifications only
+
+  from advisor.orchestrator import SessionPipeline, AIClient, StubAIClient
+  ctx = SessionPipeline(ai=StubAIClient(), dry_run=True).run()
+  print(ctx.briefing)
+  print(f"A={ctx.scenario_probs.A}% B={ctx.scenario_probs.B}%")
+
+MIGRATION COMPLETE: All 5 stages implemented and tested.
+AI involvement reduced to 3 irreducible calls per session:
+  1. gather_qualitative (M02) — reads novel text, interprets geopolitical/macro state
+  2. answer_scoring (M03)    — linguistic interpretation of Fed/geopolitical evidence
+  3. generate_briefing (M04) — prose synthesis of computed signals into M04 narrative
+All arithmetic, threshold comparisons, EV math, feasibility checks, cascade scoring
+  → pure Python (zero AI tokens).
