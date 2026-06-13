@@ -315,96 +315,114 @@ class SessionPipeline:
         logger.info("Briefing generated")
 
     def _render_briefing_context(self, ctx: SessionContext) -> str:
-        """Serialize all computed state into a briefing context string for AI Call 3."""
+        """Serialize all computed state into a compact briefing context for AI Call 3."""
         lines: List[str] = []
 
         lines.append(f"SESSION DATE: {ctx.session_date}")
         if ctx.cal:
-            lines.append(f"CALIBRATION STATE: v{ctx.cal.version} last updated {ctx.cal.last_updated}")
+            lines.append(f"CALIBRATION: v{ctx.cal.version} ({ctx.cal.last_updated})")
         if ctx.log and ctx.log.latest_probs:
             p = ctx.log.latest_probs
-            lines.append(f"PRIOR PROBABILITIES (§8): A={p.A} B={p.B} C={p.C} D={p.D} E={p.E} F={p.F}")
+            lines.append(f"PRIOR PROBS: A={p.A} B={p.B} C={p.C} D={p.D} E={p.E} F={p.F}")
 
-        lines.append("\n--- MARKET DATA ---")
+        # ── Market data — only briefing-relevant series ────────────────────────
+        _SKIP = {"DOW", "KBE", "NASDAQ_COMP", "RUSSELL2000", "WTI", "HISTORICAL_INSTRUMENT_PRICES"}
+        lines.append("\nMARKET DATA:")
+        holdings_lines: List[str] = []
         for r in ctx.readings:
-            if r.is_valid and r.spec_id not in ("HISTORICAL_INSTRUMENT_PRICES",):
-                val = r.value
-                if isinstance(val, dict):
-                    val = {k: round(v, 4) if isinstance(v, float) else v
-                           for k, v in list(val.items())[:5]}
-                lines.append(f"  {r.spec_id}: {val}")
+            if not r.is_valid:
+                continue
+            spec = r.spec_id
+            if spec in _SKIP:
+                continue
+            v = r.value
+            if spec.startswith("HOLDINGS_PRICES:"):
+                ticker = spec.split(":", 1)[1]
+                if isinstance(v, dict):
+                    holdings_lines.append(
+                        f"  {ticker}: ${v.get('price','?')} ({v.get('day_change_pct','?'):+.2f}%)"
+                        if isinstance(v.get('day_change_pct'), (int, float))
+                        else f"  {ticker}: {v.get('price','?')}"
+                    )
+            else:
+                if isinstance(v, dict):
+                    # Compact: drop prev_close and symbol noise
+                    compact = {k: (round(val, 2) if isinstance(val, float) else val)
+                               for k, val in v.items()
+                               if k not in ("symbol", "source_note", "prev_close")}
+                    lines.append(f"  {spec}: {compact}")
+                elif v is not None:
+                    lines.append(f"  {spec}: {v}")
+        if holdings_lines:
+            lines.append("  HOLDINGS (price, day%chg):")
+            lines.extend(holdings_lines)
 
-        lines.append("\n--- QUALITATIVE INTEL ---")
-        for topic, summary in ctx.qualitative.items():
-            lines.append(f"  {topic.upper()}: {summary}")
+        # ── Qualitative intel — capped per topic ──────────────────────────────
+        if ctx.qualitative:
+            lines.append("\nQUALITATIVE INTEL:")
+            for topic, summary in ctx.qualitative.items():
+                text = summary[:300] if len(summary) > 300 else summary
+                lines.append(f"  {topic.upper()}: {text}")
 
+        # ── Signals ────────────────────────────────────────────────────────────
         if ctx.credit_signal:
             cs = ctx.credit_signal
-            lines.append("\n--- CREDIT SIGNAL ---")
-            lines.append(f"  HY OAS: {cs.hy_oas} | IG OAS: {cs.ig_oas} | CCC OAS: {cs.ccc_oas}")
-            lines.append(f"  HY_stress: {cs.hy_stress_beginning} | HY_recession: {cs.hy_recession_pricing}")
-            lines.append(f"  IG_transmission: {cs.ig_transmission_reached}")
-            lines.append(f"  Convergence: {cs.convergence_text}")
+            lines.append(f"\nCREDIT: HY={cs.hy_oas}bps IG={cs.ig_oas}bps CCC={cs.ccc_oas}bps "
+                         f"| stress={cs.hy_stress_beginning} recession={cs.hy_recession_pricing} "
+                         f"ig_tx={cs.ig_transmission_reached}")
+            lines.append(f"  → {cs.convergence_text}")
 
         if ctx.divergence_signal:
             ds = ctx.divergence_signal
-            lines.append("\n--- MARKET REGIME (M14) ---")
-            lines.append(f"  Commodity fear: {ds.commodity_fear_divergence.value}")
-            lines.append(f"  Equity divergence: {ds.equity_scenario_divergence.value}")
-            lines.append(f"  Composite: {ds.composite.value}")
+            lines.append(f"\nREGIME: commodity_fear={ds.commodity_fear_divergence.value} "
+                         f"equity={ds.equity_scenario_divergence.value} "
+                         f"composite={ds.composite.value}")
 
         if ctx.yield_curve_signal:
             yc = ctx.yield_curve_signal
-            lines.append("\n--- YIELD CURVE / SCENARIO E WATCH ---")
-            lines.append(f"  10Y-2Y: {yc.spread_10y_2y}bps | 10Y-3M: {yc.spread_10y_3m}bps")
-            lines.append(f"  D_timing: {yc.d_timing_signal.value} | E_watch: {yc.e_watch_flag.value}")
-            lines.append(f"  e_pathway_type: {yc.e_pathway_type.value}")
+            lines.append(f"\nYIELD CURVE: 10Y-2Y={yc.spread_10y_2y:.0f}bps "
+                         f"10Y-3M={yc.spread_10y_3m:.0f}bps "
+                         f"D_timing={yc.d_timing_signal.value} "
+                         f"E_watch={yc.e_watch_flag.value} "
+                         f"e_pathway={yc.e_pathway_type.value}")
 
         if ctx.cascade_signal:
             cc = ctx.cascade_signal
-            lines.append("\n--- CASCADE EARLY WARNING (M17) ---")
-            lines.append(f"  Level: {cc.level.value} | SectorStressScore: {cc.sector_stress_score}")
             fires = [k for k, v in cc.chain_fires.items() if v]
             watch = [k for k, v in cc.chain_watch.items() if v]
-            if fires:
-                lines.append(f"  Fired chains: {fires}")
-            if watch:
-                lines.append(f"  Watch chains: {watch}")
+            lines.append(f"\nCASCADE: {cc.level.value} | score={cc.sector_stress_score}"
+                         + (f" | fires={fires}" if fires else "")
+                         + (f" | watch={watch}" if watch else ""))
 
+        # ── Scenario probabilities ─────────────────────────────────────────────
         if ctx.scenario_probs:
             p = ctx.scenario_probs
-            lines.append("\n--- SCENARIO PROBABILITIES ---")
-            lines.append(f"  A={p.A:.1f}% B={p.B:.1f}% C={p.C:.1f}% D={p.D:.1f}% E={p.E:.1f}% F={p.F:.1f}%")
-
+            lines.append(f"\nSCENARIO PROBS: A={p.A:.1f}% B={p.B:.1f}% C={p.C:.1f}% "
+                         f"D={p.D:.1f}% E={p.E:.1f}% F={p.F:.1f}%")
         if ctx.raw_scores:
             rs = ctx.raw_scores
-            lines.append(f"  Raw scores: A={rs.A} B={rs.B} C={rs.C} D={rs.D} E={rs.E} F={rs.F}")
-
+            lines.append(f"RAW SCORES: A={rs.A} B={rs.B} C={rs.C} D={rs.D} E={rs.E} F={rs.F}")
         if ctx.scoring_answers and ctx.scoring_answers.reasoning:
-            lines.append("\n--- SCORING REASONING ---")
+            lines.append("SCORING REASONING:")
             for qid, reason in ctx.scoring_answers.reasoning.items():
-                lines.append(f"  {qid}: {reason}")
+                lines.append(f"  {qid}: {reason[:120]}")
 
-        if ctx.prob_flags:
-            lines.append("\n--- PROBABILITY FLAGS ---")
-            for f in ctx.prob_flags:
-                lines.append(f"  {f}")
-
+        # ── Prior session state ────────────────────────────────────────────────
         if ctx.log and ctx.log.scenario_states:
             latest = ctx.log.scenario_states[-1]
-            lines.append("\n--- PRIOR SESSION STATE ---")
-            lines.append(f"  Primary driver: {latest.primary_driver}")
+            lines.append(f"\nPRIOR SESSION: driver={latest.primary_driver}")
             if latest.open_triggers:
                 lines.append(f"  Open triggers: {latest.open_triggers}")
             if latest.open_decisions:
                 lines.append(f"  Open decisions: {latest.open_decisions}")
-            if latest.next_session_flags:
-                lines.append(f"  Next-session flags: {latest.next_session_flags}")
 
-        if ctx.all_flags:
-            lines.append("\n--- SESSION FLAGS ---")
-            for f in ctx.all_flags:
-                lines.append(f"  {f}")
+        # ── Flags ──────────────────────────────────────────────────────────────
+        notable = [f for f in ctx.prob_flags + ctx.signal_flags
+                   if "cap applied" in f or "HARD_STOP" in f]
+        if notable:
+            lines.append("\nKEY FLAGS:")
+            for f in notable[:6]:
+                lines.append(f"  {f[:150]}")
 
         return "\n".join(lines)
 

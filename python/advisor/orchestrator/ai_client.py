@@ -245,11 +245,11 @@ class AIClient:
             "- Use concise prose, no bullet lists within sections.\n\n"
             f"DATA:\n{context_summary}"
         )
-        return self._call(prompt, max_tokens=_MAX_TOKENS)
+        return self._call(prompt, max_tokens=_MAX_TOKENS, timeout=180)
 
     # ── Low-level HTTP call ────────────────────────────────────────────────────
 
-    def _call(self, user_prompt: str, max_tokens: int = _MAX_TOKENS) -> str:
+    def _call(self, user_prompt: str, max_tokens: int = _MAX_TOKENS, timeout: int = 120) -> str:
         """POST one message to the Anthropic API and return the text response."""
         import ssl
         import urllib.request
@@ -272,7 +272,7 @@ class AIClient:
         }).encode("utf-8")
 
         req = urllib.request.Request(_API_URL, data=body, headers=headers, method="POST")
-        with urllib.request.urlopen(req, timeout=60, context=ssl_ctx) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, context=ssl_ctx) as resp:
             data = json.loads(resp.read().decode("utf-8"))
 
         content = data.get("content", [])
