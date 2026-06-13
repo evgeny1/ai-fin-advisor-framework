@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import sys
 from typing import Dict, List, Optional
 
 from ..analysis import (
@@ -39,6 +40,7 @@ from ..portfolio import (
 from ..types import (
     DataReading,
     DataSource,
+    ScoringAnswers,
     SessionType,
 )
 from .ai_client import AIClient, StubAIClient
@@ -77,8 +79,18 @@ class SessionPipeline:
         self.ai = ai or StubAIClient()
         self.dry_run = dry_run
 
+    # ── Progress reporter ──────────────────────────────────────────────────────
+
+    @staticmethod
+    def _prog(message: str, done: bool = False) -> None:
+        """Print a timestamped progress line to stderr."""
+        ts  = datetime.datetime.now().strftime("%H:%M:%S")
+        pfx = "✓" if done else "→"
+        print(f"[{ts}] {pfx} {message}", file=sys.stderr, flush=True)
+
     def run(self) -> SessionContext:
         """Execute full M05 pipeline. Returns populated SessionContext."""
+        self._prog("SessionPipeline starting")
         ctx = SessionContext(
             session_type=self.session_type,
             session_date=datetime.date.today().isoformat(),
@@ -94,6 +106,7 @@ class SessionPipeline:
         self._step7_generate_briefing(ctx)
         self._step8_write_back(ctx)
 
+        self._prog("Pipeline complete", done=True)
         return ctx
 
     # ── Step 1: Load config ────────────────────────────────────────────────────
@@ -104,6 +117,7 @@ class SessionPipeline:
         Parse into typed CalibrationState + SessionLogState.
         Run ValidateClassifications — HARD_STOP if any allocation ticker absent.
         """
+        self._prog("Step 1/8  Loading Calibration_State.md + Session_Log.md ...")
         logger.info("Step 1: Loading framework config")
 
         cal_text = read_calibration_state()
@@ -112,39 +126,37 @@ class SessionPipeline:
         ctx.cal = parse_calibration_state(cal_text)
         ctx.log = parse_session_log(log_text)
 
-        logger.info(
-            f"Calibration_State v{ctx.cal.version} loaded | "
-            f"Session_Log loaded ({len(ctx.log.scenario_states)} §8 entries)"
+        n_entries = len(ctx.log.scenario_states)
+        self._prog(
+            f"Step 1/8  Config: Calibration_State v{ctx.cal.version} | "
+            f"Session_Log: {n_entries} §8 entries",
+            done=True,
         )
 
-        # ValidateClassifications — check §11 coverage for all active instruments
-        allocation_tickers = [
-            t for t, e in ctx.cal.instruments.items()
-            if not e.is_candidate
-        ]
+        # ValidateClassifications
+        allocation_tickers = [t for t, e in ctx.cal.instruments.items() if not e.is_candidate]
         try:
             warnings = validate_classifications(allocation_tickers, ctx.cal)
             ctx.validate_flags.extend(warnings)
+            if warnings:
+                for w in warnings:
+                    self._prog(f"  ⚠ {w[:120]}")
         except HardStopException as e:
-            raise  # propagate hard-stop — session cannot proceed
+            raise
 
     # ── Step 2: Fetch market data ──────────────────────────────────────────────
 
     def _step2_fetch_market_data(self, ctx: SessionContext) -> None:
-        """
-        M05 Step 4: FetchRegistry.fetch_all() — all M18 registered FetchSpecs.
-        """
+        """M05 Step 4: FetchRegistry.fetch_all() — all M18 registered FetchSpecs."""
+        self._prog("Step 2/8  Fetching market data (M18 registry) ...")
         logger.info("Step 2: Fetching market data")
 
         registry = FetchRegistry()
         register_all(registry)
 
-        # Register yfinance fetcher (always available)
         from ..data.fetchers import yfinance_fetcher as yf
         registry.register_fetcher(DataSource.YFINANCE, yf.yfinance_dispatcher)
 
-        # Register FRED REST fetcher (requires FRED_API_KEY — free from fred.stlouisfed.org)
-        # Handles: YIELD_CURVE, SOFR, DFF, THREEFYTP10, HY_OAS, IG_OAS, CCC_OAS, BBB_OAS
         try:
             from ..data.fetchers import fred_fetcher as fred
             registry.register_fetcher(DataSource.FRED_SPREADSHEET_TAB, fred.fetch_yield_curve_fred)
@@ -155,33 +167,27 @@ class SessionPipeline:
 
         valid   = sum(1 for r in ctx.readings if r.is_valid)
         flagged = len(ctx.readings) - valid
-        logger.info(f"Fetched {len(ctx.readings)} readings: {valid} valid, {flagged} flagged")
-
+        self._prog(
+            f"Step 2/8  Market data: {valid} valid, {flagged} unavailable "
+            f"({len(ctx.readings)} specs total)",
+            done=True,
+        )
         if flagged:
-            ctx.fetch_flags.append(
-                f"⚠ {flagged} data readings flagged — review quality_flags in readings."
-            )
+            ctx.fetch_flags.append(f"⚠ {flagged} data readings flagged — review quality_flags in readings.")
 
     # ── Step 3: AI Call 1 — Qualitative gather ────────────────────────────────
 
     def _step3_gather_qualitative(self, ctx: SessionContext) -> None:
-        """
-        AI Call 1 — M02 QUALITATIVE_GATHER_LIST.
-        AI researches geopolitical, Fed guidance, CPI, GDP, labor, dollar reserve.
-        """
+        """AI Call 1 — M02 QUALITATIVE_GATHER_LIST."""
+        self._prog(f"Step 3/8  AI Call 1: gathering qualitative context ({len(QUALITATIVE_TARGETS)} topics) ...")
         logger.info("Step 3: AI Call 1 — qualitative gather")
 
-        # Build brief market summary for context
-        brent_reading = next(
-            (r for r in ctx.readings if r.spec_id == "BRENT_CRUDE" and r.is_valid), None
-        )
-        hy_reading = next(
-            (r for r in ctx.readings if r.spec_id == "HY_OAS" and r.is_valid), None
-        )
+        brent_reading = next((r for r in ctx.readings if r.spec_id == "BRENT_CRUDE" and r.is_valid), None)
+        hy_reading    = next((r for r in ctx.readings if r.spec_id == "HY_OAS"       and r.is_valid), None)
         summary_parts = []
         if brent_reading:
             b = brent_reading.value
-            price = b.get("current") if isinstance(b, dict) else b
+            price = b.get("current") if isinstance(b, dict) else (b.get("price") if isinstance(b, dict) else b)
             if price:
                 summary_parts.append(f"Brent ${price:.1f}/bbl")
         if hy_reading:
@@ -192,27 +198,22 @@ class SessionPipeline:
         market_summary = "; ".join(summary_parts) if summary_parts else "market data fetched"
 
         ctx.qualitative = self.ai.gather_qualitative(QUALITATIVE_TARGETS, market_summary)
-        logger.info(f"Qualitative gather complete: {len(ctx.qualitative)} topics")
+        self._prog(f"Step 3/8  Qualitative context ready ({len(ctx.qualitative)} topics)", done=True)
 
     # ── Step 4: Compute analysis signals ──────────────────────────────────────
 
     def _step4_compute_signals(self, ctx: SessionContext) -> None:
-        """
-        Stage 3 signals: CreditSignal, DivergenceSignal, CascadeSignal, YieldCurveSignal.
-        All pure Python — zero AI tokens.
-        """
+        """Stage 3 signals: CreditSignal, DivergenceSignal, CascadeSignal, YieldCurveSignal."""
+        self._prog("Step 4/8  Computing signals (credit, regime, cascade) ...")
         logger.info("Step 4: Computing analysis signals")
         cal = ctx.cal
 
-        # Analysis functions expect Dict[spec_id, DataReading]; convert from list.
-        # HOLDINGS_PRICES:TICKER readings are included under their full key.
         readings = {r.spec_id: r for r in ctx.readings}
 
         try:
             ctx.credit_signal = compute_credit_signal(readings, cal)
         except Exception as e:
             ctx.signal_flags.append(f"⚠ CreditSignal failed: {e}")
-            logger.warning(f"CreditSignal failed: {e}")
 
         try:
             ctx.divergence_signal = compute_divergence_signal(readings, cal)
@@ -220,99 +221,89 @@ class SessionPipeline:
             ctx.signal_flags.append(f"⚠ DivergenceSignal failed: {e}")
 
         try:
-            ctx.cascade_signal = assess_cascade_level(
-                readings, cal, ctx.credit_signal
-            )
+            ctx.cascade_signal     = assess_cascade_level(readings, cal, ctx.credit_signal)
             ctx.yield_curve_signal = ctx.cascade_signal.yield_curve
         except Exception as e:
             ctx.signal_flags.append(f"⚠ CascadeSignal/YieldCurve failed: {e}")
 
-        logger.info("Signals computed")
+        # Build summary line
+        cs_summary = "n/a"
+        if ctx.credit_signal:
+            cs = ctx.credit_signal
+            cs_summary = f"HY={cs.hy_oas}bps IG={cs.ig_oas}bps"
+        yc_summary = "n/a"
+        if ctx.yield_curve_signal:
+            yc = ctx.yield_curve_signal
+            yc_summary = f"10Y-2Y={yc.spread_10y_2y:.0f}bps {yc.e_pathway_type.value}"
+        cc_summary = f"Cascade={ctx.cascade_signal.level.value}" if ctx.cascade_signal else "n/a"
+        self._prog(f"Step 4/8  Credit: {cs_summary} | {yc_summary} | {cc_summary}", done=True)
 
     # ── Step 5: AI Call 2 — Scenario scoring → probabilities ─────────────────
 
     def _step5_derive_probabilities(self, ctx: SessionContext) -> None:
-        """
-        Generates ScoringQuestions, calls AI for qualitative answers,
-        aggregates raw scores, runs apply_all_rules() → ScenarioProbabilities.
-        """
+        """Scoring questions → AI Call 2 → raw scores → apply_all_rules() → ScenarioProbabilities."""
         logger.info("Step 5: AI Call 2 — scenario scoring")
 
-        # Generate all questions (some auto-scored by Python)
         ctx.scoring_questions = generate_questions(
             ctx.readings, ctx.cal, ctx.credit_signal, ctx.qualitative
         )
-
-        ai_qs = questions_for_ai(ctx.scoring_questions)
+        ai_qs     = questions_for_ai(ctx.scoring_questions)
         auto_count = len(ctx.scoring_questions) - len(ai_qs)
-        logger.info(f"Scoring: {len(ctx.scoring_questions)} checks total "
-                    f"({auto_count} auto-scored, {len(ai_qs)} to AI)")
 
-        if ai_qs:
-            ai_answers = self.ai.answer_scoring(ai_qs)
-        else:
-            from ..types import ScoringAnswers
-            ai_answers = ScoringAnswers(answers={}, reasoning={})
-
-        ctx.scoring_answers = ai_answers
-
-        # Aggregate auto + AI scores → RawScores
-        ctx.raw_scores = aggregate_raw_scores(ai_answers, ctx.scoring_questions)
-
-        # Run M03 arithmetic pipeline
-        prior = ctx.log.latest_probs if ctx.log else None
-        hy_recession = (
-            ctx.credit_signal.hy_recession_pricing
-            if ctx.credit_signal else False
+        self._prog(
+            f"Step 5/8  AI Call 2: scoring {len(ai_qs)} qualitative checks "
+            f"({auto_count} auto-scored by Python) ..."
         )
+
+        ctx.scoring_answers = self.ai.answer_scoring(ai_qs) if ai_qs else \
+            ScoringAnswers(answers={}, reasoning={})
+
+        ctx.raw_scores = aggregate_raw_scores(ctx.scoring_answers, ctx.scoring_questions)
+
+        prior = ctx.log.latest_probs if ctx.log else None
+        hy_recession = ctx.credit_signal.hy_recession_pricing if ctx.credit_signal else False
         ctx.scenario_probs, ctx.prob_flags = apply_all_rules(
-            ctx.raw_scores, prior,
-            hy_recession_pricing_fired=hy_recession,
+            ctx.raw_scores, prior, hy_recession_pricing_fired=hy_recession
         )
 
         p = ctx.scenario_probs
-        logger.info(
-            f"Probabilities: A={p.A:.0f}% B={p.B:.0f}% C={p.C:.0f}% "
-            f"D={p.D:.0f}% E={p.E:.0f}% F={p.F:.0f}%"
+        self._prog(
+            f"Step 5/8  Probabilities: "
+            f"A={p.A:.0f}% B={p.B:.0f}% C={p.C:.0f}% D={p.D:.0f}% E={p.E:.0f}% F={p.F:.0f}%",
+            done=True,
         )
+        for flag in ctx.prob_flags:
+            if "cap applied" in flag:
+                self._prog(f"  ⚑ {flag[:120]}")
 
     # ── Step 6: Portfolio math ─────────────────────────────────────────────────
 
     def _step6_portfolio_math(self, ctx: SessionContext) -> None:
-        """
-        Stage 4 portfolio math: scenarioWeightedAllocation + FeasibilityCheck
-        for each active account in Calibration_State §11.
-        Skipped when probs are unavailable.
-        """
+        """Stage 4 portfolio math (requires allocation sheet account profiles)."""
         if not ctx.has_probs or ctx.cal is None:
-            ctx.portfolio_flags.append(
-                "Portfolio math skipped — probabilities or calibration not available."
-            )
+            self._prog("Step 6/8  Portfolio math skipped (no probabilities)", done=True)
+            ctx.portfolio_flags.append("Portfolio math skipped — probabilities unavailable.")
             return
 
+        self._prog("Step 6/8  Portfolio math ...")
         logger.info("Step 6: Portfolio math")
-
-        # Build account profiles from Calibration_State
-        # In Pattern A, account profiles come from the allocation sheet.
-        # For now, emit a flag and skip — full portfolio math requires live sheet data.
         ctx.portfolio_flags.append(
             "ℹ Portfolio math: AllocationTarget computation requires account profiles "
             "from Allocation sheet 'Objectives' tab. Run `advisor session --with-allocation` "
             "when Google credentials are available for full Stage 4 integration."
         )
+        self._prog("Step 6/8  Portfolio math: allocation sheet not loaded (needs Google creds)", done=True)
 
     # ── Step 7: AI Call 3 — Briefing generation ────────────────────────────────
 
     def _step7_generate_briefing(self, ctx: SessionContext) -> None:
-        """
-        AI Call 3 — M04 Intelligence Briefing narrative.
-        Pre-renders all computed signals/probabilities into a context block,
-        then calls AI to produce the M04-ordered briefing text.
-        """
+        """AI Call 3 — M04 Intelligence Briefing narrative."""
+        self._prog("Step 7/8  AI Call 3: generating M04 briefing (may take 30-60s) ...")
         logger.info("Step 7: AI Call 3 — briefing generation")
         context_summary = self._render_briefing_context(ctx)
+        self._prog(f"  Context: {len(context_summary)} chars (~{len(context_summary)//4} tokens)")
         ctx.briefing = self.ai.generate_briefing(context_summary)
-        logger.info("Briefing generated")
+        self._prog("Step 7/8  Briefing ready", done=True)
 
     def _render_briefing_context(self, ctx: SessionContext) -> str:
         """Serialize all computed state into a compact briefing context for AI Call 3."""
@@ -429,23 +420,23 @@ class SessionPipeline:
     # ── Step 8: Write-back ────────────────────────────────────────────────────
 
     def _step8_write_back(self, ctx: SessionContext) -> None:
-        """
-        M05 Step 10: Write-back Calibration_State.md, Session_Log.md, Portfolio_State.md.
-        Only executes in FULL_DESKTOP mode and when dry_run=False.
-        """
+        """M05 Step 10: Write-back (FULL_DESKTOP only, dry_run=False only)."""
         if self.dry_run:
             ctx.write_back_flags.append("Write-back skipped: dry_run=True")
+            self._prog("Step 8/8  Write-back skipped (dry_run)", done=True)
             return
         if self.session_type != SessionType.FULL_DESKTOP:
             ctx.write_back_flags.append("Write-back skipped: READONLY_MOBILE session")
+            self._prog("Step 8/8  Write-back skipped (READONLY_MOBILE)", done=True)
             return
         if not ctx.has_probs:
             ctx.write_back_flags.append(
-                "Write-back skipped: scenario probabilities not derived — "
-                "cannot write §8 without valid probability vector."
+                "Write-back skipped: scenario probabilities not derived."
             )
+            self._prog("Step 8/8  Write-back skipped (no probabilities)", done=True)
             return
 
+        self._prog("Step 8/8  Writing back to git ...")
         logger.info("Step 8: Write-back")
 
         # Read current file texts to modify §8
@@ -458,16 +449,18 @@ class SessionPipeline:
 
         try:
             sha = write_back(
-                calibration_state=None,   # unchanged this session
+                calibration_state=None,
                 session_log=updated_log,
                 portfolio_state=portfolio_state,
                 session_type=self.session_type,
                 dry_run=False,
             )
             ctx.write_back_commit = sha
+            self._prog(f"Step 8/8  Write-back committed: {sha}", done=True)
             logger.info(f"Write-back complete: {sha}")
         except Exception as e:
             ctx.write_back_flags.append(f"⚠ Write-back failed: {e}")
+            self._prog(f"Step 8/8  Write-back FAILED: {e}")
             logger.error(f"Write-back failed: {e}")
 
     def _render_portfolio_state(self, ctx: SessionContext) -> str:
