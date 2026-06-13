@@ -204,7 +204,14 @@ class AIClient:
 
     def _call(self, user_prompt: str, max_tokens: int = _MAX_TOKENS) -> str:
         """POST one message to the Anthropic API and return the text response."""
+        import ssl
         import urllib.request
+
+        try:
+            import certifi
+            ssl_ctx = ssl.create_default_context(cafile=certifi.where())
+        except ImportError:
+            ssl_ctx = ssl.create_default_context()
 
         headers = {
             "Content-Type": "application/json",
@@ -218,7 +225,7 @@ class AIClient:
         }).encode("utf-8")
 
         req = urllib.request.Request(_API_URL, data=body, headers=headers, method="POST")
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=60, context=ssl_ctx) as resp:
             data = json.loads(resp.read().decode("utf-8"))
 
         content = data.get("content", [])

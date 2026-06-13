@@ -1,13 +1,18 @@
 """
-fred_fetcher.py — FRED REST API fetcher for Treasury yield tenors not
-available via yfinance (specifically DGS2, the 2-Year yield).
+fred_fetcher.py — FRED REST API dispatcher for all FRED_SPREADSHEET_TAB specs.
+
+Handles:
+  YIELD_CURVE   — full Treasury curve (DGS3MO, DGS2, DGS5, DGS10, DGS30)
+  SOFR          — Secured Overnight Financing Rate (SOFR)
+  DFF           — Effective Federal Funds Rate (DFF)
+  THREEFYTP10   — 10Y Term Premium ACM model (THREEFYTP10)
+  HY_OAS        — ICE BofA US HY OAS (BAMLH0A0HYM2)
+  IG_OAS        — ICE BofA US IG OAS (BAMLC0A0CM)
+  CCC_OAS       — ICE BofA CCC & Lower OAS (BAMLH0A3HYC)
+  BBB_OAS       — ICE BofA BBB Corporate OAS (BAMLC0A4CBBB)
 
 FRED API is free. Get a key at: https://fred.stlouisfed.org/docs/api/api_key.html
 Add to .env: FRED_API_KEY=your_key_here
-
-This fills the gap left by yfinance's partial yield curve (yfinance provides
-10Y via ^TNX, 30Y via ^TYX, 13W via ^IRX, but NOT 2Y). The 10Y-2Y spread
-is required by M17.computeYieldCurveSignal().
 """
 from __future__ import annotations
 
@@ -22,42 +27,56 @@ from ...types import DataReading, DataSource, FetchSpec
 
 logger = logging.getLogger(__name__)
 
-_BASE = "https://api.stlouisfed.org/fred/series/observations"
+_BASE    = "https://api.stlouisfed.org/fred/series/observations"
 _TIMEOUT = 10
 
-# FRED series codes for each yield tenor
-_FRED_YIELD_SERIES: Dict[str, str] = {
-    "year2":   "DGS2",    # 2-Year Treasury Constant Maturity Rate
-    "year5":   "DGS5",    # 5-Year
-    "year10":  "DGS10",   # 10-Year
-    "year30":  "DGS30",   # 30-Year
-    "month3":  "DGS3MO",  # 3-Month
+# ── FRED series IDs per M18 spec.id ───────────────────────────────────────────
+
+# Yield curve tenors (YIELD_CURVE spec)
+_YIELD_SERIES: Dict[str, str] = {
+    "month3": "DGS3MO",
+    "year2":  "DGS2",
+    "year5":  "DGS5",
+    "year10": "DGS10",
+    "year30": "DGS30",
+}
+
+# Single-series specs: spec.id → (fred_series_id, value_key, multiply_100)
+# multiply_100=True: FRED returns percentage points (e.g. 2.78%) → convert to bps (278bps)
+# multiply_100=False: FRED returns value in native unit (rate %, term premium %)
+_SINGLE_SERIES: Dict[str, tuple] = {
+    "SOFR":         ("SOFR",         "sofr",              False),
+    "DFF":          ("DFF",          "dff",               False),
+    "THREEFYTP10":  ("THREEFYTP10",  "term_premium_bps",  False),
+    "HY_OAS":       ("BAMLH0A0HYM2", "current",           True),   # FRED: percent → bps
+    "IG_OAS":       ("BAMLC0A0CM",   "current",           True),   # FRED: percent → bps
+    "CCC_OAS":      ("BAMLH0A3HYC",  "current",           True),   # FRED: percent → bps
+    "BBB_OAS":      ("BAMLC0A4CBBB", "current",           True),   # FRED: percent → bps
 }
 
 
-def _fred_api_key() -> Optional[str]:
+def _api_key() -> Optional[str]:
     return os.environ.get("FRED_API_KEY")
 
 
 def _fetch_latest(series_id: str) -> Optional[float]:
-    """Fetch the most recent observation for a FRED series. Returns None if unavailable."""
-    key = _fred_api_key()
+    """Fetch most recent non-missing observation from FRED."""
+    key = _api_key()
     if not key:
         return None
     params = {
-        "series_id":    series_id,
-        "api_key":      key,
-        "file_type":    "json",
-        "sort_order":   "desc",
-        "limit":        5,           # last 5 to skip any trailing "." (missing) values
-        "observation_start": (datetime.date.today() - datetime.timedelta(days=10)).isoformat(),
+        "series_id":         series_id,
+        "api_key":           key,
+        "file_type":         "json",
+        "sort_order":        "desc",
+        "limit":             5,
+        "observation_start": (datetime.date.today() - datetime.timedelta(days=14)).isoformat(),
     }
     resp = requests.get(_BASE, params=params, timeout=_TIMEOUT)
     resp.raise_for_status()
-    observations = resp.json().get("observations", [])
-    for obs in observations:
+    for obs in resp.json().get("observations", []):
         val = obs.get("value", ".")
-        if val != ".":
+        if val not in (".", ""):
             try:
                 return float(val)
             except ValueError:
@@ -65,15 +84,14 @@ def _fetch_latest(series_id: str) -> Optional[float]:
     return None
 
 
+# ── Public dispatcher ──────────────────────────────────────────────────────────
+
 def fetch_yield_curve_fred(spec: FetchSpec) -> List[DataReading]:
     """
-    Full yield curve from FRED REST API.
-    Provides: 3M, 2Y, 5Y, 10Y, 30Y and all derived spreads.
-    Requires FRED_API_KEY in environment (free key from fred.stlouisfed.org).
-    Falls back gracefully to None values if key is absent.
+    Dispatcher for all FRED_SPREADSHEET_TAB specs. Routes by spec.id.
+    Falls back gracefully to None values if FRED_API_KEY is absent.
     """
-    key = _fred_api_key()
-    if not key:
+    if not _api_key():
         return [DataReading(
             spec_id=spec.id, value=None,
             source=DataSource.FRED_SPREADSHEET_TAB,
@@ -82,8 +100,27 @@ def fetch_yield_curve_fred(spec: FetchSpec) -> List[DataReading]:
                            "get a free key at fred.stlouisfed.org/docs/api/api_key.html"],
         )]
 
+    if spec.id == "YIELD_CURVE":
+        return _fetch_yield_curve(spec)
+
+    if spec.id in _SINGLE_SERIES:
+        return _fetch_single_series(spec)
+
+    # Unknown spec — return unavailable
+    return [DataReading(
+        spec_id=spec.id, value=None,
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        fetched_at=datetime.datetime.utcnow(),
+        quality_flags=[f"UNHANDLED: no FRED series mapping for spec.id='{spec.id}'"],
+    )]
+
+
+def _fetch_yield_curve(spec: FetchSpec) -> List[DataReading]:
+    """Fetch full US Treasury yield curve from FRED."""
     values: Dict[str, Any] = {}
-    for key_name, series_id in _FRED_YIELD_SERIES.items():
+    flags: List[str] = []
+
+    for key_name, series_id in _YIELD_SERIES.items():
         try:
             values[key_name] = _fetch_latest(series_id)
         except Exception as e:
@@ -94,7 +131,6 @@ def fetch_yield_curve_fred(spec: FetchSpec) -> List[DataReading]:
     y10 = values.get("year10")
     y3m = values.get("month3")
 
-    flags = []
     if any(v is None for v in values.values()):
         missing = [k for k, v in values.items() if v is None]
         flags.append(f"PARTIAL: {missing} returned None from FRED")
@@ -103,10 +139,40 @@ def fetch_yield_curve_fred(spec: FetchSpec) -> List[DataReading]:
         spec_id=spec.id,
         value={
             **{k: round(v, 4) if v is not None else None for k, v in values.items()},
-            "spread_10y_2y":  round(y10 - y2,  4) if (y10 and y2)  else None,
-            "spread_10y_3m":  round(y10 - y3m, 4) if (y10 and y3m) else None,
-            "source_note":    "FRED REST API (DGS2/DGS5/DGS10/DGS30/DGS3MO)",
+            "spread_10y_2y": round(y10 - y2, 4)  if (y10 and y2)  else None,
+            "spread_10y_3m": round(y10 - y3m, 4) if (y10 and y3m) else None,
+            "source_note":   "FRED REST API (DGS3MO/DGS2/DGS5/DGS10/DGS30)",
         },
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        fetched_at=datetime.datetime.utcnow(),
+        quality_flags=flags,
+    )]
+
+
+def _fetch_single_series(spec: FetchSpec) -> List[DataReading]:
+    """Fetch a single-value FRED series (credit spreads, rates, term premium)."""
+    fred_series, value_key, multiply_100 = _SINGLE_SERIES[spec.id]
+
+    try:
+        val = _fetch_latest(fred_series)
+    except Exception as e:
+        logger.warning(f"FRED {fred_series} ({spec.id}) failed: {e}")
+        val = None
+
+    flags = []
+    if val is None:
+        flags.append(f"UNAVAILABLE: FRED series {fred_series} returned no data")
+
+    # Convert percent → bps for OAS series (FRED stores in percentage points)
+    if val is not None and multiply_100:
+        val = round(val * 100, 2)
+
+    # Return value as {"current": float} so get_scalar() can extract it
+    value = {"current": round(val, 4) if val is not None else val} if val is not None else None
+
+    return [DataReading(
+        spec_id=spec.id,
+        value=value,
         source=DataSource.FRED_SPREADSHEET_TAB,
         fetched_at=datetime.datetime.utcnow(),
         quality_flags=flags,

@@ -138,7 +138,7 @@ def fetch_vix_history(spec: FetchSpec) -> List[DataReading]:
     if df.empty or "Close" not in df.columns:
         raise RuntimeError("^VIX history returned empty")
     closes_raw = df["Close"].dropna()
-    closes = closes_raw.values.tolist() if hasattr(closes_raw, "values") else list(closes_raw)
+    closes = closes_raw.values.flatten().tolist()   # flatten handles multi-index DataFrame columns
     if not closes:
         raise RuntimeError("^VIX history returned empty")
     n = 30 if spec.id == "VIX_30D_AVG" else 62

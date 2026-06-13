@@ -22,6 +22,26 @@ import logging
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
+
+
+def _load_dotenv() -> None:
+    """Load .env from the python/ directory if present (no dependency required)."""
+    env_path = Path(__file__).parent.parent / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:   # don't override existing env vars
+            os.environ[key] = value
+
+
+_load_dotenv()   # must run before logging / any imports that read env vars
 
 logging.basicConfig(
     level=os.environ.get("ADVISOR_LOG_LEVEL", "WARNING"),

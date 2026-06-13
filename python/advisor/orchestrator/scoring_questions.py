@@ -361,16 +361,15 @@ def generate_questions(
     ))
 
     # E_check_ig: from CreditSignal (auto-score)
+    # Score 2 when threshold reached; 0 when calm.
+    # Score 1 ("approaching within 20bps") requires 180d median history — not available
+    # from current FRED readings alone; leave for AI when signal is intermediate.
     e_ig_auto: Optional[int] = None
     if credit_signal is not None:
         if credit_signal.ig_transmission_reached:
             e_ig_auto = 2
-        elif ig_oas_val is not None and credit_signal.ig_oas is not None:
-            # approaching: within 20 bps of threshold
-            threshold = credit_signal.ig_oas + (credit_signal.ig_oas or 0)
-            e_ig_auto = 1 if credit_signal.ig_transmission_reached is False else 0
         else:
-            e_ig_auto = 0
+            e_ig_auto = 0   # calm (no transmission); "approaching" requires history → AI if needed
     qs.append(ScoringQuestion(
         id="E_check_ig", scenario="E",
         question=(

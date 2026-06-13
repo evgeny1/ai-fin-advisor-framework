@@ -23,7 +23,6 @@ from ..analysis import (
     assess_cascade_level,
     compute_credit_signal,
     compute_divergence_signal,
-    compute_yield_curve_signal,
     validate_classifications,
     blended_scenario_return,
 )
@@ -144,6 +143,14 @@ class SessionPipeline:
         from ..data.fetchers import yfinance_fetcher as yf
         registry.register_fetcher(DataSource.YFINANCE, yf.yfinance_dispatcher)
 
+        # Register FRED REST fetcher (requires FRED_API_KEY — free from fred.stlouisfed.org)
+        # Handles: YIELD_CURVE, SOFR, DFF, THREEFYTP10, HY_OAS, IG_OAS, CCC_OAS, BBB_OAS
+        try:
+            from ..data.fetchers import fred_fetcher as fred
+            registry.register_fetcher(DataSource.FRED_SPREADSHEET_TAB, fred.fetch_yield_curve_fred)
+        except Exception as e:
+            ctx.fetch_flags.append(f"⚠ FRED fetcher not registered: {e} — credit spreads unavailable")
+
         ctx.readings = registry.fetch_all()
 
         valid   = sum(1 for r in ctx.readings if r.is_valid)
@@ -197,22 +204,26 @@ class SessionPipeline:
         logger.info("Step 4: Computing analysis signals")
         cal = ctx.cal
 
+        # Analysis functions expect Dict[spec_id, DataReading]; convert from list.
+        # HOLDINGS_PRICES:TICKER readings are included under their full key.
+        readings = {r.spec_id: r for r in ctx.readings}
+
         try:
-            ctx.credit_signal = compute_credit_signal(ctx.readings, cal)
+            ctx.credit_signal = compute_credit_signal(readings, cal)
         except Exception as e:
             ctx.signal_flags.append(f"⚠ CreditSignal failed: {e}")
             logger.warning(f"CreditSignal failed: {e}")
 
         try:
-            ctx.divergence_signal = compute_divergence_signal(ctx.readings, cal)
+            ctx.divergence_signal = compute_divergence_signal(readings, cal)
         except Exception as e:
             ctx.signal_flags.append(f"⚠ DivergenceSignal failed: {e}")
 
         try:
-            ctx.yield_curve_signal = compute_yield_curve_signal(ctx.readings, cal)
             ctx.cascade_signal = assess_cascade_level(
-                ctx.readings, cal, ctx.yield_curve_signal
+                readings, cal, ctx.credit_signal
             )
+            ctx.yield_curve_signal = ctx.cascade_signal.yield_curve
         except Exception as e:
             ctx.signal_flags.append(f"⚠ CascadeSignal/YieldCurve failed: {e}")
 
