@@ -195,7 +195,10 @@ def entry_extension_guard(
     cal: CalibrationState,
     *,
     current_price: float,
-    trailing_90d_avg: Optional[float],
+    trailing_avg: Optional[float],
+    trailing_90d_avg: Optional[float] = None,   # DEPRECATED alias → use trailing_avg
+    window_days: int = 90,
+    conflict_duration_days: Optional[int] = None,
 ) -> GuardStatus:
     """
     M14.EntryExtensionGuard for one ticker.
@@ -203,6 +206,14 @@ def entry_extension_guard(
     Called before any ADD directive executes (M05 Step 9, M09/M10 execution).
     WAR PREMIUM ENTRY GUARD (commodity-linked, geopolitical, precious metals roles)
     is an INDEPENDENT guard — apply separately per M08 execution guard spec.
+
+    §9.3 CONFLICT DURATION OVERRIDE (v1.34):
+    When conflict_duration_days > 90 and the instrument's primary role is
+    inflation_hedge_commodity_linked or inflation_hedge_precious_metals,
+    the caller MUST supply the 180-day trailing average in trailing_avg and
+    pass window_days=180. This function logs a flag when the override applies.
+    The override is the CALLER's responsibility — this function does not
+    fetch price history; it receives the pre-computed average.
 
     Parameters
     ----------
@@ -212,15 +223,36 @@ def entry_extension_guard(
         CalibrationState with §11 instrument entries and §9.3 thresholds.
     current_price:
         Current market price from AllocationSheet (T1 source).
-    trailing_90d_avg:
-        90-calendar-day trailing average price. Computed externally (M14 compute_90d_trailing_avg).
+    trailing_avg:
+        Trailing average price. 90-calendar-day by default; 180-calendar-day
+        when the §9.3 conflict duration override is active (conflict_duration_days > 90
+        for CL and IHP roles). Computed externally (M14 compute_trailing_avg).
         None → conservative treatment: guard is HALT (cannot confirm guard clear).
+    trailing_90d_avg:
+        Deprecated. Alias for trailing_avg for backward compatibility.
+        If trailing_avg is None and trailing_90d_avg is not None, trailing_90d_avg is used.
+    window_days:
+        Calendar days used to compute trailing_avg. 90 (standard) or 180 (override).
+        Used only for flag/logging; does not affect threshold math.
+    conflict_duration_days:
+        Calendar days since T1-confirmed conflict onset (if any active discrete supply event).
+        None or <= 90 → standard 90d window expected.
+        > 90 → caller should have used 180d window for CL/IHP roles (flag raised if not).
 
     Returns
     -------
     GuardStatus with result PASS | HALT | EXEMPT.
     """
     flags: List[str] = []
+
+    # Backward-compat: accept legacy trailing_90d_avg keyword
+    effective_avg = trailing_avg if trailing_avg is not None else trailing_90d_avg
+
+    # Conflict duration override check (§9.3 v1.34)
+    _OVERRIDE_ROLES = frozenset({
+        "inflation_hedge_commodity_linked",
+        "inflation_hedge_precious_metals",
+    })
 
     entry = cal.instruments.get(ticker)
     if entry is None:
@@ -239,6 +271,23 @@ def entry_extension_guard(
     # Primary role = highest-weight component
     primary_role = max(entry.components, key=lambda c: c.weight).role_id
 
+    # §9.3 conflict duration override: flag if caller should have used 180d but passed 90d
+    is_override_role = primary_role in _OVERRIDE_ROLES
+    if conflict_duration_days is not None and conflict_duration_days > 90 and is_override_role:
+        expected_window = 180
+        if window_days < expected_window:
+            flags.append(
+                f"{ticker} ({primary_role}): §9.3 conflict duration override ACTIVE "
+                f"({conflict_duration_days}d > 90d threshold) — expected 180d trailing avg "
+                f"but caller supplied {window_days}d. Guard result may be too permissive. "
+                "Re-run with 180d trailing avg."
+            )
+        else:
+            flags.append(
+                f"{ticker} ({primary_role}): §9.3 conflict duration override applied "
+                f"({conflict_duration_days}d conflict) — using {window_days}d trailing avg."
+            )
+
     # Look up threshold from §9.3
     threshold_pct: Optional[float] = cal.regime.entry_extension_thresholds.get(primary_role)
     if threshold_pct is None:
@@ -251,9 +300,9 @@ def entry_extension_guard(
     threshold = threshold_pct / 100.0  # convert percentage to fraction
 
     # Trailing average check
-    if trailing_90d_avg is None:
+    if effective_avg is None:
         flags.append(
-            f"{ticker}: 90d trailing average unavailable — "
+            f"{ticker}: trailing average unavailable ({window_days}d window) — "
             "conservative: treat guard as HALT per M14 DataIntegrity rule"
         )
         return GuardStatus(
@@ -262,12 +311,12 @@ def entry_extension_guard(
             adjusted_returns=None, flags=flags,
         )
 
-    if trailing_90d_avg <= 0:
+    if effective_avg <= 0:
         raise HardStopException(
-            f"EntryExtensionGuard: {ticker} trailing_90d_avg <= 0 ({trailing_90d_avg})"
+            f"EntryExtensionGuard: {ticker} trailing_avg <= 0 ({effective_avg})"
         )
 
-    appreciation = (current_price - trailing_90d_avg) / trailing_90d_avg
+    appreciation = (current_price - effective_avg) / effective_avg
 
     if appreciation >= threshold:
         # Compute adjusted conservative returns: published − appreciation (per M14)
