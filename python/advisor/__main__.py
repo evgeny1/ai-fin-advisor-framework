@@ -224,6 +224,11 @@ def main() -> None:
 
     cmd = " ".join(args[:2]) if len(args) >= 2 else args[0]
 
+    if args[0] == "mcp-server":
+        from .mcp_server import mcp
+        mcp.run()   # blocks; stdio transport for Claude Desktop
+        return
+
     dispatch = {
         "fetch market-data": cmd_fetch_market_data,
         "fetch calibration":  cmd_fetch_calibration,
