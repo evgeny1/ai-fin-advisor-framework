@@ -2,9 +2,7 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.33  Last updated: June 10, 2026 (B formal trigger FIRED — May CPI 4.2% YoY T1 BLS;
-# scenario probabilities revised A=5/B=41/C=38/D=5/E=4/F=7; PAVE exit executed 502sh Acc4;
-# proceeds → Acc4 DBMF 10%→15% / SGOV 15%→21%. No §4.1 changes.)
+# Version: 1.34  Last updated: June 13, 2026 (INFL §11 entry added; §9.3 EntryExtensionGuard 180d conflict duration override enacted)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -128,6 +126,27 @@ For the 3rd CPI print (the formal trigger gate), graduated response by print lev
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-13 - Framework v1.34 (INFL §11 classification + §9.3 EntryExtensionGuard 180d override).
+INFL (Horizon Kinetics Inflation Beneficiaries ETF) added to §11 as CANDIDATE instrument.
+ThematicETF_ClassificationAudit() COMPLETE: ComponentVector IHP(0.25)+CL(0.50)+RAC(0.20)+STG(0.05)+UNCLASSIFIED(0.00).
+TPL and LandBridge classified as inflation_hedge_commodity_linked (not RAC): revenue = royalty_rate ×
+commodity_price × volume; zero capex; quality note for CL D conservative floor refinement at Q2.
+M07: PASS. Foreign exposure flag (FNV/WPM dual-listed TSX; PSK Toronto) — does NOT disqualify taxable
+(equity ETF, qualified dividends, 1099). ER 0.85% acceptable for active management.
+EV +3.51% at current session vector (A=18.8/B=37.6/C=25.1/D=3.0/E=12.5/F=3.0). Rank #4.
+EntryExtensionGuard CLEARS under 180d override: 180d avg ≈ $47.00; current $51.02 = +8.5% above (threshold 20%).
+Proposed allocation: IRA 3% (from XAR 12%→9%); Roth 3% (from XAR 12%→9%); Acc4 2% (from COPX 7%→5%).
+Pending client confirmation; allocation sheet update; instruments.json add.
+
+§9.3 EntryExtensionGuard CONFLICT DURATION OVERRIDE enacted (HIGH confidence — logical necessity, no M16 return
+table calibration required). When conflict_duration > 90 calendar days from T1-confirmed onset:
+  EntryExtensionGuard uses 180d trailing average as canonical baseline for CL and IHP roles.
+Current status: US-Iran war onset Feb 28, 2026 (T1: AP). Duration = 105 days. OVERRIDE ACTIVE.
+Deactivation: T1-confirmed signed agreement + 30 calendar days, or Q2 June 30 review.
+Prior session discussion: June 8, 2026 framework audit — client raised issue; Claude proposed 180d fix
+for energy_90d divergence signal; same principle now extended to EntryExtensionGuard §9.3.
+No §4.1 changes. No probability changes this version. Session probs: A=18.8/B=37.6/C=25.1/D=3.0/E=12.5/F=3.0.
 
 2026-06-10 - Framework v1.33 (B formal trigger FIRED; probability revision; PAVE exit executed).
 May CPI 4.2% YoY (T1 BLS USDL-26-0824) — Print 3/3 (Mar 3.3%, Apr 3.8%, May 4.2%). §2.3 B formal
@@ -667,6 +686,19 @@ June 4 full session M14 computation (market_data T1 — M18 v1.2 HARD_GATE compl
 | rate_sensitive_income_short | N/A | Guard does not apply |
 | rate_sensitive_income_long | N/A | Duration risk captured by scenario framework |
 
+**CONFLICT DURATION OVERRIDE (v1.34, June 13, 2026):**
+When `conflict_duration_calendar_days > 90` from T1-confirmed conflict onset to session date,
+EntryExtensionGuard uses **180d trailing average** as canonical baseline for all
+`inflation_hedge_commodity_linked` and `inflation_hedge_precious_metals` roles.
+Rationale: when conflict onset is inside the 90d window, both the anchor and current price reflect
+war-elevated levels. The 90d comparison becomes war-vs-war rather than pre-war-vs-current, defeating
+the guard's purpose. This override applies independently of the M14 energy_90d → energy_180d
+divergence signal switch (M14 §open_decisions, June 7).
+Implementation: `compute_90d_trailing_avg()` → extend window to 180d when override active; sourcing unchanged.
+Active status (June 13, 2026): US-Iran war onset Feb 28, 2026 (T1: AP). Duration = 105 calendar days. **OVERRIDE ACTIVE.**
+Deactivation: reset to 90d baseline when conflict formally ends (T1-confirmed signed agreement + 30 calendar days)
+or at Q2 audit June 30, whichever is later, after assessing price normalization.
+
 ### 9.4 MOVE Index Thresholds (M11/M14 Integration — added v1.22 May 29, 2026)
 
 All thresholds CALIBRATION_DATED. Encoded at Q2 audit May 29, 2026. First formal audit: June 30, 2026.
@@ -1076,6 +1108,53 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   - Primary IRA: 3%
   - Primary Roth: 3%
   - Relative accounts: out of scope (not requested)
+
+#### INFL
+- Components: inflation_hedge_precious_metals (0.25) + inflation_hedge_commodity_linked (0.50) + real_asset_contracted_revenue (0.20) + secular_technology_growth (0.05)
+- Basis: Horizon Kinetics Inflation Beneficiaries ETF. Actively managed, ~51 holdings. $1.45B AUM.
+  Invests in companies that earn revenues which rise with inflation without commensurate cost increases:
+  precious metal royalty streamers (WPM, FNV, OR Royalties), land/mineral royalties (TPL, LB, PSK, VNOM),
+  energy infrastructure royalties (WBI, LNG), uranium (CCO), and AI power adjacency (nuclear/utilities).
+- ThematicETF_ClassificationAudit COMPLETE (June 13, 2026, v1.34):
+  Sectors: Energy 41.5%, Financial Services (royalty streamers) 25%, Basic Materials 22%, Other 11.5%.
+  Top 10 (48.9% NAV): WPM 6.2%, TPL 6.1%, LB 5.9%, FNV 5.0%, PSK 5.0%, VNOM 4.9%, WBI 4.6%, CCO 4.0%, OR 3.7%, LNG 3.4%.
+  IHP (0.25): WPM, FNV, OR Royalties — precious metal royalty streamers. Revenue = % of metals produced × spot price.
+  CL (0.50): TPL, LB, PSK, VNOM, energy royalty residual — land/mineral royalties + energy royalties.
+    ⚑ TPL and LandBridge classified as CL (not RAC): revenue = royalty_rate × commodity_price × volume;
+    not fixed-fee. Zero capex = high quality within CL. D conservative floor likely -5% (vs -8% for miners);
+    refine at Q2 with royalty sub-tier note.
+  RAC (0.20): WBI (water infrastructure), CCO (uranium contracts), LNG (long-term supply contracts), utilities.
+  STG (0.05): nuclear/AI power adjacency (CCO nuclear demand, Bloom Energy, energy storage).
+  UNCLASSIFIED: 0.00 — fully classified.
+- AUM: $1.45B. ER: 0.85%. Inception: Jan 11, 2021 (5.4yr track record). Portfolio turnover ~9% (low).
+- M07 STATUS: PASS. AUM ✓. ER 0.85% — elevated but consistent with active management ✓. Track record ✓.
+  ⚑ Foreign exposure: FNV, WPM dual-listed TSX; PSK Toronto-listed. FLAG retained but does NOT
+  disqualify taxable — these are equity distributions (qualified dividends), not foreign withholding issue.
+  Equity ETF structure, 1099 (not K-1), no phantom income ✓.
+- EV (A=18.8/B=37.6/C=25.1/D=3.0/E=12.5/F=3.0 — current session confirmed vector):
+  Scenario blended returns (conservative):
+    A: IHP(-2)×25% + CL(2)×50% + RAC(3)×20% + STG(6)×5% = +1.40%
+    B: IHP(6)×25% + CL(6)×50% + RAC(6)×20% + STG(-2)×5% = +5.60%
+    C: IHP(-2)×25% + CL(7)×50% + RAC(8)×20% + STG(2)×5% = +4.70%
+    D: IHP(-3)×25% + CL(-8)×50% + RAC(-6)×20% + STG(-6)×5% = -6.25%
+    E: IHP(10)×25% + CL(2)×50% + RAC(-10)×20% + STG(-12)×5% = +0.90%
+    F: IHP(-3)×25% + CL(2)×50% + RAC(3)×20% + STG(4)×5% = +1.05%
+  EV: 18.8%(1.40)+37.6%(5.60)+25.1%(4.70)+3.0%(-6.25)+12.5%(0.90)+3.0%(1.05) = **+3.51%** → Ranked #4.
+  Note: EV was computed at the June 13, 2026 session probability vector. Recompute at Q2 if vector shifts >5pp.
+- TAX PLACEMENT: ALL ACCOUNTS eligible (qualified dividend equity ETF; no K-1; no phantom income).
+- ENTRY EXTENSION GUARD (checked June 13, 2026 under §9.3 CONFLICT DURATION OVERRIDE — 180d baseline):
+  INFL 180d trailing avg (approx Dec 14, 2025–Jun 13, 2026): ≈ $47.00.
+  Current: $51.02. Premium above 180d avg: ≈ +8.5%. Threshold: 20%. **CLEARS.**
+- Structural thesis: Royalty and zero-capex companies earn revenues that pass through inflation directly.
+  Distinct from COPX (miners with extraction cost exposure) and MLPX (fixed-fee toll roads).
+  Adds precious metal streaming layer (WPM/FNV) and land royalty layer (TPL/LB) not currently in framework.
+- Last reviewed: 2026-06-13 (v1.34 — initial classification; CANDIDATE status, pending allocation execution)
+- Proposed target allocation (pending client confirmation and allocation sheet update):
+  - Primary IRA: 3% (funded from XAR 12%→9%)
+  - Primary Roth: 3% (funded from XAR 12%→9%)
+  - Primary Taxable (Acc4): 2% (funded from COPX 7%→5%)
+  - Acc3 (PRESERVATION): EXCLUDED — equity ETF incompatible with floor_nominal_loss=TRUE
+  - Relative accounts: NOT evaluated this session
 
 ---
 
