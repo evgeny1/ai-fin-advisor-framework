@@ -1,16 +1,14 @@
 """
 analysis/instruments.py — M15 instrument classification and blended return computation.
 
-Maps to: M15_InstrumentClassification.md MODULE InstrumentClassification
-
 Public functions:
-  validate_classifications()      — session-start HARD_STOP checks (§11 integrity)
-  blended_scenario_return()       — weighted blend of §4.1 values across components
-  classify_instrument()           — returns ComponentVector from §11
+  validate_classifications()      — session-start HARD_STOP checks (instrument registry integrity)
+  blended_scenario_return()       — weighted blend of return table values across components
+  classify_instrument()           — returns ComponentVector from instrument registry
   dominant_directive()            — highest-weight material component directive
 
 DESIGN:
-  - No ticker or role name is hardcoded here. All resolved from CalibrationState §11.
+  - No ticker or role name is hardcoded here. All resolved from CalibrationState instrument registry.
   - All scenario return computations MUST route through blended_scenario_return().
   - M08.classifyRole() remains for constituent-level constituent analysis (not allocation).
 """
@@ -46,21 +44,21 @@ def validate_classifications(
     cal: CalibrationState,
 ) -> List[str]:
     """
-    M15.ValidateClassifications() — runs at session start (M05 Step 3).
+    M15.ValidateClassifications() — runs at session start.
 
-    Performs 5 checks per M15 spec:
-      1. Every allocation ticker has a §11 entry → HARD_STOP if not
-      2. Every component role exists in §11 role registry → HARD_STOP if not
-      3. Every registered role has a §4.1 return table row → HARD_STOP if not
+    Performs 5 checks:
+      1. Every allocation ticker has a classification entry → HARD_STOP if not
+      2. Every component role exists in the role registry → HARD_STOP if not
+      3. Every registered role has a return table row → HARD_STOP if not
       4. Component weights sum to 1.0 per instrument → HARD_STOP if not
       5. Staleness warning (non-blocking) for instruments not reviewed in 90+ days
 
     Parameters
     ----------
     allocation_tickers:
-        All tickers currently in the allocation sheet. Must match §11 exactly.
+        All tickers currently in the allocation sheet.
     cal:
-        CalibrationState (§11 + §4.1 populated by Stage 2 parser).
+        CalibrationState (instrument registry + return table populated by parser).
 
     Returns
     -------
@@ -147,8 +145,8 @@ def classify_instrument(ticker: str, cal: CalibrationState) -> List[ComponentWei
     """
     M15.classifyInstrument(ticker) → ComponentVector.
 
-    Returns the list of ComponentWeight objects from §11.
-    Raises HardStopException if ticker not in §11 (ValidateClassifications should prevent this).
+    Returns the list of ComponentWeight objects from the instrument registry.
+    Raises HardStopException if ticker not classified (ValidateClassifications should prevent this).
     """
     entry = cal.instruments.get(ticker)
     if entry is None:
@@ -170,21 +168,21 @@ def blended_scenario_return(
     """
     M15.blendedScenarioReturn(ticker, scenario, return_type) → float.
 
-    REPLACES all direct §4.1[role][scenario] lookups throughout the framework.
-    For pure single-role instruments: result equals §4.1[role][scenario] exactly.
+    REPLACES all direct return table lookups throughout the framework.
+    For pure single-role instruments: result equals the table value exactly.
     For composite instruments: weighted blend across all components.
 
     Parameters
     ----------
     ticker:
-        Portfolio instrument ticker. Must be in cal.instruments (§11).
+        Portfolio instrument ticker. Must be in cal.instruments.
     scenario:
         One of "A", "B", "C", "D", "E", "F".
     return_type:
         "conservative" — use in ALL EV computations, idealAllocation(), FeasibilityCheck().
         "upside"       — disclosed in briefing only; NEVER used in any computation.
     cal:
-        CalibrationState with §4.1 return table and §11 instruments.
+        CalibrationState with return table and instrument registry.
 
     Returns
     -------
@@ -192,7 +190,7 @@ def blended_scenario_return(
 
     Raises
     ------
-    HardStopException if ticker or role not in §11/§4.1.
+    HardStopException if ticker or role not found in registry or return table.
     ValueError if return_type invalid or scenario invalid.
     """
     if return_type not in _VALID_RETURN_TYPES:

@@ -4,12 +4,12 @@ analysis/cascade.py — M17 systemic cascade early warning.
 Maps to: M17_SystemicCascadeWarning.md MODULE SystemicCascadeWarning
 
 Three public functions:
-  sector_stress_score()      → int 0–3 (M17 §2)
-  compute_yield_curve_signal() → YieldCurveSignal (M17 §3)
-  assess_cascade_level()     → CascadeSignal (M17 §5 + §4)
+  sector_stress_score()        → int 0–3
+  compute_yield_curve_signal() → YieldCurveSignal
+  assess_cascade_level()       → CascadeSignal
 
 NEVER routes signals into M03.DeriveScenarioProbabilities().
-CHAIN_4 score contribution = 0 until T1 AACER/PACER source confirmed (per M17 NEVER list).
+CHAIN_4 score contribution = 0 until T1 AACER/PACER source confirmed.
 """
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ def sector_stress_score(
     chain_4_t1_confirmed: bool = False,
 ) -> tuple[int, Dict[str, bool], Dict[str, bool], List[str]]:
     """
-    M17 §2 sectorStressScore().
+    M17 sectorStressScore().
 
     Returns
     -------
@@ -53,7 +53,7 @@ def sector_stress_score(
     Notes
     -----
     CHAIN_4 score contribution is always 0 until chain_4_t1_confirmed=True,
-    per M17 NEVER: score_Chain_4_without_T1_source.
+    per M17: CHAIN_4 not scored without T1 source.
     Pass chain_4_t1_confirmed=True when ABI/Epiq AACER data has been verified as T1.
     """
     flags: List[str]      = []
@@ -118,7 +118,7 @@ def sector_stress_score(
     elif kre_90d_return is None or spx_90d_return is None:
         flags.append("KRE or SP500 90d returns unavailable — CHAIN_2 KRE relative performance cannot be scored")
 
-    # ── CHAIN_3 — Private Credit / Margin Cascade (two-mode, M17 v1.3) ────────
+    # ── CHAIN_3 — Private Credit / Margin Cascade (two-mode) ────────────────
     margin_r = readings.get("FINRA_MARGIN_DEBT")
 
     chain3_watch = False
@@ -176,7 +176,7 @@ def sector_stress_score(
 
     # ── CHAIN_4 — Manufacturing / Corporate Stress ────────────────────────────
     # Score contribution = 0 until T1 AACER/PACER source confirmed
-    # ABI/Epiq AACER press releases qualify as T1-equivalent per §12.4 v1.24
+    # ABI/Epiq AACER press releases qualify as T1-equivalent for this series.
     if chain_4_t1_confirmed:
         bankrupt_r = readings.get("CORP_BANKRUPTCY_QUARTERLY")
         bankrupt_q = get_scalar(bankrupt_r, flags, "CORP_BANKRUPTCY_QUARTERLY")

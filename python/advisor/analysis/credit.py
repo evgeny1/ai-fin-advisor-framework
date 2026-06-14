@@ -3,13 +3,12 @@ analysis/credit.py — M11 CreditSignal computation.
 
 Maps to: M11_CreditAndCalibration.md MODULE CreditSignal
 
-All threshold values loaded from CalibrationState (§1). No hard-coded constants.
+All threshold values loaded from CalibrationState. No hard-coded constants.
 Threshold checks requiring 180d history or 60d velocity data degrade gracefully
 when history is absent — the check is conservatively set to False and flagged.
 
 Velocity overlays (HY: +100bps/60d; IG: +40bps/60d) are FIXED STRUCTURAL RULES
-per M11 — they are NOT calibration-dated. Sustain periods (10 trading days) are
-also fixed structural.
+— they are NOT calibration-dated. Sustain periods (10 trading days) are also fixed.
 """
 from __future__ import annotations
 
@@ -50,7 +49,7 @@ def compute_credit_signal(
           - dict       → {"current": float, "history": List[float]} (oldest-first)
                          The history list is used for median and velocity computations.
     cal:
-        CalibrationState with §1 ThresholdBlock.
+        CalibrationState with credit thresholds.
     hy_sustain_days:
         Trading days HY OAS has been above the stress threshold. Supply from
         SessionLogState or inter-session tracking. Defaults to 0 (conservative).
