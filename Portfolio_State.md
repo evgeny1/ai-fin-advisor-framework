@@ -1,29 +1,30 @@
 # Portfolio State — 2026-06-14
 
-**Calibration State:** 1.33
-**Scenario probabilities:** A=19% / B=38% / C=25% / D=3% / E=13% / F=3%
-**Primary driver:** B-scenario stagflation via Iran energy shock (May CPI 4.2% YoY Print 3/3 T1 BLS). US-Iran peace deal final text agreed June 12 (T1: AP/Pakistan PM) — imminent signing, Hormuz reopening expected; not yet signed, probabilities not moved. Probability vector: A=18.8/B=37.6/C=25.1/D=3.0/E=12.5/F=3.0. Session: INFL classified (EV +3.51% rank #4) and added §11 as CANDIDATE; §9.3 EntryExtensionGuard 180d conflict override enacted; Calibration_State.md v1.34; Python framework cleaned.
+**Calibration State:** 1.34
+**Scenario probabilities:** A=14% / B=43% / C=14% / D=7% / E=14% / F=7%
+**Primary driver:** US-Iran peace deal announced June 14 (T1: Trump Truth Social, Iran deputy FM Gharibabadi, Pakistan PM Sharif) — C collapses 38%→14.3% (−23.7pp, inside 25pp cap). MOU not yet formally signed; signing June 19 Switzerland. XLP vs INFL analysis: EXIT XLP (EV −0.57% at session vector), ADD INFL to 9% Acc4 (EV +3.01%). Session vector: A=14.3/B=42.9/C=14.3/D=7.1/E=14.3/F=7.1.
 
 ## Open Triggers
-- FOMC June 16-17 (3 days): rate decision + dot plot. Execute DeriveScenarioProbabilities() immediately post-statement. Key A/B split arbiter. MOVE at 69.36 — watch for ELEVATED (80) cross.
-- US-Iran peace deal: final text agreed June 12 T1 AP/Pakistan PM. Signing expected Sunday June 14 per Trump. Execute DeriveScenarioProbabilities() immediately on T1-confirmed signing (A→~25%, C→~12.5%, F→~12.5%). No thresholds crossed at that vector.
-- BZ=F $87.33: C-trigger INACTIVE (<$110 restart). Declining on peace deal news. C clock will only restart on confirmed Hormuz re-closure.
-- MOVE 69.36: below ELEVATED (80). FOMC catalyst watch.
-- CCC OAS quiet widening: 956bps, 6th consecutive session. Monitor post-FOMC for acceleration.
-- CHAIN_3_WATCH: $1.304T April margin debt record. May FINRA data pending (mid-July).
-- Term premium THREEFYTP10: 0.8019% vs 1.00% E-warning (~20bp gap, narrowing).
-- Q2 Audit: June 30, 2026 (17 days). EV recomputation new vector; STG B adjudication; INFL CL D floor refinement; §6 item 23 blocked proposals; M14 energy_180d formal calibration.
+- FOMC June 16-17: rate hold 99.5% priced; key event = bias shift from easing to neutral/tightening in statement. MOVE 69.36, below 80 ELEVATED threshold.
+- US-Iran MOU: ANNOUNCED June 14 (T1 trilateral). Formal signing June 19 Switzerland. NOT YET SIGNED. Nuclear: 60-day negotiation window post-signing. Multiple competing text versions; Israel opposed. §9.3 EntryExtensionGuard 180d override remains active until signed agreement + 30 days.
+- Bab el-Mandeb: likely resolving with Iran deal; downgrade to WATCH pending T1 confirmation of full Hormuz reopening.
+- BZ=F $83.93 (−3.89% June 14): C-trigger doubly inactive. Sustained Hormuz reopening = structural energy disinflation. Monitor forward CPI trajectory for B thesis duration.
+- THREEFYTP10: 0.802% vs 1.0pp E_term_premium_warning (~19.8bp gap). Rising trend.
+- CHAIN_3_WATCH: $1.304T April margin debt record. May FINRA data pending.
+- CHAIN_4: Q1 188/qtr vs WATCH ≥220. Q2 data pending (AACER/PACER T1).
+- Q2 audit: June 30, 2026 (16 days).
+- CCC OAS 956bps: 5th consecutive session quiet widening. Post-FOMC catalyst watch.
 
 ## Open Decisions
-- MAGS: HOLD-only override. EV ~−0.94%. Framework targets IRA 3% / Roth 4%. Sheet shows IRA 5% / Roth 6% — update targets in allocation sheet.
-- URA ADD: IRA 3%, Roth 3%. Guard CLEARED (v1.29). Sheet shows IRA 1% — discrepancy; clarify before executing.
-- INFL ADDITION: IRA 3% (XAR 12%→9%), Roth 3% (XAR 12%→9%), Acc4 2% (COPX 7%→5%). Pending client confirmation. Verify LNG/MLPX holding overlap before executing. EV +3.51% rank #4.
-- AIPO target reduction: UNDER CLIENT DELIBERATION. IRA/Roth 7%→3% + DBMF +4pp. EV +3.28% rank #5 (above SIVR). Reduction still EV-optimal (DBMF differential +7.74pp).
+- XLP EXIT + INFL ADD (Acc4): RECOMMENDED this session. EV gap −4.155pp (XLP −0.57% vs INFL +3.01%). Pending client confirmation. Allocation sheet: COPX 7%→5%, XLP 7%→0%, INFL 0%→9%. Confirm XLP tax lot cost basis before executing (ST loss likely given May 2026 acquisition).
+- INFL allocation sheet entry: INFL not yet in sheet. Client to add COPX 7%→5% and INFL 0%→9% targets. EntryExtensionGuard 180d override ACTIVE (CLEARED at current price). IRA/Roth INFL ADD (3% each, from XAR reduction) also pending from v1.34.
+- MAGS: HOLD-only override. EV −0.94%. Targets IRA 3%, Roth 4%. Sheet shows 5%/6% — update with URA trade.
+- URA ADD: IRA 3%, Roth 3%. Guard CLEARED (v1.29). Sheet shows IRA 1% discrepancy — clarify before executing.
+- Acc4 sheet: confirm PAVE→0%, DBMF→15%, SGOV→21% reflected (trades executed v1.33; sheet last modified June 10).
+- AIPO: 7%→3% + DBMF +4pp — under client deliberation. EV +3.28% (#3 rank unchanged at session vector).
+- XAR thesis review: C=14.3% (was 38-44% at XAR sizing); GP reduce directive fires at A≥30% (current A=14.3%, below threshold). No execution trigger. Assess at June 30 whether 12% target remains appropriate.
 - §6 item 23: 5 blocked proposals pending June 30 (STG D/E joint; IHP A/D full row; GP A MEDIUM→HIGH).
-- Bitcoin miners Q3: create bitcoin_mining_hpc role + M16 calibration (AIPO UNCLASSIFIED 7% NAV).
-- §11.2 STG B descriptor: editorial update to [-2,+4]★ at June 30.
-- EV recomputation under new vector (A=18.8/B=37.6/C=25.1/D=3.0/E=12.5/F=3.0): deferred to June 30 audit.
-- INFL CL D conservative floor: refine at Q2 (land royalty quality tier — likely -5% not -8% vs miners).
-- M14 energy_180d formal calibration: June 30 (conflict >90d; already enacted in EntryExtensionGuard §9.3 v1.34; divergence signal extension pending formal calibration).
+- EV recomputation under full new vector A=14.3/B=42.9/C=14.3/D=7.1/E=14.3/F=7.1 — deferred to June 30 audit (session computation done; full §11 rank table update requires audit procedure).
+- Bitcoin miners Q3: create bitcoin_mining_hpc role + M16 calibration (AIPO UNCLASSIFIED 7%).
 
 _Generated via MCP (Pattern B — Claude app)._
