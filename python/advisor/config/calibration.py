@@ -211,7 +211,8 @@ def _parse_regime(text: str) -> RegimeBlock:
     s91 = _between(s9, "### 9.1", "### 9.2")
     s92 = _between(s9, "### 9.2", "### 9.3")
     s93 = _between(s9, "### 9.3", "### 9.4")
-    s94 = _between(s9, "### 9.4", "\n---")
+    s94 = _between(s9, "### 9.4", "### 9.5")
+    s95 = _between(s9, "### 9.5", "\n---")
 
     # §9.1 — divergence thresholds keyed by first column
     div_rows = {r[0]: r[1] for r in _table_rows(s91) if len(r) >= 2}
@@ -276,6 +277,14 @@ def _parse_regime(text: str) -> RegimeBlock:
         elif "SYSTEMIC" in signal:
             move_systemic = val
 
+    # §9.5 — role repricing divergence thresholds: role → underperformance_pp
+    role_repricing: Dict[str, float] = {}
+    for row in _table_rows(s95):
+        if len(row) >= 2 and row[0] and row[0].lower() != "role":
+            m = re.search(r"(\d+(?:\.\d+)?)", row[1])
+            if m:
+                role_repricing[row[0].strip()] = float(m.group(1))
+
     return RegimeBlock(
         commodity_fear_HIGH_energy_pct  = cf_high_energy,
         commodity_fear_HIGH_vix_change  = cf_high_vix,
@@ -290,6 +299,7 @@ def _parse_regime(text: str) -> RegimeBlock:
         move_stress                     = move_stress,
         move_crisis                     = move_crisis,
         move_systemic                   = move_systemic,
+        role_repricing_thresholds       = role_repricing,
     )
 
 
@@ -336,9 +346,11 @@ def _parse_instruments(text: str) -> Dict[str, InstrumentEntry]:
                         components.append(ComponentWeight(role_id=role_id, weight=weight))
 
             tax = "RETIREMENT_ONLY" if "RETIREMENT ACCOUNTS ONLY" in block else "ALL"
+            passive = bool(re.search(r"passive_mandate_eligible:\s*true", block, re.IGNORECASE))
             instruments[ticker] = InstrumentEntry(
                 ticker=ticker, components=components,
                 tax_placement=tax, is_candidate=is_candidate,
+                passive_mandate_eligible=passive,
             )
 
     s11  = _between(text, "## Section 11", "## Section 12")

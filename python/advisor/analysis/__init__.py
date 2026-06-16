@@ -27,7 +27,7 @@ Public API — import directly from advisor.analysis:
   )
 """
 from .credit import compute_credit_signal
-from .regime import compute_divergence_signal, entry_extension_guard
+from .regime import compute_divergence_signal, entry_extension_guard, role_repricing_divergence
 from .cascade import (
     sector_stress_score,
     compute_yield_curve_signal,
@@ -49,6 +49,8 @@ from .scenario_math import (
 from .floor_monitor import (
     current_holdings_floor_check,
     check_all_floor_accounts,
+    passive_mandate_absent_warnings,
+    PassiveMandateAbsentWarning,
 )
 
 __all__ = [
@@ -57,6 +59,7 @@ __all__ = [
     # M14
     "compute_divergence_signal",
     "entry_extension_guard",
+    "role_repricing_divergence",
     # M17
     "sector_stress_score",
     "compute_yield_curve_signal",
@@ -75,4 +78,6 @@ __all__ = [
     # M13 floor monitor
     "current_holdings_floor_check",
     "check_all_floor_accounts",
+    "passive_mandate_absent_warnings",
+    "PassiveMandateAbsentWarning",
 ]

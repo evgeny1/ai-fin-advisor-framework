@@ -21,6 +21,7 @@ Data contract:
 """
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 from ..types import (
@@ -149,3 +150,118 @@ def check_all_floor_accounts(
             alerts.append(alert)
     return alerts
 
+
+
+# ── Update 3: Passive Mandate Absent Warning ──────────────────────────────────
+# Emitted for FLOOR_THEN_RETURN accounts when a large non-passive-mandate
+# instrument is actively repricing downward and the account is near its floor.
+
+_PASSIVE_CONCENTRATION_THRESHOLD = 0.15   # 15% of account — §13 rule
+_FLOOR_PROXIMITY_THRESHOLD_PP    = 5.0    # within 5pp of floor breach — §13 rule
+
+
+@dataclass
+class PassiveMandateAbsentWarning:
+    """
+    M13.PassiveMandateAbsentWarning — Update 3.
+
+    Advisory warning when a FLOOR_THEN_RETURN account holds a large
+    non-passive-mandate instrument that is actively repricing downward.
+    No passive mandate = no structural bid floor; active holders may continue selling.
+    Does not block execution — advisory note in briefing only.
+    """
+    account_id:          str
+    ticker:              str
+    current_weight:      float    # fraction
+    instrument_30d:      Optional[float]   # return fraction if available; None if unknown
+    passive_eligible:    bool     # always False when warning fires
+    floor_proximity_pp:  Optional[float]   # how close to floor breach (pp); None if unknown
+
+
+def passive_mandate_absent_warnings(
+    floor_accounts: List[Dict],
+    cal: CalibrationState,
+    probs: "ScenarioProbabilities",
+    holdings_30d_returns: Optional[Dict[str, Optional[float]]] = None,
+) -> List["PassiveMandateAbsentWarning"]:
+    """
+    M13.PassiveMandateAbsentWarning check for FLOOR_THEN_RETURN accounts.
+
+    Fires when ALL THREE conditions hold for an instrument in such an account:
+      1. passive_mandate_eligible == False (§11)
+      2. current_weight >= 15% of account
+      3. instrument_30d return is negative (actively repricing down) — or unknown
+         AND account is within 5pp of floor breach
+
+    Parameters
+    ----------
+    floor_accounts:
+        Same format as check_all_floor_accounts: list of
+        {"account_id": str, "weights": Dict[ticker, float]}.
+    cal:
+        CalibrationState — §11 passive_mandate_eligible + §9.5 + §4.1.
+    probs:
+        ScenarioProbabilities — used to compute floor proximity.
+    holdings_30d_returns:
+        Optional dict of ticker → 30d return fraction. None if unavailable.
+
+    Returns
+    -------
+    List of PassiveMandateAbsentWarning — one per (account, ticker) pair that fires.
+    """
+    from .instruments import blended_scenario_return as _bsr
+
+    warnings_out: List[PassiveMandateAbsentWarning] = []
+    floor_threshold = cal.floor_params.floor_loss_prob_threshold
+    prob_map = {"A": probs.A, "B": probs.B, "C": probs.C,
+                "D": probs.D, "E": probs.E, "F": probs.F}
+
+    for acct in floor_accounts:
+        account_id = acct["account_id"]
+        weights    = acct["weights"]
+
+        # Compute current worst-scenario portfolio return (for proximity check)
+        worst_return: Optional[float] = None
+        for scenario, p in prob_map.items():
+            if p / 100.0 < floor_threshold:
+                continue
+            scenario_ret = sum(
+                w * _bsr(t, scenario, "conservative", cal)
+                for t, w in weights.items()
+                if t in cal.instruments
+            )
+            if worst_return is None or scenario_ret < worst_return:
+                worst_return = scenario_ret
+
+        floor_proximity = (worst_return * 100.0) if worst_return is not None else None
+        # floor_proximity > 0 means above floor; <= 0 means breached or very close
+        near_breach = (
+            floor_proximity is not None
+            and floor_proximity < _FLOOR_PROXIMITY_THRESHOLD_PP
+        )
+
+        for ticker, weight in weights.items():
+            if weight < _PASSIVE_CONCENTRATION_THRESHOLD:
+                continue   # below 15% — not a material concentration
+
+            entry = cal.instruments.get(ticker)
+            if entry is None or entry.passive_mandate_eligible:
+                continue   # has passive floor or unknown — skip
+
+            instrument_30d = (
+                holdings_30d_returns.get(ticker)
+                if holdings_30d_returns else None
+            )
+            repricing_down = (instrument_30d is not None and instrument_30d < 0)
+
+            if repricing_down or (instrument_30d is None and near_breach):
+                warnings_out.append(PassiveMandateAbsentWarning(
+                    account_id=account_id,
+                    ticker=ticker,
+                    current_weight=weight,
+                    instrument_30d=instrument_30d,
+                    passive_eligible=False,
+                    floor_proximity_pp=floor_proximity,
+                ))
+
+    return warnings_out

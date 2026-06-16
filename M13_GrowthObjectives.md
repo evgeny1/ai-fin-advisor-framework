@@ -295,6 +295,55 @@ MODULE GrowthObjectives {
     }
   }
 
+  // ─── PASSIVE MANDATE ABSENT WARNING ─────────────────────────────────────
+  // Update 3 — added v1.1. Advisory only. Does not block execution or FeasibilityCheck.
+  //
+  // Rationale: VTI/VOO hold a structural price floor from mandated passive inflows
+  // (401K contributions, target-date fund rebalancing, index inclusion). Sector/thematic
+  // ETFs with passive_mandate_eligible=false have no such floor. When actively repricing
+  // downward with concentrated weight in a FLOOR_THEN_RETURN account, the asymmetry
+  // warrants explicit surfacing — market participants may continue selling without a
+  // natural passive bid to slow the descent.
+  //
+  // Fires when ALL THREE conditions hold for an instrument in a FLOOR_THEN_RETURN account:
+  //   1. §11 passive_mandate_eligible == false
+  //   2. current_market_weight >= 15% of account
+  //   3. instrument_30d < 0 (actively repricing down)
+  //      OR instrument_30d unavailable AND account within 5pp of floor breach
+
+  RULE PassiveMandateAbsentWarning(account, current_market_weights, holdings_30d_returns) {
+    IF account.objective_type != FLOOR_THEN_RETURN { RETURN }
+
+    floor_proximity_pp = worst_scenario_portfolio_return(current_market_weights, account)
+                         × 100  // positive = above floor; negative = breach
+
+    FOR each ticker IN current_market_weights {
+      weight = current_market_weights[ticker]
+      IF weight < 0.15 { SKIP }  // below 15% concentration threshold
+
+      entry = CALIBRATION_STATE.§11.INSTRUMENT_CLASSIFICATION_TABLE[ticker]
+      IF entry.passive_mandate_eligible == true { SKIP }
+
+      instrument_30d = holdings_30d_returns[ticker]  // null if unavailable
+      repricing_down = (instrument_30d != null AND instrument_30d < 0)
+      near_breach    = (floor_proximity_pp < 5.0)
+
+      IF repricing_down OR (instrument_30d == null AND near_breach) {
+        EMIT PassiveMandateAbsentWarning {
+          account_id:         account.account_id
+          ticker:             ticker
+          current_weight:     weight
+          instrument_30d:     instrument_30d
+          floor_proximity_pp: floor_proximity_pp
+        }
+        NOTE_IN_BRIEFING: "[ticker] at [weight%] in [account] has no passive mandate floor.
+                           30d return: [instrument_30d%]. No structural bid from index/401K flows.
+                           Monitor for continued repricing. Consider whether floor constraint
+                           warrants a proactive reduction review."
+      }
+    }
+  }
+
   // ─── CURRENT HOLDINGS FLOOR CHECK ───────────────────────────────────────
   // Called at M05 Steps 3b and 6b. Distinct from FeasibilityCheck():
   //   FeasibilityCheck()         → checks PROPOSED allocations (pre-trade)

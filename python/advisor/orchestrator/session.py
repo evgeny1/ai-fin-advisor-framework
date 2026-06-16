@@ -27,6 +27,8 @@ from ..analysis import (
     validate_classifications,
     blended_scenario_return,
     check_all_floor_accounts,
+    role_repricing_divergence,
+    passive_mandate_absent_warnings,
 )
 from ..analysis.scenario_math import apply_all_rules
 from ..config import parse_calibration_state, parse_session_log
@@ -234,6 +236,23 @@ class SessionPipeline:
                 done=True,
             )
 
+        # Update 3: passive mandate absent warnings — runs alongside floor check
+        if ctx.floor_account_weights and ctx.cal is not None:
+            try:
+                probs = ctx.log.latest_probs if ctx.log else None
+                if probs is not None:
+                    ctx.passive_mandate_warnings = passive_mandate_absent_warnings(
+                        floor_accounts=ctx.floor_account_weights,
+                        cal=ctx.cal,
+                        probs=probs,
+                        holdings_30d_returns=ctx.holdings_30d_returns or None,
+                    )
+                    if ctx.passive_mandate_warnings:
+                        n = len(ctx.passive_mandate_warnings)
+                        self._prog(f"  ⚠ PassiveMandateAbsent: {n} warning(s) — see briefing")
+            except Exception as e:
+                ctx.signal_flags.append(f"⚠ PassiveMandateAbsentWarning failed: {e}")
+
     # ── Step 5b: M05 Step 6b — FloorCheck re-run at current probabilities ────
 
     def _step5b_floor_check_rerun(self, ctx: SessionContext) -> None:
@@ -300,6 +319,27 @@ class SessionPipeline:
             ctx.divergence_signal = compute_divergence_signal(readings, cal)
         except Exception as e:
             ctx.signal_flags.append(f"⚠ DivergenceSignal failed: {e}")
+
+        # Update 1: role repricing divergence — uses holdings_30d_returns if available
+        if ctx.divergence_signal is not None and ctx.holdings_30d_returns:
+            broad_30d = ctx.divergence_signal.broad_equity_30d
+            try:
+                ctx.divergence_signal.role_repricing_warnings = role_repricing_divergence(
+                    holdings_30d_returns=ctx.holdings_30d_returns,
+                    broad_market_30d=broad_30d,
+                    cal=cal,
+                )
+                if ctx.divergence_signal.role_repricing_warnings:
+                    n = len(ctx.divergence_signal.role_repricing_warnings)
+                    self._prog(f"  ⚠ RoleRepricingDivergence: {n} instrument(s) flagged")
+            except Exception as e:
+                ctx.signal_flags.append(f"⚠ RoleRepricingDivergence failed: {e}")
+        elif not ctx.holdings_30d_returns:
+            ctx.signal_flags.append(
+                "⚠ RoleRepricingDivergence skipped — no holdings_30d_returns provided. "
+                "In the Claude orchestrator path, populate ctx.holdings_30d_returns "
+                "from the allocation sheet (GOOGLEFINANCE period returns) before Step 4."
+            )
 
         try:
             ctx.cascade_signal     = assess_cascade_level(readings, cal, ctx.credit_signal)

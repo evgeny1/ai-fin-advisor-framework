@@ -28,6 +28,7 @@ from ..types import (
     DivergenceSignal,
     GuardResult,
     GuardStatus,
+    InstrumentRepricingWarning,
 )
 from ._utils import get_history, get_scalar, compute_pct_change
 
@@ -278,3 +279,75 @@ def entry_extension_guard(
         appreciation=appreciation, threshold=threshold,
         adjusted_returns=None, flags=flags,
     )
+
+
+def role_repricing_divergence(
+    holdings_30d_returns: Dict[str, Optional[float]],
+    broad_market_30d: Optional[float],
+    cal: CalibrationState,
+) -> List[InstrumentRepricingWarning]:
+    """
+    M14.RoleRepricingDivergence() — Update 1.
+
+    Detects when a portfolio instrument underperforms the broad market by more
+    than its role-specific threshold (§9.5) over the 30-day window.
+
+    Advisory signal only — never blocks execution. Results surface in briefing
+    and feed M13.PassiveMandateAbsentWarning for FLOOR_THEN_RETURN accounts.
+
+    Parameters
+    ----------
+    holdings_30d_returns:
+        Dict mapping ticker → 30-day return as fraction (e.g. -0.12 = -12%).
+        None values are skipped with a quality flag.
+        In the Python pipeline, populated from allocation sheet GOOGLEFINANCE
+        period returns or yfinance history when available.
+    broad_market_30d:
+        30-day return of broad market proxy (SPY/VTI) as fraction.
+        None → function returns empty list with flag.
+    cal:
+        CalibrationState — provides §11 classifications and §9.5 thresholds.
+
+    Returns
+    -------
+    List of InstrumentRepricingWarning — one per breached instrument.
+    Empty list if broad_market_30d is None or no thresholds are configured.
+
+    NEVER route output into M03.DeriveScenarioProbabilities().
+    """
+    if broad_market_30d is None:
+        return []
+
+    thresholds = cal.regime.role_repricing_thresholds
+    if not thresholds:
+        return []
+
+    warnings: List[InstrumentRepricingWarning] = []
+
+    for ticker, instrument_30d in holdings_30d_returns.items():
+        if instrument_30d is None:
+            continue
+
+        entry = cal.instruments.get(ticker)
+        if entry is None or not entry.components:
+            continue
+
+        # Primary role = highest-weight component
+        primary = max(entry.components, key=lambda c: c.weight)
+        threshold_pp = thresholds.get(primary.role_id)
+        if threshold_pp is None:
+            continue   # role not in §9.5 table — no signal defined
+
+        underperformance_pp = (broad_market_30d - instrument_30d) * 100.0
+
+        if underperformance_pp >= threshold_pp:
+            warnings.append(InstrumentRepricingWarning(
+                ticker=ticker,
+                primary_role_id=primary.role_id,
+                instrument_30d=instrument_30d,
+                broad_market_30d=broad_market_30d,
+                underperformance_pp=underperformance_pp,
+                threshold_pp=threshold_pp,
+            ))
+
+    return warnings

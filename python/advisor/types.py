@@ -139,6 +139,7 @@ class InstrumentEntry:
     tax_placement: str    # "ALL" | "RETIREMENT_ONLY"
     is_candidate: bool = False    # True for §11.4 instruments not yet allocated
     last_reviewed: Optional[str] = None  # ISO date string; M15 Check 5 staleness check
+    passive_mandate_eligible: bool = False  # Update 3: True = S&P/total-market passive flows provide price floor
 
 
 @dataclass
@@ -190,6 +191,10 @@ class RegimeBlock:
     move_stress: float      # 100
     move_crisis: float      # 130
     move_systemic: float    # 160
+    role_repricing_thresholds: Dict[str, float] = field(default_factory=dict)
+    # §9.5 Update 1: role → underperformance_threshold_pp (positive = threshold)
+    # e.g. {"real_asset_contracted_revenue": 10.0} means warn if instrument
+    # underperforms broad market by >= 10pp over the 30-day window.
 
 
 @dataclass
@@ -351,6 +356,24 @@ class CreditSignal:
 
 
 @dataclass
+class InstrumentRepricingWarning:
+    """
+    M14.RoleRepricingDivergence() output — one warning per flagged instrument.
+
+    Emitted when an instrument underperforms the broad market by more than the
+    role-specific threshold (§9.5) over the 30-day window. Advisory signal only —
+    does not block execution. Surfaces in briefing and feeds floor account checks.
+    """
+    ticker:              str
+    primary_role_id:     str
+    instrument_30d:      float          # fraction (e.g. -0.12 = -12%)
+    broad_market_30d:    float          # fraction
+    underperformance_pp: float          # (broad_market_30d - instrument_30d) * 100 — positive = underperform
+    threshold_pp:        float          # §9.5 threshold for this role
+    quality_flags:       List[str] = field(default_factory=list)
+
+
+@dataclass
 class DivergenceSignal:
     """M14 market regime divergence signal. Produced by analysis/regime.py."""
     commodity_fear_divergence:  DivergenceLevel
@@ -360,6 +383,8 @@ class DivergenceSignal:
     vix_change_90d_pts:         Optional[float]  # pts (VIX current − VIX 90d rolling avg)
     broad_equity_30d:           Optional[float]  # fraction (30 trading-day SPX/VTI return)
     quality_flags:              List[str]
+    role_repricing_warnings:    List["InstrumentRepricingWarning"] = field(default_factory=list)
+    # Update 1: instrument-level repricing signals vs broad market (§9.5)
 
 
 @dataclass

@@ -2,7 +2,7 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.34  Last updated: June 13, 2026 (INFL §11 entry added; §9.3 EntryExtensionGuard 180d conflict duration override enacted)
+# Version: 1.35  Last updated: June 15, 2026 (§9.5 Role Repricing Divergence thresholds added; passive_mandate_eligible field added to all §11 instruments)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -717,7 +717,26 @@ Confidence: HIGH for 80 and 130 anchors (multiple historical regimes: 2008 peak 
 Current (May 29, 2026): 70.22 — NORMAL zone. Retreating from 79.72 peak (May 22).
 Calibration_Log baseline: first logged Apr 30 at 68.68 (T2); T1 confirmed May 11 at 70.74.
 
----
+### 9.5 Role Repricing Divergence Thresholds (M14.RoleRepricingDivergence — added v1.35)
+
+Advisory signal only. Does not block execution. Emits `InstrumentRepricingWarning` in briefing
+when a portfolio instrument underperforms BROAD_EQUITY_TRAILING (30 trading days) by >= threshold.
+Applies to all held instruments whose primary role appears in the table below.
+All thresholds CALIBRATION_DATED. Provisional — pending June 30 audit.
+
+| Role | Underperformance threshold vs broad market (pp) |
+| --- | --- |
+| real_asset_contracted_revenue | 10 |
+| inflation_hedge_commodity_linked | 15 |
+| geopolitical_premium | 20 |
+| secular_technology_growth | 10 |
+| inflation_hedge_precious_metals | 15 |
+
+Note: threshold is applied to 30-day return differential only.
+If holdings 30d returns are unavailable at session time, step is skipped with flag.
+Review at June 30 audit: calibrate thresholds to historical role-vs-broad-market volatility.
+
+
 
 ## Section 10 - M08 Thematic ETF Classification Parameters
 
@@ -797,11 +816,13 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### VTI
 - Components: broad_market_equity_domestic (0.78) + secular_technology_growth (0.22)
+- passive_mandate_eligible: true
 - Last reviewed: 2026-04-28
 - NOTE: VTI ELIMINATED from all target allocations as of April 30, 2026 (v1.9). Existing positions to be sold during rebalancing. Section 11 entry retained for blendedScenarioReturn() computation during transition period.
 
 #### XAR
 - Components: geopolitical_premium (0.90) + broad_market_equity_domestic (0.10)
+- passive_mandate_eligible: false
 - ThematicETF_ClassificationAudit COMPLETED April 29. Confirmed.
 - Last reviewed: 2026-05-30 (v1.23 — staleness check complete; classification confirmed)
 - ⚠ Valuation note: Forward P/E ~35.5x (war-premium elevated; within thesis range for geopolitical_premium; peacetime norm 18-22x. Watch for compression if A-probability rises above 20%. 66.59x trailing PE seen in some sources is a stale artifact — use forward PE only.)
@@ -820,6 +841,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### MLPX
 - Components: real_asset_contracted_revenue (0.65) + inflation_hedge_commodity_linked (0.35)
+- passive_mandate_eligible: false
 - Last reviewed: 2026-05-13 (v1.17 — entry guards CLEARED)
 - EV (A=7/B=36/C=41/D=5/E=4/F=7): **+5.10%** (revised v1.26; prior: +5.67% — RAC D/E values corrected). Ranked #2.
   - A: (0.65×3+0.35×2)×0.07 = 2.65×0.07 = +0.186%
@@ -841,6 +863,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### SGOL
 - Components: inflation_hedge_precious_metals (1.00)
+- passive_mandate_eligible: false
 - Last reviewed: 2026-04-28
 - CALIBRATION ANOMALY RESOLVED Apr 30 (v1.8): §4.1 Scenario C revised [+7%,+14%]->[-2%,+6%]. C-hawk regime empirical basis.
 - EV (A=7/B=36/C=41/D=5/E=4/F=7): **+1.24%** (revised v1.29; IHP A=-2 and D=-3 adopted v1.27; §11 text corrected from stale +1.43%). Ranked #7.
@@ -861,6 +884,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### SGOV
 - Components: rate_sensitive_income_short_duration (1.00)
+- passive_mandate_eligible: false
 - Last reviewed: 2026-06-01 (v1.25 — A and D values adopted HIGH confidence)
 - EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.89%** (revised v1.25; prior: +0.76%). Ranked #9.
   - A: 1%×0.07=+0.070; B: 1%×0.36=+0.360; C: 1%×0.41=+0.410; D: 1%×0.05=+0.050; E: (-2%)×0.04=-0.080; F: 1%×0.07=+0.070
@@ -873,6 +897,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### PAVE
 - Components: broad_market_equity_domestic (0.82) + policy_driven_thematic_equity (0.18)
+- passive_mandate_eligible: false
 - ThematicETF_ClassificationAudit conducted Apr 28. Status: watch (not FLAGGED).
 - Last reviewed: 2026-05-06 (status reconfirmed — no new legislation; IIJA core programs intact)
 - Cost basis: $54.09/share. Current: ~$56.31 (May 30). Embedded gain: ~$1,111 on 502 shares. Target: ~11% in Taxable Acc4.
@@ -902,6 +927,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### AIPO
 - Components: real_asset_contracted_revenue (0.55) + secular_technology_growth (0.16) + inflation_hedge_commodity_linked (0.11) + policy_driven_thematic_equity (0.04) + UNCLASSIFIED_bitcoin_miners (0.07)
+- passive_mandate_eligible: false
 - CLASSIFICATION REVISED v1.30 (June 2, 2026): Full T1 re-audit from Defiance ETFs official page, 77 holdings, $750.87M AUM. Three prior errors corrected:
   (1) RAC 0.45→0.55: Commercial infrastructure Industrials (PWR, VRT, ETN, GEV, MTZ, STRL, NVT, HUBB, DY, utilities, data centers) — binding driver is commercial contracts with hyperscalers/utilities, NOT government mandates. GEV confirmed Industrials/RAC (erroneously counted as IT in prior data source).
   (2) IHC 0.05→0.11: Uranium names missed or understated in prior reviews — CCJ 3.78% (largest single uranium position), NXE 0.75%, UUUU 0.50%, DNN 0.44%, LEU 0.44%; also includes Bloom Energy (BE) 4.56% energy technology, EOSE 0.62%, FLNC 0.61% energy storage.
@@ -930,6 +956,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - ⚠️ TARGET REVIEW IN PROGRESS: Client deliberating IRA/Roth 7%→3% + DBMF bump (+4pp). At corrected EV +3.28%, the substitution thesis (DBMF +11.02%) remains strongly dominant in EV terms. EV differential vs DBMF = −7.74pp/year. However, AIPO now holds a valid thesis position at #3 rank. The reduction is still EV-optimal — but AIPO is no longer marginal. Client decision pending; allocation sheet unchanged.
 #### MAGS
 - Components: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15)
+- passive_mandate_eligible: false
 - Last reviewed: 2026-05-30 (v1.23 — hold-only override confirmed)
 - ⚠ EV deterioration: from −1.77% (C=44, D=3) to −2.17% (C=41, D=5). D scenario deeply negative (−13.70% blended) — increasing D weight amplifies drag. Override remains in force but EV trendline is worsening.
 - **HOLD-ONLY OVERRIDE CONFIRMED (v1.23, May 30, 2026): No ADD at EV −2.17%. Override justified solely by absence of positive-EV secular_technology_growth alternative (URA covers RAC/IHC/STG partially; application-layer gap remains unresolved). Revisit if secular_technology_growth B adjudication at June 30 produces a materially different B conservative value.**
@@ -951,6 +978,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### DBMF
 - Components: systematic_trend_following (1.00)
+- passive_mandate_eligible: false
 - Basis: iMGP DBi Managed Futures Strategy ETF. Actively managed. Replicates top CTA hedge fund portfolios using T-bill collateral + equity/commodity/bond/currency swap agreements. Strategy: systematic trend-following across all major asset classes.
 - K-1: NONE — 1940 Act registered fund (ETF structure). No K-1 issued.
 - AUM: $3.51B. Expense ratio: 0.85%. Inception: 2019-05-08. 1-year total return: +27.3%.
@@ -975,6 +1003,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### SIVR
 - Components: inflation_hedge_precious_metals (0.55) + inflation_hedge_commodity_linked (0.45)
+- passive_mandate_eligible: false
 - Basis: Aberdeen Standard Physical Silver Shares ETF. Tracks spot silver price via physical silver bullion. Lower cost alternative to SLV (0.30% ER vs 0.50%)
 - AUM: ~$5.5B. Expense ratio: 0.30%. Custodian: ICBC Standard Bank (UK).
 - Last reviewed: 2026-05-26 (v1.21 — B-component arithmetic corrected)
@@ -996,6 +1025,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### COPX
 - Components: inflation_hedge_commodity_linked (0.75) + broad_market_equity_international (0.25)
+- passive_mandate_eligible: false
 - Basis: Global X Copper Miners ETF. Tracks Solactive Global Copper Miners Total Return Index. 41 holdings across global copper mining companies.
 - AUM: $6.86B. Expense ratio: 0.65%. Inception: 2010-04-19.
 - Country breakdown (Jan 31, 2026): Canada 36.68%, China 9.62%, US 9.59%, Japan 7.92%, Australia 7.86%, Poland 5.93%, Sweden 5.35%, UK 5.12%, Switzerland 4.82%, Others 7.13%.
@@ -1018,6 +1048,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### VTIP
 - Components: inflation_linked_sovereign (1.00)
+- passive_mandate_eligible: false
 - Basis: Vanguard Short-Term Inflation-Protected Securities ETF. AUM: $66.6B. Expense ratio: 0.03%. Beta: 0.22.
 - Last reviewed: 2026-06-01 (v1.28 — A/D/F adopted HIGH confidence; B/C/E remain MEDIUM)
 - EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.52%** (unchanged — values same as prior ⚑; status upgrade only).
@@ -1029,6 +1060,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### XLP
 - Components: consumer_defensive_equity (1.00)
+- passive_mandate_eligible: false
 - Basis: State Street Consumer Staples Select Sector SPDR ETF. AUM: $14.5B. Expense ratio: 0.08%. 100% US domestic.
 - Last reviewed: 2026-05-06 (v1.13, initial classification)
 - EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.76%** (corrected v1.28; prior +0.14% used C=0 — bug; C was adopted at +2 in v1.22). Ranked #8.
@@ -1048,6 +1080,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### VNQ
 - Components: real_estate_equity_income (0.60) + rate_sensitive_income_long_duration (0.22) + secular_technology_growth (0.12) + broad_market_equity_domestic (0.06)
+- passive_mandate_eligible: false
 - Last reviewed: 2026-05-06 (v1.13, initial classification)
 - EV at current probs (real_estate_equity_income [TBD] — LOW confidence): -4.52% to +1.27% depending on §4.1 calibration outcome.
 - STRUCTURAL NOTE: VNQ is ADVERSARIAL to current B/C dominant distribution. Modern REIT leverage (40-60% LTV) causes cap rate expansion to overwhelm rental income growth in elevated-rate environments.
@@ -1057,6 +1090,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### VEA
 - Components: broad_market_equity_international (1.00)
+- passive_mandate_eligible: true
 - Last reviewed: 2026-05-06 (v1.13, initial classification)
 - EV at current probs: approximately **−3.40%** (B/C dominant; international equity faces energy-importer FX drag).
 - ADOPTION TRIGGER: A > 25% on T1-confirmed deal.
@@ -1064,6 +1098,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### XLV
 - Components: healthcare_defensive_equity (1.00)
+- passive_mandate_eligible: false
 - Last reviewed: 2026-05-06 (v1.13, initial classification — provisional)
 - Provisional EV (§4.1 ALL PENDING): approximately −0.44% at current probs.
 - TAX PLACEMENT: ALL ACCOUNTS.
@@ -1071,6 +1106,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### FLOT
 - Components: floating_rate_credit_income (1.00)
+- passive_mandate_eligible: false
 - Last reviewed: 2026-05-06 (v1.13, initial classification — full M07 screen pending)
 - Provisional EV (§4.1 ALL PENDING): approximately +0.2-0.5% above SGOV in B.
 - KEY RISK: D/E scenario credit spread blowout vs SGOV pure Treasury safety.
@@ -1079,6 +1115,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### URA
 - Components: real_asset_contracted_revenue (0.50) + inflation_hedge_commodity_linked (0.30) + secular_technology_growth (0.20)
+- passive_mandate_eligible: false
 - Basis: Global X Uranium ETF. Tracks Solactive Global Uranium & Nuclear Components Total Return Index.
   57 holdings; top 10 = 64.85% of fund. Includes uranium miners + nuclear components manufacturers.
 - AUM: $7.81B. Expense ratio: 0.69%. Inception: ~2010 (long track record ✓).
@@ -1111,6 +1148,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 
 #### INFL
 - Components: inflation_hedge_precious_metals (0.25) + inflation_hedge_commodity_linked (0.50) + real_asset_contracted_revenue (0.20) + secular_technology_growth (0.05)
+- passive_mandate_eligible: false
 - Basis: Horizon Kinetics Inflation Beneficiaries ETF. Actively managed, ~51 holdings. $1.45B AUM.
   Invests in companies that earn revenues which rise with inflation without commensurate cost increases:
   precious metal royalty streamers (WPM, FNV, OR Royalties), land/mineral royalties (TPL, LB, PSK, VNOM),

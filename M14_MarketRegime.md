@@ -1,5 +1,8 @@
 # M14 — Market Regime & Entry Discipline
-<!-- Version: 1.2 | Adopted: May 25, 2026 -->
+<!-- Version: 1.3 | Adopted: June 15, 2026 -->
+<!-- Changes from v1.2: Update 1 — RoleRepricingDivergence() added (§9.5).
+     Detects instrument-level repricing vs broad market. New InstrumentRepricingWarning type.
+     §9.5 thresholds in CALIBRATION_STATE. Advisory signal only — never blocks execution. -->
 <!-- Changes from v1.1: DATA_REGISTRY_ENTRIES moved to M18_MarketDataFetch (v1.20 M18 integration). -->
 <!--   M14 DATA_REGISTRY_ENTRIES block renamed _LEGACY. M18 is the single FetchSpec registry. -->
 <!-- Addresses: market desensitization detection, underweight opportunity cost, entry price extension -->
@@ -10,7 +13,7 @@
 
 <!-- MODULE MANIFEST
   ID:              M14_MarketRegime
-  Version:         1.2
+  Version:         1.3
   Sub-project:     ANALYSIS_ENGINE
   Reason to change: market desensitization detection methodology or entry guard thresholds change
   Inputs consumed:  DataReading<VIX_30D_AVG>, DataReading<VIX_90D_AVG>,
@@ -149,6 +152,11 @@ MODULE MarketRegimeDiscipline {
       rate_sensitive_income_short:      N/A
       rate_sensitive_income_long:       N/A
     }
+    // §9.5 — Role repricing divergence thresholds (instrument vs broad market, 30d)
+    // @see CALIBRATION_STATE §9.5 for current values
+    // key: role_id → underperformance_threshold_pp
+    // Advisory only — does not block execution
+    role_repricing_divergence_thresholds: @see CALIBRATION_STATE §9.5
   }
 
   // ─── 1. MARKET PRICING DIVERGENCE SIGNAL ─────────────────────────────────────────────
@@ -281,6 +289,57 @@ MODULE MarketRegimeDiscipline {
     PASS
   }
 
+  // ─── 4. ROLE REPRICING DIVERGENCE ──────────────────────────────────────────────────
+  // Update 1 — added v1.3. Advisory signal only. NEVER blocks execution.
+  // NEVER feeds output into DeriveScenarioProbabilities().
+  //
+  // Purpose: detect when a portfolio instrument reprices inconsistently with its role
+  // thesis, using market price rather than scenario-level analysis. Complements
+  // ComputeDivergenceSignal() (which operates at the broad market / energy level)
+  // with instrument-level and role-level granularity.
+  //
+  // The signal answers: "Is the market disagreeing with our role classification
+  // for this instrument in a sustained, material way?"
+  //
+  // Data source: holdings 30-day returns from allocation sheet (GOOGLEFINANCE period
+  // returns) or yfinance history. Compared against BROAD_EQUITY_TRAILING (30 trading days).
+  // If holdings 30d returns are unavailable: step skipped with advisory flag.
+
+  FUNCTION RoleRepricingDivergence(
+    holdings_30d_returns,   // Dict[ticker → fraction | null] — from allocation sheet or yfinance
+    broad_market_30d        // fraction — BROAD_EQUITY_TRAILING 30d return
+  ) -> InstrumentRepricingWarning[] {
+
+    NEVER: use output as input to DeriveScenarioProbabilities()
+    ADVISORY: output surfaces in briefing and PassiveMandateAbsentWarning check only
+
+    IF broad_market_30d == null { RETURN [] }
+    IF CALIBRATION_STATE.§9.5 IS EMPTY { RETURN [] }
+
+    warnings = []
+    FOR each (ticker, instrument_30d) IN holdings_30d_returns {
+      IF instrument_30d == null { SKIP }
+
+      primary_role = M15.classifyInstrument(ticker).primaryRole
+      threshold_pp = CALIBRATION_STATE.§9.5[primary_role]
+      IF threshold_pp == null { SKIP }  // role not in §9.5 — no signal defined
+
+      underperformance_pp = (broad_market_30d - instrument_30d) × 100
+
+      IF underperformance_pp >= threshold_pp {
+        warnings.APPEND(InstrumentRepricingWarning {
+          ticker:              ticker
+          primary_role_id:     primary_role
+          instrument_30d:      instrument_30d
+          broad_market_30d:    broad_market_30d
+          underperformance_pp: underperformance_pp
+          threshold_pp:        threshold_pp
+        })
+      }
+    }
+    RETURN warnings
+  }
+
   // ─── BRIEFING BLOCK (render function — called by BriefingRegistry.assemble()) ─────────
 
   BriefingBlock MarketRegimeSignal {
@@ -291,6 +350,7 @@ MODULE MarketRegimeDiscipline {
     composite_signal:                    [HIGH | MODERATE | NONE]
     Implication: [one sentence from ComputeDivergenceSignal().implication]
     Underweight positions flagged for EV review: [list from UnderweightReviewTrigger()] | none
+    Role repricing warnings:             [ticker: −X% vs broad market (−Y% threshold)] | none
     ─────────────────────────────────────────────────────────────────────
   }
 
@@ -300,6 +360,9 @@ MODULE MarketRegimeDiscipline {
     Step 4: → Phase 2 complete: FetchRegistry.fetchAll() includes M14.DATA_REGISTRY_ENTRIES
     Step 7: → ComputeDivergenceSignal()
             → IF composite IN [HIGH, MODERATE]: UnderweightReviewTrigger(account) for each account
+            → RoleRepricingDivergence(holdings_30d_returns, broad_market_30d)
+               // Advisory only — surface in briefing; feed PassiveMandateAbsentWarning check
+               // Skip with flag if holdings_30d_returns unavailable
     Step 8: → Phase 2 complete: BriefingRegistry.assemble() includes MARKET_REGIME_SIGNAL
     Step 9: → EntryExtensionGuard(asset, account) — before any ADD
   }

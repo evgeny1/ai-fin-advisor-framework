@@ -19,6 +19,7 @@ from ..types import (
     DivergenceSignal,
     FeasibilityResult,
     FloorBreachAlert,
+    InstrumentRepricingWarning,
     RawScores,
     ScenarioProbabilities,
     ScoringAnswers,
@@ -27,6 +28,7 @@ from ..types import (
     SessionType,
     YieldCurveSignal,
 )
+from ..analysis import PassiveMandateAbsentWarning
 
 
 @dataclass
@@ -82,8 +84,17 @@ class SessionContext:
     # Each entry: {"account_id": str, "weights": Dict[ticker, float]}
     # Only FLOOR_THEN_RETURN accounts need to be included.
     # If empty: floor check steps are skipped with a flag (no hard stop).
-    floor_account_weights: List[Dict]          = field(default_factory=list)
+    floor_account_weights: List[Dict]             = field(default_factory=list)
     floor_alerts:          List[FloorBreachAlert] = field(default_factory=list)
+
+    # ── Update 1: holdings 30d returns for RoleRepricingDivergence ────────────
+    # Populated by caller from allocation sheet GOOGLEFINANCE period returns.
+    # Dict: ticker → 30d return as fraction (e.g. -0.12 = -12%). None = unavailable.
+    # If empty dict: RoleRepricingDivergence step is skipped with advisory flag.
+    holdings_30d_returns: Dict[str, Optional[float]] = field(default_factory=dict)
+
+    # ── Update 3: passive mandate absent warnings ─────────────────────────────
+    passive_mandate_warnings: List[PassiveMandateAbsentWarning] = field(default_factory=list)
 
     # ── AI Call 3 — briefing narrative (Step 8 / M04) ─────────────────────────
     briefing: Optional[str] = None
@@ -100,10 +111,16 @@ class SessionContext:
             f"scenario {a.worst_scenario} = {a.worst_return_pct:.2f}%"
             for a in self.floor_alerts
         ]
+        passive_strs = [
+            f"PASSIVE_MANDATE_ABSENT {w.ticker} in {w.account_id}: "
+            f"{w.current_weight*100:.0f}% weight, "
+            f"30d={'N/A' if w.instrument_30d is None else f'{w.instrument_30d*100:.1f}%'}"
+            for w in self.passive_mandate_warnings
+        ]
         return (
             self.validate_flags + self.fetch_flags + self.signal_flags
             + self.prob_flags + self.portfolio_flags + self.write_back_flags
-            + floor_strs
+            + floor_strs + passive_strs
         )
 
     @property
