@@ -7,11 +7,16 @@ API calls.  Zero additional cost vs CLI mode (no ANTHROPIC_API_KEY
 needed here — Claude in the conversation IS the AI).
 
 Three tools:
-  advisor_run_computation()     M05 Steps 1–4: load config, fetch
+  advisor_run_computation(floor_account_weights_json?)
+                                M05 Steps 1–4+3b: load config, fetch
                                 market data, compute all signals,
-                                build M03 scoring questions.
+                                CurrentHoldingsFloorCheck, RoleRepricingDivergence,
+                                PassiveMandateAbsentWarning, scoring questions.
+                                Pass floor account weights (from allocation sheet)
+                                to enable floor monitoring.
   advisor_apply_scoring()       M05 Step 5: scoring answers →
                                 ScenarioProbabilities (Python math).
+                                Auto-runs FloorCheck Step 6b if probs shift >= 5pp.
   advisor_write_back()          M05 Step 10: §8 entry + Portfolio_State
                                 → git commit.
 
@@ -84,15 +89,26 @@ def _err(msg: str, status: str = "ERROR") -> str:
 
 # ── Tool 1: advisor_run_computation() ─────────────────────────────────────────
 
-def _tool_run_computation() -> str:
+def _tool_run_computation(floor_account_weights_json: Optional[str] = None) -> str:
     """
-    M05 Steps 1+2+4: load config, fetch market data, compute signals,
-    build scoring questions.  Caches results for the other two tools.
+    M05 Steps 1+2+4+3b: load config, fetch market data, compute signals,
+    build M03 scoring questions, run CurrentHoldingsFloorCheck (Step 3b).
+
+    floor_account_weights_json: optional JSON string — list of dicts, each:
+      {"account_id": str, "weights": {ticker: float, ...}}
+    Only FLOOR_THEN_RETURN accounts. Derive from allocation sheet current
+    values / account total BEFORE calling this tool:
+      e.g. [{"account_id": "Relative_IRA_469",
+              "weights": {"MLPX": 0.24, "SGOV": 0.21, ...}}]
+    If omitted: CurrentHoldingsFloorCheck and PassiveMandateAbsentWarning
+    are skipped with advisory flags in output.
 
     The qualitative research (M02 QUALITATIVE_GATHER_LIST) is NOT done
     here — Claude does it after this call using web_search.  The
     qualitative_targets list tells Claude which topics to research.
     """
+    import yfinance as _yf
+
     from .config import parse_calibration_state, parse_session_log
     from .data.fetch_registry import FetchRegistry
     from .data.file_protocol import read_calibration_state, read_session_log
@@ -103,6 +119,9 @@ def _tool_run_computation() -> str:
         compute_credit_signal,
         compute_divergence_signal,
         validate_classifications,
+        role_repricing_divergence,
+        check_all_floor_accounts,
+        passive_mandate_absent_warnings,
     )
     from .orchestrator.scoring_questions import (
         QUALITATIVE_TARGETS,
@@ -245,6 +264,161 @@ def _tool_run_computation() -> str:
 
     result["signals"] = sigs
 
+    # ── Step 4b: holdings 30d returns (for RoleRepricingDivergence) ───────
+    holdings_30d: Dict[str, Optional[float]] = {}
+    alloc_tickers = [t for t, e in cal.instruments.items() if not e.is_candidate]
+    try:
+        import datetime as _dt
+        end_dt   = _dt.date.today()
+        start_dt = end_dt - _dt.timedelta(days=50)  # 50 cal days ≈ 35 trading days
+        hist = _yf.download(
+            alloc_tickers, start=start_dt.isoformat(),
+            end=end_dt.isoformat(), progress=False, auto_adjust=True,
+        )
+        if not hist.empty:
+            closes = hist["Close"] if "Close" in hist.columns else hist
+            for ticker in alloc_tickers:
+                col = closes.get(ticker) if hasattr(closes, "get") else (
+                    closes[ticker] if ticker in closes.columns else None
+                )
+                if col is not None:
+                    series = col.dropna()
+                    if len(series) >= 2:
+                        holdings_30d[ticker] = float(
+                            series.iloc[-1] / series.iloc[0] - 1
+                        )
+        _cache["holdings_30d"] = holdings_30d
+        result["holdings_30d_returns"] = {
+            t: round(v * 100, 2) for t, v in holdings_30d.items() if v is not None
+        }
+    except Exception as e:
+        result["flags"].append(f"⚠ Holdings30dReturns fetch failed: {e}")
+
+    # ── Update 1: RoleRepricingDivergence ─────────────────────────────────
+    try:
+        ds_obj = compute_divergence_signal(readings_by_id, cal)
+        broad_30d = ds_obj.broad_equity_30d
+        if broad_30d is not None and holdings_30d:
+            repricing_warnings = role_repricing_divergence(
+                holdings_30d_returns=holdings_30d,
+                broad_market_30d=broad_30d,
+                cal=cal,
+            )
+            _cache["repricing_warnings"] = repricing_warnings
+            if repricing_warnings:
+                result["role_repricing_warnings"] = [
+                    {
+                        "ticker":              w.ticker,
+                        "primary_role_id":     w.primary_role_id,
+                        "instrument_30d_pct":  round(w.instrument_30d * 100, 2),
+                        "broad_market_30d_pct":round(w.broad_market_30d * 100, 2),
+                        "underperformance_pp": round(w.underperformance_pp, 2),
+                        "threshold_pp":        w.threshold_pp,
+                    }
+                    for w in repricing_warnings
+                ]
+                result["flags"].append(
+                    f"⚠ RoleRepricingDivergence: {len(repricing_warnings)} instrument(s) "
+                    "underperforming role thesis vs broad market (§9.5). See role_repricing_warnings."
+                )
+            else:
+                result["role_repricing_warnings"] = []
+        else:
+            result["flags"].append(
+                "⚠ RoleRepricingDivergence skipped — broad_market_30d unavailable "
+                "or no holdings 30d data fetched."
+            )
+    except Exception as e:
+        result["flags"].append(f"⚠ RoleRepricingDivergence failed: {e}")
+
+    # ── Update 2: CurrentHoldingsFloorCheck (M05 Step 3b) ─────────────────
+    floor_accounts: List[Dict] = []
+    if floor_account_weights_json:
+        try:
+            floor_accounts = json.loads(floor_account_weights_json)
+            _cache["floor_accounts"] = floor_accounts
+        except Exception as e:
+            result["flags"].append(f"⚠ floor_account_weights_json parse error: {e}")
+
+    if floor_accounts:
+        prior = log.latest_probs
+        if prior is not None:
+            try:
+                floor_alerts = check_all_floor_accounts(
+                    floor_accounts=floor_accounts,
+                    probabilities=prior,
+                    cal=cal,
+                    check_step="3b",
+                )
+                _cache["floor_alerts_3b"] = floor_alerts
+                if floor_alerts:
+                    result["floor_breach_alerts"] = [
+                        {
+                            "step":            a.check_step,
+                            "account_id":      a.account_id,
+                            "worst_scenario":  a.worst_scenario,
+                            "worst_return_pct":round(a.worst_return_pct, 2),
+                            "priority":        a.priority,
+                        }
+                        for a in floor_alerts
+                    ]
+                    result["status"] = "FLOOR_BREACH"
+                    result["flags"].append(
+                        f"⚠⚠ FLOOR_BREACH_ALERT [3b]: {len(floor_alerts)} account(s). "
+                        "RecalibrationSequence required before allocation recommendations."
+                    )
+                else:
+                    result["floor_breach_alerts"] = []
+            except Exception as e:
+                result["flags"].append(f"⚠ CurrentHoldingsFloorCheck [3b] failed: {e}")
+        else:
+            result["flags"].append(
+                "⚠ CurrentHoldingsFloorCheck [3b] skipped — no prior probs in §8."
+            )
+    else:
+        result["flags"].append(
+            "ℹ CurrentHoldingsFloorCheck skipped — floor_account_weights_json not provided. "
+            "Pass current market weights for FLOOR_THEN_RETURN accounts to enable floor monitoring."
+        )
+        result["floor_breach_alerts"] = []
+
+    # ── Update 3: PassiveMandateAbsentWarning ─────────────────────────────
+    if floor_accounts and log.latest_probs is not None:
+        try:
+            passive_warns = passive_mandate_absent_warnings(
+                floor_accounts=floor_accounts,
+                cal=cal,
+                probs=log.latest_probs,
+                holdings_30d_returns=holdings_30d or None,
+            )
+            _cache["passive_warns"] = passive_warns
+            if passive_warns:
+                result["passive_mandate_warnings"] = [
+                    {
+                        "account_id":       w.account_id,
+                        "ticker":           w.ticker,
+                        "weight_pct":       round(w.current_weight * 100, 1),
+                        "instrument_30d_pct": (
+                            round(w.instrument_30d * 100, 2)
+                            if w.instrument_30d is not None else None
+                        ),
+                        "floor_proximity_pp": (
+                            round(w.floor_proximity_pp, 2)
+                            if w.floor_proximity_pp is not None else None
+                        ),
+                    }
+                    for w in passive_warns
+                ]
+                result["flags"].append(
+                    f"⚠ PassiveMandateAbsent: {len(passive_warns)} holding(s) with no "
+                    "passive mandate floor actively repricing in FLOOR_THEN_RETURN account(s). "
+                    "See passive_mandate_warnings."
+                )
+            else:
+                result["passive_mandate_warnings"] = []
+        except Exception as e:
+            result["flags"].append(f"⚠ PassiveMandateAbsentWarning failed: {e}")
+
     # ── Scoring questions (qualitative dict empty — Claude fills via search) ─
     qs = generate_questions(readings, cal, credit_signal, {})
     _cache["scoring_questions"] = qs
@@ -298,7 +472,7 @@ def _tool_apply_scoring(answers: Dict[str, int]) -> str:
     )
     _cache["scenario_probs"] = probs
 
-    return _dumps({
+    result = {
         "status": "OK",
         "scenario_probs": {
             "A": probs.A, "B": probs.B, "C": probs.C,
@@ -308,9 +482,59 @@ def _tool_apply_scoring(answers: Dict[str, int]) -> str:
             "A": raw_scores.A, "B": raw_scores.B, "C": raw_scores.C,
             "D": raw_scores.D, "E": raw_scores.E, "F": raw_scores.F,
         },
-        "sum_check": probs.A + probs.B + probs.C + probs.D + probs.E + probs.F,
-        "flags": flags,
-    })
+        "flags": list(flags),
+    }
+
+    # ── Step 6b: re-run floor check if probs shifted >= 5pp ───────────────
+    floor_accounts = _cache.get("floor_accounts", [])
+    cal            = _cache.get("cal")
+    prior          = log.latest_probs if log else None
+
+    if floor_accounts and cal is not None and prior is not None:
+        max_shift = max(
+            abs(getattr(probs, s) - getattr(prior, s))
+            for s in ["A", "B", "C", "D", "E", "F"]
+        )
+        if max_shift >= 5.0:
+            try:
+                from .analysis import check_all_floor_accounts
+                floor_alerts_6b = check_all_floor_accounts(
+                    floor_accounts=floor_accounts,
+                    probabilities=probs,
+                    cal=cal,
+                    check_step="6b",
+                )
+                if floor_alerts_6b:
+                    result["floor_breach_alerts_6b"] = [
+                        {
+                            "step":            a.check_step,
+                            "account_id":      a.account_id,
+                            "worst_scenario":  a.worst_scenario,
+                            "worst_return_pct":round(a.worst_return_pct, 2),
+                            "priority":        a.priority,
+                        }
+                        for a in floor_alerts_6b
+                    ]
+                    result["status"] = "FLOOR_BREACH"
+                    result["flags"].append(
+                        f"⚠⚠ FLOOR_BREACH_ALERT [6b]: {len(floor_alerts_6b)} account(s) "
+                        f"at current probs (max shift {max_shift:.1f}pp). "
+                        "RecalibrationSequence required."
+                    )
+                else:
+                    result["floor_breach_alerts_6b"] = []
+                    result["flags"].append(
+                        f"ℹ FloorCheck [6b]: CLEAR at current probs "
+                        f"(prob shift {max_shift:.1f}pp triggered re-check)."
+                    )
+            except Exception as e:
+                result["flags"].append(f"⚠ FloorCheck [6b] failed: {e}")
+        else:
+            result["flags"].append(
+                f"ℹ FloorCheck [6b] skipped — max prob shift {max_shift:.1f}pp < 5pp threshold."
+            )
+
+    return _dumps(result)
 
 
 # ── Tool 3: advisor_write_back() ──────────────────────────────────────────────
@@ -411,16 +635,32 @@ def build_server():
     srv = FastMCP("financial-advisor")
 
     @srv.tool()
-    def advisor_run_computation() -> str:
+    def advisor_run_computation(
+        floor_account_weights_json: Optional[str] = None,
+    ) -> str:
         """
-        M05 Steps 1–4: load Calibration_State.md + Session_Log.md from
-        local Drive path, fetch all M18 market data, compute M11/M14/M17
-        signals, and build M03 scoring questions.
+        M05 Steps 1–4 + 3b: load Calibration_State.md + Session_Log.md,
+        fetch all M18 market data, compute M11/M14/M17 signals, run
+        CurrentHoldingsFloorCheck (Step 3b), and build M03 scoring questions.
+
+        BEFORE CALLING: Read the allocation sheet via Google Drive MCP.
+        For each FLOOR_THEN_RETURN account, compute:
+          current_weight[ticker] = holding_current_value / account_total
+        Then pass as floor_account_weights_json (JSON string):
+          '[{"account_id": "Relative_IRA_469",
+             "weights": {"MLPX": 0.24, "SGOV": 0.21, "DBMF": 0.15, ...}},
+            {"account_id": "Relative_Roth_466",
+             "weights": {"MLPX": 0.18, ...}}]'
+        If omitted: floor monitoring steps skipped (advisory flags in output).
 
         Returns JSON with:
           - prior_probs: prior scenario probabilities from §8
           - market_data: compact snapshot of all live readings
+          - holdings_30d_returns: 30-day returns for all holdings (pct)
           - signals: credit / regime / cascade / yield_curve
+          - role_repricing_warnings: instruments underperforming role thesis (§9.5)
+          - floor_breach_alerts: FLOOR_THEN_RETURN account breach alerts [Step 3b]
+          - passive_mandate_warnings: non-passive instruments repricing in floor accounts
           - scoring_questions: list with auto_score (None = you answer)
           - qualitative_targets: list of topics to research via web_search
           - open_triggers / open_decisions from last §8
@@ -428,10 +668,10 @@ def build_server():
         After calling this tool:
           1. Use web_search for each item in qualitative_targets
           2. Answer scoring_questions where auto_score is null
-             (use the evidence field + your qualitative research)
           3. Call advisor_apply_scoring with your answers dict
+             (will auto-run FloorCheck Step 6b if probs shift >= 5pp)
         """
-        return _tool_run_computation()
+        return _tool_run_computation(floor_account_weights_json)
 
     @srv.tool()
     def advisor_apply_scoring(answers: Dict[str, int]) -> str:
