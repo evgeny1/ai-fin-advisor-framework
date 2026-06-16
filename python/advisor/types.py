@@ -401,6 +401,25 @@ class CascadeSignal:
     quality_flags:       List[str]
 
 
+@dataclass
+class FloorBreachAlert:
+    """
+    M13.CurrentHoldingsFloorCheck() output — emitted when FLOOR_THEN_RETURN account
+    shows negative conservative return in any scenario above the probability threshold,
+    using ACTUAL current market weights (not proposed target allocations).
+
+    Escalates to Priority 1 at M05 Step 3b or 6b. Requires client acknowledgment
+    and RecalibrationSequence before any allocation recommendations proceed.
+    """
+    account_id:         str                   # e.g. "Relative_IRA_469"
+    worst_scenario:     str                   # "A".."F" — scenario producing worst return
+    worst_return_pct:   float                 # negative — worst blended conservative return
+    weights_used:       Dict[str, float]      # ticker → actual market weight at check time
+    probabilities_used: "ScenarioProbabilities"
+    check_step:         str                   # "3b" (prior probs) or "6b" (current probs)
+    priority:           str = "IMMEDIATE"
+
+
 # ── M03 AI Boundary Contract (Stage 3) ────────────────────────────────────────
 # Python builds ScoringQuestion list from M03 check definitions + DataReadings.
 # AI fills ScoringAnswers. Python runs all arithmetic from there.

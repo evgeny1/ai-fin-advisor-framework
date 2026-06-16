@@ -1,9 +1,9 @@
 # M05 — Session Initialization
-<!-- Version: 1.4 | Updated: see git log -->
+<!-- Version: 1.5 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M05_SessionInit
-  Version:         1.4
+  Version:         1.5
   Sub-project:     ORCHESTRATION
   Reason to change: session start sequence steps, write-back protocol, or session type rules change.
   Inputs consumed:  (entry point — orchestrates all other modules)
@@ -104,6 +104,29 @@ MODULE SessionInit {
        //
        // Run M15.ValidateClassifications() — HARD_STOP if any allocation instrument absent from §11.
 
+    3b: current_holdings_floor_check
+       // FLOOR_THEN_RETURN accounts only. Runs immediately after Step 3, before market data fetch.
+       // Uses allocation sheet values already loaded in Step 1 (GOOGLEFINANCE prices at fetch time).
+       // Computes mark-to-market weights from current holding values / account total.
+       // Runs FLOOR_THEN_RETURN branch of M13.FeasibilityCheck against those ACTUAL weights
+       //   (not proposed target allocations — those are checked later at Step 9).
+       // Uses PRIOR session probabilities from §8 (loaded in Step 3) — not yet-derived current probs.
+       //   Rationale: prior probs are the best available at this point in the sequence;
+       //   current probs require qualitative gather + scoring (Steps 5–6).
+       //   If current probs are later derived and differ materially, re-run this check (see Step 6b).
+       // @see M13_GrowthObjectives.CurrentHoldingsFloorCheck()
+       //
+       IF FloorBreachAlert emitted {
+         ESCALATE: Priority 1 — display alert BEFORE any other session content
+         FORMAT:   "⚠ FLOOR_BREACH_ALERT — [account_id]: scenario [s] returns [worst_return]%
+                    at prior probability vector. Floor constraint breached on current holdings.
+                    RecalibrationSequence required before allocation recommendations."
+         REQUIRE:  client acknowledgment before proceeding to Step 4
+         DO_NOT:   proceed to portfolio recommendations without resolving
+       }
+       // READONLY_MOBILE: run check using allocation sheet values if available;
+       //   if allocation sheet unavailable, skip with FLAG: "FloorCheck skipped — no sheet data"
+
     4: fetch_current_market_data
        // Phase 2 complete: M18.FetchRegistry.fetchAll() — parallel fetch of all registered FetchSpecs
        // Registered by all modules at load time:
@@ -124,6 +147,19 @@ MODULE SessionInit {
        // @see M03_ScenarioFramework.RecalibrationRule
        AND check_scheduled_review_status
        // @see M11_CreditAndCalibration.CalibrationDiscipline.SessionLoad
+
+    6b: re_run_floor_check_at_current_probabilities
+       // Re-run M13.CurrentHoldingsFloorCheck() using newly derived scenario probabilities.
+       // Only required if Step 6 produces probabilities that differ from prior (§8) by >= 5pp
+       //   on any single scenario. If probabilities are unchanged or within 5pp: skip.
+       // Rationale: a meaningful probability shift (e.g., C −23.7pp as in v1.34) may turn
+       //   a passing floor check into a breach. Step 3b used prior probs as best available;
+       //   Step 6b resolves that with current probs.
+       IF FloorBreachAlert emitted AND NOT emitted at Step 3b {
+         ESCALATE: same Priority 1 protocol as Step 3b
+         NOTE_IN_BRIEFING: "Floor breach detected on current holdings at updated probabilities.
+                            Was CLEAR at prior probabilities. Probability shift is the trigger."
+       }
 
     7: complete_intel_gathering_steps_2_to_5
        // @see M02_IntelGathering.GatherIntel STEPS 2–5

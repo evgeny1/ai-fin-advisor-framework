@@ -18,6 +18,7 @@ from ..types import (
     DataReading,
     DivergenceSignal,
     FeasibilityResult,
+    FloorBreachAlert,
     RawScores,
     ScenarioProbabilities,
     ScoringAnswers,
@@ -76,6 +77,14 @@ class SessionContext:
     feasibility_results: Dict[str, FeasibilityResult]       = field(default_factory=dict)
     portfolio_flags:     List[str]                          = field(default_factory=list)
 
+    # ── M05 Step 3b/6b — CurrentHoldingsFloorCheck ────────────────────────────
+    # Populated by caller before SessionPipeline.run() when allocation sheet is available.
+    # Each entry: {"account_id": str, "weights": Dict[ticker, float]}
+    # Only FLOOR_THEN_RETURN accounts need to be included.
+    # If empty: floor check steps are skipped with a flag (no hard stop).
+    floor_account_weights: List[Dict]          = field(default_factory=list)
+    floor_alerts:          List[FloorBreachAlert] = field(default_factory=list)
+
     # ── AI Call 3 — briefing narrative (Step 8 / M04) ─────────────────────────
     briefing: Optional[str] = None
 
@@ -86,9 +95,15 @@ class SessionContext:
     # ── Aggregate quality flags (all steps) ───────────────────────────────────
     @property
     def all_flags(self) -> List[str]:
+        floor_strs = [
+            f"FLOOR_BREACH_ALERT [{a.check_step}] {a.account_id}: "
+            f"scenario {a.worst_scenario} = {a.worst_return_pct:.2f}%"
+            for a in self.floor_alerts
+        ]
         return (
             self.validate_flags + self.fetch_flags + self.signal_flags
             + self.prob_flags + self.portfolio_flags + self.write_back_flags
+            + floor_strs
         )
 
     @property

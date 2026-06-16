@@ -26,6 +26,7 @@ from ..analysis import (
     compute_divergence_signal,
     validate_classifications,
     blended_scenario_return,
+    check_all_floor_accounts,
 )
 from ..analysis.scenario_math import apply_all_rules
 from ..config import parse_calibration_state, parse_session_log
@@ -99,9 +100,11 @@ class SessionPipeline:
 
         self._step1_load_config(ctx)
         self._step2_fetch_market_data(ctx)
+        self._step2b_floor_check(ctx, check_step="3b")   # M05 Step 3b
         self._step3_gather_qualitative(ctx)
         self._step4_compute_signals(ctx)
         self._step5_derive_probabilities(ctx)
+        self._step5b_floor_check_rerun(ctx)              # M05 Step 6b
         self._step6_portfolio_math(ctx)
         self._step7_generate_briefing(ctx)
         self._step8_write_back(ctx)
@@ -174,6 +177,84 @@ class SessionPipeline:
         )
         if flagged:
             ctx.fetch_flags.append(f"⚠ {flagged} data readings flagged — review quality_flags in readings.")
+
+    # ── Step 2b: M05 Step 3b — CurrentHoldingsFloorCheck (prior probs) ──────
+
+    def _step2b_floor_check(self, ctx: SessionContext, check_step: str = "3b") -> None:
+        """
+        M05 Step 3b: CurrentHoldingsFloorCheck for FLOOR_THEN_RETURN accounts.
+
+        Uses prior session probabilities (§8) — best available before scoring.
+        Allocation sheet current weights must be pre-loaded into ctx.floor_account_weights
+        by the caller when Google credentials are available. If not loaded, step is skipped
+        with a flag — the Claude orchestrator path handles this via MCP sheet fetch.
+        """
+        self._prog(f"Step 2b  M05.{check_step}: CurrentHoldingsFloorCheck ...")
+
+        if not ctx.floor_account_weights:
+            ctx.floor_alerts.append(
+                f"⚠ FloorCheck Step {check_step} skipped — no allocation sheet weights loaded. "
+                "Run with Google credentials or provide floor_account_weights to SessionContext."
+            )
+            self._prog(f"Step 2b  FloorCheck skipped (no sheet data)", done=True)
+            return
+
+        probs = ctx.log.latest_probs if ctx.log else None
+        if probs is None:
+            ctx.floor_alerts.append(
+                f"⚠ FloorCheck Step {check_step} skipped — no prior probabilities in §8."
+            )
+            self._prog(f"Step 2b  FloorCheck skipped (no prior probs)", done=True)
+            return
+
+        alerts = check_all_floor_accounts(
+            floor_accounts=ctx.floor_account_weights,
+            probabilities=probs,
+            cal=ctx.cal,
+            check_step=check_step,
+        )
+
+        for alert in alerts:
+            msg = (
+                f"⚠ FLOOR_BREACH_ALERT [{check_step}] — {alert.account_id}: "
+                f"scenario {alert.worst_scenario} returns {alert.worst_return_pct:.2f}% "
+                f"at {'prior' if check_step == '3b' else 'current'} probability vector. "
+                "Floor constraint breached on current holdings. "
+                "RecalibrationSequence required before allocation recommendations."
+            )
+            ctx.floor_alerts.append(msg)
+            self._prog(f"  !! {msg[:140]}")
+
+        if not alerts:
+            self._prog(f"Step 2b  FloorCheck {check_step}: all FLOOR accounts CLEAR", done=True)
+        else:
+            self._prog(
+                f"Step 2b  FloorCheck {check_step}: {len(alerts)} BREACH(ES) detected — "
+                "client acknowledgment required",
+                done=True,
+            )
+
+    # ── Step 5b: M05 Step 6b — FloorCheck re-run at current probabilities ────
+
+    def _step5b_floor_check_rerun(self, ctx: SessionContext) -> None:
+        """
+        M05 Step 6b: Re-run CurrentHoldingsFloorCheck with newly derived probabilities.
+        Only runs if any scenario shifted >= 5pp vs prior session.
+        """
+        if not ctx.has_probs or not ctx.log or not ctx.log.latest_probs:
+            return  # can't compare — skip silently
+
+        prior = ctx.log.latest_probs
+        current = ctx.scenario_probs
+        max_shift = max(
+            abs(getattr(current, s) - getattr(prior, s)) for s in ["A","B","C","D","E","F"]
+        )
+        if max_shift < 5.0:
+            self._prog("Step 5b  FloorCheck 6b: prob shift < 5pp — skip re-run", done=True)
+            return
+
+        self._prog(f"Step 5b  FloorCheck 6b: prob shift {max_shift:.1f}pp — re-running ...")
+        self._step2b_floor_check(ctx, check_step="6b")
 
     # ── Step 3: AI Call 1 — Qualitative gather ────────────────────────────────
 

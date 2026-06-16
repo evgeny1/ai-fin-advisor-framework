@@ -1,17 +1,17 @@
 # M13 — Growth Objectives
-<!-- Version: 1.0 | Updated: see git log -->
+<!-- Version: 1.1 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M13_GrowthObjectives
-  Version:         1.0
+  Version:         1.1
   Sub-project:     PORTFOLIO_ADVISOR
   Reason to change: account objective logic, feasibility methodology, or recalibration sequence changes.
                     Return table values: go to CALIBRATION_STATE §4 only — not here.
   Inputs consumed:  ScenarioProbabilities (from M03); BlendedReturn (from M15)
                     account objective profiles (from Allocation sheet "Objectives" tab)
-  Outputs produced: AllocationTarget, FeasibilityResult
+  Outputs produced: AllocationTarget, FeasibilityResult, FloorBreachAlert
   Calibration deps: CALIBRATION_STATE §4.1 (return table), §4.2–4.3 (multipliers), §4.4 (floor/cap params)
-  Types consumed:   @see FW_Types.md — ScenarioProbabilities, BlendedReturn, AllocationTarget, FeasibilityResult
+  Types consumed:   @see FW_Types.md — ScenarioProbabilities, BlendedReturn, AllocationTarget, FeasibilityResult, FloorBreachAlert
 -->
 
 ```
@@ -293,6 +293,66 @@ MODULE GrowthObjectives {
       }
 
     }
+  }
+
+  // ─── CURRENT HOLDINGS FLOOR CHECK ───────────────────────────────────────
+  // Called at M05 Steps 3b and 6b. Distinct from FeasibilityCheck():
+  //   FeasibilityCheck()         → checks PROPOSED allocations (pre-trade)
+  //   CurrentHoldingsFloorCheck() → checks ACTUAL current holdings at current market prices
+  //
+  // Purpose: detect between-session price drift that has moved FLOOR_THEN_RETURN accounts
+  //   toward or into floor breach — without waiting for a formal trade proposal.
+  //
+  // Data source: Allocation sheet GOOGLEFINANCE prices loaded in M05 Step 1.
+  //   Use current_value per holding (sheet column) / account_total to derive actual weights.
+  //   NEVER use target allocation weights — those reflect intent, not current state.
+  //
+  // Probability source:
+  //   Step 3b: use prior session probabilities from §8 Session_Log (best available pre-scoring)
+  //   Step 6b: use newly derived scenario probabilities from M03 (definitive)
+
+  FUNCTION CurrentHoldingsFloorCheck(
+    account,                  // AccountObjectiveProfile — FLOOR_THEN_RETURN only
+    current_market_weights,   // Dict[ticker → fraction] — derived from sheet current values
+    probabilities             // ScenarioProbabilities — prior (Step 3b) or current (Step 6b)
+  ) -> FloorBreachAlert | null {
+
+    // Guard: only runs for FLOOR_THEN_RETURN accounts
+    IF account.objective_type != FLOOR_THEN_RETURN {
+      RETURN null
+    }
+
+    floor_threshold = CALIBRATION_STATE §4.4.floor_nominal_loss_probability_threshold
+    floor_breach    = false
+    worst_return    = null
+    worst_scenario  = null
+
+    FOR each scenario s WHERE probabilities[s] >= floor_threshold {
+      scenario_return_s = 0
+      FOR each ticker t IN current_market_weights {
+        blended = M15.blendedScenarioReturn(t, s, "conservative")
+        scenario_return_s += current_market_weights[t] × blended
+      }
+      IF scenario_return_s < 0 {
+        floor_breach   = true
+        worst_return   = MIN(worst_return ?? scenario_return_s, scenario_return_s)
+        worst_scenario = s
+      }
+    }
+
+    IF floor_breach {
+      RETURN FloorBreachAlert {
+        account_id:           account.account_id
+        worst_scenario:       worst_scenario
+        worst_return_pct:     worst_return
+        weights_used:         current_market_weights   // snapshot for audit trail
+        probabilities_used:   probabilities
+        check_step:           "3b" | "6b"             // which M05 step fired this
+        priority:             "IMMEDIATE"
+      }
+    }
+
+    RETURN null
   }
 
   // ─── RECALIBRATION SEQUENCE ──────────────────────────────────────────────
