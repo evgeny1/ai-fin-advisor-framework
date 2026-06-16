@@ -2,7 +2,7 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.35  Last updated: June 15, 2026 (§9.5 Role Repricing Divergence thresholds added; passive_mandate_eligible field added to all §11 instruments)
+# Version: 1.36  Last updated: June 15, 2026 (MLPX ComponentVector revised RAC(0.65)/IHC(0.35)→RAC(0.50)/IHC(0.50); EV updated at v1.34 vector +3.97%)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -126,6 +126,29 @@ For the 3rd CPI print (the formal trigger gate), graduated response by print lev
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-15 - Framework v1.36 (MLPX ComponentVector revision — IHC weight).
+M16.CalibrationMethodology() 4-layer run for MLPX IHC component weight (§11 parameter; M15 domain):
+L1: Revised unconditional anchor RAC(0.50)/IHC(0.50) → 3.18% real (down from 3.57% at prior weights; both coherent).
+    Infrastructure unconditional ~4-5% real (JPM LTCMA); commodity unconditional ~1.6-2.1% real (RA/JPM).
+L2: MLPX 2015 = -35.25% nominal; AMZI Dec14-Nov15 = -33.5% total return (T1: AMLP N-CSR SEC filing).
+    MLPX tracked AMZI almost 1:1 in 2015 — zero observable RAC insulation despite 65% contractual weight.
+    MLPX 2020 = -20.26% nominal; AMZ FY2020 = -24.50% (T1: Cushing N-CSR). ~4pp RAC protection measurable.
+    2yr annualized real 2014-15: -14.0%. IHC sensitivity clearly > 0.35 in both analogues.
+L3: Three structural mechanisms documented (falsifiable, T1/T2 sourced): (1) counterparty creditworthiness
+    contagion — producer credit declines in oil collapse reprices MLP equity regardless of fee structure;
+    (2) volume floor risk — minimum volume commitments exposed when throughput falls below thresholds;
+    (3) sector sentiment / forced-seller contagion — commodity ETF outflows drag all energy sub-sectors.
+    Combined directional impact: -8 to -18pp acute D-scenario underperformance vs pure RAC contract theory.
+L4: Neutral distribution (A=35/B=15/C=15/D=10/E=5/F=20). Revised: 2.500% vs anchor 3.18% → gap -0.68pp.
+    Current: 2.546% vs anchor 3.57% → gap -1.03pp. Both PASS ±3pp. Revised gap is tighter.
+Confidence: MEDIUM (2 analogues; no institutional RAC/IHC decomposition source for midstream ETFs).
+ComponentVector revised: RAC(0.65)/IHC(0.35) → RAC(0.50)/IHC(0.50). Client confirmed 2026-06-15.
+⚠ IHC E = +2% anchored to RESERVE_EROSION pathway. At v1.34 vector E=12.5% may reflect SYSTEMIC_LIQUIDITY
+  — if so, IHC E should be calibrated negative. Reassess at June 30; if confirmed negative, EV improvement
+  of +0.14pp from this revision reverses. Separate M16 run required (IHC E cell, not ComponentVector).
+⚠ Relative IRA E-scenario nominal loss ≈ -0.68% (revised weights) at v1.34 vector. E=12.5% is below the
+  15% formal floor-breach threshold — no action. Watch: if E rises above 15%, reassess floor.
 
 2026-06-13 - Framework v1.34 (INFL §11 classification + §9.3 EntryExtensionGuard 180d override).
 INFL (Horizon Kinetics Inflation Beneficiaries ETF) added to §11 as CANDIDATE instrument.
@@ -840,17 +863,18 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - ⚠ Deal trajectory (A rising): geopolitical_premium A return proposed revision to [-6,0] pending June 30. If adopted, XAR EV would decline further.
 
 #### MLPX
-- Components: real_asset_contracted_revenue (0.65) + inflation_hedge_commodity_linked (0.35)
+- Components: real_asset_contracted_revenue (0.50) + inflation_hedge_commodity_linked (0.50)
 - passive_mandate_eligible: false
-- Last reviewed: 2026-05-13 (v1.17 — entry guards CLEARED)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+5.10%** (revised v1.26; prior: +5.67% — RAC D/E values corrected). Ranked #2.
-  - A: (0.65×3+0.35×2)×0.07 = 2.65×0.07 = +0.186%
-  - B: (0.65×6+0.35×6)×0.36 = 6.00×0.36 = +2.160%
-  - C: (0.65×8+0.35×7)×0.41 = 7.65×0.41 = +3.137%
-  - D: (0.65×(-6)+0.35×(-8))×0.05 = -6.70×0.05 = -0.335%
-  - E: (0.65×(-10)+0.35×2)×0.04 = -5.80×0.04 = -0.232%
-  - F: (0.65×3+0.35×2)×0.07 = 2.65×0.07 = +0.186%
-  - Total: +5.102% ≈ +5.10%.
+- Last reviewed: 2026-06-15 (v1.36 — ComponentVector revised RAC(0.65)/IHC(0.35)→RAC(0.50)/IHC(0.50); M16 4-layer complete; client confirmed)
+- EV (A=18.8/B=37.6/C=25.1/D=3.0/E=12.5/F=3.0): **+3.97%** (v1.36). Prior: +5.10% at A=7/B=36/C=41/D=5/E=4/F=7 (stale vector — do not use). Ranked #2 at prior vector; rank TBD pending full v1.34-vector recompute across all instruments.
+  - A: (0.50×3+0.50×2)×0.188 = 2.50×0.188 = +0.470%
+  - B: (0.50×6+0.50×6)×0.376 = 6.00×0.376 = +2.256%
+  - C: (0.50×8+0.50×7)×0.251 = 7.50×0.251 = +1.883%
+  - D: (0.50×(-6)+0.50×(-8))×0.030 = -7.00×0.030 = -0.210%
+  - E: (0.50×(-10)+0.50×2)×0.125 = -4.00×0.125 = -0.500%
+  - F: (0.50×3+0.50×2)×0.030 = 2.50×0.030 = +0.075%
+  - Total: +3.974% ≈ +3.97%.
+  - ⚠ EV improvement vs prior weights (+0.14pp) driven by IHC E=+2% (RESERVE_EROSION) gaining weight vs RAC E=-10%. If IHC E recalibrated negative at June 30 (SYSTEMIC_LIQUIDITY pathway), improvement reverses.
 - Target allocation (v1.13 consolidated targets):
   - Primary IRA: 30%
   - Primary Roth: 28%
