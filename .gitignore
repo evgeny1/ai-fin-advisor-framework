@@ -10,3 +10,6 @@ python/build/
 python/.coverage
 python/htmlcov/
 .coverage
+.venv/
+.pytest_cache/
+__pycache__/
