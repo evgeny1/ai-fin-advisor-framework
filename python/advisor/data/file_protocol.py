@@ -105,7 +105,7 @@ def write_back(
         logger.info(f"[DRY RUN] Would commit: {files_written}")
         return "dry-run"
 
-    return _git_commit(base, files_written, f"Session write-back: {today} — §7 credit + §8 scenario state + Portfolio_State")
+    return _git_commit(base, files_written, f"Session write-back: {today} — §8 scenario state + Portfolio_State")
 
 
 def _safe_write(path: Path, content: str) -> None:

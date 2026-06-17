@@ -610,27 +610,45 @@ class SessionPipeline:
         return "\n".join(lines)
 
     def _append_session_log_entry(self, log_text: str, ctx: SessionContext) -> str:
-        """Append §8 session state block to Session_Log.md content."""
+        """Append §8 session state block to Session_Log.md content.
+
+        Must stay byte-compatible with config/session_log.py's parser:
+        '---' block separator, a line starting 'date:', and a literal
+        'scenario_probabilities: { A: X%, ... }' line. (Mirrors the fix
+        applied to mcp_server.py._tool_write_back — this Pattern-A path
+        had the identical format bug independently, plus a List[str]
+        interpolated directly into an f-string for next_session_flags,
+        which would have rendered as a Python repr like "['p1', 'p2']"
+        rather than a parseable bullet list.)
+
+        open_triggers / open_decisions remain placeholders: SessionContext
+        has no structured field carrying these yet (Stage 5 plumbing gap,
+        not part of this fix) — leave as explicit review markers rather
+        than fabricating content.
+        """
         p = ctx.scenario_probs
         if p is None:
             return log_text  # safety guard — caller already checked
 
-        prob_str = (
-            f"A={p.A:.0f} / B={p.B:.0f} / C={p.C:.0f} / "
-            f"D={p.D:.0f} / E={p.E:.0f} / F={p.F:.0f}"
-        )
+        probs_str = (f"{{ A: {p.A:g}%, B: {p.B:g}%, C: {p.C:g}%, "
+                     f"D: {p.D:g}%, E: {p.E:g}%, F: {p.F:g}% }}")
 
         # Identify primary driver from qualitative or signals
         primary_driver = "derived via SessionPipeline (Pattern A)"
         if ctx.divergence_signal:
             primary_driver = f"composite regime: {ctx.divergence_signal.composite.value}"
 
+        flags_block = ("\n".join(f"- {f}" for f in ctx.prob_flags)
+                        if ctx.prob_flags else "_None this session._")
+
         new_entry = (
-            f"\n\n### §8 Entry — {ctx.session_date}\n"
-            f"**Probabilities:** {prob_str}\n"
-            f"**Primary driver:** {primary_driver}\n"
-            f"**Open triggers:** [review session briefing]\n"
-            f"**Open decisions:** [review session briefing]\n"
-            f"**Next session flags:** {ctx.prob_flags}\n"
+            f"\n\n---\n\n"
+            f"date: {ctx.session_date} ({ctx.session_type.value})\n"
+            f"scenario_probabilities: {probs_str}\n"
+            f"primary_driver: {primary_driver}\n"
+            f"session_type: {ctx.session_type.value}\n\n"
+            f"open_triggers:\n- [review session briefing]\n\n"
+            f"open_decisions:\n- [review session briefing]\n\n"
+            f"next_session_flags:\n{flags_block}\n"
         )
-        return log_text + new_entry
+        return log_text.rstrip() + new_entry

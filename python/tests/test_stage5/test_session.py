@@ -97,6 +97,39 @@ def test_pipeline_no_write_back_in_dry_run():
 
 
 @pytest.mark.integration
+def test_pipeline_session_log_entry_is_parseable():
+    """Regression test (2026-06-17): _append_session_log_entry() used to
+    emit a '### §8 Entry — DATE' header with no '---' separator — the
+    same format bug independently present in mcp_server._tool_write_back.
+    Confirms the Pattern-A path now produces a block parse_session_log()
+    actually recognizes as a distinct, new §8 entry."""
+    from advisor.config.session_log import parse_session_log
+
+    pipeline = SessionPipeline(ai=StubAIClient(), dry_run=True)
+    ctx = pipeline.run()
+    assert ctx.scenario_probs is not None
+
+    seed_log = (
+        "## Section 8 - Session State Log\n\n---\n\n"
+        "date: 2026-06-01 (full M05 session — seed entry)\n"
+        "scenario_probabilities: { A: 10%, B: 40%, C: 30%, D: 10%, E: 5%, F: 5% }\n"
+        "primary_driver: seed entry for round-trip test\n"
+        "session_type: full M05 session\n"
+    )
+    updated = pipeline._append_session_log_entry(seed_log, ctx)
+    state = parse_session_log(updated)
+
+    assert len(state.scenario_states) == 2, (
+        "New entry was merged into the seed block (missing '---' "
+        "separator) instead of standing alone."
+    )
+    p = state.latest_probs
+    assert p is not None
+    total = p.A + p.B + p.C + p.D + p.E + p.F
+    assert abs(total - 100.0) < 0.01
+
+
+@pytest.mark.integration
 def test_pipeline_briefing_non_empty():
     pipeline = SessionPipeline(ai=StubAIClient(), dry_run=True)
     ctx = pipeline.run()

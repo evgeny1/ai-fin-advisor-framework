@@ -628,12 +628,36 @@ def _render_portfolio_state(cal: Any, probs: Any, session_date: str,
     return "\n".join(lines)
 
 
+def _bullet_list(items: List[str]) -> str:
+    """Render as '- item' lines, matching the §8 canonical-schema list format
+    that config/session_log.py._extract_list() parses (bullet items under a
+    bare 'key:' line, terminated by a blank line)."""
+    return "\n".join(f"- {item}" for item in items) if items else "_None this session._"
+
+
+def _numbered_list(items: List[str]) -> str:
+    """Render as '1. item' lines — same parser, numbered-list branch."""
+    return "\n".join(f"{i}. {item}" for i, item in enumerate(items, 1)) if items else "_None this session._"
+
+
+def _fmt_scenario_probs(p: Any) -> str:
+    """Render as 'scenario_probabilities: { A: X%, ... }' — the exact literal
+    form config/session_log.py._parse_probs() matches via regex. Uses ':g'
+    (no forced rounding to whole numbers) so values like 12.5 are preserved
+    exactly rather than rounding inconsistently and breaking the sum-to-100
+    invariant (the bug this replaces: rounded headline values summed to 99
+    or 101 in the two malformed June 14 entries this format superseded)."""
+    return (f"{{ A: {p.A:g}%, B: {p.B:g}%, C: {p.C:g}%, "
+            f"D: {p.D:g}%, E: {p.E:g}%, F: {p.F:g}% }}")
+
+
 def _tool_write_back(
     primary_driver: str,
     open_triggers: List[str],
     open_decisions: List[str],
     next_session_flags: List[str],
     dry_run: bool,
+    session_type: str,
 ) -> str:
     from .data.file_protocol import read_session_log, write_back
     from .types import SessionType
@@ -647,17 +671,19 @@ def _tool_write_back(
 
     today = datetime.date.today().isoformat()
     p = probs
-    prob_str = (f"A={p.A:.0f} / B={p.B:.0f} / C={p.C:.0f} / "
-                f"D={p.D:.0f} / E={p.E:.0f} / F={p.F:.0f}")
-    flags_str = "; ".join(next_session_flags) if next_session_flags else "none"
 
+    # Canonical §8 schema (Session_Log.md header) — must stay byte-compatible
+    # with config/session_log.py's parser: '---' block separator, a line
+    # starting 'date:', and 'scenario_probabilities: { A: X%, ... }' exactly.
     new_entry = (
-        f"\n\n### §8 Entry — {today}\n"
-        f"**Probabilities:** {prob_str}\n"
-        f"**Primary driver:** {primary_driver}\n"
-        f"**Open triggers:** {'; '.join(open_triggers) or 'none'}\n"
-        f"**Open decisions:** {'; '.join(open_decisions) or 'none'}\n"
-        f"**Next session flags:** {flags_str}\n"
+        f"\n\n---\n\n"
+        f"date: {today} ({session_type})\n"
+        f"scenario_probabilities: {_fmt_scenario_probs(p)}\n"
+        f"primary_driver: {primary_driver}\n"
+        f"session_type: {session_type}\n\n"
+        f"open_triggers:\n{_bullet_list(open_triggers)}\n\n"
+        f"open_decisions:\n{_numbered_list(open_decisions)}\n\n"
+        f"next_session_flags:\n{_bullet_list(next_session_flags)}\n"
     )
 
     log_text = _cache.get("log_text") or read_session_log()
@@ -760,6 +786,7 @@ def build_server():
         primary_driver: str,
         open_triggers: List[str],
         open_decisions: List[str],
+        session_type: str,
         next_session_flags: Optional[List[str]] = None,
         dry_run: bool = False,
     ) -> str:
@@ -773,6 +800,12 @@ def build_server():
         primary_driver: concise description of session's main driver
         open_triggers:  list of active trigger strings to carry forward
         open_decisions: list of pending decision strings to carry forward
+        session_type:   required — describe what kind of session this was,
+                        e.g. "full M05 session", "ad-hoc", "audit". No
+                        default on purpose: pick deliberately rather than
+                        silently mislabeling an ad-hoc session as full M05.
+                        Written verbatim into both the §8 'date:' parenthetical
+                        and the 'session_type:' field.
         next_session_flags: items to surface at next session start
                             (default empty)
         dry_run: if true, writes files locally but skips git commit
@@ -785,6 +818,7 @@ def build_server():
             open_decisions=open_decisions,
             next_session_flags=next_session_flags or [],
             dry_run=dry_run,
+            session_type=session_type,
         )
 
     return srv

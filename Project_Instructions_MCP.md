@@ -180,7 +180,10 @@ Execute `M05_SessionInit.SessionStartSequence` in strict order:
 
 // SESSION END — executes automatically after portfolio discussion concludes:
 9. Write-back                 → advisor_write_back(primary_driver, open_triggers,
-                                  open_decisions, next_session_flags)  ← MCP tool
+                                  open_decisions, session_type, next_session_flags)  ← MCP tool
+                                session_type is REQUIRED, no default — pass the actual
+                                  session type ("full M05 session", "ad-hoc", "audit"),
+                                  never omit or guess "full M05" by default.
                                 Appends §8 entry to Session_Log.md.
                                 Renders and writes Portfolio_State.md.
                                 Single git commit — both files together.
