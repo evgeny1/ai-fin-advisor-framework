@@ -170,8 +170,9 @@ class TestSessionLogIntegration:
         assert len(session_log.credit_readings) >= 10
 
     def test_scenario_states_count(self, session_log):
-        # File has 8 full entries (May 25 through June 10)
-        assert len(session_log.scenario_states) == 8
+        # File has 10 full entries (May 25 through June 14 — two June 14 entries
+        # recovered 2026-06-17 from a malformed write-back format; see git log)
+        assert len(session_log.scenario_states) == 10
 
     def test_latest_probs_sum_100(self, session_log):
         p = session_log.latest_probs
@@ -180,14 +181,14 @@ class TestSessionLogIntegration:
         assert abs(total - 100.0) < 0.01
 
     def test_latest_probs_values(self, session_log):
-        # June 10 session: A=5/B=41/C=38/D=5/E=4/F=7
+        # June 14 second session (US-Iran MOU announced): A=14.3/B=42.9/C=14.3/D=7.1/E=14.3/F=7.1
         p = session_log.latest_probs
-        assert p.A == pytest.approx(5.0)
-        assert p.B == pytest.approx(41.0)
-        assert p.C == pytest.approx(38.0)
-        assert p.D == pytest.approx(5.0)
-        assert p.E == pytest.approx(4.0)
-        assert p.F == pytest.approx(7.0)
+        assert p.A == pytest.approx(14.3)
+        assert p.B == pytest.approx(42.9)
+        assert p.C == pytest.approx(14.3)
+        assert p.D == pytest.approx(7.1)
+        assert p.E == pytest.approx(14.3)
+        assert p.F == pytest.approx(7.1)
 
     def test_all_states_sum_100(self, session_log):
         for entry in session_log.scenario_states:
@@ -213,7 +214,7 @@ class TestSessionLogIntegration:
         assert len(session_log.latest_next_flags) >= 5
 
     def test_prior_probs_not_same_as_latest(self, session_log):
-        # June 7 and June 10 differ (A: 7→5, B: 36→41)
+        # June 14 first and second entries differ (C: 25.1→14.3 on MOU announcement)
         prior   = session_log.prior_probs
         latest  = session_log.latest_probs
         assert prior is not None
