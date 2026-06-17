@@ -53,6 +53,15 @@ class Scenario(Enum):
     A = "A"; B = "B"; C = "C"; D = "D"; E = "E"; F = "F"
 
 
+class ThesisStatus(Enum):
+    """M19 per-instrument thesis-sustaining condition status (§13).
+    UNKNOWN must never silently default to ACTIVE — see M19_ThesisSustainingConditions.md."""
+    ACTIVE   = "ACTIVE"
+    DEGRADED = "DEGRADED"
+    FAILED   = "FAILED"
+    UNKNOWN  = "UNKNOWN"
+
+
 # ── Data Layer Types (Stage 1) ─────────────────────────────────────────────────
 
 @dataclass
@@ -143,6 +152,22 @@ class InstrumentEntry:
 
 
 @dataclass
+class ThesisConditionEntry:
+    """M19 §13 per-ticker thesis-sustaining condition entry. Condition strings are
+    natural-language (calibration-dated, human-reviewable); analysis/thesis.py owns
+    the mapping from recognized condition phrasings to live data. degraded_signals
+    is optional — most tickers go straight ACTIVE→FAILED with no DEGRADED tier."""
+    ticker: str
+    primary_driver: str
+    sustaining_conditions: List[str]
+    failure_signals: List[str]
+    data_dependencies: List[str]
+    last_reviewed: str
+    degraded_signals: List[str] = field(default_factory=list)
+    notes: str = ""
+
+
+@dataclass
 class ThresholdBlock:
     """§1 credit signal thresholds (relative to 180d trailing median)."""
     hy_stress_delta: int           # bps above median — fires HY_STRESS
@@ -228,6 +253,7 @@ class CalibrationState:
     roles: Dict[str, str]                            # §11.1: role_id → binding_driver
     instruments: Dict[str, InstrumentEntry]          # §11.3/§11.4: ticker → entry
     cascade: CascadeBlock                            # §12
+    thesis_conditions: Dict[str, ThesisConditionEntry] = field(default_factory=dict)  # §13
 
 
 # ── Session Log Types (Stage 2) ────────────────────────────────────────────────
@@ -427,6 +453,20 @@ class CascadeSignal:
 
 
 @dataclass
+class ThesisEvaluation:
+    """
+    M19.evaluateThesisConditions() output — one ticker's result this session.
+    Produced by analysis/thesis.py. Never feeds M03. UNKNOWN must never be
+    silently treated as ACTIVE by any consumer (briefing, allocation, etc.).
+    """
+    ticker:                str
+    status:                ThesisStatus
+    fired_condition_text:  Optional[str] = None    # the specific condition text that drove the status
+    missing_dependencies:  List[str] = field(default_factory=list)
+    quality_flags:         List[str] = field(default_factory=list)
+
+
+@dataclass
 class FloorBreachAlert:
     """
     M13.CurrentHoldingsFloorCheck() output — emitted when FLOOR_THEN_RETURN account
@@ -458,6 +498,7 @@ class ScoringQuestion:
     evidence:     str        # pre-rendered from DataReadings
     valid_scores: List[int]  # valid integer answers e.g. [0,1,2] or [0,3]
     auto_score:   Optional[int] = None  # if set: Python scored this — skip AI for this question
+    consumer:     str = "M03"  # "M03" (DeriveScenarioProbabilities) | "M19" (thesis judgment conditions)
 
 
 @dataclass

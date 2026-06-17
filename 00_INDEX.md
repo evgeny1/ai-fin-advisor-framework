@@ -1,8 +1,8 @@
 # 00 — Index & Module Map
 <!-- Personal Financial Advisor Framework — Pseudo-Code Edition -->
 <!-- Source documents: Framework_Main_v1, Framework_Extension_v1, Calibration_State, Amendment 1, Amendment 2 -->
-<!-- Last updated: May 29, 2026 (v1.23 portfolio-state-writeback: Portfolio_State.md added to SOURCE_MAP, -->
-<!--   WriteBack upgraded to three-file atomic push, PERMANENT_RULES and NEVER list updated) -->
+<!-- Last updated: June 17, 2026 (v1.24: M19_ThesisSustainingConditions added — new sub-project
+     THESIS_MONITORING, §13 extension point, NEVER-feeds-M03 boundary, canonical briefing id) -->
 
 ```
 FRAMEWORK PersonalFinancialAdvisor {
@@ -32,6 +32,9 @@ FRAMEWORK PersonalFinancialAdvisor {
     M18_MarketDataFetch           // Centralized financial data registry (v1.1, added v1.20):
                                   //   all DATA_REGISTRY_ENTRIES for the framework in one place;
                                   //   PriceDataIntegrity guard. M02/M11/M14/M17 entries superseded.
+    M19_ThesisSustainingConditions // Per-instrument thesis monitoring: reads §13 sustaining/
+                                  //   degraded/failure conditions; produces ThesisStatus
+                                  //   (ACTIVE | DEGRADED | FAILED | UNKNOWN). Never feeds M03.
     // Cross-cutting framework files (@see SUB_PROJECTS below)
     FW_Types                      // Shared type contracts (v1.1) — ALL modules consume/produce these types
     CALIBRATION_STATE             // Live threshold values (GitHub: Calibration_State.md)
@@ -85,6 +88,20 @@ FRAMEWORK PersonalFinancialAdvisor {
       note:             "All other sub-projects depend on FRAMEWORK_CORE. It depends on nothing."
     }
 
+    THESIS_MONITORING {
+      reason_to_change: "thesis-sustaining condition definitions, evaluation methodology, or
+                         status taxonomy change"
+      modules:          [M19_ThesisSustainingConditions]
+      extension_point:  CALIBRATION_STATE §13
+                        // New ticker: add a §13 entry only. M19 module logic does not change.
+      consumes:         [DataReading, ScenarioProbabilities, RegimeSignal]  // from DATA_INTELLIGENCE
+                        //   + ANALYSIS_ENGINE; reads M14 RegimeSignal for MAGS-class dependencies
+      produces:         [ThesisStatus]   // per instrument: ACTIVE | DEGRADED | FAILED | UNKNOWN
+      note:             "Downstream advisory signal only — does not override any other module's
+                         computation, so it has no slot in the PRECEDENCE ladder below. Consumed
+                         by M06.HoldJustification and the THESIS_CONDITION_STATUS briefing section."
+    }
+
     ORCHESTRATION {
       reason_to_change: "session flow or output format changes (rare)"
       modules:          [M05_SessionInit, M04_BriefingFormat]
@@ -121,9 +138,10 @@ FRAMEWORK PersonalFinancialAdvisor {
     "M16_ReturnTableCalibration.md"
     "M17_SystemicCascadeWarning.md"    // v1.4: e_pathway_type derivation; CHAIN_5 calibration gap
     "M18_MarketDataFetch.md"           // v1.1: all framework DATA_REGISTRY_ENTRIES centralized here
+    "M19_ThesisSustainingConditions.md" // v1.0: per-instrument thesis monitoring (added June 17, 2026)
 
     // GitHub-resident operational files (fetched every session)
-    "Calibration_State.md"  // LIVE CONFIG: §1–§6, §9–§12 thresholds, return table, classifications
+    "Calibration_State.md"  // LIVE CONFIG: §1–§6, §9–§13 thresholds, return table, classifications
     "Session_Log.md"        // SESSION DATA: §7 credit readings, §8 scenario state (AUTHORITATIVE for prior probs)
     "Portfolio_State.md"    // COMPANION CONTEXT: living snapshot written every session — companion project only
     "Calibration_Log.md"    // ARCHIVE: §3 history; read-only
@@ -155,10 +173,13 @@ FRAMEWORK PersonalFinancialAdvisor {
         + M17.sectorStressScore()                 // → CascadeSignal.D_precursor_binding
         + M17.computeYieldCurveSignal()           // → YieldCurveSignal (incl. e_pathway_type)
         + M17.assessCascadeLevel()               // → [MONITORING | ALERT | PRE_POSITION]
+        + M19.evaluateThesisConditions()          // → ThesisStatus per held §13 instrument;
+                                                   //   requires ScenarioProbabilities (step 6) +
+                                                   //   DataReadings (step 4) + M14 output (above)
         → IF M14.composite IN [HIGH, MODERATE]: M14.UnderweightReviewTrigger(account)
         → IF M17.cascadeLevel IN [ALERT, PRE_POSITION]: surface in briefing; prepare §5 review
     8:  BriefingRegistry.assemble(readings)       // Phase 2 complete — ordered section list
-        // M04-owned + M11, M14, M17 registered sections assembled in declared order
+        // M04-owned + M11, M14, M17, M19 registered sections assembled in declared order
         // @see M04_BriefingFormat.IntelligenceBriefing
     9:  portfolio discussion
         → before any ADD executes: M14.EntryExtensionGuard(asset, account)
@@ -235,6 +256,15 @@ FRAMEWORK PersonalFinancialAdvisor {
       → M15.classifyInstrument()         // §11 lookup → ComponentVector
       → M15.blendedScenarioReturn()      // weighted blend → BlendedReturn
       → M15.dominantDirective()
+
+    thesis_sustainment_check
+      → M19.evaluateThesisConditions()    // §13 lookup per held instrument
+      → [ACTIVE | DEGRADED | FAILED | UNKNOWN]
+      → IF status != ACTIVE: surface in THESIS_CONDITION_STATUS briefing section + attach
+        supporting M02 qualitative narrative
+      → consumed by M06.HoldJustification (EV math + thesis check, not EV math alone)
+      // NEVER routes ThesisStatus into M03.DeriveScenarioProbabilities
+      // requires M14 RegimeSignal computed first when a §13 entry references it (e.g. MAGS)
 
     return_table_revision
       → M16.CalibrationMethodology() [4 layers]
@@ -317,6 +347,7 @@ FRAMEWORK PersonalFinancialAdvisor {
     role_registry:               extensible list of roles + binding drivers  // §11.1
     instrument_classification:   per-instrument component weights            // §11.3
     classification_staleness:    90 calendar days
+    thesis_sustaining_conditions: extensible per-ticker sustaining/degraded/failure registry // §13
     next_full_audit:             September 30, 2026
     // MOVE index thresholds (M11/M14 — §9.4, added v1.22)
     MOVE_NORMAL:                 < 80
@@ -363,6 +394,13 @@ FRAMEWORK PersonalFinancialAdvisor {
                                         NEVER feed into M03.DeriveScenarioProbabilities
     e_pathway_type_boundary:          M17 e_pathway_type routes M10 directives only —
                                         NEVER feed into M03.DeriveScenarioProbabilities
+    thesis_status_boundary:           M19 ThesisStatus signals inform M06.HoldJustification and
+                                        the briefing only — NEVER feed into M03.DeriveScenarioProbabilities
+    ai_boundary_cap:                  exactly three AI interpretation calls per session
+                                        (M02 qualitative intel, M03 scenario scoring, M04 briefing
+                                        narrative); M19 judgment-based conditions route through
+                                        existing M02/M03 boundaries via tagged ScoringQuestions —
+                                        NEVER add a fourth independent AI interpretation step
     no_hardcoded_tickers_in_modules:  instrument tickers never appear in M01–M17 module files
     no_hardcoded_roles_in_modules:    roles defined in CALIBRATION_STATE §11 only
     blended_return_mandatory:         ALL scenario return computations use M15.blendedScenarioReturn()
@@ -397,8 +435,8 @@ FRAMEWORK PersonalFinancialAdvisor {
     canonical_briefing_section_ids:      PRIMARY_DRIVER | SCENARIO_PROBABILITIES | ENERGY_AND_COMMODITIES
                                            | EQUITY_MARKETS | MARKET_REGIME_SIGNAL | FIXED_INCOME_AND_RATES
                                            | CREDIT_SIGNALS | CASCADE_EARLY_WARNING
-                                           | CURRENCY | CURRENT_HOLDINGS | GEOPOLITICAL_SIGNAL
-                                           | PENDING_TRIGGERS | NET_ASSESSMENT
+                                           | CURRENCY | CURRENT_HOLDINGS | THESIS_CONDITION_STATUS
+                                           | GEOPOLITICAL_SIGNAL | PENDING_TRIGGERS | NET_ASSESSMENT
     qualitative_gather_not_DataReading:  M02.QualitativeGatherList outputs are working inputs only —
                                            NEVER registered as DataReading or FetchSpec
     portfolio_state_writeback:           Portfolio_State.md written atomically with Session_Log.md
@@ -453,6 +491,11 @@ FRAMEWORK PersonalFinancialAdvisor {
     execute_PrePositioningLadder_without_explicit_client_confirmation,
     score_CHAIN_4_without_T1_AACER_PACER_source,
     include_metric_deviating_2x_from_norm_without_cross_referencing,
+    // M19
+    feed_ThesisStatus_into_M03_DeriveScenarioProbabilities,
+    add_a_fourth_AI_interpretation_boundary__route_judgment_conditions_through_M02_M03_instead,
+    silently_default_ThesisStatus_to_ACTIVE_on_a_data_gap__report_UNKNOWN,
+    hardcode_per_ticker_conditions_in_M19_module_file__add_to_CALIBRATION_STATE_section_13_only,
     // Phase 0+1 architecture rules (added v1.20)
     use_ticker_symbol_in_AdvisoryAction__role_id_must_be_RoleID_resolved_via_section_11,
     cross_sub_project_boundary_with_raw_DataReading_or_AllocationTarget__use_FW_Types_contracts,

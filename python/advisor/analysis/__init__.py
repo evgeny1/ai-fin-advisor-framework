@@ -52,6 +52,7 @@ from .floor_monitor import (
     passive_mandate_absent_warnings,
     PassiveMandateAbsentWarning,
 )
+from .thesis import evaluate_thesis_conditions
 
 __all__ = [
     # M11
@@ -80,4 +81,6 @@ __all__ = [
     "check_all_floor_accounts",
     "passive_mandate_absent_warnings",
     "PassiveMandateAbsentWarning",
+    # M19 thesis sustaining conditions
+    "evaluate_thesis_conditions",
 ]

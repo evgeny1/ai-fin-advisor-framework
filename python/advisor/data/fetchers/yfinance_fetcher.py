@@ -43,6 +43,9 @@ _SYMBOL_MAP: Dict[str, str] = {
     # Precious metals
     "GOLD_SPOT":    "GC=F",
     "SILVER":       "SI=F",
+    # Industrial metals (§13 M19)
+    "COPPER_SPOT":  "HG=F",
+    "URANIUM_SPOT": "UX=F",  # ⚠ unconfirmed/illiquid — see m18_registry.py note
     # Broad equities
     "SP500":        "^GSPC",
     "NASDAQ_COMP":  "^IXIC",

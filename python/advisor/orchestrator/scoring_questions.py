@@ -489,3 +489,90 @@ def aggregate_raw_scores(
 def questions_for_ai(questions: List[ScoringQuestion]) -> List[ScoringQuestion]:
     """Filter to questions that need AI scoring (auto_score is None)."""
     return [q for q in questions if q.auto_score is None]
+
+
+# ── M19 thesis-sustaining Call-2 judgment questions ────────────────────────────
+# Separate from generate_questions() by design — that function's 20-question
+# count is asserted exactly by tests/test_stage5/test_scoring_questions.py.
+# These are combined with the M03 list only at the orchestration layer
+# (mcp_server.py), never inside generate_questions() itself.
+#
+# Mirrors M19_ThesisSustainingConditions.md JUDGMENT_CONDITIONS registry and
+# analysis/thesis.py's _eval_call2() routing exactly — update all three
+# together if the registry changes. All entries: consumer="M19", auto_score=
+# None always (inherently AI-judgment), scenario="N/A" (not M03-scenario-keyed).
+# Gated on the ticker actually having a §13 entry, so a future session that
+# drops a ticker from §13 doesn't keep asking a stale question about it.
+
+def generate_m19_judgment_questions(cal: CalibrationState) -> List[ScoringQuestion]:
+    """Build the M19 Call-2 judgment questions for whichever §13 tickers
+    are present in cal.thesis_conditions this session."""
+    qs: List[ScoringQuestion] = []
+    tc = cal.thesis_conditions
+
+    if "SGOL" in tc:
+        qs.append(ScoringQuestion(
+            id="M19_SGOL_CB_NARRATIVE", scenario="N/A",
+            question=(
+                "Is the central bank gold reserve accumulation narrative still intact "
+                "this session (continued or accelerating official-sector buying, per "
+                "M02.cb_gold_reserve_accumulation T1/T2 evidence)? Score 1=intact; 0=not intact."
+            ),
+            evidence="Qualitative — see M02.cb_gold_reserve_accumulation gather result.",
+            valid_scores=[0, 1],
+            consumer="M19",
+        ))
+
+    if "SIVR" in tc:
+        qs.append(ScoringQuestion(
+            id="M19_SIVR_CB_NARRATIVE", scenario="N/A",
+            question=(
+                "Same check as SGOL (shared mechanism) — is the central bank gold reserve "
+                "accumulation narrative still intact this session? Score 1=intact; 0=not intact."
+            ),
+            evidence="Qualitative — see M02.cb_gold_reserve_accumulation gather result.",
+            valid_scores=[0, 1],
+            consumer="M19",
+        ))
+
+    if "URA" in tc:
+        qs.append(ScoringQuestion(
+            id="M19_URA_NUCLEAR_POLICY", scenario="N/A",
+            question=(
+                "In how many of {US, EU, Japan, UK} is nuclear policy support currently "
+                "intact (per M02.nuclear_policy_trajectory)? Score the count, 0-4. "
+                "§13 sustaining condition requires >=2."
+            ),
+            evidence="Qualitative — see M02.nuclear_policy_trajectory gather result.",
+            valid_scores=[0, 1, 2, 3, 4],
+            consumer="M19",
+        ))
+
+    if "XAR" in tc:
+        qs.append(ScoringQuestion(
+            id="M19_XAR_CONFLICT_GATE", scenario="N/A",
+            question=(
+                "Has a major de-escalation event occurred that reduces XAR's geopolitical "
+                "premium (e.g. Iran MOU progress, Hormuz traffic normalizing) — per "
+                "M02.active_conflict_status / M02.escalation_or_deescalation? "
+                "Score 1=de-escalation event fired; 0=conflict premise still active."
+            ),
+            evidence="Qualitative — see M02.active_conflict_status gather result.",
+            valid_scores=[0, 1],
+            consumer="M19",
+        ))
+
+    if "COPX" in tc:
+        qs.append(ScoringQuestion(
+            id="M19_COPX_CHINA_PMI", scenario="N/A",
+            question=(
+                "Is China's most recent official NBS Manufacturing PMI print >= 49 "
+                "(per CHINA_PMI_MANUFACTURING — WEBSEARCH_T1, same official-statistics "
+                "pattern as CPI_YOY)? Score 1=yes (>=49); 0=no (<49)."
+            ),
+            evidence="WEBSEARCH_T1 — see CHINA_PMI_MANUFACTURING gather result.",
+            valid_scores=[0, 1],
+            consumer="M19",
+        ))
+
+    return qs

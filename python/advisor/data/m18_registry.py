@@ -68,6 +68,31 @@ _ALL_SPECS: list[FetchSpec] = [
         consumer=["M02"],
     ),
 
+    FetchSpec(
+        id="COPPER_SPOT",
+        source=DataSource.YFINANCE,
+        description="Copper futures HG=F via yfinance. Same liquid-contract pattern as GOLD_SPOT/SILVER "
+                    "(COMEX High Grade Copper, heavily traded). Added for §13 M19 COPX thesis monitoring "
+                    "(data_dependency: COPPER_SPOT — corrected from a prior draft that mistakenly listed SIUSD).",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M19"],
+    ),
+
+    FetchSpec(
+        id="URANIUM_SPOT",
+        source=DataSource.YFINANCE,
+        description="⚠ UNCONFIRMED — CME UxC U3O8 futures (ticker UX, yfinance convention UX=F). "
+                    "Real but illiquid contract (CME-quoted volume frequently 0; wide bid/ask). "
+                    "Verify against live yfinance before relying on it — sandbox has no network path "
+                    "to Yahoo Finance to test this ticker directly. If FETCH_FAILED or implausible, "
+                    "M19 falls back to the URA ETF price (already fetched via HOLDINGS_PRICES) as a proxy, "
+                    "flagged as a proxy substitution, never silently treated as the true spot price.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M19"],
+    ),
+
     # ── BROAD EQUITIES ────────────────────────────────────────────────────────
 
     FetchSpec(
@@ -272,6 +297,17 @@ _ALL_SPECS: list[FetchSpec] = [
         acceptable_lag_days=35,
         consumer=["M02", "M03"],
         calibration_use="§2.3 B-trigger: >= 4.0% YoY, 3+ consecutive prints",
+    ),
+
+    FetchSpec(
+        id="CHINA_PMI_MANUFACTURING",
+        source=DataSource.WEBSEARCH_T1,
+        description="NBS (National Bureau of Statistics of China) official Manufacturing PMI, "
+                    "same official-statistics exception pattern as CPI_YOY (BLS). Not a price series — "
+                    "HARD_GATE does not apply. Added for §13 M19 SIVR/COPX industrial-demand monitoring.",
+        update_frequency=UpdateFrequency.MONTHLY,
+        acceptable_lag_days=35,
+        consumer=["M19"],
     ),
 
     # ── CASCADE CHAIN STRUCTURAL INPUTS ───────────────────────────────────────

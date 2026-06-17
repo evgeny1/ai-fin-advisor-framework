@@ -2,7 +2,10 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.36  Last updated: June 15, 2026 (MLPX ComponentVector revised RAC(0.65)/IHC(0.35)→RAC(0.50)/IHC(0.50); EV updated at v1.34 vector +3.97%)
+# Version: 1.38  Last updated: June 17, 2026 (M19 Python implementation complete — types.py,
+calibration.py §13 parser, m18_registry.py, analysis/thesis.py, scoring_questions.py M19
+questions, mcp_server.py wiring; COPX/URA §13 data_dependencies updated from "pending" to
+verified-live status)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -126,6 +129,68 @@ For the 3rd CPI print (the formal trigger gate), graduated response by print lev
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-17 - Framework v1.38 (M19 Python implementation — completes the work the v1.37 entry
+flagged as pending). All Python layers built and verified:
+types.py: ThesisStatus enum, ThesisConditionEntry/ThesisEvaluation dataclasses,
+CalibrationState.thesis_conditions field, ScoringQuestion.consumer tag (all backward-compatible
+defaults). config/calibration.py: _parse_thesis_conditions() — tested directly against the
+live file, all 10 §13 tickers parse correctly including DBMF's literal {BZUSD, GCUSD, DXY,
+^GSPC} braces inside quoted text and MLPX's optional degraded_signals field.
+data/m18_registry.py: COPPER_SPOT (yfinance HG=F) and CHINA_PMI_MANUFACTURING (WEBSEARCH_T1,
+CPI_YOY pattern) registered and confirmed working; URANIUM_SPOT (yfinance UX=F) registered but
+confirmed via live test NOT to return data — CME's UxC contract is real but too illiquid for
+yfinance; fails gracefully to a flagged DataReading via the existing fetch_all() error handling,
+no crash. analysis/thesis.py (new file): evaluate_thesis_conditions() — point-in-time numeric
+conditions (B+C/scenario probability thresholds, BZUSD, THREEFYTP10, HY_OAS,
+equity_scenario_divergence) evaluated directly; conditions containing "sustained"/
+"consecutive"/"rolling"/"trend"/"reversal" explicitly skipped with a quality_flag rather than
+guessed at — no historical trend-tracking infrastructure exists yet for the 6-12 week windows
+§13 specifies. Judgment conditions route through 5 new Call 2 questions (orchestrator/
+scoring_questions.py: generate_m19_judgment_questions(), kept separate from generate_questions()
+so the existing 20-question-count test stays untouched) — added a 5th question
+(M19_COPX_CHINA_PMI) beyond the 4 in the original registry, since China PMI is WEBSEARCH_T1
+and can't be auto-scored from a DataReading the way the gold/uranium checks can (same
+limitation as CPI_YOY). mcp_server.py: M19 questions appended to advisor_run_computation()'s
+returned list; tsc_evaluations computed inside advisor_apply_scoring() (not run_computation) —
+required because several §13 conditions reference B+C/scenario probability, which only exists
+post-scoring. Full pytest suite: 497 passed, 4 skipped (pre-existing), 0 failed (one expected
+maintenance-test count bump, 31→34 specs, per that test's own "update when adding series"
+instruction). Functional smoke test against live data: 25 scoring questions generated (20 M03
++ 5 M19), scenario probabilities summed to 100, tsc_evaluations populated correctly — MLPX
+DEGRADED under live B+C/D conditions, all others ACTIVE; URA/INFL correctly absent from results
+(both still §11.4 CANDIDATE, not held). COPX and URA §13 data_dependencies/notes updated to
+drop stale "pending M18 registration" language now that those series are actually live.
+Deferred (explicitly out of scope, confirmed separate-session by client): GAP-3 regime
+duration/crowding-adjustment to M13.idealAllocation() sizing — distinct from and larger than
+this M19 hand-off.
+
+2026-06-17 - Framework v1.37 (§13 M19 Thesis Sustaining Conditions added — DBMF,
+SGOL, SIVR, MLPX, XAR, MAGS, URA, COPX, AIPO, INFL; PAVE dropped (exited); COPX note corrected
+(was held all along); §13.1 VNQ/VEA placeholders).
+New module M19_ThesisSustainingConditions registered (00_INDEX SUB_PROJECT THESIS_MONITORING).
+§13 added: DBMF, SGOL, SIVR (full standalone block — no INHERITS), MLPX (+degraded_signals
+tier), XAR, MAGS, URA, COPX, AIPO, INFL (new — replaces PAVE/XLP). PAVE dropped entirely (exited
+June 10, v1.33 — fully logged, no thesis monitoring needed for an unheld position). COPX note
+corrected: prior draft incorrectly stated "not currently held" — COPX is an active Acc4 holding
+(220 sh); also corrected a copy-paste data-dependency error (SIUSD → COPPER_SPOT, pending M18).
+§13.1 added: VNQ/VEA placeholders (§11.4 CANDIDATE, zero allocation — no live entry).
+AI-boundary mechanism: numeric TSC conditions evaluated in pure Python (no AI). Judgment-based
+conditions (SGOL/SIVR reserve-narrative, URA nuclear-policy, XAR conflict-status) route through
+existing M02 QualitativeGatherList + new Call 2 ScoringQuestions tagged consumer:M19 — stays
+within the framework's 3-AI-boundary cap, no new boundary added.
+M02 v2.2: two new QUALITATIVE_GATHER_LIST items (cb_gold_reserve_accumulation,
+nuclear_policy_trajectory) added to feed M19 Call 2 questions.
+Pending (not yet implemented, flagged for follow-up): M18 entries for COPPER_SPOT,
+CHINA_PMI_MANUFACTURING, URANIUM_SPOT (source verification required — Cameco/UxC have no clean
+public API); scoring_questions.py M19-tagged questions; advisor_run_computation() tsc_evaluations
+field; M19 module file itself (M19_ThesisSustainingConditions.md).
+INFL/XLP factual note: client confirmed XLP exited and INFL purchased (June 17, 2026) ahead of
+the formal trades_executed log entry — Session_Log still shows this as "recommended, pending
+client confirmation" (June 14 entry). Per client direction, formal execution logging (price,
+date, share count) is deferred to the next full M05 session; §13 treats INFL as held now for
+thesis-monitoring purposes only — this is a documentation convenience, not a portfolio write-back.
+No §4.1 changes. No probability changes. No allocation target changes.
 
 2026-06-15 - Framework v1.36 (MLPX ComponentVector revision — IHC weight).
 M16.CalibrationMethodology() 4-layer run for MLPX IHC component weight (§11 parameter; M15 domain):
@@ -1373,3 +1438,258 @@ Integration with M08 execution (portfolio actions):
 - CascadeLevel ALERT: activates M17 §5 exit window review for FLAGGED instruments (PAVE)
 - CascadeLevel WARNING: triggers M10 D-response pre-positioning review
 - CascadeLevel CRITICAL: invokes M10 Scenario D execution protocol
+
+---
+
+## Section 13 - M19 Thesis Sustaining Conditions
+
+Governing module: M19_ThesisSustainingConditions.md (v1.0, added June 17, 2026).
+Conditions reference role IDs, DataReading keys, and M02 QualitativeGatherList keys only —
+no evaluation logic lives in this section; M19 reads these values and never hardcodes them.
+
+Status taxonomy (per ticker, per session):
+  ACTIVE   — all sustaining_conditions hold; no degraded_signals or failure_signals fired.
+  DEGRADED — a degraded_signals condition fired (tailwind fading — not thesis failure).
+  FAILED   — a failure_signals condition fired (original thesis broken).
+  UNKNOWN  — required data unavailable this session. NEVER silently default to ACTIVE on a
+             data gap — an unresolved dependency is reported as UNKNOWN, not treated as a pass.
+
+degraded_signals is an optional field (most tickers omit it). Where absent, status resolves
+directly between ACTIVE and FAILED.
+
+Briefing behavior: THESIS_CONDITION_STATUS section (position_after: CURRENT_HOLDINGS;
+@see M04 BRIEFING_REGISTRY_ENTRY registered by M19) SUPPRESSES rows for ACTIVE instruments
+unless every tracked instrument is ACTIVE this session (then show a single all-clear line).
+DEGRADED / FAILED / UNKNOWN rows always surface, with the underlying M02 qualitative
+narrative attached for those statuses only — not for ACTIVE rows.
+
+Scope: applies to active-conviction / thematic positions only. Defensive and floor-sleeve
+holdings (consumer_defensive_equity, rate_sensitive_income_short, cash-equivalents) have no
+commodity/duration/war-premium degradation mechanism to monitor — same "N/A, guard does not
+apply" precedent already used for those roles in §9.3. No §13 entry for those roles.
+
+All values CALIBRATION_DATED. First audit: June 30, 2026.
+
+DBMF: {
+  primary_driver: "systematic_trend_following — sustained directional macro trends"
+  sustaining_conditions: [
+    "B+C combined probability >= 55%",
+    "≥2 of {BZUSD, GCUSD, DXY, ^GSPC} trending directionally over rolling 8-week window
+     (directional = net move >= 8% in one direction without full reversal)"
+  ]
+  failure_signals: [
+    "DBMF_3M_return < -3% while B+C >= 55% (instrument underperforming own scenario)",
+    "All 4 tracked markets in mean-reversion mode simultaneously for >= 4 consecutive weeks"
+  ]
+  data_dependencies: ["DBMF", "BZUSD", "GCUSD", "DXY_INDEX", "^GSPC"]
+  last_reviewed: "2026-06-17"
+  notes: "DBMF is a replication product — composition changes continuously.
+          Trend quality evaluation requires market-level signals, not DBMF price alone."
+}
+
+SGOL: {
+  primary_driver: "inflation_hedge_precious_metals — monetary debasement + sovereign reserve demand"
+  sustaining_conditions: [
+    "10Y real yield (THREEFYTP10) <= 1.5% (above this level gold faces structural headwind)",
+    "DXY not in sustained appreciation trend >= 8 consecutive weeks",
+    "Central bank reserve accumulation narrative intact (M02.cb_gold_reserve_accumulation —
+     T2 qualitative check)"
+  ]
+  failure_signals: [
+    "THREEFYTP10 > 2.0% sustained >= 4 weeks",
+    "DXY appreciation > 8% over 8 weeks",
+    "Deflationary shock onset (Scenario E probability >= 20%)"
+  ]
+  data_dependencies: ["GCUSD", "THREEFYTP10", "DXY_INDEX"]
+  last_reviewed: "2026-06-17"
+  notes: "SIVR is written as its own full standalone block below (no INHERITS shorthand —
+          every §13 entry stays independently grep-able). It shares this core mechanism;
+          its industrial-demand sensitivity is captured as a SIVR-specific failure signal."
+}
+
+SIVR: {
+  primary_driver: "inflation_hedge_precious_metals — monetary debasement + sovereign reserve demand
+                   (shares SGOL's mechanism; adds industrial demand sensitivity)"
+  sustaining_conditions: [
+    "10Y real yield (THREEFYTP10) <= 1.5% (above this level precious metals face structural headwind)",
+    "DXY not in sustained appreciation trend >= 8 consecutive weeks",
+    "Central bank reserve accumulation narrative intact (M02.cb_gold_reserve_accumulation —
+     T2 qualitative check)"
+  ]
+  failure_signals: [
+    "THREEFYTP10 > 2.0% sustained >= 4 weeks",
+    "DXY appreciation > 8% over 8 weeks",
+    "Deflationary shock onset (Scenario E probability >= 20%)",
+    "COPX sustained decline > 15% over 8 weeks (SIVR-specific: industrial demand proxy degradation)"
+  ]
+  data_dependencies: ["SIVR", "THREEFYTP10", "DXY_INDEX", "COPX"]
+  last_reviewed: "2026-06-17"
+  notes: "Full standalone block, not inherited from SGOL — kept duplicated intentionally for
+          grep-ability. Silver's additional industrial-demand sensitivity is captured via the
+          COPX-proxy failure signal rather than a separate copper data dependency."
+}
+
+MLPX: {
+  primary_driver: "real_asset_contracted_revenue — energy infrastructure cash flow stability"
+  sustaining_conditions: [
+    "BZUSD >= 70 (approximate floor for pipeline distribution sustainability)",
+    "B+C combined probability >= 50% (energy demand and supply constraint scenario)"
+  ]
+  degraded_signals: [
+    "B+C combined probability < 50% without Scenario D rising → tailwind fading, not thesis
+     failure — contracted throughput still insulates against a soft regime decline"
+  ]
+  failure_signals: [
+    "BZUSD sustained < 65 for >= 6 consecutive weeks",
+    "Scenario D probability >= 30% (demand collapse threatens throughput)"
+  ]
+  data_dependencies: ["BZUSD", "MLPX"]
+  last_reviewed: "2026-06-17"
+  notes: "MLPX distributions partially protected by contracted throughput — floor is
+          lower than spot commodity exposure. Monitor TTM distribution vs carry assumption.
+          sustaining_conditions and failure_signals are intentionally asymmetric: a soft B+C
+          fade alone is DEGRADED, not FAILED; only an active D-driven demand shock fails
+          the thesis outright. Confirmed intentional by client, June 17, 2026."
+}
+
+XAR: {
+  primary_driver: "policy_driven_thematic_equity (geopolitical_premium) — active conflict
+                   + defense budget trajectory"
+  sustaining_conditions: [
+    "Active US-Iran conflict status OR equivalent elevated geopolitical threat
+     (M02.active_conflict_status / M02.escalation_or_deescalation — T1/T2 verified)",
+    "Defense budget trajectory positive (not subject to emergency cuts)"
+  ]
+  failure_signals: [
+    "Iran MOU signed AND Hormuz traffic confirmed reopened (T1 verified)",
+    "Major de-escalation event reducing geopolitical premium — advisor judgment required
+     (M19 Call 2 ScoringQuestion, fed by M02.active_conflict_status — no separate AI boundary)"
+  ]
+  data_dependencies: ["XAR", "M02.active_conflict_status"]
+  last_reviewed: "2026-06-17"
+  notes: "XAR thesis is binary on Hormuz status. Iran deal signing is the primary
+          single-point failure event. Monitor MOU status each session — June 14, 2026 peace
+          deal announcement is a live test case; formal signing expected June 19, not yet
+          T1-confirmed as of last_reviewed date."
+}
+
+MAGS: {
+  primary_driver: "secular_technology_growth — equity market divergence from B/C fundamentals"
+  sustaining_conditions: [
+    "M14 equity_scenario_divergence == HIGH (markets running ahead of scenario fundamentals)",
+    "HY OAS <= 350 bps (credit stress would collapse the divergence trade rapidly)"
+  ]
+  failure_signals: [
+    "equity_scenario_divergence shifts to MODERATE for >= 2 consecutive sessions",
+    "HY OAS > 350 bps (CHAIN-3 escalation — divergence unwinds)",
+    "Nasdaq 30d return <= -10% (sustained tech correction)"
+  ]
+  data_dependencies: ["MAGS", "^GSPC", "HY_OAS"]
+  last_reviewed: "2026-06-17"
+  notes: "MAGS is explicitly a divergence bet — not a B/C-native position. Its TSC
+          depends on M14 output (equity_scenario_divergence). M19 must read M14 output
+          before evaluating MAGS TSC — execution order matters."
+}
+
+URA: {
+  primary_driver: "policy_driven_thematic_equity — nuclear renaissance + energy security"
+  sustaining_conditions: [
+    "Uranium spot price stable or in upward trend (T1 source: Cameco spot or UxC)",
+    "Nuclear policy support intact in ≥2 of {US, EU, Japan, UK} (M02.nuclear_policy_trajectory)",
+    "B+C combined probability >= 50% (energy constraint scenario sustains nuclear economics)"
+  ]
+  failure_signals: [
+    "Uranium spot sustained decline > 20% from most recent high over 12 weeks",
+    "Major nuclear policy reversal in ≥2 jurisdictions",
+    "Scenario A probability >= 30% (soft landing reduces energy security premium)"
+  ]
+  data_dependencies: ["URA", "URANIUM_SPOT (registered in M18, yfinance UX=F — confirmed via
+                       live test, June 17, 2026, NOT returning data: CME's UxC contract is
+                       real but too illiquid for yfinance to carry a clean feed. Falls back
+                       to FETCH_FAILED automatically; no functioning T1 spot price source
+                       currently wired. URA ETF price — already fetched via HOLDINGS_PRICES —
+                       remains the practical proxy until a working source is found)"]
+  last_reviewed: "2026-06-17"
+  notes: "URA has a known STG(0.20) classification flag as unsupported — Oklo (7.42% NAV)
+          reclassified as PDT. TSC evaluation uses corrected classification."
+}
+
+COPX: {
+  primary_driver: "inflation_hedge_commodity_linked — industrial commodity cycle + infrastructure demand"
+  sustaining_conditions: [
+    "Copper spot price stable or in upward trend over rolling 8-week window",
+    "China PMI Manufacturing >= 49 (demand floor)",
+    "B+C combined probability >= 50%"
+  ]
+  failure_signals: [
+    "Copper spot sustained decline > 15% over 8 weeks",
+    "Scenario D probability >= 25% (industrial recession crushes copper demand)",
+    "China demand collapse signal (T1 PMI < 47 for >= 2 consecutive months)"
+  ]
+  data_dependencies: ["COPX", "COPPER_SPOT", "CHINA_PMI_MANUFACTURING"]
+  last_reviewed: "2026-06-17"
+  notes: "CORRECTION (June 17, 2026): prior draft of this entry stated 'COPX not currently
+          held' — incorrect. COPX is an active Acc4 holding (220 sh per most recent allocation
+          sheet). TSC evaluation applies to live monitoring, not entry consideration only.
+          Original data_dependencies listed SIUSD (silver) in error — corrected to COPPER_SPOT
+          above. COPPER_SPOT and CHINA_PMI_MANUFACTURING registered in M18 same session
+          (yfinance HG=F and WEBSEARCH_T1 respectively); China PMI threshold check routes
+          through Call 2 question M19_COPX_CHINA_PMI since WEBSEARCH_T1 surfaces as
+          qualitative narrative, not a structured DataReading Python can auto-score (same
+          limitation as CPI_YOY). The 8-week trailing-window conditions in this entry (copper
+          spot trend, sustained decline) are not yet automatable — no historical trend-tracking
+          infrastructure exists for COPPER_SPOT yet; evaluated qualitatively until built."
+}
+
+AIPO: {
+  primary_driver: "real_asset_contracted_revenue (0.55) + secular_technology_growth (0.16)
+                   + inflation_hedge_commodity_linked (0.11) + policy_driven_thematic_equity (0.04)"
+  sustaining_conditions: [
+    "AI infrastructure capital expenditure cycle intact (hyperscaler capex guidance positive)",
+    "B+C combined probability >= 50% (commodity-linked infrastructure benefits from regime)"
+  ]
+  failure_signals: [
+    "Hyperscaler capex guidance revised down ≥2 consecutive quarters",
+    "Scenario D probability >= 25% (capex freeze under recession)"
+  ]
+  data_dependencies: ["AIPO"]
+  last_reviewed: "2026-06-17"
+  notes: "Bitcoin mining component (~6.5% NAV) classification pending — treat as
+          unclassified until formal M15 review. Does not affect TSC evaluation materially."
+}
+
+INFL: {
+  primary_driver: "diversified inflation-beneficiary royalty model — inflation_hedge_commodity_linked
+                   (0.50) + inflation_hedge_precious_metals (0.25) + real_asset_contracted_revenue
+                   (0.20) + secular_technology_growth (0.05); revenue scales with commodity/land/
+                   energy prices without commensurate cost increases (royalty structure, not direct
+                   commodity ownership)"
+  sustaining_conditions: [
+    "B+C combined probability >= 50% (inflationary/energy-constrained regime sustains royalty
+     revenue growth across the diversified book)",
+    "GCUSD stable-to-positive over rolling 8-week window (IHP component — WPM/FNV/OR royalty streams)"
+  ]
+  failure_signals: [
+    "Scenario A probability >= 30% (disinflationary soft landing removes the core inflation-
+     beneficiary thesis)",
+    "GCUSD sustained decline > 15% over 8 weeks (degrades IHP royalty component)",
+    "Scenario D probability >= 25% (industrial/land-royalty volume declines under recession)"
+  ]
+  data_dependencies: ["INFL", "GCUSD", "BZUSD"]
+  last_reviewed: "2026-06-17"
+  notes: "Added in place of PAVE (exited June 10, 2026, v1.33 — fully logged, no §13 entry
+          needed) and XLP (exited on or before June 17, 2026 per client; recommendation logged
+          Session_Log June 14, formal trades_executed entry deferred to next full M05 session
+          per client direction, June 17, 2026). §11 currently shows INFL as CANDIDATE
+          (v1.34, June 13, 2026) — status should be upgraded to ACTIVE at the next full M05
+          session once the actual execution (price, date, share count) is logged. ComponentVector
+          and EV math already established at §11; not re-derived here. TPL/LandBridge classified
+          as CL not RAC (royalty_rate × commodity_price × volume, not fixed-fee)."
+}
+
+### 13.1 Candidate Placeholders (zero current allocation — no live entry)
+
+VNQ, VEA: §11.4 CANDIDATE only; zero current allocation. adoption_trigger: create a full §13
+entry (primary_driver, sustaining_conditions, failure_signals, data_dependencies) the session
+either instrument is actually added to live allocation. Until then M19 simply skips them —
+UNKNOWN does not apply to a position that was never held.

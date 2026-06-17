@@ -19,6 +19,7 @@ from ..types import (
     MultiplierBlock,
     RegimeBlock,
     ReturnRange,
+    ThesisConditionEntry,
     ThresholdBlock,
 )
 
@@ -423,6 +424,76 @@ def _parse_cascade(text: str) -> CascadeBlock:
     )
 
 
+# ── §13 M19 thesis-sustaining conditions ───────────────────────────────────────
+
+_TICKER_BLOCK_START_RE = re.compile(r"(?m)^([A-Z]{2,6}):\s*\{\s*$")
+_BLOCK_END_RE = re.compile(r"(?m)^\}\s*$")
+
+
+def _extract_quoted_field(block: str, field_name: str) -> Optional[str]:
+    """Extract a single quoted scalar field, e.g. 'primary_driver: "..."'.
+    DOTALL + non-greedy so multi-line continuations inside the quotes are
+    captured as one string and collapsed to single spaces."""
+    m = re.search(rf'(?m)^\s*{field_name}:\s*"(.*?)"', block, re.DOTALL)
+    if not m:
+        return None
+    return re.sub(r"\s+", " ", m.group(1)).strip()
+
+
+def _extract_list_field(block: str, field_name: str) -> List[str]:
+    """Extract a quoted-string list field, e.g. 'sustaining_conditions: [ "...", "..." ]'.
+    Returns [] if the field is absent (e.g. degraded_signals, which most tickers omit)."""
+    m = re.search(rf'(?m)^\s*{field_name}:\s*\[(.*?)\]', block, re.DOTALL)
+    if not m:
+        return []
+    return [
+        re.sub(r"\s+", " ", item.group(1)).strip()
+        for item in re.finditer(r'"(.*?)"', m.group(1), re.DOTALL)
+    ]
+
+
+def _parse_thesis_conditions(text: str) -> Dict[str, "ThesisConditionEntry"]:
+    """Parse §13 M19 thesis-sustaining condition entries.
+
+    Each ticker block has the form:
+        TICKER: {
+          primary_driver: "..."
+          sustaining_conditions: [ "...", "..." ]
+          degraded_signals: [ "..." ]        # optional — most tickers omit
+          failure_signals: [ "...", "..." ]
+          data_dependencies: ["...", "..."]
+          last_reviewed: "YYYY-MM-DD"
+          notes: "..."
+        }
+
+    §13.1 candidate placeholders (prose only — "VNQ, VEA: §11.4 CANDIDATE only...")
+    never match the ticker-block start pattern below, so they're skipped automatically;
+    no explicit section-end boundary is needed before scanning to end of file.
+    """
+    idx13 = text.find("## Section 13")
+    s13 = text[idx13:] if idx13 != -1 else ""
+
+    entries: Dict[str, ThesisConditionEntry] = {}
+    for start_m in _TICKER_BLOCK_START_RE.finditer(s13):
+        ticker = start_m.group(1)
+        end_m = _BLOCK_END_RE.search(s13, start_m.end())
+        if end_m is None:
+            continue  # malformed block — skip rather than guess at content
+        block = s13[start_m.end():end_m.start()]
+
+        entries[ticker] = ThesisConditionEntry(
+            ticker=ticker,
+            primary_driver=_extract_quoted_field(block, "primary_driver") or "",
+            sustaining_conditions=_extract_list_field(block, "sustaining_conditions"),
+            degraded_signals=_extract_list_field(block, "degraded_signals"),
+            failure_signals=_extract_list_field(block, "failure_signals"),
+            data_dependencies=_extract_list_field(block, "data_dependencies"),
+            last_reviewed=_extract_quoted_field(block, "last_reviewed") or "",
+            notes=_extract_quoted_field(block, "notes") or "",
+        )
+    return entries
+
+
 # ── Top-level entry point ──────────────────────────────────────────────────────
 
 
@@ -450,4 +521,5 @@ def parse_calibration_state(text: str) -> CalibrationState:
         roles        = _parse_role_registry(text),
         instruments  = _parse_instruments(text),
         cascade      = _parse_cascade(text),
+        thesis_conditions = _parse_thesis_conditions(text),
     )

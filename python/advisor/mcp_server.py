@@ -126,6 +126,7 @@ def _tool_run_computation(floor_account_weights_json: Optional[str] = None) -> s
     from .orchestrator.scoring_questions import (
         QUALITATIVE_TARGETS,
         generate_questions,
+        generate_m19_judgment_questions,
     )
     from .types import DataSource
 
@@ -421,6 +422,7 @@ def _tool_run_computation(floor_account_weights_json: Optional[str] = None) -> s
 
     # ── Scoring questions (qualitative dict empty — Claude fills via search) ─
     qs = generate_questions(readings, cal, credit_signal, {})
+    qs = qs + generate_m19_judgment_questions(cal)
     _cache["scoring_questions"] = qs
 
     ai_qs    = [q for q in qs if q.auto_score is None]
@@ -433,6 +435,7 @@ def _tool_run_computation(floor_account_weights_json: Optional[str] = None) -> s
             "evidence":    q.evidence,
             "valid_scores": q.valid_scores,
             "auto_score":  q.auto_score,   # None = Claude must answer
+            "consumer":    q.consumer,     # "M03" or "M19" — informational only
         }
         for q in qs
     ]
@@ -484,6 +487,64 @@ def _tool_apply_scoring(answers: Dict[str, int]) -> str:
         },
         "flags": list(flags),
     }
+
+    # ── M19 thesis-sustaining condition evaluation ─────────────────────────
+    # Runs here (not in advisor_run_computation) because several §13
+    # conditions reference B+C/Scenario-X probability, which only exists
+    # once scoring has run. cal/readings/regime are recomputed from _cache
+    # rather than cached objects, following the same convention already
+    # used above for RoleRepricingDivergence's DivergenceSignal recompute.
+    cal_for_tsc = _cache.get("cal")
+    readings_list = _cache.get("readings", [])
+    if cal_for_tsc is not None and readings_list:
+        try:
+            from .analysis import compute_divergence_signal, evaluate_thesis_conditions
+
+            readings_by_id = {r.spec_id: r for r in readings_list}
+            held_tickers = [t for t, e in cal_for_tsc.instruments.items()
+                            if not e.is_candidate]
+            m19_ids = {q.id for q in _cache.get("scoring_questions", [])
+                       if q.consumer == "M19"}
+            call2_answers = {qid: answers[qid] for qid in m19_ids if qid in answers}
+
+            regime_signal = None
+            try:
+                regime_signal = compute_divergence_signal(readings_by_id, cal_for_tsc)
+            except Exception as e:
+                result["flags"].append(f"⚠ M19: DivergenceSignal recompute failed: {e}")
+
+            tsc = evaluate_thesis_conditions(
+                held_tickers=held_tickers,
+                readings=readings_by_id,
+                probs=probs,
+                regime_signal=regime_signal,
+                cal=cal_for_tsc,
+                call2_answers=call2_answers,
+            )
+            _cache["tsc_evaluations"] = tsc
+            result["tsc_evaluations"] = [
+                {
+                    "ticker":               t.ticker,
+                    "status":               t.status.value,
+                    "fired_condition_text": t.fired_condition_text,
+                    "missing_dependencies": t.missing_dependencies,
+                    "quality_flags":        t.quality_flags,
+                }
+                for t in tsc
+            ]
+            unknown = [t.ticker for t in tsc if t.status.value == "UNKNOWN"]
+            if unknown:
+                result["flags"].append(
+                    f"⚠ M19: {len(unknown)} ticker(s) UNKNOWN this session "
+                    f"(no evaluable §13 condition — not the same as ACTIVE): {unknown}"
+                )
+        except Exception as e:
+            result["flags"].append(f"⚠ M19 thesis evaluation failed: {e}")
+    else:
+        result["flags"].append(
+            "ℹ M19 thesis evaluation skipped — no cached calibration/readings "
+            "(call advisor_run_computation first)."
+        )
 
     # ── Step 6b: re-run floor check if probs shifted >= 5pp ───────────────
     floor_accounts = _cache.get("floor_accounts", [])

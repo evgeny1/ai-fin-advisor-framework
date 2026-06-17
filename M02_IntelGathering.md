@@ -1,5 +1,5 @@
 # M02 — Intelligence Gathering
-<!-- Version: 2.1 | Adopted: May 25, 2026 -->
+<!-- Version: 2.2 | Adopted: May 25, 2026 -->
 <!-- Changes from v2.0: M18 integration — DATA_REGISTRY_ENTRIES block moved to M18_MarketDataFetch. -->
 <!--   M02's DATA_REGISTRY_ENTRIES are now _LEGACY (superseded by M18). -->
 <!--   GatherIntel STEP 1 now references M18 explicitly. -->
@@ -8,10 +8,11 @@
 <!-- Extended by: M11 (HY_OAS, CCC_OAS, IG_OAS, BBB_OAS, MOVE) -->
 <!-- Extended by: M14 (VIX_30D_AVG, VIX_90D_AVG, BROAD_EQUITY_TRAILING) -->
 <!-- Extended by: M17 (YIELD_CURVE, KRE, KBE, THREEFYTP10, SOFR, DFF, FINRA_MARGIN_DEBT, NATGAS_HENRY_HUB, FARM_FILINGS_YOY) -->
+<!-- Extended by: M19 (cb_gold_reserve_accumulation, nuclear_policy_trajectory — feed Call 2 ScoringQuestions, consumer tag M19) -->
 
 <!-- MODULE MANIFEST
   ID:              M02_IntelGathering
-  Version:         2.1
+  Version:         2.2
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: core M02-owned data sources change (energy, equities, rates, FX, inflation);
                     OR qualitative gather methodology changes.
@@ -40,8 +41,14 @@ MODULE IntelGathering {
     escalation_or_deescalation:     web_search — geopolitical signals from last 48h
     breaking_geopolitical_events:   web_search — window: last 48h
     fed_forward_guidance_changes:   web_search — latest Fed statements, press conferences, minutes
+    cb_gold_reserve_accumulation:   web_search (T2 acceptable) — central bank gold reserve accumulation
+                                     narrative; consumer: M19 (SGOL/SIVR sustaining condition)
+    nuclear_policy_trajectory:      web_search (T1 preferred) — nuclear policy support/reversal across
+                                     {US, EU, Japan, UK}; consumer: M19 (URA sustaining condition)
     NOTE: "NEVER treat qualitative outputs as DataReading.
-           Apply M01_SourceIntegrity.classify() to every item before use in analysis."
+           Apply M01_SourceIntegrity.classify() to every item before use in analysis.
+           cb_gold_reserve_accumulation and nuclear_policy_trajectory feed M19 Call 2 ScoringQuestions
+           only — M19 itself never interprets free text directly. @see M19_ThesisSustainingConditions."
   }
 
 
