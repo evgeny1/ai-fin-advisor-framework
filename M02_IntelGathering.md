@@ -1,18 +1,9 @@
 # M02 — Intelligence Gathering
-<!-- Version: 2.2 | Adopted: May 25, 2026 -->
-<!-- Changes from v2.0: M18 integration — DATA_REGISTRY_ENTRIES block moved to M18_MarketDataFetch. -->
-<!--   M02's DATA_REGISTRY_ENTRIES are now _LEGACY (superseded by M18). -->
-<!--   GatherIntel STEP 1 now references M18 explicitly. -->
-<!--   To add a new data series: register in M18_MarketDataFetch.DATA_REGISTRY_ENTRIES only. -->
-<!-- Cross-references: @see M01_SourceIntegrity, @see M03_ScenarioFramework, @see M04_BriefingFormat -->
-<!-- Extended by: M11 (HY_OAS, CCC_OAS, IG_OAS, BBB_OAS, MOVE) -->
-<!-- Extended by: M14 (VIX_30D_AVG, VIX_90D_AVG, BROAD_EQUITY_TRAILING) -->
-<!-- Extended by: M17 (YIELD_CURVE, KRE, KBE, THREEFYTP10, SOFR, DFF, FINRA_MARGIN_DEBT, NATGAS_HENRY_HUB, FARM_FILINGS_YOY) -->
-<!-- Extended by: M19 (cb_gold_reserve_accumulation, nuclear_policy_trajectory — feed Call 2 ScoringQuestions, consumer tag M19) -->
+<!-- Version: 2.3 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M02_IntelGathering
-  Version:         2.2
+  Version:         2.3
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: core M02-owned data sources change (energy, equities, rates, FX, inflation);
                     OR qualitative gather methodology changes.
@@ -22,6 +13,9 @@
   Outputs produced: List<DataReading>   // via FetchRegistry.fetchAll()
   Calibration deps: none (PriceDataIntegrity rules are structural)
   Types consumed:   @see FW_Types.md — FetchSpec, DataReading, FetchRegistry
+  Cross-module:     @see M01_SourceIntegrity, @see M03_ScenarioFramework, @see M04_BriefingFormat.
+                    DATA_REGISTRY_ENTRIES superseded by M18_MarketDataFetch (extended there by
+                    M11, M14, M17, M19 — @see M18 for the full series list).
 -->
 
 ```

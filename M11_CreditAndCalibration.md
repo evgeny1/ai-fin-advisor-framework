@@ -1,22 +1,20 @@
 # M11 — Credit Signal Protocol & Calibration Discipline
-<!-- Version: 1.2 | Adopted: May 25, 2026 -->
-<!-- Changes from v1.1: DATA_REGISTRY_ENTRIES moved to M18_MarketDataFetch (v1.20 M18 integration). -->
-<!--   M11 DATA_REGISTRY_ENTRIES block renamed _LEGACY. M18 is the single FetchSpec registry. -->
-<!-- Extends: M02_IntelGathering (FetchRegistry), M04_BriefingFormat (BriefingRegistry), M10_ScenariosDEF (D trigger) -->
-<!-- Companion: @see CALIBRATION_STATE (must load every session); @see FW_Types.md (types) -->
+<!-- Version: 1.3 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M11_CreditAndCalibration
-  Version:         1.2
+  Version:         1.3
   Sub-project:     ANALYSIS_ENGINE (CreditSignal) | FRAMEWORK_CORE (CalibrationDiscipline)
-  Phase-3 note:    Planned split: M11_CreditData (DATA_INTELLIGENCE) + M11_CreditAnalysis (ANALYSIS_ENGINE)
-  Reason to change (CreditSignal):          credit signal methodology or spread thresholds change
-  Reason to change (CalibrationDiscipline): calibration review process or schedule changes
+  Reason to change: credit signal methodology or spread thresholds change (CreditSignal);
+                    OR calibration review process or schedule changes (CalibrationDiscipline).
   Inputs consumed:  DataReading<HY_OAS>, DataReading<CCC_OAS>, DataReading<IG_OAS>,
                     DataReading<BBB_OAS>, DataReading<MOVE>
   Outputs produced: CreditSignal
   Calibration deps: CALIBRATION_STATE §1
   Types consumed:   @see FW_Types.md — DataReading, CreditSignal, FetchSpec, BriefingSectionSpec
+  Cross-module:     @see M02_IntelGathering (FetchRegistry), @see M04_BriefingFormat (BriefingRegistry),
+                    @see M10_ScenariosDEF (Scenario D trigger). DATA_REGISTRY_ENTRIES superseded by
+                    M18_MarketDataFetch. CALIBRATION_STATE must load every session.
 -->
 
 ```

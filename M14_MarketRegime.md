@@ -1,26 +1,20 @@
 # M14 — Market Regime & Entry Discipline
-<!-- Version: 1.3 | Adopted: June 15, 2026 -->
-<!-- Changes from v1.2: Update 1 — RoleRepricingDivergence() added (§9.5).
-     Detects instrument-level repricing vs broad market. New InstrumentRepricingWarning type.
-     §9.5 thresholds in CALIBRATION_STATE. Advisory signal only — never blocks execution. -->
-<!-- Changes from v1.1: DATA_REGISTRY_ENTRIES moved to M18_MarketDataFetch (v1.20 M18 integration). -->
-<!--   M14 DATA_REGISTRY_ENTRIES block renamed _LEGACY. M18 is the single FetchSpec registry. -->
-<!-- Addresses: market desensitization detection, underweight opportunity cost, entry price extension -->
-<!-- Generalizes: WAR PREMIUM ENTRY GUARD (previously user-mandated, unmodularized) -->
-<!-- Extends: M02_IntelGathering (FetchRegistry), M04_BriefingFormat (BriefingRegistry), M08_FunctionalRoles (execution guards) -->
-<!-- Consumed by: M05_SessionInit (Steps 7–8), M08_FunctionalRoles.ExecutionGuards -->
-<!-- Companion: @see FW_Types.md (types) -->
+<!-- Version: 1.4 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M14_MarketRegime
-  Version:         1.3
+  Version:         1.4
   Sub-project:     ANALYSIS_ENGINE
-  Reason to change: market desensitization detection methodology or entry guard thresholds change
+  Reason to change: market desensitization detection methodology or entry guard thresholds change.
+                    Generalizes the WAR PREMIUM ENTRY GUARD (previously user-mandated, unmodularized).
   Inputs consumed:  DataReading<VIX_30D_AVG>, DataReading<VIX_90D_AVG>,
                     DataReading<BROAD_EQUITY_TRAILING>, DataReading<BRENT_CRUDE> (registered by M02)
   Outputs produced: RegimeSignal
   Calibration deps: CALIBRATION_STATE §9
   Types consumed:   @see FW_Types.md — DataReading, RegimeSignal, FetchSpec, BriefingSectionSpec
+  Cross-module:     @see M02_IntelGathering (FetchRegistry), @see M04_BriefingFormat (BriefingRegistry),
+                    @see M08_FunctionalRoles (execution guards). Consumed by M05_SessionInit (Steps 7–8).
+                    DATA_REGISTRY_ENTRIES superseded by M18_MarketDataFetch.
 -->
 
 ```

@@ -1,17 +1,9 @@
 # M04 — Briefing Format
-<!-- Version: 2.0 | Adopted: May 25, 2026 -->
-<!-- Changes from v1.x: Phase 2 complete — hardcoded section list replaced by BRIEFING_REGISTRY_ENTRIES; -->
-<!--   TEMPLATE body now calls BriefingRegistry.assemble(readings); MODULE_MANIFEST added; -->
-<!--   render functions added for all M04-owned sections. -->
-<!--   M04 is now a thin wiring layer: HEADER hardcoded; sections driven by registry. -->
-<!--   Adding a new module's briefing section: register BRIEFING_REGISTRY_ENTRY in the owning -->
-<!--   module; M04 does not change. -->
-<!-- Cross-references: @see M02_IntelGathering, @see M03_ScenarioFramework -->
-<!-- M11 (CREDIT_SIGNALS), M14 (MARKET_REGIME_SIGNAL), M17 (CASCADE_EARLY_WARNING) own their sections. -->
+<!-- Version: 2.1 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M04_BriefingFormat
-  Version:         2.0
+  Version:         2.1
   Sub-project:     ORCHESTRATION
   Reason to change: session output format changes; OR M04-owned briefing section content changes.
                     Adding a new module's briefing section: register BRIEFING_REGISTRY_ENTRY
@@ -21,6 +13,8 @@
   Outputs produced: OrderedList<BriefingSection>
   Calibration deps: none
   Types consumed:   @see FW_Types.md — DataReading, BriefingSection, BriefingSectionSpec, BriefingRegistry
+  Cross-module:     @see M02_IntelGathering, @see M03_ScenarioFramework. Section owners:
+                    M11 (CREDIT_SIGNALS), M14 (MARKET_REGIME_SIGNAL), M17 (CASCADE_EARLY_WARNING).
 -->
 
 ```

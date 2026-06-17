@@ -1,32 +1,12 @@
 # M17 — Systemic Cascade Early Warning
-<!-- Version: 1.4 | Adopted: May 29, 2026 -->
-<!-- Changes from v1.3: -->
-<!--   Finding 2 fix: computeYieldCurveSignal() now derives e_pathway_type -->
-<!--     (SYSTEMIC_LIQUIDITY | RESERVE_EROSION) from DXY direction + IG/sovereign CDS -->
-<!--     convergence signals. Consumed by M10.ScenarioE directive conditional branch. -->
-<!--   Finding 7 doc: CHAIN_5 THREEFYTP10 150bp alert threshold flagged as lacking -->
-<!--     historical calibration basis; added to Q2 audit checklist. -->
-<!--   MODULE MANIFEST version bumped to 1.4. -->
-<!-- Changes from v1.2: FW-BUG-01 — CHAIN_3 two-mode scoring fix. -->
-<!--   sectorStressScore() now distinguishes WATCH (record high, score 0) -->
-<!--   from FIRES (−5% MoM decline after record OR gate_count ≥3, score +1). -->
-<!-- Changes from v1.0: Phase 0 ticker fix (§5 PrePositioningLadder now role-based, zero tickers); -->
-<!--   MODULE_MANIFEST added; DATA_REGISTRY_ENTRIES and BRIEFING_REGISTRY_ENTRY added; -->
-<!--   NEVER list updated. -->
-<!-- Extends: M02_IntelGathering (fetch list), M04_BriefingFormat (new briefing block), -->
-<!--   M11_CreditAndCalibration (complementary) -->
-<!-- Companion: @see CALIBRATION_STATE §12 (M17 thresholds); @see FW_Types.md (types) -->
+<!-- Version: 1.5 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M17_SystemicCascadeWarning
-  Version:         1.4
+  Version:         1.5
   Sub-project:     ANALYSIS_ENGINE (§1–4, §6) | PORTFOLIO_ADVISOR (§5)
-  Phase-2 note:    §5 spans two sub-projects. Planned split:
-                     M17_CascadeAnalysis (ANALYSIS_ENGINE)
-                     M17_PrePositionAdvisor (PORTFOLIO_ADVISOR)
-  Reason to change:
-    §1–4, §6: analytical methodology for real-economy cascade chain assessment changes
-    §5:       investment strategy or pre-positioning rules change (separate reason)
+  Reason to change: analytical methodology for real-economy cascade chain assessment changes (§1–4, §6);
+                    OR investment strategy/pre-positioning rules change (§5).
   Inputs consumed:  DataReading<YIELD_CURVE>, DataReading<FINRA_MARGIN_DEBT>,
                     DataReading<KRE>, DataReading<SOFR>, DataReading<DFF>,
                     DataReading<THREEFYTP10>, DataReading<NATGAS_HENRY_HUB>,
@@ -35,6 +15,9 @@
   Calibration deps: CALIBRATION_STATE §12
   Types consumed:   @see FW_Types.md — DataReading, CascadeSignal, YieldCurveSignal,
                     AdvisoryAction, ActionDirection, TaxConstraint, RoleID, ChainID
+  Cross-module:     @see M02_IntelGathering (fetch list), @see M04_BriefingFormat (briefing block),
+                    @see M11_CreditAndCalibration (complementary lagging signal). CALIBRATION_STATE §12
+                    holds M17 thresholds.
 -->
 
 ```

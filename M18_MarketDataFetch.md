@@ -1,15 +1,12 @@
 # M18 — Market Data Fetch
-<!-- Version: 1.2 | Updated: June 4, 2026 -->
-<!-- Sub-project: DATA_INTELLIGENCE -->
-<!-- Reason to change: new data series needed, source changes, or lag tolerance changes.
-     NEVER register DATA_REGISTRY_ENTRIES in any other module — add here only.
-     Full change history: git log M18_MarketDataFetch.md -->
+<!-- Version: 1.3 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M18_MarketDataFetch
-  Version:         1.2
+  Version:         1.3
   Sub-project:     DATA_INTELLIGENCE
-  Reason to change: new series added, source changed, lag tolerance changed.
+  Reason to change: new series added, source changed, or lag tolerance changed.
+                    NEVER register DATA_REGISTRY_ENTRIES in any other module — add here only;
                     NEVER change M02, M11, M14, or M17 to add a data series.
   Inputs consumed:  (none — M18 is a registry; FetchRegistry.fetchAll() pulls from it)
   Outputs produced: List<DataReading>   // via FetchRegistry.fetchAll()

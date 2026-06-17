@@ -1,15 +1,9 @@
 # M19 — Thesis Sustaining Conditions
-<!-- Version: 1.0 | Adopted: June 17, 2026 -->
-<!-- Cross-references: @see M02_IntelGathering (QualitativeGatherList consumer),
-     @see M03_ScenarioFramework (ScenarioProbabilities + ScoringQuestion consumer),
-     @see M06_ClientAndAdvisory (HoldJustification consumer),
-     @see M14_MarketRegime (RegimeSignal consumer for MAGS-class entries),
-     @see M04_BriefingFormat (BriefingRegistry) -->
-<!-- Companion: @see CALIBRATION_STATE §13 (per-ticker conditions); @see FW_Types.md (ThesisStatus) -->
+<!-- Version: 1.1 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M19_ThesisSustainingConditions
-  Version:         1.0
+  Version:         1.1
   Sub-project:     THESIS_MONITORING
   Reason to change: thesis-sustaining condition evaluation methodology, status taxonomy, or
                     AI-boundary routing changes. New tickers: add a CALIBRATION_STATE §13
@@ -23,6 +17,10 @@
   Calibration deps: CALIBRATION_STATE §13 (sustaining_conditions, degraded_signals,
                     failure_signals, data_dependencies — per ticker)
   Types consumed:   @see FW_Types.md — DataReading, ScenarioProbabilities, RegimeSignal, ThesisStatus
+  Cross-module:     @see M02_IntelGathering (QualitativeGatherList consumer), @see M03_ScenarioFramework
+                    (ScoringQuestion consumer), @see M06_ClientAndAdvisory (HoldJustification consumer),
+                    @see M14_MarketRegime (RegimeSignal, MAGS-class entries), @see M04_BriefingFormat.
+                    CALIBRATION_STATE §13 holds per-ticker conditions.
 -->
 
 ```

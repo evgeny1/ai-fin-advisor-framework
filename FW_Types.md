@@ -1,30 +1,19 @@
 # FW_Types — Framework Shared Type Definitions
-<!-- Version: 1.2 | Adopted: May 25, 2026 | Updated: June 4, 2026 -->
-<!-- Changes v1.2 (June 4, 2026): -->
-<!--   DEFECT-FWT-03: DataSource enum — added FMP_INDEXES (used by M18 v1.2 for ^VIX, ^GSPC -->
-<!--     index quotes; missing from type contract). -->
-<!--   DEFECT-FWT-04: DataSource enum — added YFINANCE_MCP (market_data MCP server; used by -->
-<!--     M18 v1.2 for HOLDINGS_PRICES, MOVE, DXY, KRE, KBE, NASDAQ_COMP, DOW, RUSSELL2000, -->
-<!--     HISTORICAL_INSTRUMENT_PRICES). -->
-<!--   FMP_COMMODITY comment updated: plan tier confirmed June 4, 2026 (BZUSD, GCUSD, SIUSD -->
-<!--     all working). Removed "not yet confirmed" caveat. -->
-<!--   WEBSEARCH_T1 comment updated: prohibited for price/return/level data per M18 v1.2 -->
-<!--     HARD_GATE NoWebSearchForPriceData. Permitted only for official statistical publications. -->
-<!--   FetchSpec.update_frequency: ON_DEMAND added (used by HISTORICAL_INSTRUMENT_PRICES). -->
-<!-- Changes v1.1 (May 29, 2026): -->
-<!--   DEFECT-FWT-01: DataSource enum — added FMP_CHART and FMP_COMMODITY (used in M18 FetchSpecs -->
-<!--     but missing from type contract; type violation now resolved). -->
-<!--   DEFECT-FWT-02: YieldCurveSignal — added e_pathway_type field (SYSTEMIC_LIQUIDITY | -->
-<!--     RESERVE_EROSION) to support M10.ScenarioE pathway-conditional directives. -->
-<!--     ModuleID enum updated to include M18. -->
-<!-- Sub-project: FRAMEWORK_CORE -->
-<!-- Purpose: defines the shared contracts (types) used across all sub-projects. -->
-<!--   DATA_INTELLIGENCE produces DataReading. -->
-<!--   ANALYSIS_ENGINE consumes DataReading, produces Signal types. -->
-<!--   PORTFOLIO_ADVISOR consumes Signal types, produces AllocationTarget / AdvisoryAction. -->
-<!--   ORCHESTRATION wires them; knows about all types but has no business logic. -->
-<!-- Reason to change: a new shared contract is needed (rare). -->
-<!-- NEVER add business logic here — types only. -->
+<!-- Version: 1.3 | Updated: see git log -->
+
+<!-- MODULE MANIFEST
+  ID:              FW_Types
+  Version:         1.3
+  Sub-project:     FRAMEWORK_CORE
+  Reason to change: a new shared contract is needed (rare).
+                    NEVER add business logic here — types only.
+  Inputs consumed:  none — this file defines contracts; it does not consume them
+  Outputs produced: shared type contracts consumed by all sub-projects
+                    (DataReading → DATA_INTELLIGENCE; Signal types → ANALYSIS_ENGINE;
+                    AllocationTarget/AdvisoryAction → PORTFOLIO_ADVISOR; ORCHESTRATION wires all)
+  Calibration deps: none
+  Types consumed:   none — this file IS the type contract source for all other modules
+-->
 
 ```
 TYPES FrameworkCore {
