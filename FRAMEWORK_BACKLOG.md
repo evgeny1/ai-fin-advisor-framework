@@ -470,6 +470,7 @@ per scenario, 48 cells per role), not a mechanical fix — flagged here for
 prioritization, parallel to ENG-13's framing of a different M19 coverage
 gap.
 
+
 ### ENG-20 — M14 energy_180d extended-conflict caveat not implemented in regime.py
 <!-- ITEM
   Status:    OPEN
@@ -506,6 +507,7 @@ scenario (C) is materially in play.
 `energy_180d` computation to `compute_divergence_signal()`, mirroring the
 pattern already used in `entry_extension_guard()`.
 
+
 ### ENG-21 — M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback
 <!-- ITEM
   Status:    OPEN
@@ -541,7 +543,6 @@ actually fired in practice?) before deciding whether M12.md's absolute
 existing tests). If it's genuinely dead code in practice, simplest fix
 is removing it rather than reconciling two systems for an edge case
 that doesn't occur.
-
 
 
 ### ENG-3 — Pattern A / Pattern B duplication & convergence decision
@@ -725,6 +726,7 @@ explanation is methodology ("why/how"), not a calibration-dated value
 leave only the per-ticker data blocks in §13. Low priority — §13's
 per-entry structure is otherwise appropriately lean (unlike §3/§6/§11).
 
+
 ### ENG-10 — No test coverage for advisor_run_computation / advisor_apply_scoring
 <!-- ITEM
   Status:    OPEN
@@ -870,6 +872,7 @@ here so it's a known, chosen state rather than an invisible gap. If the
 codebase grows, a simple local pre-push git hook running `pytest -q`
 would close most of the risk without needing real CI infrastructure.
 
+
 ### ENG-23 — M05_SessionInit.md retired outright (ENG-2 follow-on decision #2)
 <!-- ITEM
   Status:    CLOSED
@@ -932,8 +935,6 @@ parametrizes over the same glob, one fewer file to assert PASS on; not a
 regression).
 
 
-
-
 ### ENG-25 — instruments.json write not wired — Project_Instructions_MCP.md claimed MCP server writes it
 <!-- ITEM
   Status:    OPEN
@@ -971,6 +972,8 @@ instruments.json write into `file_protocol.write_back()` or
 active tickers from `cal.instruments`, serialize to JSON, write to
 `_MCP_DIR / "instruments.json"`. Then remove the manual step from
 WriteBack and update Project_Instructions_MCP.md and M12 accordingly.
+
+
 ### ENG-24 — M13.RecalibrationSequence() has no Python implementation — still 100% manual
 <!-- ITEM
   Status:    OPEN
