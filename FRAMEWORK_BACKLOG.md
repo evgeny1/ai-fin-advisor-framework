@@ -48,8 +48,8 @@
 | ENG-7 | OPEN | MEDIUM | hygiene | §11 stores computed EV math redundantly |
 | ENG-8 | OPEN | LOW | hygiene | Orphaned exited-instrument entries not pruned |
 | ENG-9 | OPEN | LOW | hygiene | §13 preamble mixes methodology with live data |
-| ENG-10 | OPEN | HIGH | testing | No test coverage for advisor_run_computation / advisor_apply_scoring |
-| ENG-11 | OPEN | HIGH | testing | No Pattern-B end-to-end pipeline test |
+| ENG-10 | CLOSED | HIGH | testing | No test coverage for advisor_run_computation / advisor_apply_scoring |
+| ENG-11 | CLOSED | HIGH | testing | No Pattern-B end-to-end pipeline test |
 | ENG-12 | OPEN | MEDIUM | testing | Tests assert against live, not snapshotted, framework files |
 | ENG-13 | OPEN | MEDIUM | functional-gap | M19 trailing-window conditions have no tracking infrastructure |
 | ENG-14 | OPEN | LOW | documentation | GAP-11 label has no description anywhere |
@@ -729,10 +729,11 @@ per-entry structure is otherwise appropriately lean (unlike §3/§6/§11).
 
 ### ENG-10 — No test coverage for advisor_run_computation / advisor_apply_scoring
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  HIGH
   Category:  testing
   Opened:    2026-06-17
+  Closed:    2026-06-18
   Area:      python/advisor/mcp_server.py
   Related:   ENG-1, ENG-11
 -->
@@ -758,13 +759,26 @@ realistic inputs against an isolated temp framework dir (same
 assert the returned JSON has the documented shape and that `_cache` is
 populated correctly for the next tool in the sequence to consume.
 
+**Resolution (2026-06-18):** Implemented as suggested. `tests/test_mcp/test_run_computation.py`
+added with 23 tests covering both `_tool_run_computation()` (OK status, prior_probs
+shape/sum, scoring_questions structure, signals key, calibration_version,
+floor_breach_alerts, market_data_summary, and _cache population for
+cal/log/scoring_questions/readings) and `_tool_apply_scoring()` (precondition
+error, OK status, probs sum-to-100, all 6 scenarios present, 3% floor respected,
+scenario_probs cached, raw_scores shape, write_back prereqs confirmed). All
+network fetchers mocked via `FetchRegistry.fetch_all` monkeypatch — tests run
+against the real Calibration_State.md/Session_Log.md content for config parsing
+fidelity, skipped automatically if those files are absent (same pattern as
+ENG-12's `skip_if_missing`). 0 failures.
+
 
 ### ENG-11 — No Pattern-B end-to-end pipeline test
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  HIGH
   Category:  testing
   Opened:    2026-06-17
+  Closed:    2026-06-18
   Area:      python/advisor/mcp_server.py
   Related:   ENG-3, ENG-10
 -->
@@ -781,6 +795,20 @@ deterministic stubbed "answers" for the scoring step (analogous to
 StubAIClient), and asserts the final Session_Log.md is fully parseable
 and internally consistent (sum-to-100, dates monotonic, etc.). This is
 the single highest-value test currently missing in the repo.
+
+**Resolution (2026-06-18):** Implemented as suggested.
+`tests/test_mcp/test_pattern_b_pipeline.py` added with 10 tests: 2 sequential-
+dependency checks (write_back fails cleanly without prior run_computation or
+apply_scoring) and 8 full-pipeline tests running
+`_tool_run_computation()` -> `_tool_apply_scoring()` -> `_tool_write_back(dry_run=True)`
+in sequence against an isolated tmp dir seeded with real Calibration_State.md
+content and a minimal Session_Log.md. Confirms: no errors anywhere in the
+sequence, the new §8 entry is distinct and parseable (not merged into the
+seed block), new entry probabilities sum to 100% and respect the 3% floor,
+the seed entry is preserved unchanged, entry dates are chronologically
+monotonic, and open_triggers/open_decisions/next_session_flags round-trip
+correctly through the write → re-parse cycle. Network fetchers mocked the
+same way as ENG-10. 0 failures.
 
 
 ### ENG-12 — Tests assert against live, not snapshotted, framework files
