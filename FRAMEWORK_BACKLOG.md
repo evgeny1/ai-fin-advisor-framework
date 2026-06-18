@@ -40,7 +40,7 @@
 | ID | Status | Severity | Category | Title |
 |---|---|---|---|---|
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
-| ENG-2 | OPEN | HIGH | architecture | Module necessity review (M01–M19) |
+| ENG-2 | IN_PROGRESS | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | OPEN | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
 | ENG-4 | OPEN | MEDIUM | architecture | Stage 5 (Pattern A) incomplete plumbing |
 | ENG-5 | OPEN | HIGH | hygiene | Compaction cadence mismatch (Calibration_State §3, Session_Log §8) |
@@ -54,6 +54,12 @@
 | ENG-13 | OPEN | MEDIUM | functional-gap | M19 trailing-window conditions have no tracking infrastructure |
 | ENG-14 | OPEN | LOW | documentation | GAP-11 label has no description anywhere |
 | ENG-15 | OPEN | LOW | process | No CI — test suite is run manually |
+| ENG-16 | OPEN | HIGH | architecture | M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py |
+| ENG-17 | OPEN | LOW | documentation | BriefingRegistry described as built ("Phase 2 complete") but doesn't exist in Python anywhere |
+| ENG-18 | OPEN | LOW | hygiene | M17 CascadeChainRegistry embeds live dated figures in module file; CHAIN_5/6 not scored |
+| ENG-19 | OPEN | MEDIUM | functional-gap | 8 of 17 RoleID roles have no M09/M10 scenario-directive coverage anywhere |
+| ENG-20 | OPEN | MEDIUM | functional-gap | M14 energy_180d extended-conflict caveat not implemented in regime.py |
+| ENG-21 | OPEN | LOW | hygiene | M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback |
 
 ---
 
@@ -101,12 +107,12 @@ test. This is now codified as a rule, not just a one-off fix.
 
 ### ENG-2 — Module necessity review (M01–M19)
 <!-- ITEM
-  Status:    OPEN
+  Status:    IN_PROGRESS
   Severity:  HIGH
   Category:  architecture
   Opened:    2026-06-17
-  Area:      M01_SourceIntegrity.md – M19_ThesisSustainingConditions.md (all 19)
-  Related:   ENG-3
+  Area:      M01_SourceIntegrity.md – M19_ThesisSustainingConditions.md (all 19), FW_Types.md
+  Related:   ENG-3, ENG-16, ENG-17, ENG-18, ENG-19, ENG-20, ENG-21
 -->
 
 **Description:** The M01–M19 pseudo-code module files predate the Python/MCP
@@ -115,29 +121,293 @@ server, essentially, the pseudo-code modules are the artifacts of the old
 version, at least some of them... I will be planning work to review the
 necessity of having this many modules now that the mcp part of the
 framework is implemented." This is the framework owner's own planned
-review, recorded here as a flagged open question — no recommendation is
-made in this entry about which modules to retain, merge, or retire, since
-that review hasn't happened yet.
+review, recorded here as a flagged open question.
 
-**Why it matters:** Every module file still gets loaded as Project
-Knowledge in every advisory session (00_INDEX.md FILE_MAP) regardless of
-whether its logic is now fully owned by `python/advisor/`. Some modules are
-genuinely still doing the job only an LLM can do (M02 qualitative
-interpretation, M06 advisory judgment); others may now be near-total
-restatements of what `python/advisor/analysis/*.py` already implements and
-enforces in code. Until the review happens, nobody can say which bucket a
-given module falls into, which makes "should I edit the .md file or the
-.py file" a real source of confusion for both advisory and coding sessions.
+**Suggested approach (original framing, see Update below for what was
+actually found):** for each module, classify as (a) AI-judgment-only —
+keep as the authoritative source, Python has no equivalent; (b)
+spec-for-Python — Python is the executable truth, the .md file is
+documentation of intent and could likely shrink substantially; (c) fully
+superseded — logic, thresholds, and registries have moved entirely into
+`python/advisor/` and CALIBRATION_STATE, and the .md file may be
+retireable or mergeable into 00_INDEX.md.
 
-**Suggested approach (not a decision):** for each module, classify as
-(a) AI-judgment-only — keep as the authoritative source, Python has no
-equivalent; (b) spec-for-Python — Python is the executable truth, the .md
-file is documentation of intent and could likely shrink substantially;
-(c) fully superseded — logic, thresholds, and registries have moved
-entirely into `python/advisor/` and CALIBRATION_STATE, and the .md file may
-be retireable or mergeable into 00_INDEX.md. See README.md → "Pseudo-code
-vs Python" for the current best understanding of this split, pending the
-actual review.
+**Update (2026-06-17) — deep-verification pass completed:** Read all 19
+module files in full plus FW_Types.md and cross-checked each against the
+actual Python source AND against what `mcp_server.py` actually imports
+and calls (not just whether a Python equivalent exists anywhere in the
+repo — those are different questions; see ENG-16). Findings:
+
+- **Wired into the live session today, and shrunk/retired this pass:**
+  M02 (deleted legacy `PriceDataIntegrity` block), M03 (shrunk six
+  `SCORE ScenarioA-F` blocks — confirmed verbatim-duplicated in
+  `scoring_questions.py`), M05 (reduced to a step-cross-reference stub —
+  superseded by `Project_Instructions_MCP.md`; also fixed a stale
+  GitHub-push write-back instruction), M11 (shrunk
+  `SignalConvergenceTest`/`THRESHOLD`/`ScenarioDTrigger` blocks — confirmed
+  in `credit.py`), M12 (corrected three factual errors — see commit
+  `26b861b`), M14 (deleted legacy fetch-list blocks; shrunk
+  `ComputeDivergenceSignal`'s deterministic math — confirmed in
+  `regime.py` — while keeping the `energy_180d` extended-conflict caveat
+  in full, since that part is NOT implemented in Python; see ENG-20).
+  FW_Types.md: added missing M19 to the `ModuleID` enum.
+- **Confirmed AI-judgment-only, no Python equivalent, left untouched:**
+  M01, M06, M16.
+- **Confirmed mixed but NOT wired into `mcp_server.py` despite having a
+  faithful, tested Python implementation — left fully untouched, see
+  ENG-16 for the real issue here:** M07, M08, M09, M10, M13, M15.
+- **M04 is AI-judgment-only, not Python-owned, despite README previously
+  implying otherwise** — no `BriefingRegistry` class exists anywhere in
+  the codebase; see ENG-17. Left untouched this pass (correcting the
+  misleading framing is tracked separately, not urgent).
+- **M17, M18, M19 reviewed, left untouched** — M18 is already the
+  strongest "fully superseded, minimal" example in the framework; M19 is
+  flagged as the best-designed module in the framework (clean AI-boundary
+  routing, no spec/Python duplication, no legacy cruft) — worth using as
+  the template for what M02/M07/M08/M09/M10/M11/M13/M17 should converge
+  toward, NOT a retirement candidate. M17 has two open findings of its
+  own (ENG-18).
+
+All 7 edited files re-validated against `tools/validate_manifests.py`
+(20/20 pass) and committed/pushed (`26b861b`), net change -361 lines.
+
+**Why this item stays IN_PROGRESS rather than CLOSED:** the original ask
+— "review the necessity of having this many modules" — has now actually
+happened, with evidence, for all 19 files. But three real follow-on
+decisions remain open and are tracked as their own items rather than
+closed out here: (1) whether to build the `mcp_server.py` wiring for the
+unwired portfolio-math modules (ENG-16) — the single biggest factor in
+whether M07/M08/M09/M10/M13/M15 are ever actually shrinkable; (2) whether
+M05 should be deleted outright and removed from 00_INDEX.md's FILE_MAP,
+vs. its current reduced-stub state — that's a bigger architectural call
+than this pass made unilaterally; (3) the smaller hygiene/functional-gap
+findings spun out as ENG-17 through ENG-21.
+
+### ENG-16 — M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py
+<!-- ITEM
+  Status:    OPEN
+  Severity:  HIGH
+  Category:  architecture
+  Opened:    2026-06-17
+  Area:      python/advisor/mcp_server.py, analysis/instruments.py, portfolio/allocation.py,
+             portfolio/directives.py, M07_InstrumentEval.md, M08_FunctionalRoles.md,
+             M09_ScenariosABC.md, M10_ScenariosDEF.md, M13_GrowthObjectives.md,
+             M15_InstrumentClassification.md
+  Related:   ENG-2, ENG-3
+-->
+
+**Description:** Confirmed by reading every import in `mcp_server.py`
+directly: `M07.auto_disqualify()`, `M08.dual_role_conflict()`, the entire
+M09/M10 RESPONSES table (`portfolio/directives.py` — 54 entries, complete
+and tested), `M13.idealAllocation()`/`FeasibilityCheck()`/
+`ComputeTargetMultiplier()`/`RecalibrationSequence()`
+(`portfolio/allocation.py`), and M15's `classifyInstrument()`/
+`blendedScenarioReturn()`/`dominantDirective()`
+(`analysis/instruments.py`) are all implemented faithfully and have test
+coverage — but none of them are imported or called anywhere in
+`mcp_server.py`. (M15's `validate_classifications` and M07/M08's other
+functions referenced elsewhere are the only exceptions actually wired.)
+
+**Why it matters:** this is roughly a third of the framework's logic.
+Every live session, Claude currently re-derives all of this by hand from
+the `.md` spec — directive lookups, allocation math, feasibility checks —
+because no MCP tool surfaces the Python version. This directly
+contradicts design principle #1 ("minimize AI to interpretation-only
+tasks; all arithmetic, threshold comparisons... belong in Python"), and
+it's also why these six module files are NOT shrink/retire candidates
+under ENG-2 — they remain the operative, load-bearing spec until this
+gap is closed.
+
+**Suggested next step:** design and add new `financial-advisor` MCP
+tools (or extend an existing one) that expose `idealAllocation`,
+`FeasibilityCheck`, `blendedScenarioReturn`, `classifyInstrument`, and
+the M09/M10 directive lookup to Claude as callable tools, the same way
+`advisor_run_computation`/`advisor_apply_scoring` already expose Stage 3
+analysis. This is a larger engineering effort than a documentation
+pass — likely its own multi-session project. Once wired, M07/M08/M09/
+M10/M13/M15 become real shrink candidates under ENG-2.
+
+### ENG-17 — BriefingRegistry described as built ("Phase 2 complete") but doesn't exist in Python anywhere
+<!-- ITEM
+  Status:    OPEN
+  Severity:  LOW
+  Category:  documentation
+  Opened:    2026-06-17
+  Area:      M02_IntelGathering.md, M04_BriefingFormat.md, M05_SessionInit.md,
+             M11_CreditAndCalibration.md, M14_MarketRegime.md, M17_SystemicCascadeWarning.md,
+             M19_ThesisSustainingConditions.md, FW_Types.md
+  Related:   ENG-2
+-->
+
+**Description:** Confirmed no `BriefingRegistry` class exists anywhere in
+`python/advisor/` — not in `mcp_server.py`, not in `orchestrator/session.py`,
+not in `types.py`. `FW_Types.md`'s own `BriefingRegistry`/
+`BriefingSectionSpec` structs were never translated into `types.py` at
+all — they remain pseudo-code only. Despite this, seven module files
+contain a "Phase 2 complete: BriefingRegistry.assemble()..." annotation
+describing a working registry-based briefing-assembly system. (Contrast
+with `FetchRegistry`, which really was built as real Python and really is
+wired — so the asymmetry is real, not just consistently-stale wording
+everywhere.) Briefing rendering is, and remains, 100% Claude's job,
+following each module's `BriefingBlock`/`render_fn` spec directly in
+prose — which is fine and already correct in practice (Claude follows
+`Project_Instructions_MCP.md`, not this claim) — the only problem is the
+documentation actively misleads about what exists in code.
+
+**Why it matters:** low urgency today since nothing currently relies on
+the false claim, but it risks sending a future coding session looking
+for nonexistent code, or being used to justify treating M04 as more
+Python-owned than it is.
+
+**Suggested next step:** in each of the seven files, replace "Phase 2
+complete: BriefingRegistry.assemble()..." with an accurate one-line
+note that this section ordering is a Claude-applied convention, not
+executed code. Cosmetic, low-risk, batchable in one pass.
+
+### ENG-18 — M17 CascadeChainRegistry embeds live dated figures in module file; CHAIN_5/6 not scored
+<!-- ITEM
+  Status:    OPEN
+  Severity:  LOW
+  Category:  hygiene
+  Opened:    2026-06-17
+  Area:      M17_SystemicCascadeWarning.md, Calibration_State.md, python/advisor/analysis/cascade.py
+  Related:   ENG-2, ENG-9
+-->
+
+**Description:** Two related findings from reading `M17_SystemicCascadeWarning.md`
+against `analysis/cascade.py`:
+
+1. `CascadeChainRegistry`'s `ACTIVE_STATUS` fields embed live, dated
+   figures directly in the module file (e.g. specific debt totals, YoY
+   filing percentages, margin-debt levels, dated 2026 figures) — this is
+   the same "why/how vs what-now" violation ENG-9 already flags for §13,
+   just in the opposite direction: live data sitting in a module `.md`
+   instead of `Calibration_State.md`, with no versioning mechanism, so it
+   will go stale silently.
+2. `sector_stress_score()` in `cascade.py` only scores CHAIN_1 through
+   CHAIN_4. CHAIN_5 (Sovereign Fiscal → E Pathway) is partially covered
+   by `compute_yield_curve_signal()`'s separate term-premium/E-watch
+   logic (same module, different function — not a gap), but CHAIN_6
+   (Municipal Fiscal) has no scoring logic anywhere and is explicitly
+   qualitative-only per its own `.md` text — confirmed intentional, not
+   a bug, but worth noting alongside finding 1 since both concern the
+   same registry.
+
+**Suggested next step:** move the dated `ACTIVE_STATUS` figures out of
+M17.md into a new `Calibration_State.md` §-numbered section (parallel to
+how §13 holds M19's per-ticker data), leaving M17.md with only the
+structural chain definitions. Larger edit than a simple shrink since it
+requires touching Calibration_State.md's section numbering — not done
+as part of the ENG-2 pass.
+
+### ENG-19 — 8 of 17 RoleID roles have no M09/M10 scenario-directive coverage anywhere
+<!-- ITEM
+  Status:    OPEN
+  Severity:  MEDIUM
+  Category:  functional-gap
+  Opened:    2026-06-17
+  Area:      M09_ScenariosABC.md, M10_ScenariosDEF.md, python/advisor/portfolio/directives.py,
+             FW_Types.md
+  Related:   ENG-2, ENG-13, ENG-16
+-->
+
+**Description:** `FW_Types.md`'s `RoleID` enum lists 17 roles (per
+`CALIBRATION_STATE` §11.1), but the M09/M10 RESPONSES table — and its
+Python mirror, `directives.py` — only define directives for 9 of them.
+`directives.py`'s own docstring admits this: "Newer §11 roles not in
+M09/M10 return HOLD with a quality_flag." The 8 uncovered roles:
+`secular_technology_growth`, `inflation_linked_sovereign`,
+`real_estate_equity_income`, `systematic_trend_following`,
+`consumer_defensive_equity`, `healthcare_defensive_equity`,
+`floating_rate_credit_income`, `emerging_market_equity`. This was not
+checked against whether `Calibration_State.md` §11 fills the gap some
+other way — worth a quick look before treating this as fully open.
+
+**Why it matters:** this is a real methodology/coverage gap, not a
+documentation problem — for these 8 roles, neither Claude nor Python has
+a defined scenario-directive table to consult; directives must be
+reasoned from general principles each session, with no consistency
+guarantee across sessions the way the other 9 roles have.
+
+**Suggested next step:** this requires the framework owner's actual
+investment judgment (defining ADD/HOLD/REDUCE/EXIT directives per role
+per scenario, 48 cells per role), not a mechanical fix — flagged here for
+prioritization, parallel to ENG-13's framing of a different M19 coverage
+gap.
+
+### ENG-20 — M14 energy_180d extended-conflict caveat not implemented in regime.py
+<!-- ITEM
+  Status:    OPEN
+  Severity:  MEDIUM
+  Category:  functional-gap
+  Opened:    2026-06-17
+  Area:      M14_MarketRegime.md, python/advisor/analysis/regime.py
+  Related:   ENG-2
+-->
+
+**Description:** `M14_MarketRegime.md`'s `ComputeDivergenceSignal` has an
+"EXTENDED CONFLICT CAVEAT" (added 2026-06-07): when an active discrete
+supply event has persisted > 90 calendar days, both endpoints of the
+`energy_90d` window fall inside the conflict period, so the signal can
+understate a sustained war premium — the spec says to also compute
+`energy_180d` and use the higher reading. Confirmed during the ENG-2 pass
+that `analysis/regime.py`'s `compute_divergence_signal()` has no
+conflict-duration awareness and never computes an `energy_180d` fallback
+— it unconditionally uses the 90d window. (Note: `entry_extension_guard()`
+in the same file DOES accept a `conflict_duration_days` parameter and
+DOES support a 180-day window — but that's a different function serving
+a different guard, not this one.) This was kept fully in M14.md's text
+(not shrunk) specifically because of this gap.
+
+**Why it matters:** if a supply-shock event is active and has run past
+90 days, `commodity_fear_divergence` from the MCP tool may be understating
+the signal with no automatic correction — Claude has to remember to check
+conflict duration and compute the 180d figure by hand every session. Not
+checked in this pass whether a currently-active scenario makes this live
+right now — worth checking at next session start if a supply-shock
+scenario (C) is materially in play.
+
+**Suggested next step:** add conflict-duration awareness and an
+`energy_180d` computation to `compute_divergence_signal()`, mirroring the
+pattern already used in `entry_extension_guard()`.
+
+### ENG-21 — M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback
+<!-- ITEM
+  Status:    OPEN
+  Severity:  LOW
+  Category:  hygiene
+  Opened:    2026-06-17
+  Area:      M12_DriveProtocol.md, python/advisor/data/file_protocol.py
+  Related:   ENG-2
+-->
+
+**Description:** `M12_DriveProtocol.md` documents the read-fallback path
+for framework `.md` files as: 1st Desktop Commander (local git path),
+2nd GitHub MCP — explicitly stating Google Drive is "NOT used for .md
+reads." This describes Claude's own direct-tool-call read path (used in
+READONLY_MOBILE or when Claude itself is reading these files, e.g. in a
+coding session). Separately, `file_protocol.py`'s internal
+`_read_from_drive()` fallback — exercised only when the
+`financial-advisor` MCP server's own Python process can't find the file
+locally — uses the Google Drive API, not GitHub. These may not actually
+be in conflict in practice: the Python server fallback is a rarely-
+triggered internal resilience path (the server already requires local
+filesystem access to run at all, so the local file being absent is an
+edge case — e.g. misconfigured `ADVISOR_FRAMEWORK_PATH` or accidental
+deletion), serving a different purpose than the READONLY_MOBILE path
+M12.md describes. Flagged as low-priority and not fixed this pass — the
+nuance needs more investigation (has this Python fallback path ever
+actually fired in practice?) before deciding whether M12.md's absolute
+"NOT used: Google Drive" rule needs qualifying or whether
+`file_protocol.py`'s fallback should be changed to match it.
+
+**Suggested next step:** before editing either side, check whether
+`_read_from_drive()` has ever actually been exercised (log output,
+existing tests). If it's genuinely dead code in practice, simplest fix
+is removing it rather than reconciling two systems for an edge case
+that doesn't occur.
+
+
 
 ### ENG-3 — Pattern A / Pattern B duplication & convergence decision
 <!-- ITEM
