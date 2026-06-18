@@ -1,9 +1,9 @@
 # FW_Types — Framework Shared Type Definitions
-<!-- Version: 1.3 | Updated: see git log -->
+<!-- Version: 1.4 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              FW_Types
-  Version:         1.3
+  Version:         1.4
   Sub-project:     FRAMEWORK_CORE
   Reason to change: a new shared contract is needed (rare).
                     NEVER add business logic here — types only.
@@ -302,8 +302,9 @@ TYPES FrameworkCore {
 
   ENUM ModuleID {
     M01, M02, M03, M04, M05, M06, M07, M08,
-    M09, M10, M11, M12, M13, M14, M15, M16, M17, M18
+    M09, M10, M11, M12, M13, M14, M15, M16, M17, M18, M19
     // M18 added v1.1 — centralized data fetch registry
+    // M19 added v1.4 — thesis sustaining conditions (was missing; added during ENG-2 review, 2026-06-17)
   }
 
   ENUM SourceTier { T1, T2, T3 }

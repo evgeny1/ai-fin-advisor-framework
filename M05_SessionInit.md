@@ -1,11 +1,13 @@
 # M05 — Session Initialization
-<!-- Version: 1.5 | Updated: see git log -->
+<!-- Version: 1.6 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M05_SessionInit
-  Version:         1.5
+  Version:         1.6
   Sub-project:     ORCHESTRATION
-  Reason to change: session start sequence steps, write-back protocol, or session type rules change.
+  Reason to change: the step cross-reference table needs updating because
+                    Project_Instructions_MCP.md's step numbering changed.
+                    The session sequence itself is owned by Project_Instructions_MCP.md.
   Inputs consumed:  (entry point — orchestrates all other modules)
   Outputs produced: (side effects only: intelligence briefing rendered; write-back committed)
   Calibration deps: all — session init loads full CALIBRATION_STATE and SESSION_LOG at every session
@@ -15,172 +17,43 @@
 ```
 MODULE SessionInit {
 
-  // ─── REQUIRED INPUTS ─────────────────────────────────────────────────────────────────
+  // ─── SUPERSEDED (confirmed during ENG-2 module necessity review, 2026-06-17) ─────────
+  // The full Session Start Sequence — input requirements, step-by-step execution order,
+  // floor-check timing, write-back protocol — now lives in Project_Instructions_MCP.md.
+  // That file is what Claude actually reads and follows during a live advisory session,
+  // has its own current step numbering, and is kept in sync with the MCP tool surface
+  // (advisor_run_computation / advisor_apply_scoring / advisor_write_back).
+  //
+  // This module predates the MCP tools. Its content had drifted: Step 10 below (in the
+  // pre-shrink version, recoverable from git history) instructed write-back via
+  // github:push_files — wrong, and directly contradicted by M12's CoreRules NEVER list.
+  // Project_Instructions_MCP.md's Step 9 has the correct, current write-back instruction.
+  //
+  // Retained here only as a step-number cross-reference, since several module files
+  // cite "@see M05.SessionStartSequence Step N" using this file's original numbering.
+  //
+  // @see Project_Instructions_MCP.md — "Session start sequence" (authoritative)
 
-  INPUT_1: AllocationFile {
-    fetch_via:  @see M12_FileProtocol.fetchAllocation()
-    format:     Google_Sheets
-    sheets:     ["Schwab Accounts", "Relative's Schwab Accounts", "Objectives"]
-    REQUIRE:    loaded_before_briefing
-    // Prices are live via GOOGLEFINANCE formula — treat as current at time of fetch.
-    // "Objectives" tab contains AccountObjectiveProfiles @see M13_GrowthObjectives
+  STEP_CROSS_REFERENCE {
+    // M05 step (original numbering, this file) → Project_Instructions_MCP.md (current)
+    "0  declare_session_type"                        : "implicit in opening message — READONLY_MOBILE iff financial-advisor MCP tools unavailable"
+    "1  confirm_allocation_file_loaded"               : "Step 1"
+    "1b compute_floor_account_weights"                : "Step 1b"
+    "2  confirm_pending_decisions"                    : "Step 2"
+    "3  fetch_calibration_state_AND_session_log"      : "Step 3 — advisor_run_computation()"
+    "3b current_holdings_floor_check"                 : "Step 3 — advisor_run_computation() floor_breach_alerts"
+    "4  fetch_current_market_data"                    : "Step 3 — advisor_run_computation() market_data"
+    "5  identify_primary_driver"                      : "Step 4 — qualitative research"
+    "6  derive_scenario_probabilities"                : "Step 6 — advisor_apply_scoring()"
+    "6b re_run_floor_check_at_current_probabilities"  : "Step 6 — advisor_apply_scoring() floor_breach_alerts_6b (auto-runs if any scenario shifts >= 5pp)"
+    "7  complete_intel_gathering_steps_2_to_5"        : "Steps 4-5 — qualitative research + scoring"
+    "8  produce_intelligence_briefing"                : "Step 7"
+    "9  begin_portfolio_discussion"                   : "Step 8"
+    "10 write_session_state_and_credit_readings"      : "Step 9 — advisor_write_back(); Desktop Commander + local git ONLY, never GitHub push_files"
   }
 
-  INPUT_2: PendingDecisions {
-    ASK_CLIENT: "Are there any pending decisions, conditional triggers, or time-sensitive items from our last session?"
-    ALSO_CHECK: §8_Session_State_Log  // loaded from Session_Log.md in INPUT_3
-  }
-
-  INPUT_3: FrameworkFiles {
-    // Framework modules (M01–M18) are Project Knowledge — always in context, no fetch needed.
-    // CALIBRATION_STATE and Session_Log.md are fetched every session via Desktop Commander.
-    // @see M12_FileProtocol.readFrameworkFile() — Desktop Commander local path primary; GitHub MCP backup.
-
-    fetch_via:        @see M12_FileProtocol.fetchCalibrationState()
-                      @see M12_FileProtocol.fetchSessionLog()
-    // Both fetches run CONCURRENTLY — only after Step 1 is confirmed successful.
-
-    APPLY current_threshold_values_from CALIBRATION_STATE §1, §2
-    APPLY M13_GrowthObjectives session load requirements
-    APPLY M15_InstrumentClassification session load requirements
-    // @see M15.ValidateClassifications() — HARD_STOP if any allocation instrument absent from §11
-
-    APPLY M17_SystemicCascadeWarning cascade threshold values
-    // @see CALIBRATION_STATE §12 — M17 thresholds (farm filings, natgas, CRE/KRE, margin, sovereign, yield curve)
-
-    LOAD §8_Session_State_Log FROM Session_Log.md {
-      IF §8 EXISTS AND §8.latest_entry.date >= current_date - 7_calendar_days {
-        prior_scenario_probabilities = §8.latest_entry.scenario_probabilities
-        prior_primary_driver         = §8.latest_entry.primary_driver
-        prior_open_triggers          = §8.latest_entry.open_triggers
-        prior_open_decisions         = §8.latest_entry.open_decisions
-        prior_next_session_flags     = §8.latest_entry.next_session_flags
-      }
-      IF §8 DOES_NOT_EXIST OR §8.latest_entry.date < current_date - 7_calendar_days {
-        FLAG: "No recent session state found in Session_Log §8 (missing or > 7 days old).
-               Scenario probabilities derived without 25pp cap this session."
-        prior_scenario_probabilities = null
-      }
-    }
-
-    WHEN M11 contradicts_main_framework → M11 takes_precedence
-    NOTE_IN_BRIEFING: "Calibration State: last update [date from CALIBRATION_STATE.md] | Session Log: loaded"
-  }
-
-  // ─── EXECUTION ORDER ────────────────────────────────────────────────────────────────
-
-  SEQUENCE SessionStartSequence {
-
-    0: declare_session_type {
-       // REQUIRED before any other step. Declare one of:
-       //   FULL_DESKTOP    — Desktop Commander available + local git accessible
-       //   READONLY_MOBILE — no Desktop Commander (Android / web-only)
-       // Detection: if Desktop Commander tools are present in the tool list → FULL_DESKTOP
-       //            if absent or unreachable → READONLY_MOBILE
-       // State explicitly in session header before Step 1 runs.
-       // FULL_DESKTOP: all steps including WriteBack (Step 10) execute normally.
-       // READONLY_MOBILE: skip Step 10 entirely; advisory only; note this in briefing header.
-       // @see M12_FileProtocol.SessionType
-    }
-
-    1: confirm_allocation_file_loaded
-       // INPUT_1 — hard gate; STOP if fails
-       // Google Drive — @see M12_FileProtocol.fetchAllocation()
-       // Load "Objectives" tab — account profiles required for M13
-
-    2: confirm_pending_decisions
-       // INPUT_2
-       // Steps 2 and 3 may run concurrently — only after Step 1 confirmed successful
-
-    3: fetch_calibration_state_AND_session_log
-       // INPUT_3 — TWO concurrent fetches (only after Step 1 confirmed)
-       // @see M12_FileProtocol.readFrameworkFile() — Desktop Commander primary; GitHub backup
-       //
-       // From Calibration_State.md: apply §1, §2 thresholds; §4 return table + multipliers (M13);
-       //   §9 M14 market regime thresholds; §11 role registry + instrument classification (M15);
-       //   §12 M17 cascade thresholds (farm filings, natgas, CRE/KRE, margin, sovereign, yield curve).
-       // From Session_Log.md: load §8 Session State Log (prior scenario probabilities, open items).
-       //   §8 in Session_Log is AUTHORITATIVE for prior probabilities — not Calibration_State.
-       //
-       // Run M15.ValidateClassifications() — HARD_STOP if any allocation instrument absent from §11.
-
-    3b: current_holdings_floor_check
-       // FLOOR_THEN_RETURN accounts only. Runs immediately after Step 3, before market data fetch.
-       // Uses allocation sheet values already loaded in Step 1 (GOOGLEFINANCE prices at fetch time).
-       // Computes mark-to-market weights from current holding values / account total.
-       // Runs FLOOR_THEN_RETURN branch of M13.FeasibilityCheck against those ACTUAL weights
-       //   (not proposed target allocations — those are checked later at Step 9).
-       // Uses PRIOR session probabilities from §8 (loaded in Step 3) — not yet-derived current probs.
-       //   Rationale: prior probs are the best available at this point in the sequence;
-       //   current probs require qualitative gather + scoring (Steps 5–6).
-       //   If current probs are later derived and differ materially, re-run this check (see Step 6b).
-       // @see M13_GrowthObjectives.CurrentHoldingsFloorCheck()
-       //
-       IF FloorBreachAlert emitted {
-         ESCALATE: Priority 1 — display alert BEFORE any other session content
-         FORMAT:   "⚠ FLOOR_BREACH_ALERT — [account_id]: scenario [s] returns [worst_return]%
-                    at prior probability vector. Floor constraint breached on current holdings.
-                    RecalibrationSequence required before allocation recommendations."
-         REQUIRE:  client acknowledgment before proceeding to Step 4
-         DO_NOT:   proceed to portfolio recommendations without resolving
-       }
-       // READONLY_MOBILE: run check using allocation sheet values if available;
-       //   if allocation sheet unavailable, skip with FLAG: "FloorCheck skipped — no sheet data"
-
-    4: fetch_current_market_data
-       // Phase 2 complete: M18.FetchRegistry.fetchAll() — parallel fetch of all registered FetchSpecs
-       // Registered by all modules at load time:
-       //   M02 (core market data: energy, equities, rates, FX, inflation, FFR, holdings)
-       //   M11 (credit spreads: HY_OAS, CCC_OAS, IG_OAS, BBB_OAS, MOVE)
-       //   M14 (VIX trailing averages, broad equity trailing performance)
-       //   M17 (yield curve, cascade chain inputs: KRE, THREEFYTP10, SOFR, DFF,
-       //         FINRA_MARGIN_DEBT, NATGAS_HENRY_HUB, FARM_FILINGS_YOY)
-       // + M02.QualitativeGatherList (geopolitical status, Fed guidance — web search)
-       // @see M02_IntelGathering.GatherIntel STEP 1
-
-    5: identify_primary_driver
-       // @see M02_IntelGathering.identifyPrimaryDriver()
-
-    6: derive_scenario_probabilities
-       // @see M03_ScenarioFramework.DeriveScenarioProbabilities()
-       AND check_recalibration_trigger
-       // @see M03_ScenarioFramework.RecalibrationRule
-       AND check_scheduled_review_status
-       // @see M11_CreditAndCalibration.CalibrationDiscipline.SessionLoad
-
-    6b: re_run_floor_check_at_current_probabilities
-       // Re-run M13.CurrentHoldingsFloorCheck() using newly derived scenario probabilities.
-       // Only required if Step 6 produces probabilities that differ from prior (§8) by >= 5pp
-       //   on any single scenario. If probabilities are unchanged or within 5pp: skip.
-       // Rationale: a meaningful probability shift (e.g., C −23.7pp as in v1.34) may turn
-       //   a passing floor check into a breach. Step 3b used prior probs as best available;
-       //   Step 6b resolves that with current probs.
-       IF FloorBreachAlert emitted AND NOT emitted at Step 3b {
-         ESCALATE: same Priority 1 protocol as Step 3b
-         NOTE_IN_BRIEFING: "Floor breach detected on current holdings at updated probabilities.
-                            Was CLEAR at prior probabilities. Probability shift is the trigger."
-       }
-
-    7: complete_intel_gathering_steps_2_to_5
-       // @see M02_IntelGathering.GatherIntel STEPS 2–5
-
-    8: produce_intelligence_briefing
-       // Phase 2 complete: BriefingRegistry.assemble(readings) — ordered section list
-       // M04-owned sections + M11, M14, M17 registered sections assembled in declared order
-       // @see M04_BriefingFormat.IntelligenceBriefing
-       // ScenarioProbabilities section must show full scoring output
-       // from DeriveScenarioProbabilities() — scores, raw, base, final per scenario
-
-    9: begin_portfolio_discussion
-
-    // SESSION END — after portfolio discussion concludes:
-
-    10: write_session_state_and_credit_readings_to_github
-        // @see M12_FileProtocol.WriteBack
-        // push_files([Calibration_State.md, Session_Log.md, Portfolio_State.md]) — single atomic operation to master
-        // Portfolio_State.md rendered by M12.constructPortfolioState() — companion project context snapshot
-        // ALWAYS execute at session end — do not wait for client instruction
-  }
+  // Full original procedure (INPUT_1/2/3, SEQUENCE SessionStartSequence with all step
+  // detail) recoverable from git history of this file, version 1.5 and earlier.
 
 }
 ```

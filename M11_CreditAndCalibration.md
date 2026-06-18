@@ -1,9 +1,9 @@
 # M11 — Credit Signal Protocol & Calibration Discipline
-<!-- Version: 1.3 | Updated: see git log -->
+<!-- Version: 1.4 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M11_CreditAndCalibration
-  Version:         1.3
+  Version:         1.4
   Sub-project:     ANALYSIS_ENGINE (CreditSignal) | FRAMEWORK_CORE (CalibrationDiscipline)
   Reason to change: credit signal methodology or spread thresholds change (CreditSignal);
                     OR calibration review process or schedule changes (CalibrationDiscipline).
@@ -61,26 +61,11 @@ MODULE CreditSignal {
   }
 
   // ─── SIGNAL CONVERGENCE TEST (run each session) ───────────────────────────────────────
-
-  RULE SignalConvergenceTest() {
-    IF all_indicators(HY, CCC, IG) tighten_or_hold {
-      RETURN credit_endorses_current_equity_regime
-      weight: corroborating
-    }
-    IF HY_composite_calm AND CCC_widening_materially {
-      RETURN early_stage_stress_hidden_by_aggregation
-    }
-    IF HY_composite > stress_beginning_threshold
-       AND velocity_confirmed
-       AND equities_flat_or_up {
-      RETURN institutional_credit_dissenting_from_retail_equity_bid
-      weight: primary_warning
-    }
-    IF IG > transmission_threshold AND velocity_confirmed {
-      RETURN transmission_reached_investment_grade
-      weight: severe
-    }
-  }
+  // Confirmed during ENG-2 review (2026-06-17): faithfully implemented as
+  // analysis/credit.py's _convergence_text(), called by compute_credit_signal(),
+  // which IS wired into advisor_run_computation() — this runs live every session.
+  // The four cases below (corroborating / hidden stress / primary warning / severe)
+  // are the exact branches credit.py evaluates. @see python/advisor/analysis/credit.py
 
   // ─── ASYMMETRIC WEIGHTING RULE (post-2008 signal quality) ────────────────────────────
 
@@ -102,67 +87,37 @@ MODULE CreditSignal {
   }
 
   // ─── THRESHOLDS ───────────────────────────────────────────────────────────────────────
-  // Delta values loaded from @see CALIBRATION_STATE §1 at session start.
-  // Velocity overlays are FIXED STRUCTURAL RULES — not calibration-dated.
-
-  THRESHOLD HY_StressBeginning {
-    condition:  HY_OAS > (trailing_180d_median + [HY_STRESS_DELTA])
-                AND widened >= 100bps OVER prior_60_days  // velocity — fixed structural
-    sustain:    >= 10 trading_days
-    action:     revisit B/C/D probabilities
-    [HY_STRESS_DELTA]: @see CALIBRATION_STATE §1.1
-  }
-
-  THRESHOLD HY_RecessionPricing {
-    condition:  HY_OAS > (trailing_180d_median + [HY_RECESSION_DELTA])
-    sustain:    >= 10 trading_days
-    action:     ScenarioD.probability_floor = 25%
-    [HY_RECESSION_DELTA]: @see CALIBRATION_STATE §1.1
-  }
-
-  THRESHOLD IG_TransmissionReached {
-    condition:  IG_OAS > (trailing_180d_median + [IG_TRANSMISSION_DELTA])
-                AND widened >= 40bps OVER prior_60_days  // velocity — fixed structural
-    sustain:    >= 10 trading_days
-    action:     recession/credit_event_pricing has_reached_investment_grade
-    [IG_TRANSMISSION_DELTA]: @see CALIBRATION_STATE §1.2
-  }
-
-  THRESHOLD CCC_TailFirstWidening {
-    condition_ratio:    CCC widens 3x HY_composite OVER any_30_day_window
-    condition_absolute: CCC + >= 200bps WHILE composite + < 50bps OVER 30_days
-    action:   flag_for_monitoring
-              add_explicit_note to_next_3_sessions
-    [absolute_divergence_floor]: @see CALIBRATION_STATE §1.3
-  }
-
-  CONSTRAINT VelocityOverlayRationale {
-    // HY: 100bps / 60 days — FIXED — not calibration-dated
-    // IG:  40bps / 60 days — FIXED — not calibration-dated
-  }
+  // Confirmed during ENG-2 review (2026-06-17): the four thresholds below — and their
+  // exact delta/velocity/sustain conditions — are implemented line-for-line in
+  // analysis/credit.py's compute_credit_signal(), which IS wired into
+  // advisor_run_computation() and runs live every session. Delta values still come
+  // from CALIBRATION_STATE §1 (read by the parser, never hardcoded in Python).
+  // Velocity overlays (HY: 100bps/60d; IG: 40bps/60d) are fixed structural constants,
+  // not calibration-dated, also matched exactly in Python.
+  //
+  //   HY_StressBeginning:     HY_OAS > median+§1.1 delta, velocity confirmed, 10d sustain
+  //                            → CreditSignal.hy_stress_beginning
+  //   HY_RecessionPricing:    HY_OAS > median+§1.1 delta, 10d sustain
+  //                            → CreditSignal.hy_recession_pricing; fires ScenarioD floor = 25%
+  //   IG_TransmissionReached: IG_OAS > median+§1.2 delta, velocity confirmed, 10d sustain
+  //                            → CreditSignal.ig_transmission_reached
+  //   CCC_TailFirstWidening:  CCC widens 3x HY composite (30d) OR CCC+200bps while
+  //                            composite+<50bps (30d) → CreditSignal.ccc_tail_first_widening
+  //
+  // @see python/advisor/analysis/credit.py — compute_credit_signal()
 
   // ─── UPDATED SCENARIO D TRIGGER ───────────────────────────────────────────────────────
   // Supersedes original Part 6 Scenario D trigger. @see M10_ScenariosDEF.ScenarioD
-
-  ScenarioDTrigger {
-    REQUIRE [
-      unemployment_rising >= 0.5% OVER any_3_month_window  // BLS
-      AND Fed_cutting_aggressively(
-            >= 75bps_cumulative_within_60d
-            OR any_emergency_inter_meeting_cut
-          )
-      AND credit_stress AT_LEAST_ONE_OF [
-        (a) IG_OAS transmission_reached threshold_fired
-        (b) HY_OAS recession_pricing threshold_fired
-        (c) CCC_OAS + >= 100bps OVER 30d WHILE composite_calm
-            SUSTAINED through_next_session
-      ]
-    ]
-    NOTE: "All spread conditions require T1 confirmation from dedicated FRED series pages."
-    GraduatedResponseRule: still_applies
-    D_floor_25pct: partial_rotation triggered_automatically
-                   UNLESS T1_counter_evidence_documented_in_briefing
-  }
+  // The credit_stress component (IG transmission OR HY recession OR CCC tail-widening,
+  // each independently sufficient) is implemented identically in
+  // orchestrator/scoring_questions.py's D_check_credit auto-scoring and in M03's
+  // raw_D check membership (capped at 3). The unemployment + Fed-cutting-aggressively
+  // conditions remain AI-scored (no automated unemployment/Fed-pace data feed yet).
+  //
+  // D_floor_25pct: HY_RecessionPricing firing triggers the 25% D floor automatically in
+  //   analysis/scenario_math.py's apply_floors() — wired, runs every session.
+  // GraduatedResponseRule still applies once D crosses 30%/40% — @see M08.ExecutionGuards.
+  // NOTE: all spread conditions require T1 confirmation from dedicated FRED series pages.
 
 }
 

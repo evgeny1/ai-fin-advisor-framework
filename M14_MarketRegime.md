@@ -1,9 +1,9 @@
 # M14 — Market Regime & Entry Discipline
-<!-- Version: 1.4 | Updated: see git log -->
+<!-- Version: 1.5 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M14_MarketRegime
-  Version:         1.4
+  Version:         1.5
   Sub-project:     ANALYSIS_ENGINE
   Reason to change: market desensitization detection methodology or entry guard thresholds change.
                     Generalizes the WAR PREMIUM ENTRY GUARD (previously user-mandated, unmodularized).
@@ -32,44 +32,11 @@ MODULE MarketRegimeDiscipline {
   // NEVER feed M14 signals into DeriveScenarioProbabilities().
   // @see M03_ScenarioFramework.DeriveScenarioProbabilities.ScoringIntegrity
 
-  // ─── DATA REGISTRY ENTRIES (LEGACY — superseded by M18_MarketDataFetch, v1.2) ─────────
-  // Moved to M18_MarketDataFetch.DATA_REGISTRY_ENTRIES. Retained here for reference.
-
-  DATA_REGISTRY_ENTRIES_LEGACY {
-    REGISTER FetchSpec { id: "VIX_30D_AVG",          source: WEBSEARCH_T1, description: "VIX 30-day rolling avg — CBOE or FRED VIXCLS series",   update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "VIX_90D_AVG",          source: WEBSEARCH_T1, description: "VIX 90-day rolling avg — CBOE or FRED VIXCLS series",   update_frequency: DAILY, acceptable_lag_days: 1 }
-    REGISTER FetchSpec { id: "BROAD_EQUITY_TRAILING", source: WEBSEARCH_T1, description: "VTI or SPX 30/60/90d trailing pct-change — approved source", update_frequency: DAILY, acceptable_lag_days: 1 }
-  }
-
-  // ─── FETCH LIST (legacy — superseded by DATA_REGISTRY_ENTRIES above) ─────────────────
-  // Retained for reference only. FetchRegistry.fetchAll() owns all structured fetches.
-
-  FetchList_LEGACY {
-    VIX_trailing {
-      VIX_30d_avg:  rolling 30-day average of VIX daily close
-      VIX_90d_avg:  rolling 90-day average of VIX daily close
-      source:       CBOE official or FRED (VIXCLS series)
-    }
-    broad_equity_trailing_performance {
-      instrument:   VTI (or SPX as proxy if VTI unavailable)
-      windows:      [30d, 60d, 90d]
-      compute:      pct_change from [30d | 60d | 90d] prior close to current price
-      source:       @see M02_IntelGathering.PriceDataIntegrity.APPROVED_SOURCES
-      IF trailing_close unavailable from approved source {
-        FLAG: "Trailing close unavailable — nominal threshold applied."
-      }
-    }
-    position_trailing_performance {
-      FOR each held position:
-        windows:    [30d, 60d, 90d]
-        current_price:    AllocationSheet.price(asset)
-        reference_price:  web fetch of 30/60/90d prior close from approved source
-        IF reference_price unavailable {
-          FLAG: "[asset.ticker] — trailing reference price unavailable.
-                 Apply conservative assumption: treat as threshold met."
-        }
-    }
-  }
+  // ─── DATA REGISTRY ENTRIES ────────────────────────────────────────────────────────────
+  // Superseded by M18_MarketDataFetch.DATA_REGISTRY_ENTRIES (v1.2). No content retained
+  // here — confirmed during ENG-2 review (2026-06-17) that FetchRegistry.fetchAll() is
+  // the live, wired path and a second copy here only risks drift.
+  // @see M18_MarketDataFetch.DATA_REGISTRY_ENTRIES
 
   // ─── BRIEFING REGISTRY ENTRY ──────────────────────────────────────────────────────────
   // Phase 2 complete: BriefingRegistry.assemble() in M04 iterates this entry.
@@ -171,40 +138,19 @@ MODULE MarketRegimeDiscipline {
     //   REQUIRES: formal M16 adoption at next Q-end audit to make energy_180d the canonical metric.
     //   Until then: 90d remains the operative metric; 180d is supplemental context.
     //   FLAG in briefing as: "⚠ Conflict > 90d: energy_90d may understate war premium — 180d: [value%]"
+    //   CONFIRMED during ENG-2 review (2026-06-17): analysis/regime.py's compute_divergence_signal()
+    //   does NOT implement this caveat — it only ever computes the 90d window, with no
+    //   conflict-duration awareness and no energy_180d fallback. This remains a manual
+    //   step: when a supply event is active and > 90 days old, compute energy_180d by hand
+    //   and apply the higher reading yourself before reporting commodity_fear_divergence.
 
-    energy_change_90d    = (Brent_current - Brent_90d_prior_close) / Brent_90d_prior_close
-    VIX_change_90d_pts   = VIX_current - VIX_90d_avg
-
-    IF energy_change_90d >= +0.15 AND VIX_change_90d_pts <= 0 {
-      commodity_fear_divergence = HIGH
-    } ELSE IF energy_change_90d >= +0.10 AND VIX_change_90d_pts <= +5 {
-      commodity_fear_divergence = MODERATE
-    } ELSE {
-      commodity_fear_divergence = NONE
-    }
-
-    dominant_scenario  = M02_IntelGathering.identifyPrimaryDriver().current_dominant_driver
-    equity_directive   = lookup_directive("broad_market_equity_domestic", dominant_scenario)
-
-    IF equity_directive IN ["Reduce", "reduce_to minimumConvictionWeight()"] {
-      IF broad_equity_trailing_performance.change_30d >= +0.05 {
-        equity_scenario_divergence = HIGH
-      } ELSE IF broad_equity_trailing_performance.change_30d >= +0.02 {
-        equity_scenario_divergence = MODERATE
-      } ELSE {
-        equity_scenario_divergence = NONE
-      }
-    } ELSE {
-      equity_scenario_divergence = NOT_APPLICABLE
-    }
-
-    IF commodity_fear_divergence == HIGH OR equity_scenario_divergence == HIGH {
-      composite = HIGH
-    } ELSE IF commodity_fear_divergence == MODERATE OR equity_scenario_divergence == MODERATE {
-      composite = MODERATE
-    } ELSE {
-      composite = NONE
-    }
+    // ─── THRESHOLD CLASSIFICATION ─────────────────────────────────────────────────────
+    // Confirmed during ENG-2 review: this scoring (energy_90d/VIX → commodity_fear_divergence;
+    // reductive-directive + broad_equity_30d → equity_scenario_divergence; composite combination)
+    // is implemented identically in analysis/regime.py's compute_divergence_signal(), which IS
+    // wired into advisor_run_computation() and runs live every session. Thresholds come from
+    // CALIBRATION_STATE §9.1 (read by the parser, never hardcoded in Python).
+    // @see python/advisor/analysis/regime.py — compute_divergence_signal()
 
     RETURN DivergenceSignal { commodity_fear_divergence, equity_scenario_divergence, composite, implication }
 

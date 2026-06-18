@@ -1,9 +1,9 @@
 # M12 — File Access Protocol
-<!-- Version: Amendment 3 | Updated: see git log -->
+<!-- Version: Amendment 4 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M12_DriveProtocol
-  Version:         Amendment 3
+  Version:         Amendment 4
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: file access sources, write toolchain, or session type rules change.
   Inputs consumed:  (infrastructure — reads and writes framework files; no domain inputs)
@@ -199,28 +199,26 @@ MODULE FileProtocol {
     }
 
     // ── PATTERN B: Session Write-Back ────────────────────────────────────────
-    // Use for: session-end write of §7 + §8 + Portfolio_State.
-    // Three files committed atomically in a single git commit.
+    // Use for: session-end write of §8 + Portfolio_State.
+    // CORRECTED during ENG-2 review (2026-06-17): this used to describe a manual
+    // Desktop-Commander-driven edit/grep/git sequence. Confirmed that's stale —
+    // data/file_protocol.py.write_back() now does file writes AND
+    // git add/commit/push as a single Python function call, invoked by the
+    // advisor_write_back() MCP tool. No manual edit_block/grep/git steps run for
+    // session write-back anymore. Two files only — NEVER Calibration_State.md
+    // (see STEP 3 above).
 
     PATTERN_B SessionWriteBack {
-      STEP 1: edit_files {
-        CALL TOOLCHAIN.edit
-        targets: Calibration_State.md, Session_Log.md, Portfolio_State.md
-      }
-      STEP 2: verify { CALL TOOLCHAIN.verify — grep date string in each file }
-      STEP 3: commit_and_push {
-        git -C [local.path] add Calibration_State.md Session_Log.md Portfolio_State.md
-        git -C [local.path] commit -m "Session write-back: [date] — §7 credit + §8 scenario state + Portfolio_State"
-        git -C [local.path] push origin master
-      }
+      CALL: advisor_write_back(primary_driver, open_triggers, open_decisions,
+                                session_type, next_session_flags)
+      // Internally: writes Session_Log.md + Portfolio_State.md, then
+      // git add / commit / push — all inside one Python call (file_protocol.write_back()).
       GUARD PatternB_Rules {
-        NEVER:  execute in READONLY_MOBILE session
-        NEVER:  commit if §8 probabilities do not sum to 100%
-        NEVER:  write §7 row if T1_flag == stale AND no_better_source_available
-                // log the gap: "[date] — readings unavailable this session"
-        ALWAYS: all three files in a single git commit
-        NEVER:  omit Portfolio_State.md from the commit
-        NEVER:  Portfolio_State.md scenario_probabilities != §8 new_entry probabilities
+        NEVER:  execute in READONLY_MOBILE session  // tool enforces via SessionType check
+        NEVER:  commit if §8 probabilities do not sum to 100%  // enforced upstream by apply_all_rules()
+        ALWAYS: both files (Session_Log.md, Portfolio_State.md) in a single git commit
+        NEVER:  include Calibration_State.md in this commit
+        NEVER:  call advisor_write_back() before advisor_apply_scoring() has run this session
       }
     }
   }
@@ -306,10 +304,16 @@ MODULE FileProtocol {
       next_session_flags:     [list]
     }
 
-    STEP 3: construct Calibration_State updated content {
-      // Apply any §3 log entries, §11 EV updates, threshold changes from this session
-      // If no changes: use session-start content unchanged
-      // Always include in commit for atomic consistency
+    STEP 3: Calibration_State.md {
+      // CORRECTED during ENG-2 review (2026-06-17) — this step previously said to
+      // "always include" Calibration_State.md in the write-back commit. That was wrong
+      // and contradicted confirmed, intentional code behavior:
+      // advisor_write_back() / file_protocol.write_back() NEVER writes
+      // Calibration_State.md — calibration_state=None is passed unconditionally.
+      // NEVER include Calibration_State.md in this write-back commit.
+      // Calibration value changes (§3 log entries, §11 EV updates, threshold changes)
+      // go through a SEPARATE manual edit + git commit via PATTERN_A FrameworkAmendment
+      // — not through this procedure, and not in the same commit as §8/Portfolio_State.
     }
 
     STEP 4: construct Portfolio_State {
@@ -336,7 +340,8 @@ MODULE FileProtocol {
       NEVER:  overwrite existing §7 or §8 rows — append only
       NEVER:  write §7 row if T1_flag == stale AND no_better_source_available
       NEVER:  write §8 if probabilities do not sum to 100%
-      ALWAYS: all three .md files in a single git commit
+      ALWAYS: both files (Session_Log.md, Portfolio_State.md) in a single git commit
+              // NEVER Calibration_State.md — see STEP 3 above
     }
   }
 

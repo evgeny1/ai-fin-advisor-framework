@@ -1,9 +1,9 @@
 # M03 — Scenario Framework
-<!-- Version: 1.1 | Updated: see git log -->
+<!-- Version: 1.2 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M03_ScenarioFramework
-  Version:         1.1
+  Version:         1.2
   Sub-project:     ANALYSIS_ENGINE
   Reason to change: scenario definitions, probability derivation rules, B vs C separation, or scoring methodology changes.
                     scenarioWeightedAllocation() and minimumConvictionWeight() delegate to M13 — changes to those go to M13.
@@ -171,129 +171,23 @@ MODULE ScenarioFramework {
     // 2 = conditions consistent with but not yet at formal trigger level
     // 3 = trigger condition MET (T1 confirmed, sustain period satisfied)
 
-    SCORE ScenarioA {
-      // binding_variable: fed_normalization
-      check_fed: Fed cutting OR forward_guidance_toward_cuts confirmed (FOMC statement)
-        IF yes:            → 2
-        IF pausing:        → 1
-        IF holding/hiking: → 0
-      check_energy: Energy prices declining >= 5 consecutive trading days
-        IF yes:            → 2
-        IF flat:           → 1
-        IF rising:         → 0
-      check_credit: Credit calm per M11 (HY, IG not in stress)
-        IF calm:           → 1
-        IF stressed:       → 0
-      raw_A = sum(check_fed, check_energy, check_credit)  // max: 5
-    }
-
-    SCORE ScenarioB {
-      // binding_variable: fed_constraint
-      check_cpi: CPI trajectory vs B trigger (> 4% YoY × 3 consecutive prints, BLS)
-        IF trigger_met:               → 3
-        IF CPI 3–4% trending upward:  → 2
-        IF CPI below 3% or declining: → 0
-      check_gdp: Real GDP vs B condition (<= 0%, BEA advance)
-        IF GDP <= 0%:                 → 3
-        IF GDP 0–1.5%:                → 2
-        IF GDP > 1.5%:                → 1
-      check_fed: Fed explicitly holding OR signaling constraint (FOMC statement)
-        IF holding or signaling_constraint: → 2
-        IF cutting:                         → 0
-      raw_B = sum(check_cpi, check_gdp, check_fed)  // max: 8
-    }
-
-    SCORE ScenarioC {
-      // binding_variable: supply_shock_severity
-      check_brent: Brent vs C trigger (MAX($110, trailing_90d × 1.40), 10+ days)
-        // ⚑ CALIBRATION_DATED nominal $110 — @see CALIBRATION_STATE §2.1
-        // sources: EIA_weekly_report, CME_Group_settlement_data
-        IF trigger_met AND sustained >= 10 trading_days:                             → 3
-        IF active_dateable_supply_event T1-verified
-           AND Brent within 15% of trigger threshold:                                → 2
-        IF active_dateable_supply_event T1-verified
-           AND Brent below 15%-of-trigger band:                                      → 1
-        IF no_verified_supply_event:                                                  → 0
-      check_cpi: CPI reaccelerating >= 2 consecutive monthly prints (BLS)
-        IF 2+ prints confirmed:   → 2
-        IF 1 print confirmed:     → 1
-        IF decelerating:          → 0
-      check_chokepoint: Supply chokepoint verified by T1 primary sources
-                        (ACLED, ISW, IEA_raw)
-        IF verified and active:   → 2
-        IF resolved:              → 0
-        IF unverified:            → 0
-      raw_C = sum(check_brent, check_cpi, check_chokepoint)  // max: 7
-    }
-
-    SCORE ScenarioD {
-      // binding_variable: demand_destruction
-      check_unemployment: Rising >= 0.5% over any 3-month window (BLS)
-        IF threshold_met:               → 3
-        IF rising but below threshold:  → 1
-        IF stable or falling:           → 0
-      check_fed: Fed cutting aggressively (>= 75bps/60d OR emergency inter-meeting cut)
-        IF yes:                         → 3
-        IF cutting gradually:           → 1
-        IF holding:                     → 0
-      check_credit: Credit stress from M11 D-trigger components
-        // @see M11_CreditAndCalibration.ScenarioDTrigger
-        IF HY_RecessionPricing fired:    → 3  // also activates D_floor = 25%
-        IF IG_TransmissionReached fired: → 3  // additive; can reach max alone
-        IF HY_StressBeginning fired:     → 2
-        IF CCC_TailFirstWidening active: → 1
-        IF credit_calm:                  → 0
-        // NOTE: credit check is capped at 3 even if multiple triggers fire
-        credit_check = MIN(sum_of_fired_triggers, 3)
-      check_gdp: Two consecutive negative quarters (BEA advance estimate)
-        IF two_negative:    → 2
-        IF one_negative:    → 1
-        IF positive:        → 0
-      raw_D = sum(check_unemployment, check_fed, credit_check, check_gdp)  // max: 11
-      // D structural floor applied AFTER normalization @see ApplyFloors
-    }
-
-    SCORE ScenarioE {
-      // binding_variable: reserve_system_integrity
-      check_dedollar: Dollar reserve status materially challenged (T1 sources)
-        // sovereign de-dollarization announcements; SWIFT exclusion data;
-        // central bank reserve composition data (IMF)
-        IF formal_sovereign_dedollarization_announcements T1-confirmed: → 2
-        IF central_bank_reserve_shift documented (IMF data):            → 1  // additive
-        IF DXY falling on fundamental grounds (NOT safe-haven spike):   → 1  // additive
-        IF DXY stable or rising:                                        → 0
-        dedollar_check = MIN(sum_of_sub_items, 3)
-      check_stress: Systemic financial stress
-        IF IG_TransmissionReached AND sovereign_CDS_widening_significantly: → 2
-        IF interbank_funding_stress confirmed:                               → 2  // additive
-        IF credit_calm:                                                      → 0
-        stress_check = MIN(sum_of_sub_items, 2)
-      check_ig: IG_OAS vs transmission threshold (@see M11_CreditAndCalibration)
-        IF IG_TransmissionReached fired: → 2
-        IF approaching (within 20 bps):  → 1
-        IF calm:                         → 0
-      raw_E = sum(dedollar_check, stress_check, check_ig)  // max: 7
-    }
-
-    SCORE ScenarioF {
-      // binding_variable: growth_momentum
-      check_gdp: Nominal GDP > 3% annualized × 2 consecutive quarters (BEA)
-        // ⚑ CALIBRATION_DATED — @see CALIBRATION_STATE §2.3
-        IF trigger_met:                              → 3
-        IF GDP 2–3% (approaching but not trigger):   → 1
-        IF GDP < 2%:                                 → 0
-      check_cpi: CPI trending up but below stagflationary threshold
-        IF CPI rising AND 2% < CPI < 4% YoY:        → 2
-        IF CPI >= 4% OR decelerating:               → 0
-      check_fed: Fed tightening but demand still strong (FOMC confirmed)
-        IF tightening AND demand_data_strong:        → 2
-        IF cutting OR demand_weakening:              → 0
-      check_noshock: Absence of verified supply shock
-        IF no_supply_shock_verified:                 → 1
-        IF supply_shock_verified (T1):               → -2  // penalize
-      raw_F = sum(check_gdp, check_cpi, check_fed, check_noshock)  // max: 8
-      raw_F = MAX(raw_F, 0)
-    }
+    // ─── PER-SCENARIO CHECKS ──────────────────────────────────────────────────────────────
+    // Confirmed during ENG-2 review (2026-06-17): the full check-by-check scoring rubric
+    // (score thresholds, evidence requirements, per-check wording) is generated verbatim
+    // into ScoringQuestion.question text by scoring_questions.py.generate_questions() —
+    // the exact text Claude receives from advisor_run_computation() already contains this
+    // rubric, word for word at review time. Maintaining a second copy here only risks the
+    // two drifting apart; this file is no longer consulted to score a live session.
+    // @see python/advisor/orchestrator/scoring_questions.py — generate_questions()
+    //
+    // Check membership per scenario (which raw scores sum into which scenario):
+    //   raw_A = check_fed + check_energy + check_credit                    (max 5)
+    //   raw_B = check_cpi + check_gdp + check_fed                          (max 8)
+    //   raw_C = check_brent + check_cpi + check_chokepoint                 (max 7)
+    //   raw_D = check_unemployment + check_fed + credit_check + check_gdp  (max 11)
+    //   raw_E = dedollar_check + stress_check + check_ig                   (max 7)
+    //   raw_F = MAX(check_gdp + check_cpi + check_fed + check_noshock, 0)  (max 8)
+    // Full original criteria (pre-shrink) recoverable from git history of this file.
 
     // ─── NORMALIZATION ─────────────────────────────────────────────────────────────────────
 
