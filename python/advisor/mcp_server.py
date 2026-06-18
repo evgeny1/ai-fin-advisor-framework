@@ -1,12 +1,12 @@
 """
 advisor/mcp_server.py — MCP server for Claude Desktop integration.
 
-Exposes the advisor framework as three MCP tools so Claude in the
-Claude app can run the full M05 session pipeline without separate
-API calls.  Zero additional cost vs CLI mode (no ANTHROPIC_API_KEY
-needed here — Claude in the conversation IS the AI).
+Exposes the advisor framework as MCP tools so Claude in the Claude app
+can run the full M05 session pipeline without separate API calls.
+Zero additional cost vs CLI mode (no ANTHROPIC_API_KEY needed here —
+Claude in the conversation IS the AI).
 
-Three tools:
+Five tools:
   advisor_run_computation(floor_account_weights_json?)
                                 M05 Steps 1–4+3b: load config, fetch
                                 market data, compute all signals,
@@ -17,6 +17,19 @@ Three tools:
   advisor_apply_scoring()       M05 Step 5: scoring answers →
                                 ScenarioProbabilities (Python math).
                                 Auto-runs FloorCheck Step 6b if probs shift >= 5pp.
+  advisor_evaluate_allocation() M13/M15/M08: scenarioWeightedAllocation(),
+                                FeasibilityCheck(), classifyInstrument(),
+                                dominantDirective(), DualRoleConflict() — for
+                                one account. Requires advisor_run_computation
+                                and advisor_apply_scoring to have run this
+                                session (added 2026-06-17 closing ENG-16 — this
+                                math previously had no MCP tool and was
+                                re-derived by hand from the M13/M15 .md spec
+                                every session).
+  advisor_check_instrument_candidate()
+                                M07.AutoDisqualify() for a candidate
+                                instrument not yet in §11. Pure on supplied
+                                metrics — no session precondition.
   advisor_write_back()          M05 Step 10: §8 entry + Portfolio_State
                                 → git commit.
 
@@ -85,6 +98,41 @@ def _dumps(obj: Any) -> str:
 
 def _err(msg: str, status: str = "ERROR") -> str:
     return _dumps({"status": status, "error": msg})
+
+
+def _parse_account_profile(data: Dict[str, Any]) -> Any:
+    """
+    Build an AccountProfile from the dict Claude constructs after reading
+    the allocation sheet's "Objectives" tab. No parser exists for that tab
+    in Python (M13's account profiles have always been Claude-read,
+    Claude-constructed) — this only validates/converts the dict into the
+    typed dataclass M13/M15 functions require.
+    """
+    from .types import AccountProfile, ObjectiveType
+
+    raw_obj_type = data.get("objective_type")
+    try:
+        obj_type = ObjectiveType(raw_obj_type)
+    except (KeyError, ValueError) as e:
+        valid = [o.value for o in ObjectiveType]
+        raise ValueError(
+            f"objective_type must be one of {valid}, got {raw_obj_type!r}"
+        ) from e
+
+    if "account_id" not in data:
+        raise ValueError("account_profile missing required field 'account_id'")
+    if "planning_horizon_years" not in data:
+        raise ValueError("account_profile missing required field 'planning_horizon_years'")
+
+    return AccountProfile(
+        account_id=data["account_id"],
+        owner=data.get("owner", "primary"),
+        planning_horizon_years=int(data["planning_horizon_years"]),
+        objective_type=obj_type,
+        floor_nominal_loss=bool(data.get("floor_nominal_loss", False)),
+        concentration_cap=float(data.get("concentration_cap", 0.40)),
+        drawdown_tolerance=float(data.get("drawdown_tolerance", 0.30)),
+    )
 
 
 # ── Tool 1: advisor_run_computation() ─────────────────────────────────────────
@@ -598,7 +646,177 @@ def _tool_apply_scoring(answers: Dict[str, int]) -> str:
     return _dumps(result)
 
 
-# ── Tool 3: advisor_write_back() ──────────────────────────────────────────────
+# ── Tool 3: advisor_evaluate_allocation() ─────────────────────────────────────
+# Closes ENG-16: M13.idealAllocation()/scenarioWeightedAllocation()/
+# FeasibilityCheck(), M15.classifyInstrument()/dominantDirective(),
+# M08.DualRoleConflict() all had faithful, tested Python implementations
+# that no MCP tool ever called — Claude re-derived all of this by hand from
+# the M13/M15/M08 .md spec every session. This tool wires them in.
+
+def _tool_evaluate_allocation(
+    account_profile: Dict[str, Any],
+    current_weights: Dict[str, float],
+    tickers: Optional[List[str]] = None,
+    proposed_allocations: Optional[Dict[str, float]] = None,
+) -> str:
+    """
+    M13/M15/M08 portfolio math for one account.
+
+    Requires advisor_run_computation() and advisor_apply_scoring() to have
+    been called earlier this session (uses cached cal + scenario_probs —
+    §8 AUTHORITATIVE probabilities, never recomputed here).
+    """
+    cal = _cache.get("cal")
+    probs = _cache.get("scenario_probs")
+    if cal is None:
+        return _err("No calibration state cached. Call advisor_run_computation first.")
+    if probs is None:
+        return _err("No scenario probabilities cached. Call advisor_apply_scoring first.")
+
+    from .exceptions import HardStopException
+    from .analysis.instruments import classify_instrument, dominant_directive
+    from .portfolio.allocation import scenario_weighted_allocation, feasibility_check
+    from .portfolio.directives import DIRECTIVES
+    from .portfolio.evaluation import dual_role_conflict
+
+    try:
+        account = _parse_account_profile(account_profile)
+    except Exception as e:
+        return _err(f"account_profile invalid: {e}")
+
+    eval_tickers = tickers if tickers else list(current_weights.keys())
+    if not eval_tickers:
+        return _err("No tickers to evaluate — current_weights is empty and tickers not given.")
+
+    dominant_scenario = max(("A", "B", "C", "D", "E", "F"), key=lambda s: getattr(probs, s))
+
+    result: Dict[str, Any] = {
+        "status": "OK",
+        "account_id": account.account_id,
+        "objective_type": account.objective_type.value,
+        "dominant_scenario": dominant_scenario,
+        "instruments": {},
+        "flags": [],
+    }
+
+    for ticker in eval_tickers:
+        entry_result: Dict[str, Any] = {}
+
+        try:
+            components = classify_instrument(ticker, cal)
+            entry_result["components"] = [
+                {"role_id": c.role_id, "weight": c.weight} for c in components
+            ]
+        except HardStopException as e:
+            result["flags"].append(f"⚠ {ticker}: classifyInstrument failed — {e}")
+            result["instruments"][ticker] = {"error": str(e)}
+            continue  # nothing else can be computed without a classification
+
+        try:
+            target = scenario_weighted_allocation(
+                ticker=ticker, account=account, probs=probs,
+                all_current_weights=current_weights, cal=cal,
+            )
+            entry_result["scenario_weighted_weight"] = round(target.scenario_weighted_weight, 4)
+            entry_result["per_scenario"] = {s: round(w, 4) for s, w in target.per_scenario.items()}
+            entry_result["blended_conservative_return_pct"] = round(target.blended_conservative_return, 2)
+            entry_result["directive"] = target.directive.value
+            entry_result["floor"] = round(target.floor, 4)
+            if target.quality_flags:
+                entry_result["quality_flags"] = target.quality_flags
+        except Exception as e:
+            result["flags"].append(f"⚠ {ticker}: scenarioWeightedAllocation failed — {e}")
+
+        try:
+            entry_result["dominant_directive_conflict_aware"] = dominant_directive(
+                ticker, dominant_scenario, DIRECTIVES, cal
+            )
+        except Exception as e:
+            result["flags"].append(f"⚠ {ticker}: dominantDirective failed — {e}")
+
+        try:
+            entry_result["dual_role_conflict"] = dual_role_conflict(ticker, dominant_scenario, cal)
+        except Exception as e:
+            result["flags"].append(f"⚠ {ticker}: DualRoleConflict check failed — {e}")
+
+        result["instruments"][ticker] = entry_result
+
+    if proposed_allocations:
+        try:
+            fr = feasibility_check(
+                account=account, proposed_allocations=proposed_allocations,
+                probs=probs, cal=cal,
+            )
+            result["feasibility"] = {
+                "feasible":             fr.feasible,
+                "portfolio_return_pct": round(fr.portfolio_return, 2),
+                "objective_type":       fr.objective_type,
+                "required_return_pct":  (round(fr.required_return, 2)
+                                          if fr.required_return is not None else None),
+                "target_multiplier":    fr.target_multiplier,
+                "shortfall_pp":         (round(fr.shortfall_pp, 2)
+                                          if fr.shortfall_pp is not None else None),
+                "drawdown_adjusted_return": fr.drawdown_adjusted_return,
+                "target_met":           fr.target_met,
+                "floor_breached":       fr.floor_breached,
+                "worst_scenario":       fr.worst_scenario,
+                "worst_return_pct":     (round(fr.worst_return, 2)
+                                          if fr.worst_return is not None else None),
+                "quality_flags":        fr.quality_flags,
+            }
+        except Exception as e:
+            result["flags"].append(f"⚠ FeasibilityCheck failed: {e}")
+    else:
+        result["flags"].append(
+            "ℹ FeasibilityCheck skipped — proposed_allocations not provided. "
+            "Pass a ticker→weight dict for the full proposed portfolio (should sum "
+            "to ~1.0) to run it. NEVER present allocation recommendations without "
+            "this check having run."
+        )
+
+    return _dumps(result)
+
+
+# ── Tool 4: advisor_check_instrument_candidate() ──────────────────────────────
+# Closes the M07 portion of ENG-16. Pure on the supplied metrics — no
+# CalibrationState dependency, no precondition on advisor_run_computation
+# having run this session. For a candidate instrument not yet in §11.
+
+def _tool_check_instrument_candidate(
+    ticker: str,
+    aum_millions: Optional[float] = None,
+    track_record_years: Optional[float] = None,
+    foreign_concentration_pct: Optional[float] = None,
+    instrument_type: str = "active_fund",
+    revenue_type: str = "fee_based",
+    has_contract_backstop: bool = True,
+    hold_horizon_years: int = 10,
+) -> str:
+    """M07.AutoDisqualify() for one candidate instrument."""
+    from .portfolio.evaluation import auto_disqualify
+    from .types import InstrumentSpec
+
+    spec = InstrumentSpec(
+        ticker=ticker,
+        aum_millions=aum_millions,
+        track_record_years=track_record_years,
+        foreign_concentration_pct=foreign_concentration_pct,
+        instrument_type=instrument_type,
+        revenue_type=revenue_type,
+        has_contract_backstop=has_contract_backstop,
+        hold_horizon_years=hold_horizon_years,
+    )
+    r = auto_disqualify(spec)
+    return _dumps({
+        "status":       "OK",
+        "ticker":       r.ticker,
+        "disqualified": r.disqualified,
+        "reason":       r.reason,
+        "quality_flags": r.quality_flags,
+    })
+
+
+# ── Tool 5: advisor_write_back() ──────────────────────────────────────────────
 
 def _render_portfolio_state(cal: Any, probs: Any, session_date: str,
                             primary_driver: str, open_triggers: List[str],
@@ -780,6 +998,100 @@ def build_server():
         (25pp cap notice if applied).
         """
         return _tool_apply_scoring(answers)
+
+    @srv.tool()
+    def advisor_evaluate_allocation(
+        account_profile: Dict[str, Any],
+        current_weights: Dict[str, float],
+        tickers: Optional[List[str]] = None,
+        proposed_allocations: Optional[Dict[str, float]] = None,
+    ) -> str:
+        """
+        M13/M15/M08 portfolio math for one account: scenarioWeightedAllocation()
+        (full per-scenario breakdown + probability-weighted target + blended
+        conservative return + floor), FeasibilityCheck(), classifyInstrument()
+        (ComponentVector), dominantDirective() (conflict-aware, multi-role),
+        and DualRoleConflict() (ADD-vs-REDUCE detection in composites).
+
+        Call AFTER advisor_run_computation() and advisor_apply_scoring() —
+        uses their cached calibration state and scenario probabilities
+        (§8 AUTHORITATIVE — never recompute probabilities yourself).
+
+        account_profile: dict built from the allocation sheet's "Objectives"
+          tab (no Python parser for that tab exists — you read and construct
+          this). Required keys: account_id, planning_horizon_years,
+          objective_type (one of "TARGET_THEN_RETURN", "RETURN_THEN_TARGET",
+          "FLOOR_THEN_RETURN", "PRESERVATION"). Optional: owner (default
+          "primary"), floor_nominal_loss (default False), concentration_cap
+          (default 0.40), drawdown_tolerance (default 0.30).
+          e.g. {"account_id": "Primary_IRA_6469", "owner": "primary",
+                "planning_horizon_years": 10,
+                "objective_type": "TARGET_THEN_RETURN",
+                "concentration_cap": 0.40, "drawdown_tolerance": 0.35}
+
+        current_weights: ticker → current allocation fraction in this account,
+          for ALL holdings in the account (used for ranking within bounds).
+          e.g. {"MLPX": 0.18, "AIPO": 0.12, "SGOV": 0.30, ...}
+
+        tickers: optional — which tickers to compute the full breakdown for.
+          Default: all keys in current_weights. Narrow this to just the
+          ticker(s) you're actually making a recommendation about.
+
+        proposed_allocations: optional — ticker → proposed weight for the
+          FULL account (should sum to ~1.0). Runs FeasibilityCheck against
+          this set. If omitted, FeasibilityCheck is skipped with an advisory
+          flag — NEVER present allocation recommendations without it having
+          run at least once for the account.
+
+        Returns JSON with per-ticker: components (ComponentVector),
+        scenario_weighted_weight, per_scenario (all six), blended_conservative
+        _return_pct, directive, dominant_directive_conflict_aware, floor,
+        dual_role_conflict (null if none), quality_flags. Plus feasibility
+        (if proposed_allocations given).
+        """
+        return _tool_evaluate_allocation(
+            account_profile=account_profile,
+            current_weights=current_weights,
+            tickers=tickers,
+            proposed_allocations=proposed_allocations,
+        )
+
+    @srv.tool()
+    def advisor_check_instrument_candidate(
+        ticker: str,
+        aum_millions: Optional[float] = None,
+        track_record_years: Optional[float] = None,
+        foreign_concentration_pct: Optional[float] = None,
+        instrument_type: str = "active_fund",
+        revenue_type: str = "fee_based",
+        has_contract_backstop: bool = True,
+        hold_horizon_years: int = 10,
+    ) -> str:
+        """
+        M07.AutoDisqualify() for a candidate instrument not yet in §11.
+        No session precondition — pure on the metrics you supply.
+
+        Four hard guards, any one disqualifies: AUM < $100M with a 10+ year
+        hold horizon; foreign concentration > 40% for active_fund/sector_ETF;
+        commodity-dependent revenue with no contract backstop; track record
+        < 3 years. Unknown metrics (None) skip that guard with a flag rather
+        than falsely disqualifying — supply what you have.
+
+        instrument_type: "active_fund" | "sector_ETF" | "passive_broad" | "single_stock"
+        revenue_type: "fee_based" | "commodity_dependent" | "mixed"
+
+        Returns {disqualified, reason, quality_flags}.
+        """
+        return _tool_check_instrument_candidate(
+            ticker=ticker,
+            aum_millions=aum_millions,
+            track_record_years=track_record_years,
+            foreign_concentration_pct=foreign_concentration_pct,
+            instrument_type=instrument_type,
+            revenue_type=revenue_type,
+            has_contract_backstop=has_contract_backstop,
+            hold_horizon_years=hold_horizon_years,
+        )
 
     @srv.tool()
     def advisor_write_back(

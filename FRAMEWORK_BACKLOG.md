@@ -54,12 +54,13 @@
 | ENG-13 | OPEN | MEDIUM | functional-gap | M19 trailing-window conditions have no tracking infrastructure |
 | ENG-14 | OPEN | LOW | documentation | GAP-11 label has no description anywhere |
 | ENG-15 | OPEN | LOW | process | No CI — test suite is run manually |
-| ENG-16 | OPEN | HIGH | architecture | M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py |
+| ENG-16 | CLOSED | HIGH | architecture | M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py |
 | ENG-17 | OPEN | LOW | documentation | BriefingRegistry described as built ("Phase 2 complete") but doesn't exist in Python anywhere |
 | ENG-18 | OPEN | LOW | hygiene | M17 CascadeChainRegistry embeds live dated figures in module file; CHAIN_5/6 not scored |
 | ENG-19 | OPEN | MEDIUM | functional-gap | 8 of 17 RoleID roles have no M09/M10 scenario-directive coverage anywhere |
 | ENG-20 | OPEN | MEDIUM | functional-gap | M14 energy_180d extended-conflict caveat not implemented in regime.py |
 | ENG-21 | OPEN | LOW | hygiene | M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback |
+| ENG-22 | OPEN | LOW | testing | Test suite needs reorganizing into unit/e2e/integration — currently flat test_stageN folders |
 
 ---
 
@@ -185,15 +186,14 @@ findings spun out as ENG-17 through ENG-21.
 
 ### ENG-16 — M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  HIGH
   Category:  architecture
   Opened:    2026-06-17
+  Closed:    2026-06-17
   Area:      python/advisor/mcp_server.py, analysis/instruments.py, portfolio/allocation.py,
-             portfolio/directives.py, M07_InstrumentEval.md, M08_FunctionalRoles.md,
-             M09_ScenariosABC.md, M10_ScenariosDEF.md, M13_GrowthObjectives.md,
-             M15_InstrumentClassification.md
-  Related:   ENG-2, ENG-3
+             portfolio/directives.py, portfolio/evaluation.py, tests/e2e/test_evaluate_allocation.py
+  Related:   ENG-2, ENG-3, ENG-22
 -->
 
 **Description:** Confirmed by reading every import in `mcp_server.py`
@@ -203,29 +203,101 @@ and tested), `M13.idealAllocation()`/`FeasibilityCheck()`/
 `ComputeTargetMultiplier()`/`RecalibrationSequence()`
 (`portfolio/allocation.py`), and M15's `classifyInstrument()`/
 `blendedScenarioReturn()`/`dominantDirective()`
-(`analysis/instruments.py`) are all implemented faithfully and have test
-coverage — but none of them are imported or called anywhere in
+(`analysis/instruments.py`) were all implemented faithfully and had test
+coverage — but none of them were imported or called anywhere in
 `mcp_server.py`. (M15's `validate_classifications` and M07/M08's other
-functions referenced elsewhere are the only exceptions actually wired.)
+functions referenced elsewhere were the only exceptions actually wired.)
 
-**Why it matters:** this is roughly a third of the framework's logic.
-Every live session, Claude currently re-derives all of this by hand from
-the `.md` spec — directive lookups, allocation math, feasibility checks —
-because no MCP tool surfaces the Python version. This directly
-contradicts design principle #1 ("minimize AI to interpretation-only
-tasks; all arithmetic, threshold comparisons... belong in Python"), and
-it's also why these six module files are NOT shrink/retire candidates
-under ENG-2 — they remain the operative, load-bearing spec until this
-gap is closed.
+**Why it mattered:** roughly a third of the framework's logic. Every live
+session, Claude was re-deriving all of this by hand from the `.md` spec —
+directive lookups, allocation math, feasibility checks — because no MCP
+tool surfaced the Python version. Directly contradicted design principle
+#1 ("minimize AI to interpretation-only tasks; all arithmetic, threshold
+comparisons... belong in Python").
 
-**Suggested next step:** design and add new `financial-advisor` MCP
-tools (or extend an existing one) that expose `idealAllocation`,
-`FeasibilityCheck`, `blendedScenarioReturn`, `classifyInstrument`, and
-the M09/M10 directive lookup to Claude as callable tools, the same way
-`advisor_run_computation`/`advisor_apply_scoring` already expose Stage 3
-analysis. This is a larger engineering effort than a documentation
-pass — likely its own multi-session project. Once wired, M07/M08/M09/
-M10/M13/M15 become real shrink candidates under ENG-2.
+**Resolution (2026-06-17):** Added two new MCP tools to `mcp_server.py`:
+
+- `advisor_evaluate_allocation(account_profile, current_weights, tickers?,
+  proposed_allocations?)` — wires `scenario_weighted_allocation()` (full
+  per-scenario breakdown, probability-weighted target, blended
+  conservative return, floor, naive directive), `dominant_directive()`
+  (conflict-aware, multi-role — supersedes the naive directive for
+  presentation), `dual_role_conflict()` (M08), `classify_instrument()`
+  (M15 ComponentVector), and `feasibility_check()` (M13, when
+  `proposed_allocations` is given). Requires `advisor_run_computation()`
+  and `advisor_apply_scoring()` to have run this session (uses their
+  cached `cal`/`scenario_probs` — never recomputes probabilities). No
+  Python parser exists for the allocation sheet's "Objectives" tab, so
+  `account_profile` is a dict Claude constructs after reading it
+  directly — same pattern as the existing `floor_account_weights_json`
+  parameter on `advisor_run_computation`.
+- `advisor_check_instrument_candidate(ticker, aum_millions?,
+  track_record_years?, foreign_concentration_pct?, instrument_type,
+  revenue_type, has_contract_backstop, hold_horizon_years)` — wires M07's
+  `auto_disqualify()`. No session precondition; pure on supplied metrics.
+
+Per-ticker failures are isolated (one unclassified ticker doesn't take
+down the whole call) and every external call is wrapped with a flag on
+failure, matching the error-handling convention already used in
+`_tool_run_computation`.
+
+Added `tests/e2e/test_evaluate_allocation.py` (13 tests, all passing) —
+genuinely end-to-end: exercises the MCP tool wrapper composing five
+underlying functions for one ticker the way a real session would, not
+just the underlying functions in isolation (those already had coverage
+in `tests/test_stage4/` — what was missing was the composition layer,
+which is exactly what shipped unwired). Covers: precondition errors (no
+`advisor_run_computation`/`advisor_apply_scoring` having run), invalid
+`objective_type`, full per-scenario breakdown shape, dominant-scenario
+selection, composite-instrument component weights, `DualRoleConflict`
+detection on a composite with genuinely conflicting ADD/REDUCE directives
+in its dominant scenario, per-ticker failure isolation,
+`FeasibilityCheck` skip/run paths, and the M07 candidate check's
+disqualify/pass/no-precondition paths. Full existing suite
+(536 passed, 4 skipped) re-run clean after the change.
+
+**Follow-up, not done here:** `Project_Instructions_MCP.md`'s "How to
+make a recommendation" and "How to execute a position action" sections
+still describe the manual hand-derivation procedure — they should be
+updated to call the new tool instead, the next time that file is
+touched. M13's `RecalibrationSequence()` also remains unwired (out of
+scope for this pass — narrower than the allocation/feasibility/
+directive/classification math this closed).
+
+### ENG-22 — Test suite needs reorganizing into unit/e2e/integration
+<!-- ITEM
+  Status:    OPEN
+  Severity:  LOW
+  Category:  testing
+  Opened:    2026-06-17
+  Area:      python/tests/
+  Related:   ENG-16
+-->
+
+**Description:** The test suite is currently organized as flat
+`test_stage1` through `test_stage5` folders (named for the Python
+migration stage that introduced them) plus `test_mcp` and
+`test_framework`. Per the framework owner: this should eventually become
+a structure organized by test *kind* — unit, e2e, integration — rather
+than by historical migration stage. `tests/e2e/` was created when
+closing ENG-16 as the first instance of the new convention (genuinely
+end-to-end: exercises an MCP tool composing multiple underlying functions
+together, not a single function in isolation) — the existing
+`test_stage1`–`test_stage5`/`test_mcp` folders were deliberately NOT
+moved as part of that fix; this is a separate, larger task.
+
+**Suggested next step:** decide the target taxonomy (likely: `unit/`
+for single-function tests close to today's `test_stage1`-`test_stage4`
+content, `e2e/` for MCP-tool-level composition tests like the new
+allocation test and `test_mcp/test_write_back_format.py`, `integration/`
+for anything touching the live framework files like
+`test_stage2/test_integration.py` — see ENG-12, which is closely related).
+Migrate incrementally rather than in one large rename — each move risks
+breaking relative imports/fixtures (e.g. `test_stage3/conftest.py` and
+`test_stage4/conftest.py` are both consumed by name-scoped pytest
+fixture discovery, not explicit imports) and should get its own
+verification pass (`pytest -q` clean) before moving on to the next
+folder.
 
 ### ENG-17 — BriefingRegistry described as built ("Phase 2 complete") but doesn't exist in Python anywhere
 <!-- ITEM
