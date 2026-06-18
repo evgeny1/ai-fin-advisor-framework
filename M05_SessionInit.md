@@ -5,9 +5,10 @@
   ID:              M05_SessionInit
   Version:         1.6
   Sub-project:     ORCHESTRATION
-  Reason to change: the step cross-reference table needs updating because
-                    Project_Instructions_MCP.md's step numbering changed.
-                    The session sequence itself is owned by Project_Instructions_MCP.md.
+  Reason to change: Project_Instructions_MCP.md's step numbering changes —
+                    update the cross-reference table to match. The session
+                    sequence itself is owned by Project_Instructions_MCP.md,
+                    not this file.
   Inputs consumed:  (entry point — orchestrates all other modules)
   Outputs produced: (side effects only: intelligence briefing rendered; write-back committed)
   Calibration deps: all — session init loads full CALIBRATION_STATE and SESSION_LOG at every session
