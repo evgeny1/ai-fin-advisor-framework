@@ -197,7 +197,8 @@ Execute the sequence below, in strict order. (This section is itself the authori
                                   session, update separately via Desktop Commander + git
                                   (advisor_write_back does not touch Calibration_State.md).
                                 Local only (no git):
-                                  instruments.json — written by MCP server automatically
+                                  instruments.json — written manually via Desktop Commander:write_file
+                                  during WriteBack Step 4b (@see M12_DriveProtocol.md WriteBack STEP 4b)
                                   NEVER push instruments.json to git
 ```
 

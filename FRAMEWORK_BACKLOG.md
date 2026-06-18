@@ -63,6 +63,7 @@
 | ENG-22 | OPEN | LOW | testing | Test suite needs reorganizing into unit/e2e/integration — currently flat test_stageN folders |
 | ENG-23 | CLOSED | MEDIUM | architecture | M05_SessionInit.md retired outright (ENG-2 follow-on decision #2) |
 | ENG-24 | OPEN | MEDIUM | architecture | M13.RecalibrationSequence() has no Python implementation — still 100% manual |
+| ENG-25 | OPEN | LOW | architecture | instruments.json write not wired — Project_Instructions_MCP.md claimed MCP server writes it; it doesn't |
 
 ---
 
@@ -909,6 +910,45 @@ parametrizes over the same glob, one fewer file to assert PASS on; not a
 regression).
 
 
+
+
+### ENG-25 — instruments.json write not wired — Project_Instructions_MCP.md claimed MCP server writes it
+<!-- ITEM
+  Status:    OPEN
+  Severity:  LOW
+  Category:  architecture
+  Opened:    2026-06-18
+  Area:      python/advisor/mcp_server.py, python/advisor/data/file_protocol.py,
+             M12_DriveProtocol.md (WriteBack STEP 4b), Project_Instructions_MCP.md
+  Related:   ENG-2
+-->
+
+**Description:** Discovered during ENG-2 M12 assessment (2026-06-18). A
+comment in Project_Instructions_MCP.md's Step 9 block read:
+"instruments.json - written by MCP server automatically" (lowercase dash,
+no em-dash). Confirmed via grep across all of `python/advisor/` that this
+is false: no production code calls `.write_text()` on `_INSTRUMENTS_FILE`
+вЂ” only test fixtures do. `advisor_run_computation()` (`_tool_run_computation`)
+and `advisor_write_back()` (`_tool_write_back`) / `file_protocol.write_back()`
+contain zero calls that create or update instruments.json.
+
+`yfinance_fetcher.py` READS instruments.json at fetch time (via
+`load_instruments()`) and falls back to a hardcoded list if the file is
+missing/unreadable. So the fallback works, but the "automatically written"
+claim was just wrong.
+
+**Resolution so far:** Project_Instructions_MCP.md corrected to say
+"written manually via Desktop Commander:write_file during WriteBack Step 4b
+(@see M12_DriveProtocol.md WriteBack STEP 4b)". M12_DriveProtocol.md's
+STEP 4b already correctly described the manual write; added a вљ  note
+confirming the automation gap and referencing this item.
+
+**Suggested next step (LOW priority — fallback works):** Wire the
+instruments.json write into `file_protocol.write_back()` or
+`_tool_run_computation()` (after Calibration_State.md is loaded): extract
+active tickers from `cal.instruments`, serialize to JSON, write to
+`_MCP_DIR / "instruments.json"`. Then remove the manual step from
+WriteBack and update Project_Instructions_MCP.md and M12 accordingly.
 ### ENG-24 — M13.RecalibrationSequence() has no Python implementation — still 100% manual
 <!-- ITEM
   Status:    OPEN
