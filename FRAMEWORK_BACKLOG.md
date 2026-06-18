@@ -221,6 +221,28 @@ skips — see ENG-12; 2 are pre-existing FMP 403 plan-tier skips), 2
 failed (live yfinance network/DNS resolution failure on the machine
 this pass ran on — unrelated to any code change here).
 
+**Update (2026-06-18) — M12 and M18 shrink passes:**
+M12_DriveProtocol.md: confirmed not a deletion candidate (fetchAllocation(),
+PATTERN_A FrameworkAmendment, CompactSessionLog are still 100% manual). Shrunk
+the Python-wired functions to pointers: readFrameworkFile, fetchCalibrationState,
+fetchSessionLog → advisor_run_computation(); constructPortfolioState →
+_render_portfolio_state(); PATTERN_B → advisor_write_back(). Also corrected
+SOURCE_MAP local path (was Mac-hardcoded; now notes ADVISOR_FRAMEWORK_PATH env
+var). 375→278 lines. Bug found: instruments.json NOT written by Python write_back()
+despite Project_Instructions_MCP.md claiming otherwise — opened ENG-25.
+M18_MarketDataFetch.md: 1,034 lines. DATA_REGISTRY_ENTRIES (~620 lines of
+REGISTER FetchSpec blocks) confirmed superseded by python/advisor/data/m18_registry.py
+(377-line Python translation). Shrunk entire DATA_REGISTRY_ENTRIES section to a
+pointer + brief series list. Kept all other content (HARD_GATE NoWebSearchForPriceData,
+FMP_PLAN_TIER_MAP, AllocationPriceCrossCheck, PriceDataIntegrity, ALLOCATION_
+SPREADSHEET_TABS, YFINANCE_MCP_SERVER_REFERENCE, NEVER list). Also fixed:
+instruments.json LIFECYCLE note (pointed to ENG-25 gap); cleared the "pending M18
+registration" doc-note for COPPER_SPOT/URANIUM_SPOT/CHINA_PMI_MANUFACTURING
+(added to m18_registry.py during M19 work; M18.md pointer now covers them). Noted
+that M18.md FMP sources reflect FMP MCP connector context (higher-tier account)
+while Python m18_registry.py uses standalone key (lower tier, many endpoints 403).
+1,034→546 lines. validate_manifests: 19/19 pass.
+
 ### ENG-16 — M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py
 <!-- ITEM
   Status:    CLOSED

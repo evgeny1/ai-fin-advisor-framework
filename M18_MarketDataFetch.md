@@ -1,9 +1,9 @@
 # M18 — Market Data Fetch
-<!-- Version: 1.3 | Updated: see git log -->
+<!-- Version: 1.4 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M18_MarketDataFetch
-  Version:         1.3
+  Version:         1.4
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: new series added, source changed, or lag tolerance changed.
                     NEVER register DATA_REGISTRY_ENTRIES in any other module — add here only;
@@ -98,533 +98,43 @@ MODULE MarketDataFetch {
   //   MANUAL_CLIENT_INPUT         — Client-provided value (e.g. confirmed screenshot).
 
 
-  // ─── DATA REGISTRY ENTRIES ───────────────────────────────────────────────────
-  // All structured data series used by any module in the framework.
-  // Registered with FetchRegistry at module load. FetchRegistry.fetchAll() iterates all.
+  // ─── DATA REGISTRY ENTRIES ───────────────────────────────────────
+  // SUPERSEDED (confirmed during ENG-2 module necessity review, 2026-06-18).
+  // Every FetchSpec entry is now registered in Python only:
+  //   @see python/advisor/data/m18_registry.py
+  // Python is the operative source — FetchRegistry.fetchAll() reads from it.
+  // M18.md is no longer the authoritative source for individual series entries.
   //
-  // Note on series IDs / tickers: stored in description only, not in FetchSpec.id —
-  // consistent with existing framework convention (M02, M11, M14, M17 all do this).
-
-  DATA_REGISTRY_ENTRIES {
-
-    // ── ENERGY ──────────────────────────────────────────────────────────────────
-    REGISTER FetchSpec {
-      id:                  "BRENT_CRUDE"
-      source:              FMP_COMMODITY
-      description:         "Brent crude futures — FMP:commodity commodities-quote BZUSD.
-                            Confirmed working free tier June 4, 2026 ($95.24).
-                            BZ=F is canonical Brent reference per Calibration_State §2.1 (v1.17).
-                            Fallback: YFINANCE_MCP market_get_quotes [BZ=F].
-                            NOT Trading Economics CFD (confirmed $3-4 discrepancy May 13, 2026).
-                            DEPRECATED source: WEBSEARCH_T1 — removed by HARD_GATE v1.2."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02, M03, M17]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "WTI"
-      source:              WEBSEARCH_T1
-      description:         "WTI crude futures CL=F — EIA weekly or CME Group settlement data.
-                            CPI_YOY-class exception: EIA.gov is an official government source.
-                            Fallback: YFINANCE_MCP market_get_quotes [CL=F].
-                            Note: WTI is secondary to Brent in this framework — used for
-                            cross-referencing only; Brent is the primary C-trigger series."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "NATURAL_GAS"
-      source:              FRED_OR_WEBSEARCH
-      description:         "Henry Hub natural gas front-month — FRED DHHNGSP preferred
-                            (embedded in allocation spreadsheet FRED tab; typically 3-5 day lag).
-                            Web search fallback: Google Finance NGM26/NGN26 futures.
-                            ⚠ MANDATORY fetch when FARM_FILINGS_YOY within 10pp of the
-                            +50% threshold (currently +46% — MANDATORY every session).
-                            Do not omit silently."
-      update_frequency:    DAILY
-      acceptable_lag_days: 3
-      consumer:            [M02, M17]
-      calibration_use:     "CHAIN_1 §12.1: ≥$6.00/mmBtu sustained 30 days"
-    }
+  // To add a new series: add a FetchSpec block to m18_registry.py. Do NOT
+  // re-add a REGISTER FetchSpec block here — the NEVER rule below still governs
+  // which FILE owns entries; it has always meant Python m18_registry.py in practice.
+  //
+  // SERIES IN PYTHON REGISTRY (as of 2026-06-18):
+  //   ENERGY:           BRENT_CRUDE, WTI, NATURAL_GAS
+  //   METALS:           GOLD_SPOT, SILVER, COPPER_SPOT (*), URANIUM_SPOT (*)
+  //   EQUITIES:         SP500, NASDAQ_COMP, DOW, RUSSELL2000
+  //   VOLATILITY:       VIX, VIX_30D_AVG, VIX_90D_AVG, MOVE
+  //   BANKS:            KRE, KBE
+  //   RATES/CURVE:      YIELD_CURVE, SOFR, DFF, THREEFYTP10
+  //   CREDIT:           HY_OAS, IG_OAS, CCC_OAS, BBB_OAS
+  //   FX:               DXY
+  //   INFLATION/POLICY: CPI_YOY, CHINA_PMI_MANUFACTURING (*)
+  //   CASCADE INPUTS:   FINRA_MARGIN_DEBT, NATGAS_HENRY_HUB, FARM_FILINGS_YOY
+  //   HOLDINGS:         HOLDINGS_PRICES, BROAD_EQUITY_TRAILING,
+  //                     HISTORICAL_INSTRUMENT_PRICES
+  //
+  // (*) = entries added to m18_registry.py during M19 implementation; were not
+  //       registered in M18.md. The Calibration_State.md "pending M18 registration"
+  //       notes on COPX/URA are now resolved by this pointer (doc-cleanup complete).
+  //
+  // NOTE ON SOURCES: m18_registry.py uses DataSource.YFINANCE as primary for most
+  // series because the standalone FMP API key returns 403 for most FMP endpoints.
+  // M18.md historically showed FMP as primary (FMP MCP connector uses a higher-tier
+  // account). The FMP_PLAN_TIER_MAP section below is still accurate for Claude
+  // advisory sessions using the FMP MCP connector directly; it is NOT accurate for
+  // Python advisor_run_computation() calls (which use standalone key).
 
 
-    // ── PRECIOUS METALS ──────────────────────────────────────────────────────────
-    REGISTER FetchSpec {
-      id:                  "GOLD_SPOT"
-      source:              FMP_COMMODITY
-      description:         "Gold futures — FMP:commodity commodities-quote GCUSD.
-                            Confirmed working free tier June 4, 2026 ($4,504.20).
-                            Fallback: YFINANCE_MCP market_get_quotes [GC=F].
-                            Crosscheck: GOOGLEFINANCE CURRENCY:XAUUSD via allocation sheet.
-                            DEPRECATED source: GOOGLEFINANCE as primary."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "SILVER"
-      source:              FMP_COMMODITY
-      description:         "Silver futures — FMP:commodity commodities-quote SIUSD.
-                            Confirmed working free tier June 4, 2026 ($74.16).
-                            Fallback: YFINANCE_MCP market_get_quotes [SI=F].
-                            Crosscheck: GOOGLEFINANCE CURRENCY:XAGUSD via allocation sheet.
-                            DEPRECATED source: GOOGLEFINANCE as primary."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02]
-    }
-
-
-    // ── BROAD EQUITIES ────────────────────────────────────────────────────────────
-    REGISTER FetchSpec {
-      id:                  "SP500"
-      source:              FMP_INDEXES
-      description:         "S&P 500 Index — FMP:indexes index-quote ^GSPC.
-                            Confirmed working free tier June 4, 2026 ($7,584.82).
-                            ⚠ ^SPX remains ACCESS DENIED — use ^GSPC (same index).
-                            Fallback: YFINANCE_MCP market_get_macro [SP500 key].
-                            Crosscheck: GOOGLEFINANCE INDEXSP:.INX via allocation sheet.
-                            DEPRECATED source: GOOGLEFINANCE as primary."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02, M14]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "NASDAQ_COMP"
-      source:              YFINANCE_MCP
-      description:         "NASDAQ Composite — YFINANCE_MCP market_get_quotes [^IXIC].
-                            DEPRECATED source: WEBSEARCH_T1."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "DOW"
-      source:              YFINANCE_MCP
-      description:         "Dow Jones Industrial Average — YFINANCE_MCP market_get_quotes [^DJI].
-                            DEPRECATED source: WEBSEARCH_T1."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "RUSSELL2000"
-      source:              YFINANCE_MCP
-      description:         "Russell 2000 — YFINANCE_MCP market_get_quotes [^RUT].
-                            DEPRECATED source: WEBSEARCH_T1."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02]
-    }
-
-
-    // ── VOLATILITY ────────────────────────────────────────────────────────────────
-    REGISTER FetchSpec {
-      id:                  "VIX"
-      source:              FMP_INDEXES
-      description:         "VIX current daily close — FMP:indexes index-quote ^VIX.
-                            Confirmed working free tier June 4, 2026 ($15.40).
-                            Fallback: YFINANCE_MCP market_get_macro [VIX key].
-                            Crosscheck: GOOGLEFINANCE INDEXCBOE:VIX via allocation sheet.
-                            DEPRECATED source: ALLOCATION_SPREADSHEET_OTHER as primary."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02, M14]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "VIX_30D_AVG"
-      source:              FMP_CHART
-      description:         "VIX 30-day rolling average — computed from FMP:chart
-                            historical-price-eod-light ^VIX with from_date = 30 trading
-                            days prior to current session date.
-                            Confirmed working at current FMP plan tier (May 26, 2026).
-                            Computation: sum(close[0..29]) / 30 from returned EOD array
-                            (array is newest-first; index 0 = most recent close).
-                            Fallback: YFINANCE_MCP market_get_history [^VIX, period=3m]
-                            (count back 30 trading days from returned array).
-                            Session result (May 26): VIX_30D_AVG = 17.99 (Apr 13–May 22)."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M14]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "VIX_90D_AVG"
-      source:              FMP_CHART
-      description:         "VIX 90-day rolling average — computed from FMP:chart
-                            historical-price-eod-light ^VIX with from_date = 90 calendar
-                            days prior to current session date (≈ 62 trading days).
-                            Confirmed working at current FMP plan tier (May 26, 2026).
-                            Computation: sum(all returned closes) / count from EOD array.
-                            Also derives VIX_change_90d_pts for M14 divergence signal:
-                            VIX_change_90d_pts = close[0] − close[last_index].
-                            Fallback: YFINANCE_MCP market_get_history [^VIX, period=6m]
-                            (count back 62 trading days from returned array).
-                            Session result (May 26): VIX_90D_AVG = 21.24;
-                            VIX_change_90d_pts = 16.70 − 17.93 = −1.23 pts."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M14]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "MOVE"
-      source:              YFINANCE_MCP
-      description:         "ICE BofA MOVE Index — YFINANCE_MCP market_get_macro [MOVE key].
-                            Symbol: ^MOVE. Confirmed working June 4, 2026 (73.58).
-                            FMP:indexes index-quote ^MOVE → ACCESS DENIED free tier — do not retry.
-                            Fallback: ALLOCATION_SPREADSHEET_OTHER GOOGLEFINANCE(INDEXNYSEGIS:MOVE).
-                            DEPRECATED source: ALLOCATION_SPREADSHEET_OTHER as primary."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M11, M02]
-      calibration_use:     "Watch level 80. Alert level 100. Formal threshold TBD at Q2 audit."
-    }
-
-
-    // ── REGIONAL BANKS / CASCADE CHAIN EQUITIES ────────────────────────────────────
-    REGISTER FetchSpec {
-      id:                  "KRE"
-      source:              YFINANCE_MCP
-      description:         "SPDR S&P Regional Banking ETF — YFINANCE_MCP market_get_macro [KRE key].
-                            Symbol: KRE. Confirmed working June 4, 2026.
-                            Fallback: ALLOCATION_SPREADSHEET_OTHER GOOGLEFINANCE(KRE).
-                            DEPRECATED source: ALLOCATION_SPREADSHEET_OTHER as primary."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M17]
-      calibration_use:     "CHAIN_2 §12.2: KRE vs SPX 90d underperformance ≥ −15pp"
-    }
-
-    REGISTER FetchSpec {
-      id:                  "KBE"
-      source:              YFINANCE_MCP
-      description:         "SPDR S&P Bank ETF — YFINANCE_MCP market_get_macro [KBE key].
-                            Symbol: KBE. Confirmed working June 4, 2026.
-                            Fallback: ALLOCATION_SPREADSHEET_OTHER GOOGLEFINANCE(KBE).
-                            DEPRECATED source: ALLOCATION_SPREADSHEET_OTHER as primary."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M17]
-    }
-
-
-    // ── RATES & YIELD CURVE ────────────────────────────────────────────────────────
-    REGISTER FetchSpec {
-      id:                  "TREASURY_10Y"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "DGS10 — 10-year Treasury yield — FRED tab in allocation sheet.
-                            ⚠ NOT YET CONFIRMED in allocation spreadsheet (as of May 26, 2026).
-                            Add DGS10 at Q2 audit. Until confirmed: obtain from YIELD_CURVE
-                            FMP fetch (10Y tenor from FMP:economics treasury-rates).
-                            Do NOT use web search as fallback — YIELD_CURVE fetch covers this."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "TREASURY_2Y"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "DGS2 — 2-year Treasury yield — FRED tab in allocation sheet.
-                            ⚠ NOT YET CONFIRMED in allocation spreadsheet (as of May 26, 2026).
-                            Add at Q2 audit. Until confirmed: obtain from YIELD_CURVE FMP fetch
-                            (2Y tenor from FMP:economics treasury-rates).
-                            Do NOT use web search as fallback."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "YIELD_CURVE"
-      source:              FMP_ECONOMICS_TREASURY_RATES
-      description:         "Full US Treasury par yield curve — FMP:economics treasury-rates
-                            endpoint. All tenors: 1M, 2M, 3M, 6M, 1Y, 2Y, 3Y, 5Y, 7Y, 10Y,
-                            20Y, 30Y. Confirmed working at current FMP plan tier.
-                            Returns array newest-first; use index [0] for current session.
-                            Fallback: treasury.gov Daily Par Yield Curve Rates.
-                            Derives: TREASURY_10Y, TREASURY_2Y, TREASURY_30Y, 10Y-2Y spread,
-                            10Y-3M spread (all readable from this single fetch — no separate
-                            TREASURY_10Y or TREASURY_2Y fetch needed when this is available).
-                            June 4, 2026: 10Y=4.47%, 2Y=4.05%, 10Y-2Y=+42bp, 30Y=4.97%."
-      update_frequency:    DAILY
-      acceptable_lag_days: 2
-      consumer:            [M17, M02]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "SOFR"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "SOFR — Secured Overnight Financing Rate — FRED tab in
-                            allocation sheet. Confirmed present (May 26: 3.51%)."
-      update_frequency:    DAILY
-      acceptable_lag_days: 2
-      consumer:            [M17, M11]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "DFF"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "DFF — Effective Federal Funds Rate — FRED tab in allocation
-                            sheet. Confirmed present (May 26: 3.62%)."
-      update_frequency:    DAILY
-      acceptable_lag_days: 2
-      consumer:            [M17, M11, M02]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "THREEFYTP10"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "THREEFYTP10 — 10-year Treasury term premium (Adrian-Crump-Moench)
-                            — FRED tab in allocation sheet. Confirmed present (May 15: 0.8117%).
-                            Weekly cadence — acceptable_lag_days reflects this."
-      update_frequency:    WEEKLY
-      acceptable_lag_days: 7
-      consumer:            [M17, M02]
-      calibration_use:     "§12.5: E_term_premium_warning=100bp; E_term_premium_alert=150bp"
-    }
-
-    REGISTER FetchSpec {
-      id:                  "BREAKEVEN_10Y"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "T10YIE — 10-year breakeven inflation rate — FRED tab in
-                            allocation sheet.
-                            ⚠ NOT YET CONFIRMED in allocation spreadsheet (as of May 26, 2026).
-                            Add at Q2 audit. Until confirmed: FRED T10YIE series page (web search
-                            of fred.stlouisfed.org is an approved official-statistics exception;
-                            this is not a price series — the HARD_GATE does not apply here)."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02, M03]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "BREAKEVEN_5Y"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "T5YIE — 5-year breakeven inflation rate — FRED tab in
-                            allocation sheet.
-                            ⚠ NOT YET CONFIRMED in allocation spreadsheet (as of May 26, 2026).
-                            Add at Q2 audit. Until confirmed: FRED T5YIE series page (same
-                            official-statistics exception as BREAKEVEN_10Y — not a price series)."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02]
-    }
-
-
-    // ── CREDIT SPREADS ────────────────────────────────────────────────────────────
-    REGISTER FetchSpec {
-      id:                  "HY_OAS"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "ICE BofA US High Yield OAS — BAMLH0A0HYM2 — FRED tab in
-                            allocation sheet. Confirmed T1 source since May 13, 2026."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M11]
-      calibration_use:     "M11 §1.1 HY_STRESS_DELTA and HY_RECESSION_DELTA thresholds"
-    }
-
-    REGISTER FetchSpec {
-      id:                  "CCC_OAS"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "ICE BofA CCC & Lower OAS — BAMLH0A3HYC — FRED tab in
-                            allocation sheet. Confirmed T1 source since May 13, 2026."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M11]
-      calibration_use:     "M11 §1.3 CCC tail divergence signal"
-    }
-
-    REGISTER FetchSpec {
-      id:                  "IG_OAS"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "ICE BofA US IG OAS — BAMLC0A0CM — FRED tab in allocation
-                            sheet. Confirmed T1 source since May 13, 2026."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M11]
-      calibration_use:     "M11 §1.2 IG_TRANSMISSION_DELTA threshold"
-    }
-
-    REGISTER FetchSpec {
-      id:                  "BBB_OAS"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "ICE BofA BBB US Corporate OAS — BAMLC0A4CBBB — FRED tab in
-                            allocation sheet. Confirmed present (May 21: 0.94%)."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M11]
-    }
-
-
-    // ── FX ─────────────────────────────────────────────────────────────────────────
-    REGISTER FetchSpec {
-      id:                  "DXY"
-      source:              YFINANCE_MCP
-      description:         "US Dollar Index — YFINANCE_MCP market_get_macro [DXY key].
-                            Symbol: DX-Y.NYB. Confirmed working June 4, 2026 (99.46).
-                            FMP forex endpoint → all symbols ACCESS DENIED free tier.
-                            FMP indexes DX-Y.NYB → ACCESS DENIED free tier.
-                            Add GOOGLEFINANCE formula to allocation sheet at Q2 audit.
-                            DEPRECATED source: WEBSEARCH_T1."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02]
-      calibration_use:     "§2.2: DXY ≥105 sustained → SGOL invalidation risk"
-    }
-
-
-    // ── INFLATION & MONETARY POLICY ───────────────────────────────────────────────
-    REGISTER FetchSpec {
-      id:                  "CPI_YOY"
-      source:              WEBSEARCH_T1
-      description:         "Latest BLS CPI YoY print — BLS.gov press release.
-                            HARD_GATE EXCEPTION: CPI is an official government statistical
-                            publication (BLS.gov), not a market price or aggregator narrative.
-                            Web search targeting the BLS release is permitted; the number
-                            appears in the official press release as a primary statistic.
-                            Current: April 2026 = 3.8% YoY (print 2/3 toward B trigger).
-                            Next print: mid-June 2026 (May data). Run
-                            DeriveScenarioProbabilities() immediately on 8:30am ET release."
-      update_frequency:    MONTHLY
-      acceptable_lag_days: 35
-      consumer:            [M02, M03]
-      calibration_use:     "§2.3 B-trigger: ≥4.0% YoY, 3+ consecutive prints"
-    }
-
-    REGISTER FetchSpec {
-      id:                  "FED_FUNDS_RATE"
-      source:              FRED_SPREADSHEET_TAB
-      description:         "DFF — effective federal funds rate — FRED tab in allocation sheet.
-                            Current: 3.50–3.75% (on hold). Kevin Warsh confirmed as Fed Chair
-                            May 22, 2026. Next FOMC: June 16–17, 2026."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M02, M03]
-    }
-
-
-    // ── CASCADE CHAIN STRUCTURAL INPUTS ──────────────────────────────────────────────
-    REGISTER FetchSpec {
-      id:                  "FINRA_MARGIN_DEBT"
-      source:              ALLOCATION_SPREADSHEET_FINRA
-      description:         "FINRA monthly margin debit balances — FINRA tab in allocation sheet.
-                            Current: $1.304T (April 2026 — all-time nominal record).
-                            CHAIN_3_WATCH = TRUE (record loaded; cascade onset requires
-                            ≥−5% MoM decline or ≥3 gate events)."
-      update_frequency:    MONTHLY
-      acceptable_lag_days: 30
-      consumer:            [M17]
-      calibration_use:     "CHAIN_3 §12.3 two-mode: WATCH on record; FIRES on ≥−5% MoM
-                            or gate_count ≥3"
-    }
-
-    REGISTER FetchSpec {
-      id:                  "NATGAS_HENRY_HUB"
-      source:              FRED_OR_WEBSEARCH
-      description:         "Henry Hub natural gas spot — FRED DHHNGSP (embedded in allocation
-                            spreadsheet FRED tab; ~3-5 day lag) or Google Finance NGM26/NGN26
-                            futures as current proxy.
-                            ⚠ MANDATORY when FARM_FILINGS_YOY within 10pp of +50% threshold.
-                            Current FARM_FILINGS_YOY = +46% — MANDATORY every session.
-                            Session result (May 26): $2.71–$2.85/mmBtu (front-month futures).
-                            Well below $6 CHAIN_1 threshold."
-      update_frequency:    DAILY
-      acceptable_lag_days: 3
-      consumer:            [M17]
-      calibration_use:     "CHAIN_1 §12.1: ≥$6.00/mmBtu sustained 30 days (partial condition)"
-    }
-
-    REGISTER FetchSpec {
-      id:                  "FARM_FILINGS_YOY"
-      source:              USDA_OR_AFBF
-      description:         "Chapter 12 farm bankruptcy YoY change — USDA quarterly or AFBF.
-                            Current: +46% YoY (2025 data). Borderline CHAIN_1 threshold (+50%).
-                            Next USDA quarterly update may cross threshold — watch."
-      update_frequency:    QUARTERLY
-      acceptable_lag_days: 90
-      consumer:            [M17]
-      calibration_use:     "CHAIN_1 §12.1: ≥+50% YoY (AND natgas or fertilizer threshold)"
-    }
-
-
-    // ── HOLDINGS PRICES ────────────────────────────────────────────────────────────
-    REGISTER FetchSpec {
-      id:                  "HOLDINGS_PRICES"
-      source:              YFINANCE_MCP
-      description:         "All active portfolio instrument prices — YFINANCE_MCP market_get_quotes.
-                            Instrument list driven by instruments.json (same dir as server.py).
-                            instruments.json is written by advisory session WriteBack (M12 PATTERN_B)
-                            from §11.3 active positions — replaces manually maintained portfolio.json.
-                            Fallback list is hardcoded in server.py for pre-first-session resilience.
-                            ⚠ CROSSCHECK REQUIRED: after fetching via YFINANCE_MCP, compare
-                            against GOOGLEFINANCE prices in allocation sheet (already loaded at
-                            session Step 1). If discrepancy > 5% on any instrument → HALT and
-                            apply ALLOCATION_PRICE_CROSSCHECK protocol.
-                            Allocation sheet prices are ~20-min delayed but T1 (live exchange feed).
-                            DEPRECATED source: GOOGLEFINANCE as primary."
-      update_frequency:    DAILY
-      acceptable_lag_days: 0
-      consumer:            [M02, M06, M13]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "BROAD_EQUITY_TRAILING"
-      source:              FMP_INDEXES
-      description:         "S&P 500 (^GSPC) 30-day and 90-day trailing pct-change —
-                            computed from FMP:indexes index-historical-price-eod-light ^GSPC
-                            with from_date = 90 calendar days prior to session date.
-                            Confirmed working: ^GSPC via FMP:indexes June 4, 2026.
-                            NOTE: ^GSPC replaces SPY proxy (used in v1.1 because ^SPX
-                            was ACCESS DENIED). SPY remains a valid fallback if ^GSPC
-                            historical endpoint fails.
-                            Computation:
-                              30d_return = (close[0] − close[30_trading_days_back]) / close[30_trading_days_back]
-                              90d_return = (close[0] − close[last_index]) / close[last_index]
-                            Index 0 in FMP response = most recent close (array newest-first).
-                            Fallback: YFINANCE_MCP market_get_history [^GSPC, period=6m].
-                            Session result (May 26, SPY proxy): 30-trading-day return = +8.68%."
-      update_frequency:    DAILY
-      acceptable_lag_days: 1
-      consumer:            [M14]
-    }
-
-    REGISTER FetchSpec {
-      id:                  "HISTORICAL_INSTRUMENT_PRICES"
-      source:              YFINANCE_MCP
-      description:         "Daily adjusted close prices for any portfolio instrument over any
-                            date range — YFINANCE_MCP market_get_history.
-                            Supports: period shorthands (ytd, 1m, 3m, 6m, 1y, 2y, 5y) or
-                            explicit start/end dates (YYYY-MM-DD). Returns adjusted closes
-                            (splits + dividends) with total_return_pct computed.
-                            ⚠ ON-DEMAND ONLY — NOT a standard session fetch.
-                            Fetch only when explicitly needed for a specific analytical task.
-                            Use cases:
-                              1. Return table validation (M16): compare instrument performance
-                                 in historical scenario-equivalent periods vs return table values.
-                                 E.g., MLPX during 2022 (B-proxy), DBMF during 2022 (B).
-                              2. Thesis performance tracking: is an instrument tracking its
-                                 EV trajectory given current scenario probabilities?
-                              3. Stress period analysis: drawdown, max daily loss.
-                              4. Correlation cross-check: do uncorrelated instruments actually
-                                 diverge in practice during this regime?
-                            Session capacity: use for Q2 audit calibration tasks; avoid during
-                            standard M05 sessions unless a specific decision requires it."
-      update_frequency:    ON_DEMAND
-      acceptable_lag_days: 1
-      consumer:            [M16, M13, M07]
-    }
-
-  }  // end DATA_REGISTRY_ENTRIES
 
 
   // ─── HARD GATE: NO WEB SEARCH FOR PRICE DATA ─────────────────────────────────
@@ -953,7 +463,8 @@ MODULE MarketDataFetch {
   // instruments.json: dev/market_data_mcp/instruments.json (same directory)
   //
   // INSTRUMENTS.JSON LIFECYCLE:
-  //   Written by: advisory session M12 PATTERN_B WriteBack (via Desktop Commander)
+  //   Written by: manually via Desktop Commander:write_file during WriteBack Step 4b
+  //              (@see M12_DriveProtocol.md WriteBack STEP 4b; NOT automated in Python — see ENG-25)
   //   Read by:    server.py on every tool call (dynamic, no restart needed)
   //   Format:     { "instruments": ["MLPX","SGOL",...], "last_updated": "YYYY-MM-DD",
   //                "session": "YYYY-MM-DD advisory" }
