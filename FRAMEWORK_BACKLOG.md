@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-17
+**Last updated:** 2026-06-18
 
 ## Index
 
@@ -62,6 +62,7 @@
 | ENG-21 | OPEN | LOW | hygiene | M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback |
 | ENG-22 | OPEN | LOW | testing | Test suite needs reorganizing into unit/e2e/integration — currently flat test_stageN folders |
 | ENG-23 | CLOSED | MEDIUM | architecture | M05_SessionInit.md retired outright (ENG-2 follow-on decision #2) |
+| ENG-24 | OPEN | MEDIUM | architecture | M13.RecalibrationSequence() has no Python implementation — still 100% manual |
 
 ---
 
@@ -175,15 +176,49 @@ All 7 edited files re-validated against `tools/validate_manifests.py`
 
 **Why this item stays IN_PROGRESS rather than CLOSED:** the original ask
 — "review the necessity of having this many modules" — has now actually
-happened, with evidence, for all 19 files. Two of the three follow-on
-decisions flagged in the original pass have since been resolved: (1)
-the `mcp_server.py` wiring for the unwired portfolio-math modules — see
-ENG-16, CLOSED; (2) whether `M05_SessionInit.md` should be deleted
-outright — see ENG-23, CLOSED, deleted 2026-06-17. What remains open:
-(3) the smaller hygiene/functional-gap findings spun out as ENG-17
-through ENG-21; and the larger question of whether M07/M08/M09/M10/M13/
-M15 themselves are now shrinkable now that ENG-16 wired their Python —
-not attempted yet, flagged as the next ENG-2 sub-pass.
+happened, with evidence, for all 19 files. Of the three follow-on
+decisions flagged in the original pass: (1) the `mcp_server.py` wiring
+for the unwired portfolio-math modules — see ENG-16, CLOSED; (2) whether
+`M05_SessionInit.md` should be deleted outright — see ENG-23, CLOSED,
+deleted 2026-06-17; (3) the smaller hygiene/functional-gap findings spun
+out as ENG-17 through ENG-21 — still open.
+
+**Update (2026-06-18) — M07/M08/M13/M15 shrink pass, second half of the
+M07/M08/M09/M10/M13/M15 question left open above:** now that ENG-16 wired
+their Python, re-read all four files against the actual wired functions
+and shrunk every FUNCTION/GUARD/RULE block confirmed to have a faithful,
+called Python equivalent to a short pointer (formula/spec retained,
+literal pseudo-code removed) — M07 (`AutoDisqualify` →
+`advisor_check_instrument_candidate()`), M08 (`DualRoleConflict` →
+`dual_role_conflict()`), M13 (`ComputeTargetMultiplier`,
+`RequiredRealReturn`, `ComputeFloor`, `idealAllocation`,
+`minimumConvictionWeight` — fully retired, folded into `ComputeFloor`,
+`FeasibilityCheck`, `PassiveMandateAbsentWarning`,
+`CurrentHoldingsFloorCheck`), M15 (`ValidateClassifications`,
+`classifyInstrument`, `blendedScenarioReturn`, `dominantDirective`).
+Net: M13 541→~290 lines, M15 263→176 lines, M07/M08 shrunk by their one
+superseded section each. Two real NEVER-rule violations were found and
+fixed in the same pass, not just staleness: M13's `RecalibrationSequence`
+had two direct `§4.1[M08.classifyRole(a)][s]` lookups (should route
+through `M15.blendedScenarioReturn()`/`classifyInstrument()` per the
+NEVER rules) and `RecommendationFlow` step 3 still said
+`M08.classifyRole(asset)` instead of `M15.classifyInstrument(asset)` —
+M15.md had already claimed this exact correction was made, but it
+hadn't actually been applied in M13. All four fixed.
+`M13.RecalibrationSequence()` itself was left fully untouched — confirmed
+via grep it has no Python implementation anywhere, unlike every other
+M13 function — opened as its own item, ENG-24, rather than folded into
+this one. M09/M10 were read in full and confirmed NOT shrinkable: their
+Python mirror (`directives.py`) captures only the bare DirectiveCode,
+not the `rationale`/`urgency`/conditional nuance (e.g. Scenario A's
+DXY-trajectory check before adding international equity) that these
+files carry — that's the legitimate "why" half of the why/how split per
+design principle 3, not redundant documentation. `validate_manifests.py`:
+19/19 pass. Full pytest suite: 491 passed, 46 skipped (44 are
+`test_stage2/test_integration.py`'s pre-existing live-file-presence
+skips — see ENG-12; 2 are pre-existing FMP 403 plan-tier skips), 2
+failed (live yfinance network/DNS resolution failure on the machine
+this pass ran on — unrelated to any code change here).
 
 ### ENG-16 — M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py
 <!-- ITEM
@@ -872,6 +907,42 @@ via glob, no hardcoded count to fix). Full pytest suite re-run clean:
 535 passed, 4 skipped (one fewer than the prior 536 — `test_manifest_schema.py`
 parametrizes over the same glob, one fewer file to assert PASS on; not a
 regression).
+
+
+### ENG-24 — M13.RecalibrationSequence() has no Python implementation — still 100% manual
+<!-- ITEM
+  Status:    OPEN
+  Severity:  MEDIUM
+  Category:  architecture
+  Opened:    2026-06-18
+  Area:      M13_GrowthObjectives.md, python/advisor/mcp_server.py
+  Related:   ENG-2, ENG-16
+-->
+
+**Description:** Confirmed by grep across `python/advisor/` — `RecalibrationSequence`
+appears only as a string in three places (`types.py`, `mcp_server.py`,
+`orchestrator/session.py`), all saying it's "required before allocation
+recommendations proceed." No function anywhere actually implements it.
+This is the one M13 function that survived the 2026-06-18 shrink pass
+untouched, because there is nothing to point to — every other FUNCTION in
+M13 (ComputeTargetMultiplier, RequiredRealReturn, ComputeFloor,
+idealAllocation, FeasibilityCheck, PassiveMandateAbsentWarning,
+CurrentHoldingsFloorCheck) is wired via `advisor_evaluate_allocation()` or
+`advisor_run_computation()`; this one is still 100% Claude's manual job,
+fires whenever `FeasibilityCheck` / `feasibility_check()` returns
+`feasible: false`.
+
+**Why it matters:** anchor-position identification, residual-gap
+computation, and the reallocate-then-evaluate-new-instrument decision tree
+are exactly the kind of deterministic, multi-step arithmetic the framework's
+design principle #1 says belongs in Python, not re-derived by Claude each
+time a feasibility check fails.
+
+**Suggested next step:** port `RecalibrationSequence()` into
+`portfolio/allocation.py` alongside the other M13 functions, wire it into
+`advisor_evaluate_allocation()` (fire automatically when `feasibility.feasible
+== false`), add e2e test coverage analogous to `tests/e2e/test_evaluate_allocation.py`,
+then shrink M13's RECALIBRATION SEQUENCE section to match the rest of the file.
 
 ---
 

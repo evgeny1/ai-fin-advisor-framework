@@ -1,9 +1,9 @@
 # M08 — Functional Roles (Dynamic Position Classification)
-<!-- Version: 1.7 | Updated: see git log -->
+<!-- Version: 1.8 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M08_FunctionalRoles
-  Version:         1.7
+  Version:         1.8
   Sub-project:     PORTFOLIO_ADVISOR (primary) | ANALYSIS_ENGINE (classifyRole for constituent analysis only)
   Reason to change: role classification logic, dual-role conflict rules, execution guards, or mandate impairment logic changes.
                     New roles: add to CALIBRATION_STATE §11 only — not here.
@@ -280,27 +280,19 @@ MODULE FunctionalRoles {
   }
 
   // ─── DUAL-ROLE CONFLICT RESOLUTION ──────────────────────────────────────
-
-  RULE DualRoleConflict(holding, roleA, roleB) {
-    IF holding qualifies_under roleA AND roleB {
-      IF prescribed_actions ARE same_direction {
-        APPLY: more_conservative_action
-      }
-      IF prescribed_actions ARE opposite_direction {
-        // e.g. one says exit, other says hold/add
-        NEVER: default_to_more_conservative_label
-        INSTEAD {
-          IDENTIFY: which_role_represents_larger_share_of_return_driver
-                    // based on most recent position review
-          APPLY:    that_role's_instruction
-          IF dominant_role_cannot_be_determined_this_session {
-            FLAG:   position_for_manual_review
-            ACTION: none  // until resolved
-          }
-        }
-      }
-    }
-  }
+  // SUPERSEDED (confirmed during ENG-2 module necessity review, 2026-06-17; wiring
+  // closed via ENG-16). The mechanical version of this rule — direction conflict
+  // detection, dominant-role-by-weight selection, the resulting directive — is now
+  // computed by `dual_role_conflict()` and surfaced via the `dual_role_conflict`
+  // field of `advisor_evaluate_allocation()` (see Project_Instructions_MCP.md).
+  // Retained here as the spec it implements:
+  //   IF roleA and roleB directives are same_direction  → apply the more conservative one
+  //   IF opposite_direction → apply the larger-weighted role's directive, NEVER default
+  //     to "more conservative" as a shortcut for opposite-direction conflicts
+  //   IF dominant role weight is genuinely ambiguous → flag for manual review, no action
+  //     (Python always has a numeric weight, so this branch in practice never fires —
+  //     noted here only because the function's docstring still describes it)
+  // @see python/advisor/portfolio/evaluation.py dual_role_conflict()
 
   // ─── TAX PLACEMENT AT EXECUTION ──────────────────────────────────────────
   // Apply to every entry and exit across all scenario protocols.

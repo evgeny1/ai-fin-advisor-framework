@@ -1,9 +1,9 @@
 # M15 — Instrument Classification
-<!-- Version: 1.0 | Updated: see git log -->
+<!-- Version: 1.1 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M15_InstrumentClassification
-  Version:         1.0
+  Version:         1.1
   Sub-project:     ANALYSIS_ENGINE
   Reason to change: classification logic, blendedScenarioReturn methodology, or ValidateClassifications() rules change.
                     Role registry and instrument decomposition: add to CALIBRATION_STATE §11 only — not here.
@@ -30,132 +30,45 @@ MODULE InstrumentClassification {
   // 6. Backward compatible: pure single-role instruments produce identical results to prior sessions.
 
   // ─── SESSION-START VALIDATION ────────────────────────────────────────────
-  // Runs as part of Project_Instructions_MCP.md Step 3 (advisor_run_computation) — after both
-  // allocation file and Calibration State are confirmed loaded.
-
-  PROCEDURE ValidateClassifications() {
-
-    instruments_in_file = AllocationSheet.all_tickers()
-    classified          = CALIBRATION_STATE.§11.INSTRUMENT_CLASSIFICATION_TABLE.keys()
-    registered_roles    = CALIBRATION_STATE.§11.ROLE_REGISTRY.registered_roles
-
-    // Check 1: Every instrument in allocation file must have a §11 entry
-    unclassified = instruments_in_file EXCLUDING classified
-    IF unclassified NOT EMPTY {
-      HARD_STOP
-      FLAG: "Unclassified instruments in allocation file: [list]
-             Add entries to CALIBRATION_STATE §11.INSTRUMENT_CLASSIFICATION_TABLE.
-             Required: components[] with {role, weight}, weights summing to 1.0,
-             last_reviewed date, methodology note.
-             Session is invalid for allocation computations until resolved."
-    }
-
-    // Check 2: Every component role must exist in §11.ROLE_REGISTRY
-    FOR each instrument IN classified {
-      FOR each component IN §11.classification(instrument).components {
-        IF component.role NOT IN registered_roles {
-          HARD_STOP
-          FLAG: "[instrument]: component references unregistered role '[component.role]'.
-                 Register role in §11.ROLE_REGISTRY before proceeding."
-        }
-      }
-    }
-
-    // Check 3: Every registered role must have a row in §4.1 return table
-    FOR each role IN registered_roles {
-      IF role NOT IN CALIBRATION_STATE.§4_1 {
-        HARD_STOP
-        FLAG: "Role '[role]' registered in §11 has no §4.1 return table row.
-               Add conservative/upside estimates for all six scenarios before proceeding."
-      }
-    }
-
-    // Check 4: Component weights must sum to 1.0 per instrument (tolerance 0.001)
-    FOR each instrument IN classified {
-      total_weight = SUM(c.weight for c IN §11.classification(instrument).components)
-      IF abs(total_weight - 1.0) > 0.001 {
-        HARD_STOP
-        FLAG: "[instrument] component weights sum to [total_weight] (expected 1.0).
-               Correct §11.INSTRUMENT_CLASSIFICATION_TABLE."
-      }
-    }
-
-    // Check 5: Staleness warning (non-blocking)
-    FOR each instrument IN classified {
-      last_reviewed = §11.classification(instrument).last_reviewed
-      IF last_reviewed < current_date - 90_calendar_days {
-        FLAG: "[instrument] classification last reviewed [last_reviewed] — over 90 days ago.
-               Queue for next scheduled calibration review."
-        // Warning only — does not block session
-      }
-    }
-
-    RETURN validation_passed
-  }
+  // SUPERSEDED (confirmed during ENG-2 module necessity review, 2026-06-17; wiring
+  // closed via ENG-16/pre-existing). Runs automatically inside `advisor_run_computation()`
+  // (Project_Instructions_MCP.md Step 3) — HARD_STOP surfaces in the tool's status field,
+  // no separate call needed. Retained here as the spec for what gets checked:
+  //   1. Every instrument in the allocation file has a §11 entry (else HARD_STOP)
+  //   2. Every component role exists in §11.ROLE_REGISTRY (else HARD_STOP)
+  //   3. Every registered role has a §4.1 return table row (else HARD_STOP)
+  //   4. Component weights sum to 1.0 per instrument, tolerance 0.001 (else HARD_STOP)
+  //   5. Staleness: flag (non-blocking) any classification last_reviewed > 90 days ago
+  // @see python/advisor/analysis/instruments.py validate_classifications()
 
   // ─── INSTRUMENT CLASSIFICATION LOOKUP ────────────────────────────────────
-  // Replaces M08_FunctionalRoles.classifyRole() for all scenario return computations.
-  // Returns a vector of {role, weight} pairs summing to 1.0.
-
-  FUNCTION classifyInstrument(ticker) -> ComponentVector {
-    IF ticker NOT IN CALIBRATION_STATE.§11.INSTRUMENT_CLASSIFICATION_TABLE {
-      HARD_STOP
-      FLAG: "[ticker] missing from §11 — ValidateClassifications() should have caught this at session start."
-    }
-    RETURN CALIBRATION_STATE.§11.INSTRUMENT_CLASSIFICATION_TABLE[ticker].components
-  }
+  // SUPERSEDED — wired into `advisor_evaluate_allocation()`'s `components` field
+  // (Project_Instructions_MCP.md). Replaces M08_FunctionalRoles.classifyRole() for
+  // all scenario return computations. Returns a vector of {role, weight} pairs
+  // summing to 1.0; ticker missing from §11 → HARD_STOP (caught at session start
+  // by ValidateClassifications() above, so this should never fire mid-session).
+  // @see python/advisor/analysis/instruments.py classify_instrument()
 
   // ─── BLENDED SCENARIO RETURN ─────────────────────────────────────────────
-  // REPLACES all direct §4.1[role][scenario] lookups throughout the framework.
-  // All scenario return computations MUST route through this function.
-  // For pure single-role instruments: result equals §4.1[role][scenario] exactly.
-  // For composite instruments: weighted blend across components.
-
-  FUNCTION blendedScenarioReturn(ticker, scenario, return_type) -> Float {
-    // return_type: "conservative" | "upside"
-    // Default for ALL feasibility math, idealAllocation(), FeasibilityCheck(): "conservative"
-    // Upside: disclosed in briefing only — NEVER used in any computation
-
-    components = classifyInstrument(ticker)
-    result = 0
-    FOR each component c IN components {
-      result += c.weight × CALIBRATION_STATE.§4_1[c.role][scenario][return_type]
-    }
-    RETURN result
-  }
+  // SUPERSEDED — wired into `advisor_evaluate_allocation()`'s `per_scenario` /
+  // `blended_conservative_return_pct` fields. REPLACES all direct §4.1[role][scenario]
+  // lookups throughout the framework — never present allocation numbers without this
+  // having run (the full per-scenario breakdown, not just the blended total).
+  // Formula: result = Σ component.weight × §4.1[component.role][scenario][return_type]
+  // ("conservative" for all feasibility/allocation math; "upside" disclosed in
+  // briefing only, NEVER used in any computation). For a pure single-role
+  // instrument, result equals §4.1[role][scenario] exactly.
+  // @see python/advisor/analysis/instruments.py blended_scenario_return()
 
   // ─── DOMINANT DIRECTIVE (for M09/M10 execution protocols) ────────────────
-  // Scenario execution protocols prescribe directives by role.
-  // For composite instruments: apply directive of highest-weight material component
-  // unless directives conflict — in which case surface for resolution.
-  // Material component threshold: weight >= 0.15
-
-  FUNCTION dominantDirective(ticker, scenario) -> Directive {
-    components        = classifyInstrument(ticker)
-    sorted            = sort_descending(components by weight)
-    primary_role      = sorted[0].role
-    primary_directive = lookup_directive(primary_role, scenario)  // from M09 or M10
-
-    // Single-component: trivial
-    IF sorted.length == 1 { RETURN primary_directive }
-
-    // Material components only (weight >= 0.15)
-    material   = [c for c IN components WHERE c.weight >= 0.15]
-    directives = [lookup_directive(c.role, scenario) for c IN material]
-
-    IF all_same_direction(directives) {
-      RETURN most_conservative(directives)
-      // Same-direction conflict: apply more conservative — @see M08.DualRoleConflict
-    }
-
-    IF conflicting_directions(directives) {
-      FLAG: "[ticker] has conflicting directives in [scenario]:
-             [list c.role: directive for material components].
-             Applying dominant role [primary_role]: [primary_directive].
-             Surface in briefing — may require manual review."
-      RETURN primary_directive
-    }
-  }
+  // SUPERSEDED — wired into `advisor_evaluate_allocation()`'s
+  // `dominant_directive_conflict_aware` field; supersedes the naive directive for
+  // presentation. Spec: for composite instruments, apply the directive of the
+  // highest-weight material component (weight >= 0.15) unless material components'
+  // directives conflict — in which case surface the conflict, apply the dominant
+  // (largest-weight) role's directive anyway, and flag for manual review. Single
+  //-component instruments: trivial, the one role's directive applies.
+  // @see python/advisor/analysis/instruments.py dominant_directive()
 
   // ─── CLASSIFICATION METHODOLOGY ──────────────────────────────────────────
   // Reference procedure for deriving component weights at initial classification

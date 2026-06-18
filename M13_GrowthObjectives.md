@@ -1,9 +1,9 @@
 # M13 — Growth Objectives
-<!-- Version: 1.1 | Updated: see git log -->
+<!-- Version: 1.2 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M13_GrowthObjectives
-  Version:         1.1
+  Version:         1.2
   Sub-project:     PORTFOLIO_ADVISOR
   Reason to change: account objective logic, feasibility methodology, or recalibration sequence changes.
                     Return table values: go to CALIBRATION_STATE §4 only — not here.
@@ -44,39 +44,18 @@ MODULE GrowthObjectives {
   }
 
   // ─── TARGET MULTIPLIER ───────────────────────────────────────────────────
-  // For TARGET_THEN_RETURN accounts: regime-dependent, probability-weighted.
-  // Prevents cliff effects from dominant-scenario shifts.
-  // Floor enforced regardless of probability vector.
-  // ⚑ Per-scenario multipliers CALIBRATION_DATED → CALIBRATION_STATE §4.2 (IRA) / §4.3 (Roth)
-
-  FUNCTION ComputeTargetMultiplier(account) -> Float {
-    IF account.objective_type NOT IN [TARGET_THEN_RETURN] {
-      RETURN null  // no target multiplier for non-TARGET accounts
-    }
-
-    // Load multipliers from CALIBRATION_STATE based on account type
-    IF account.account_id IN ["IRA_primary", "IRA_relative"] {
-      multipliers = CALIBRATION_STATE §4.2
-    }
-    IF account.account_id IN ["Roth_IRA_primary", "Roth_IRA_relative"] {
-      multipliers = CALIBRATION_STATE §4.3
-    }
-
-    result = 0
-    FOR each scenario s IN [A, B, C, D, E, F] {
-      result += s.probability × multipliers[s]
-    }
-    RETURN MAX(result, multipliers.floor)
-  }
-
-  FUNCTION RequiredRealReturn(account) -> Float {
-    // Real annualized return needed to reach target over planning horizon
-    multiplier = ComputeTargetMultiplier(account)
-    horizon    = account.planning_horizon_years
-    RETURN (multiplier ^ (1.0 / horizon)) - 1
-    // Example: IRA current B/C regime (~1.57× over 10yr) → ~4.6% real annualized
-    // Example: Roth current B/C regime (~2.0× over 15yr) → ~4.7% real annualized
-  }
+  // SUPERSEDED (confirmed during ENG-2 module necessity review, 2026-06-17; wiring
+  // closed via ENG-16). For TARGET_THEN_RETURN accounts (IRA, Roth IRA): a regime-
+  // dependent, probability-weighted multiplier, floor-enforced regardless of
+  // probability vector, that prevents cliff effects from dominant-scenario shifts.
+  // Routes to §4.2 (IRA) or §4.3 (Roth) multiplier tables. Not separately exposed
+  // as its own MCP field — its result surfaces inside `advisor_evaluate_allocation()`'s
+  // `feasibility.target_multiplier` field whenever proposed_allocations is supplied.
+  // Formula: multiplier = MAX(Σ probability[s] × table_multiplier[s], table_floor)
+  // RequiredRealReturn: real annualized return needed to reach target over the
+  // planning horizon — surfaces as `feasibility.required_return`.
+  // Formula: required_return = (multiplier ^ (1/horizon_years)) − 1
+  // @see python/advisor/portfolio/allocation.py compute_target_multiplier(), required_real_return()
 
   // ─── EXPECTED REAL ANNUALIZED RETURN TABLE ───────────────────────────────
   // Empirically grounded structural estimates per functional role per scenario.
@@ -94,209 +73,71 @@ MODULE GrowthObjectives {
   }
 
   // ─── FLOOR COMPUTATION ──────────────────────────────────────────────────
-  // Independently defined — does NOT reference scenarioWeightedAllocation().
-  // Breaks the circularity in the prior M03 definition.
-
-  FUNCTION ComputeFloor(asset, account) -> Float {
-    base_floor    = [FLOOR_FRACTION] × AllocationSheet.currentAllocation(asset, account)
-    minimum_floor = [FLOOR_MINIMUM_PCT] × account.total_value
-    // ⚑ CALIBRATION_DATED values → CALIBRATION_STATE §4.4
-    RETURN MAX(base_floor, minimum_floor)
-    // NEVER zero unless both inputs are zero
-  }
+  // SUPERSEDED — wired, surfaces as the `floor` field in
+  // `advisor_evaluate_allocation()`'s AllocationTarget output. Independently
+  // defined — does NOT reference scenarioWeightedAllocation(); breaks the
+  // circularity in the prior M03 definition. REDUCE_TO_MIN directives (the
+  // old "minimumConvictionWeight()") resolve to this same floor point — there
+  // is no separate minimum-conviction computation anymore, by design.
+  // Formula: floor = MAX([FLOOR_FRACTION] × current_weight, [FLOOR_MINIMUM_PCT] × account_total)
+  // (⚑ FLOOR_FRACTION / FLOOR_MINIMUM_PCT → CALIBRATION_STATE §4.4. Never zero
+  // unless both inputs are zero.)
+  // @see python/advisor/portfolio/allocation.py compute_floor()
 
   // ─── IDEAL ALLOCATION ────────────────────────────────────────────────────
-  // Resolves the gap in M03_ScenarioFramework.scenarioWeightedAllocation()
-  // @see M03_ScenarioFramework.scenarioWeightedAllocation()
+  // SUPERSEDED — wired, surfaces as the `per_scenario` field in
+  // `advisor_evaluate_allocation()`'s AllocationTarget output (one ideal weight
+  // per scenario A–F). Resolves the gap in M03_ScenarioFramework.scenarioWeightedAllocation().
+  // Spec the Python implements:
+  //   1. Resolve primary-role directive from M09/M10 DIRECTIVES (via M15.classifyInstrument()
+  //      — NOT M08.classifyRole(), superseded per M15's INTEGRATION note).
+  //   2. Map directive → permitted [min_w, max_w] weight range:
+  //        Exit → [0, 0] | REDUCE_TO_MIN → [floor, floor] | Reduce → [floor, current]
+  //        Hold | Evaluate → [current, current] | Add | Add_aggressive → [current, cap]
+  //      If min_w == max_w, the directive fully determines weight — no ranking needed.
+  //   3. Otherwise: rank all holdings by blended conservative return in this scenario;
+  //      scale linearly within [min_w, max_w] by rank (best return → max_w).
+  //   4. FLOOR_THEN_RETURN / PRESERVATION accounts: if blended conservative return is
+  //      negative under an Add/Add_aggressive/Hold directive, cap weight at floor.
+  //   5. Clamp to [min_w, max_w] ∩ [0, cap] and return.
+  // @see python/advisor/portfolio/allocation.py ideal_allocation()
 
-  FUNCTION idealAllocation(asset, scenario, account) -> Float {
-
-    // STEP 1: Resolve role and directive
-    role      = M08_FunctionalRoles.classifyRole(asset)
-    directive = lookup_directive(role, scenario)  // from M09 or M10 RESPONSES
-
-    // STEP 2: Establish permitted weight range for this directive
-    floor   = ComputeFloor(asset, account)
-    cap     = account.concentration_cap  // ⚑ CALIBRATION_STATE §4.4
-    current = AllocationSheet.currentAllocation(asset, account)
-
-    DIRECTION_BOUNDS {
-      "Exit"             → [  0%,    0%   ]
-      "reduce_to_floor"  → [floor,  floor ]
-      "Reduce"           → [floor,  current]
-      "Hold"             → [current, current]
-      "Evaluate"         → [current, current]  // no move without EV calc per M06
-      "Add"              → [current,   cap ]
-      "Add_aggressive"   → [current,   cap ]   // same bounds; ranking drives toward cap
-    }
-    [min_w, max_w] = DIRECTION_BOUNDS[directive]
-
-    IF min_w == max_w {
-      RETURN min_w  // direction fully determines weight; no optimization needed
-    }
-
-    // STEP 3: Rank by conservative expected return in this scenario.
-    //         Scale within permitted range proportionally.
-    r_conservative = CALIBRATION_STATE §4.1[role][scenario].conservative
-
-    all_roles     = [M08.classifyRole(h) for h in account.holdings]
-    all_returns   = sorted_descending(
-      [(role_r, CALIBRATION_STATE §4.1[role_r][scenario].conservative) for role_r in all_roles]
-    )
-    rank_position  = all_returns.index_of(role)          // 0 = highest return
-    rank_count     = all_returns.length
-    rank_fraction  = 1.0 - (rank_position / rank_count)  // 1.0 = best; ~0 = worst
-
-    raw_weight = min_w + (rank_fraction × (max_w - min_w))
-
-    // STEP 4: Apply floor nominal loss guard (FLOOR_THEN_RETURN and PRESERVATION accounts)
-    IF account.floor_nominal_loss {
-      IF r_conservative < 0 AND directive IN ["Add", "Add_aggressive", "Hold"] {
-        raw_weight = MIN(raw_weight, floor)
-        FLAG: "[asset.ticker] expected negative conservative real return in [scenario]
-               under directive [directive]. Weight capped at floor. Surface in briefing."
-      }
-    }
-
-    // STEP 5: Clamp and return
-    ideal = CLAMP(raw_weight, min_w, max_w)
-    ideal = MIN(ideal, cap)
-    ideal = MAX(ideal, 0.0)
-    RETURN ideal
-  }
-
-  // ─── UPDATED minimumConvictionWeight() ───────────────────────────────────
-  // Replaces M03_ScenarioFramework.minimumConvictionWeight().
-  // Non-circular: floor independently defined above.
-
-  FUNCTION minimumConvictionWeight(asset, account) -> Float {
-    floor_value = ComputeFloor(asset, account)
-    weighted    = M03_ScenarioFramework.scenarioWeightedAllocation(asset, account)
-    RETURN MAX(floor_value, weighted)
-    // Run explicitly — never estimate.
-    // Never zero unless both inputs are zero.
-  }
+  // ─── MINIMUM CONVICTION WEIGHT (REDUCE_TO_MIN) ───────────────────────────
+  // SUPERSEDED — folded into ComputeFloor() above and the REDUCE_TO_MIN row of
+  // DIRECTION_BOUNDS. No longer a separate function: REDUCE_TO_MIN directives
+  // resolve directly to the floor point, non-circularly. `M03_ScenarioFramework.
+  // minimumConvictionWeight()` is fully retired by this.
 
   // ─── FEASIBILITY CHECK ───────────────────────────────────────────────────
-  // Runs after scenarioWeightedAllocation() produces proposed allocations.
-  // Runs before any allocation recommendation is presented.
-  // Uses conservative expected return throughout.
-
-  FUNCTION FeasibilityCheck(account, proposed_allocations) -> FeasibilityResult {
-
-    // STEP 1: Compute scenario-weighted conservative portfolio return
-    portfolio_return = 0
-    FOR each scenario s IN [A, B, C, D, E, F] {
-      scenario_return_s = 0
-      FOR each asset a IN account.holdings {
-        role              = M08.classifyRole(a)
-        weight            = proposed_allocations[a]
-        r                 = CALIBRATION_STATE §4.1[role][s].conservative
-        scenario_return_s += weight × r
-      }
-      portfolio_return += s.probability × scenario_return_s
-    }
-
-    // STEP 2: Branch by objective type
-
-    CASE account.objective_type {
-
-      TARGET_THEN_RETURN: {
-        required = RequiredRealReturn(account)
-        IF portfolio_return >= required {
-          RETURN FeasibilityResult {
-            feasible:          true
-            portfolio_return:  portfolio_return
-            required_return:   required
-            target_multiplier: ComputeTargetMultiplier(account)
-          }
-        } ELSE {
-          RETURN FeasibilityResult {
-            feasible:         false
-            portfolio_return: portfolio_return
-            required_return:  required
-            shortfall_pp:     required - portfolio_return
-            → fire: RecalibrationSequence(account, proposed_allocations,
-                                          shortfall: required - portfolio_return,
-                                          priority: TARGET)
-          }
-        }
-      }
-
-      RETURN_THEN_TARGET: {
-        // Primary: maximize return per unit of drawdown risk. Target is advisory.
-        drawdown_adjusted_return = portfolio_return / account.drawdown_tolerance
-        required                 = RequiredRealReturn(account)
-        RETURN FeasibilityResult {
-          feasible:                 true   // always — optimization, not a gate
-          portfolio_return:         portfolio_return
-          drawdown_adjusted_return: drawdown_adjusted_return
-          target_met:               portfolio_return >= required  // advisory note only
-        }
-      }
-
-      FLOOR_THEN_RETURN: {
-        // Hard floor: no nominal loss in any scenario above probability threshold.
-        // ⚑ floor_nominal_loss_probability_threshold → CALIBRATION_STATE §4.4
-        floor_threshold = CALIBRATION_STATE §4.4.floor_nominal_loss_probability_threshold
-        floor_breach    = false
-        worst_return    = null
-        worst_scenario  = null
-
-        FOR each scenario s WHERE s.probability >= floor_threshold {
-          scenario_return_s = Σ [
-            proposed_allocations[a]
-            × CALIBRATION_STATE §4.1[M08.classifyRole(a)][s].conservative
-            for a in account.holdings
-          ]
-          IF scenario_return_s < 0 {
-            floor_breach   = true
-            worst_return   = MIN(worst_return ?? scenario_return_s, scenario_return_s)
-            worst_scenario = s
-          }
-        }
-
-        IF floor_breach {
-          RETURN FeasibilityResult {
-            feasible:       false
-            floor_breached: true
-            worst_scenario: worst_scenario
-            worst_return:   worst_return
-            → fire: RecalibrationSequence(account, proposed_allocations,
-                                          shortfall: abs(worst_return),
-                                          priority: FLOOR_PROTECTION)
-          }
-        } ELSE {
-          required = RequiredRealReturn(account)
-          RETURN FeasibilityResult {
-            feasible:         true
-            portfolio_return: portfolio_return
-            floor_breached:   false
-            target_met:       portfolio_return >= required  // advisory
-          }
-        }
-      }
-
-      PRESERVATION: {
-        IF portfolio_return < 0 {
-          FLAG: "Preservation account: negative conservative real return expected.
-                 Requires immediate review."
-          RETURN FeasibilityResult {
-            feasible: false
-            → fire: RecalibrationSequence(account, proposed_allocations,
-                                          shortfall: abs(portfolio_return),
-                                          priority: FLOOR_PROTECTION)
-          }
-        } ELSE {
-          RETURN FeasibilityResult { feasible: true, portfolio_return: portfolio_return }
-        }
-      }
-
-    }
-  }
+  // SUPERSEDED (confirmed during ENG-2 module necessity review, 2026-06-17; wiring
+  // closed via ENG-16). Wired into `advisor_evaluate_allocation()`'s `feasibility`
+  // field — only computed when `proposed_allocations` is passed; never present
+  // allocation numbers without it having run. Runs after scenario-weighted
+  // allocations are produced, before any recommendation is presented. Uses
+  // conservative blended return throughout — never upside.
+  //
+  // Always computes the scenario-weighted conservative portfolio return first,
+  // then branches by account.objective_type:
+  //   TARGET_THEN_RETURN  — feasible iff portfolio_return >= RequiredRealReturn();
+  //                         on failure, reports shortfall_pp and fires RecalibrationSequence
+  //                         (below — NOT yet wired, still Claude's job to run by hand)
+  //   RETURN_THEN_TARGET  — always feasible (optimization, not a gate); reports
+  //                         drawdown_adjusted_return = portfolio_return / drawdown_tolerance,
+  //                         and target_met as an advisory note only
+  //   FLOOR_THEN_RETURN   — hard floor: no nominal loss allowed in any scenario whose
+  //                         probability >= §4.4.floor_nominal_loss_probability_threshold;
+  //                         a breach sets floor_breached=true and fires RecalibrationSequence
+  //                         at FLOOR_PROTECTION priority
+  //   PRESERVATION        — feasible iff portfolio_return >= 0; failure fires
+  //                         RecalibrationSequence at FLOOR_PROTECTION priority
+  // @see python/advisor/portfolio/allocation.py feasibility_check()
 
   // ─── PASSIVE MANDATE ABSENT WARNING ─────────────────────────────────────
-  // Update 3 — added v1.1. Advisory only. Does not block execution or FeasibilityCheck.
+  // SUPERSEDED (confirmed during ENG-2 module necessity review, 2026-06-17; wiring
+  // closed pre-existing). Update 3 — added v1.1. Advisory only — does not block
+  // execution or FeasibilityCheck. Runs automatically inside `advisor_run_computation()`
+  // for FLOOR_THEN_RETURN accounts when `floor_account_weights_json` is supplied;
+  // surfaces as `passive_mandate_warnings` in the tool output.
   //
   // Rationale: VTI/VOO hold a structural price floor from mandated passive inflows
   // (401K contributions, target-date fund rebalancing, index inclusion). Sector/thematic
@@ -310,101 +151,34 @@ MODULE GrowthObjectives {
   //   2. current_market_weight >= 15% of account
   //   3. instrument_30d < 0 (actively repricing down)
   //      OR instrument_30d unavailable AND account within 5pp of floor breach
-
-  RULE PassiveMandateAbsentWarning(account, current_market_weights, holdings_30d_returns) {
-    IF account.objective_type != FLOOR_THEN_RETURN { RETURN }
-
-    floor_proximity_pp = worst_scenario_portfolio_return(current_market_weights, account)
-                         × 100  // positive = above floor; negative = breach
-
-    FOR each ticker IN current_market_weights {
-      weight = current_market_weights[ticker]
-      IF weight < 0.15 { SKIP }  // below 15% concentration threshold
-
-      entry = CALIBRATION_STATE.§11.INSTRUMENT_CLASSIFICATION_TABLE[ticker]
-      IF entry.passive_mandate_eligible == true { SKIP }
-
-      instrument_30d = holdings_30d_returns[ticker]  // null if unavailable
-      repricing_down = (instrument_30d != null AND instrument_30d < 0)
-      near_breach    = (floor_proximity_pp < 5.0)
-
-      IF repricing_down OR (instrument_30d == null AND near_breach) {
-        EMIT PassiveMandateAbsentWarning {
-          account_id:         account.account_id
-          ticker:             ticker
-          current_weight:     weight
-          instrument_30d:     instrument_30d
-          floor_proximity_pp: floor_proximity_pp
-        }
-        NOTE_IN_BRIEFING: "[ticker] at [weight%] in [account] has no passive mandate floor.
-                           30d return: [instrument_30d%]. No structural bid from index/401K flows.
-                           Monitor for continued repricing. Consider whether floor constraint
-                           warrants a proactive reduction review."
-      }
-    }
-  }
+  // @see python/advisor/analysis/floor_monitor.py passive_mandate_absent_warnings()
 
   // ─── CURRENT HOLDINGS FLOOR CHECK ───────────────────────────────────────
-  // Called at Project_Instructions_MCP.md Steps 3b and 6b. Distinct from FeasibilityCheck():
-  //   FeasibilityCheck()         → checks PROPOSED allocations (pre-trade)
-  //   CurrentHoldingsFloorCheck() → checks ACTUAL current holdings at current market prices
+  // SUPERSEDED — wired, runs automatically inside `advisor_run_computation()`
+  // (Step 3b, prior probs) and `advisor_apply_scoring()` (Step 6b, newly derived
+  // probs, auto-fires if any scenario shifted >= 5pp) — surfaces as
+  // `floor_breach_alerts` / `floor_breach_alerts_6b`. `status == "FLOOR_BREACH"`
+  // must be surfaced before any other session content, per Project_Instructions_MCP.md.
   //
-  // Purpose: detect between-session price drift that has moved FLOOR_THEN_RETURN accounts
-  //   toward or into floor breach — without waiting for a formal trade proposal.
-  //
-  // Data source: Allocation sheet GOOGLEFINANCE prices loaded in Project_Instructions_MCP.md Step 1.
-  //   Use current_value per holding (sheet column) / account_total to derive actual weights.
-  //   NEVER use target allocation weights — those reflect intent, not current state.
-  //
-  // Probability source:
-  //   Step 3b: use prior session probabilities from §8 Session_Log (best available pre-scoring)
-  //   Step 6b: use newly derived scenario probabilities from M03 (definitive)
-
-  FUNCTION CurrentHoldingsFloorCheck(
-    account,                  // AccountObjectiveProfile — FLOOR_THEN_RETURN only
-    current_market_weights,   // Dict[ticker → fraction] — derived from sheet current values
-    probabilities             // ScenarioProbabilities — prior (Step 3b) or current (Step 6b)
-  ) -> FloorBreachAlert | null {
-
-    // Guard: only runs for FLOOR_THEN_RETURN accounts
-    IF account.objective_type != FLOOR_THEN_RETURN {
-      RETURN null
-    }
-
-    floor_threshold = CALIBRATION_STATE §4.4.floor_nominal_loss_probability_threshold
-    floor_breach    = false
-    worst_return    = null
-    worst_scenario  = null
-
-    FOR each scenario s WHERE probabilities[s] >= floor_threshold {
-      scenario_return_s = 0
-      FOR each ticker t IN current_market_weights {
-        blended = M15.blendedScenarioReturn(t, s, "conservative")
-        scenario_return_s += current_market_weights[t] × blended
-      }
-      IF scenario_return_s < 0 {
-        floor_breach   = true
-        worst_return   = MIN(worst_return ?? scenario_return_s, scenario_return_s)
-        worst_scenario = s
-      }
-    }
-
-    IF floor_breach {
-      RETURN FloorBreachAlert {
-        account_id:           account.account_id
-        worst_scenario:       worst_scenario
-        worst_return_pct:     worst_return
-        weights_used:         current_market_weights   // snapshot for audit trail
-        probabilities_used:   probabilities
-        check_step:           "3b" | "6b"             // which Project_Instructions_MCP.md step fired this
-        priority:             "IMMEDIATE"
-      }
-    }
-
-    RETURN null
-  }
+  // Distinct from FeasibilityCheck(): FeasibilityCheck checks PROPOSED allocations
+  // (pre-trade); this checks ACTUAL current holdings at current market prices —
+  // detecting between-session price drift that has moved a FLOOR_THEN_RETURN
+  // account toward or into floor breach without waiting for a formal trade proposal.
+  // Data source: allocation sheet GOOGLEFINANCE current values / account_total —
+  // NEVER target allocation weights, which reflect intent, not current state.
+  // Fires (any scenario s with probability >= §4.4.floor_nominal_loss_probability_threshold):
+  //   Σ current_market_weight[t] × blendedScenarioReturn(t, s, "conservative") < 0
+  // @see python/advisor/analysis/floor_monitor.py current_holdings_floor_check()
 
   // ─── RECALIBRATION SEQUENCE ──────────────────────────────────────────────
+  // ⚠ NOT wired into any MCP tool (confirmed during ENG-2 module necessity review,
+  // 2026-06-17 — see FRAMEWORK_BACKLOG.md ENG-16's "follow-up, not done here" note).
+  // Unlike every other FUNCTION in this file, this one is still Claude's job to
+  // execute by hand, in full, per the spec below — there is no Python equivalent
+  // to call. (The two §4.1-lookup-via-M08.classifyRole() bugs this section used to
+  // have were fixed 2026-06-17 during the same pass that found this gap — both now
+  // correctly route through M15.classifyInstrument()/blendedScenarioReturn(), per
+  // the NEVER rules in Project_Instructions_MCP.md.)
   // Fires when FeasibilityCheck returns feasible: false.
   // Both steps always run in sequence — step 2 runs regardless of step 1 outcome.
 
@@ -422,7 +196,7 @@ MODULE GrowthObjectives {
 
     anchor_return = Σ [
       proposed_allocations[a]
-      × Σ [s.probability × CALIBRATION_STATE §4.1[M08.classifyRole(a)][s].conservative
+      × Σ [s.probability × M15.blendedScenarioReturn(a, s, "conservative")
            for s in [A,B,C,D,E,F]]
       for a in high_conviction
     ]
@@ -445,7 +219,7 @@ MODULE GrowthObjectives {
     dominant_scenario = M02_IntelGathering.identifyPrimaryDriver().current_dominant_driver
     non_anchor        = account.holdings EXCLUDING high_conviction
     ranked_non_anchor = sort_descending(
-      [(a, Σ [s.probability × CALIBRATION_STATE §4.1[M08.classifyRole(a)][s].conservative
+      [(a, Σ [s.probability × M15.blendedScenarioReturn(a, s, "conservative")
               for s in [A,B,C,D,E,F]])
        for a in non_anchor]
     )
@@ -470,7 +244,9 @@ MODULE GrowthObjectives {
       "Evaluating unheld functional roles."
     }
 
-    all_roles_held = [M08.classifyRole(a) for a in account.holdings]
+    all_roles_held = UNION(
+      c.role for a in account.holdings for c in M15.classifyInstrument(a).components
+    )
     candidate_role = highest_conservative_return_role(
                        scenario:       dominant_scenario,
                        excluding:      all_roles_held,
@@ -504,15 +280,16 @@ MODULE GrowthObjectives {
   //   M13.idealAllocation(asset, scenario, account) for each scenario s
   //   account parameter required — load from Allocation sheet "Objectives" tab
   //
-  // M03.minimumConvictionWeight() superseded by:
-  //   M13.minimumConvictionWeight(asset, account)
-  //   All references in M09/M10 execution protocols resolve to M13 version
+  // M03.minimumConvictionWeight() is fully retired (see MINIMUM CONVICTION WEIGHT
+  // above) — REDUCE_TO_MIN directives resolve directly to ComputeFloor()'s floor
+  // point. There is no M13.minimumConvictionWeight() function to call instead.
 
   // Full per-asset per-account recommendation flow:
   SEQUENCE RecommendationFlow {
     1: load_profiles    → Allocation sheet "Objectives" tab
     2: load_return_tbl  → CALIBRATION_STATE §4.1 (loaded at session start with §4.2–4.4)
-    3: classify_role    → M08_FunctionalRoles.classifyRole(asset)
+    3: classify         → M15_InstrumentClassification.classifyInstrument(asset)
+                          // NOT M08_FunctionalRoles.classifyRole() — superseded, see M15
     4: derive_probs     → M03_ScenarioFramework.DeriveScenarioProbabilities()
     5: compute_ideals   → M13.idealAllocation(asset, s, account) for each s
     6: compute_weighted → M03.scenarioWeightedAllocation(asset, account)
@@ -522,11 +299,15 @@ MODULE GrowthObjectives {
     9: validate         → M06.SimplicityTest, M07.AutoDisqualify, M06.TaxPlacement
     10: hold_ev         → M06.HoldJustification (EV math required if hold recommended)
   }
+  // In practice (Pattern B / MCP mode): steps 1–8 collapse into one
+  // `advisor_evaluate_allocation()` call — @see Project_Instructions_MCP.md
+  // "How to make a recommendation". This SEQUENCE is the conceptual map it implements.
 
   // ─── SESSION LOAD REQUIREMENT ─────────────────────────────────────────────
   // M13 is Project Knowledge — always in context.
   // The following CALIBRATION_STATE sections must be loaded at session start
-  // (fetched as part of Calibration_State.md from GitHub — @see M12_FileProtocol).
+  // (read from the local filesystem via `advisor_run_computation()` —
+  // @see Project_Instructions_MCP.md, M12_DriveProtocol; NEVER GitHub for this read).
 
   REQUIRE at_session_start {
     CALIBRATION_STATE §4.1  // return table — required for idealAllocation()

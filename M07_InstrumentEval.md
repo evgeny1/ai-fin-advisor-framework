@@ -1,9 +1,9 @@
 # M07 — Instrument Evaluation
-<!-- Version: 1.1 | Updated: see git log -->
+<!-- Version: 1.2 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M07_InstrumentEval
-  Version:         1.1
+  Version:         1.2
   Sub-project:     PORTFOLIO_ADVISOR
   Reason to change: evaluation criteria, AUM/volume/spread thresholds, or disqualification rules change.
   Inputs consumed:  instrument metadata (AUM, volume, spread, inception date, foreign exposure)
@@ -75,15 +75,21 @@ MODULE InstrumentEval {
   }
 
   // ─── AUTOMATIC DISQUALIFICATION ──────────────────────────────────────────
-
-  GUARD AutoDisqualify(instrument) {
-    IF instrument.AUM < $100M AND hold_horizon >= 10y          → DISQUALIFY
-    IF instrument.foreign_concentration > 40%
-       AND instrument.type IN [active_fund, sector_ETF]        → DISQUALIFY
-    IF instrument.revenue == pure_commodity_price_dependent
-       AND NOT contract_backstop                               → DISQUALIFY
-    IF instrument.track_record < 3y                            → DISQUALIFY
-  }
+  // SUPERSEDED (confirmed during ENG-2 module necessity review, 2026-06-17; wiring
+  // closed via ENG-16). The four hard GUARD conditions below are now executed by
+  // `advisor_check_instrument_candidate(ticker, aum_millions?, track_record_years?,
+  // foreign_concentration_pct?, instrument_type, revenue_type, has_contract_backstop,
+  // hold_horizon_years)` — see Project_Instructions_MCP.md. Re-run it for existing
+  // holdings too, not only new candidates, if any of these metrics may have changed.
+  // Retained here as the spec these four conditions implement (ForeignExposureRule
+  // above governs how to set instrument_type/foreign_concentration_pct correctly
+  // before calling the tool — that judgment is NOT in Python):
+  //   1. AUM < $100M AND hold_horizon >= 10y                        → DISQUALIFY
+  //   2. foreign_concentration > 40% AND type IN [active_fund,
+  //      sector_ETF]                                                 → DISQUALIFY
+  //   3. revenue == commodity_dependent AND NOT contract_backstop    → DISQUALIFY
+  //   4. track_record < 3y                                           → DISQUALIFY
+  // @see python/advisor/portfolio/evaluation.py auto_disqualify()
 
   // ─── THEMATIC ETF CLASSIFICATION GATE ────────────────────────────────────
   // Applies to: any thematic or sector ETF whose label suggests
