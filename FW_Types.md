@@ -1,9 +1,9 @@
 # FW_Types — Framework Shared Type Definitions
-<!-- Version: 1.4 | Updated: see git log -->
+<!-- Version: 1.5 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              FW_Types
-  Version:         1.4
+  Version:         1.5
   Sub-project:     FRAMEWORK_CORE
   Reason to change: a new shared contract is needed (rare).
                     NEVER add business logic here — types only.
@@ -25,7 +25,7 @@ TYPES FrameworkCore {
     ANALYSIS_ENGINE,     // M03, M11, M14, M15, M16, M17 §1–4
     PORTFOLIO_ADVISOR,   // M06, M07, M08, M09, M10, M13, M17 §5
     FRAMEWORK_CORE,      // FW_Types.md, CALIBRATION_STATE, SESSION_LOG, 00_INDEX
-    ORCHESTRATION        // M05, M04
+    ORCHESTRATION        // M04 (M05 retired 2026-06-17, ENG-2 — see Project_Instructions_MCP.md)
   }
 
 
@@ -230,9 +230,10 @@ TYPES FrameworkCore {
 
 
   // ─── REGISTRY TYPES ────────────────────────────────────────────────
-  // Extension points for the framework. New modules add entries; orchestration
-  // iterates registries without knowing their contents. M05 never changes when
-  // a new module is added — the module registers itself.
+  // Extension points for the framework. New modules add entries; the session
+  // sequence (Project_Instructions_MCP.md) iterates registries without knowing
+  // their contents. The sequence never changes when a new module is added —
+  // the module registers itself.
 
   STRUCT FetchRegistry {
     // Accumulates FetchSpec from all modules. Replaces M02 hardcoded FETCH_LIST.
@@ -301,8 +302,9 @@ TYPES FrameworkCore {
   ENUM Scenario { A, B, C, D, E, F }
 
   ENUM ModuleID {
-    M01, M02, M03, M04, M05, M06, M07, M08,
+    M01, M02, M03, M04, M06, M07, M08,
     M09, M10, M11, M12, M13, M14, M15, M16, M17, M18, M19
+    // M05 retired 2026-06-17 (ENG-2) — see Project_Instructions_MCP.md
     // M18 added v1.1 — centralized data fetch registry
     // M19 added v1.4 — thesis sustaining conditions (was missing; added during ENG-2 review, 2026-06-17)
   }

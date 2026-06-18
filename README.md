@@ -74,7 +74,7 @@ and conflating them is the most common source of confusion:
 | How a signal/EV/probability is *computed* | The relevant `python/advisor/analysis/` or `portfolio/` file (Layer 3) |
 | The *methodology* behind why a calibration value should be revised | `M16_ReturnTableCalibration.md` (Layer 1) — this one is genuinely still authoritative, it's a methodology doc an LLM applies, not something Python executes |
 | What an MCP tool does, its signature, or what JSON it returns | `python/advisor/mcp_server.py` (Layer 3) — **then check `Project_Instructions_MCP.md`, see §9 below** |
-| The session execution sequence (M05 steps) | `Project_Instructions_MCP.md` is what Claude actually reads; `M05_SessionInit.md` is the pseudo-code original — keep both in sync if you touch either |
+| The session execution sequence (M05 steps) | `Project_Instructions_MCP.md` is the sole authoritative source — `M05_SessionInit.md` was retired 2026-06-17 (ENG-2) once fully superseded; "M05" survives only as the session-type label in `Session_Log.md` |
 
 
 ---
@@ -91,7 +91,7 @@ of intent than executable specification.
 | M02 Intel Gathering | `data/fetch_registry.py`, `data/m18_registry.py` | Python owns data fetching; qualitative gathering is AI-judgment-only |
 | M03 Scenario Framework | `analysis/scenario_math.py` | Python owns the arithmetic; AI owns scoring-question interpretation |
 | M04 Briefing Format | `mcp_server.py` (briefing assembly), `orchestrator/session.py` | Mostly Python now |
-| M05 Session Init | `Project_Instructions_MCP.md` (Pattern B) / `orchestrator/session.py` (Pattern A) | Sequencing logic now lives outside the .md file |
+| M05 Session Init | `Project_Instructions_MCP.md` (Pattern B) / `orchestrator/session.py` (Pattern A) | **RETIRED 2026-06-17 (ENG-2)** — `M05_SessionInit.md` deleted; was already reduced to a step-cross-reference stub, fully superseded |
 | M06 Client & Advisory | — | AI-judgment-only (advisory principles, tax placement reasoning) |
 | M07 Instrument Eval | `portfolio/evaluation.py` (`auto_disqualify`) | Python owns the mechanical checks |
 | M08 Functional Roles | `portfolio/evaluation.py` (`dual_role_conflict`), `portfolio/directives.py` | Python owns conflict detection + directive lookup |

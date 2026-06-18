@@ -277,7 +277,7 @@ MODULE FileProtocol {
   // REQUIRE: SessionType == FULL_DESKTOP
   // Executed automatically at session end — do not wait for client instruction.
   // @see CANONICAL_WRITE_WORKFLOW.PATTERN_B
-  // @see M05_SessionInit.SessionStartSequence Step 10
+  // @see Project_Instructions_MCP.md "Session start sequence" Step 9 (advisor_write_back)
 
   PROCEDURE WriteBack {
     WHEN:    portfolio_discussion_concluded

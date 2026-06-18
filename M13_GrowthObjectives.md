@@ -345,14 +345,14 @@ MODULE GrowthObjectives {
   }
 
   // ─── CURRENT HOLDINGS FLOOR CHECK ───────────────────────────────────────
-  // Called at M05 Steps 3b and 6b. Distinct from FeasibilityCheck():
+  // Called at Project_Instructions_MCP.md Steps 3b and 6b. Distinct from FeasibilityCheck():
   //   FeasibilityCheck()         → checks PROPOSED allocations (pre-trade)
   //   CurrentHoldingsFloorCheck() → checks ACTUAL current holdings at current market prices
   //
   // Purpose: detect between-session price drift that has moved FLOOR_THEN_RETURN accounts
   //   toward or into floor breach — without waiting for a formal trade proposal.
   //
-  // Data source: Allocation sheet GOOGLEFINANCE prices loaded in M05 Step 1.
+  // Data source: Allocation sheet GOOGLEFINANCE prices loaded in Project_Instructions_MCP.md Step 1.
   //   Use current_value per holding (sheet column) / account_total to derive actual weights.
   //   NEVER use target allocation weights — those reflect intent, not current state.
   //
@@ -396,7 +396,7 @@ MODULE GrowthObjectives {
         worst_return_pct:     worst_return
         weights_used:         current_market_weights   // snapshot for audit trail
         probabilities_used:   probabilities
-        check_step:           "3b" | "6b"             // which M05 step fired this
+        check_step:           "3b" | "6b"             // which Project_Instructions_MCP.md step fired this
         priority:             "IMMEDIATE"
       }
     }

@@ -1,8 +1,10 @@
 # 00 — Index & Module Map
 <!-- Personal Financial Advisor Framework — Pseudo-Code Edition -->
 <!-- Source documents: Framework_Main_v1, Framework_Extension_v1, Calibration_State, Amendment 1, Amendment 2 -->
-<!-- Last updated: June 17, 2026 (v1.24: M19_ThesisSustainingConditions added — new sub-project
-     THESIS_MONITORING, §13 extension point, NEVER-feeds-M03 boundary, canonical briefing id) -->
+<!-- Last updated: June 17, 2026 (v1.25: M05_SessionInit retired per ENG-2 — removed from
+     MODULES/ORCHESTRATION/FILE_MAP; SESSION_START_SEQUENCE block (stale, ended in a GitHub
+     push_files write-back) replaced with a pointer to Project_Instructions_MCP.md, the
+     actual authoritative sequence) -->
 
 ```
 FRAMEWORK PersonalFinancialAdvisor {
@@ -14,7 +16,6 @@ FRAMEWORK PersonalFinancialAdvisor {
     M02_IntelGathering            // FetchRegistry orchestrator, price integrity, gather procedure, primary driver
     M03_ScenarioFramework         // Six scenarios, probability rules, B vs C rule, scenario-weighted math
     M04_BriefingFormat            // BriefingRegistry orchestrator, render functions, briefing template
-    M05_SessionInit               // Session initialization sequence — entry point
     M06_ClientAndAdvisory         // Client profile, advisory principles
     M07_InstrumentEval            // Instrument evaluation framework
     M08_FunctionalRoles           // Dynamic position classification, dual-role conflicts, execution guards
@@ -104,10 +105,13 @@ FRAMEWORK PersonalFinancialAdvisor {
 
     ORCHESTRATION {
       reason_to_change: "session flow or output format changes (rare)"
-      modules:          [M05_SessionInit, M04_BriefingFormat]
+      modules:          [M04_BriefingFormat]
       extension_points: [FetchRegistry, BriefingRegistry]   // @see FW_Types.md
       note:             "Thin wiring layer. Contains NO business logic.
-                         Phase 2 complete: iterates registries only — does not enumerate modules."
+                         Session sequencing itself (formerly M05_SessionInit) is owned by
+                         Project_Instructions_MCP.md — retired here 2026-06-17 per ENG-2,
+                         see FRAMEWORK_BACKLOG.md. Phase 2 complete: iterates registries
+                         only — does not enumerate modules."
     }
 
   }  // end SUB_PROJECTS
@@ -124,7 +128,6 @@ FRAMEWORK PersonalFinancialAdvisor {
     "M02_IntelGathering.md"            // v2.1: FetchRegistry orchestrator; M18 integration
     "M03_ScenarioFramework.md"
     "M04_BriefingFormat.md"            // v2.0: BriefingRegistry orchestrator
-    "M05_SessionInit.md"
     "M06_ClientAndAdvisory.md"
     "M07_InstrumentEval.md"
     "M08_FunctionalRoles.md"
@@ -152,41 +155,15 @@ FRAMEWORK PersonalFinancialAdvisor {
   // ─── LOAD ORDER (every session) ──────────────────────────────────────────────────────
 
   SESSION_START_SEQUENCE {
-    // @see M05_SessionInit.SessionStartSequence for full detail
-    1:  M12_FileProtocol.fetchAllocation()        // Google Drive — hard gate
-    2:  confirm_pending_decisions                 // cross-check against Session_Log §8
-    3:  M12_FileProtocol.fetchCalibrationState()  // GitHub — Calibration_State.md
-        M12_FileProtocol.fetchSessionLog()        // GitHub — Session_Log.md (CONCURRENT)
-        // Apply: §1, §2 thresholds; §4 return table (M13); §9 M14 thresholds;
-        //        §11 classifications (M15); §12 M17 cascade thresholds
-        // Load: §8 prior probabilities (AUTHORITATIVE)
-        // Run M15.ValidateClassifications() — HARD_STOP if any instrument absent from §11
-    4:  FetchRegistry.fetchAll()                  // Phase 2 complete — parallel fetch of all registered FetchSpecs
-        // M02 (core market data), M11 (credit spreads), M14 (VIX trailing, equity trailing),
-        // M17 (yield curve, cascade chain inputs)
-        // + M02.QualitativeGatherList (geopolitical, Fed guidance — web search)
-        // @see M02_IntelGathering.GatherIntel STEP 1
-    5:  M02_IntelGathering.identifyPrimaryDriver()
-    6:  M03_ScenarioFramework.RecalibrationRule  +  M11.CalibrationDiscipline.SessionLoad
-    7:  M02_IntelGathering.GatherIntel STEPS 2–5
-        + M14.ComputeDivergenceSignal()           // → RegimeSignal
-        + M17.sectorStressScore()                 // → CascadeSignal.D_precursor_binding
-        + M17.computeYieldCurveSignal()           // → YieldCurveSignal (incl. e_pathway_type)
-        + M17.assessCascadeLevel()               // → [MONITORING | ALERT | PRE_POSITION]
-        + M19.evaluateThesisConditions()          // → ThesisStatus per held §13 instrument;
-                                                   //   requires ScenarioProbabilities (step 6) +
-                                                   //   DataReadings (step 4) + M14 output (above)
-        → IF M14.composite IN [HIGH, MODERATE]: M14.UnderweightReviewTrigger(account)
-        → IF M17.cascadeLevel IN [ALERT, PRE_POSITION]: surface in briefing; prepare §5 review
-    8:  BriefingRegistry.assemble(readings)       // Phase 2 complete — ordered section list
-        // M04-owned + M11, M14, M17, M19 registered sections assembled in declared order
-        // @see M04_BriefingFormat.IntelligenceBriefing
-    9:  portfolio discussion
-        → before any ADD executes: M14.EntryExtensionGuard(asset, account)
-        → if Scenario E active: read YieldCurveSignal.e_pathway_type before rate directives
-    10: M12_FileProtocol.WriteBack
-        // push_files([Calibration_State.md, Session_Log.md, Portfolio_State.md]) — atomic to master
-        // Portfolio_State.md rendered by M12.constructPortfolioState() — companion project context snapshot
+    // SUPERSEDED (confirmed during ENG-2 module necessity review, 2026-06-17; same finding
+    // that led to retiring M05_SessionInit.md, see FRAMEWORK_BACKLOG.md ENG-2).
+    // The block this replaced enumerated 10 steps ending in a GitHub push_files write-back —
+    // wrong, and contradicted by this very file's own NEVER list and by M12's CoreRules.
+    // The actual, current, MCP-tool-based sequence (advisor_run_computation /
+    // advisor_apply_scoring / advisor_write_back; local git write-back only, never GitHub)
+    // lives in Project_Instructions_MCP.md, "Session start sequence" — that file is what
+    // Claude actually reads and follows during a live advisory session.
+    // @see Project_Instructions_MCP.md — "Session start sequence" (authoritative)
   }
 
 

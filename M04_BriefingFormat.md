@@ -277,8 +277,8 @@ MODULE BriefingFormat {
       ═══════════════════════════════════════════════
       PORTFOLIO INTELLIGENCE BRIEFING
       Date: [DATE] | Time: [TIME ET]
-      Framework Extension v[N] loaded              // REQUIRED — @see M05_SessionInit
-      Calibration State loaded, last update: [date] // REQUIRED — @see M05_SessionInit
+      Framework Extension v[N] loaded              // REQUIRED — @see Project_Instructions_MCP.md
+      Calibration State loaded, last update: [date] // REQUIRED — @see Project_Instructions_MCP.md
       ═══════════════════════════════════════════════
     }
 

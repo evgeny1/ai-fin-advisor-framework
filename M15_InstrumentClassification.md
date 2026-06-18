@@ -30,8 +30,8 @@ MODULE InstrumentClassification {
   // 6. Backward compatible: pure single-role instruments produce identical results to prior sessions.
 
   // ─── SESSION-START VALIDATION ────────────────────────────────────────────
-  // Runs as part of M05_SessionInit Step 3 — after both allocation file and
-  // Calibration State are confirmed loaded.
+  // Runs as part of Project_Instructions_MCP.md Step 3 (advisor_run_computation) — after both
+  // allocation file and Calibration State are confirmed loaded.
 
   PROCEDURE ValidateClassifications() {
 
@@ -255,7 +255,7 @@ MODULE InstrumentClassification {
   REQUIRE at_session_start {
     CALIBRATION_STATE.§11.ROLE_REGISTRY                    // loaded with Calibration_State.md
     CALIBRATION_STATE.§11.INSTRUMENT_CLASSIFICATION_TABLE  // loaded with Calibration_State.md
-    M15.ValidateClassifications()                          // run after M05 Steps 1 + 3
+    M15.ValidateClassifications()                          // run after Project_Instructions_MCP.md Steps 1 + 3
     // Absence or validation failure = session invalid for allocation computations
   }
 

@@ -158,7 +158,7 @@ MODULE ScenarioFramework {
   // Produces a reproducible probability vector from binding variable scores.
   // Any session running the same data produces the same output within a
   // narrow, auditable band — eliminating unconstrained fresh-session judgment.
-  // @see M05_SessionInit.SessionStartSequence Step 6
+  // @see Project_Instructions_MCP.md "Session start sequence" Step 6 (advisor_apply_scoring)
   // @see M12_FileProtocol.WriteBack §8 (output persisted at session end)
   // @see M04_BriefingFormat.ScenarioProbabilities (output display format)
 

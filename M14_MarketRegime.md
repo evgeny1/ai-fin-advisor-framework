@@ -13,7 +13,7 @@
   Calibration deps: CALIBRATION_STATE §9
   Types consumed:   @see FW_Types.md — DataReading, RegimeSignal, FetchSpec, BriefingSectionSpec
   Cross-module:     @see M02_IntelGathering (FetchRegistry), @see M04_BriefingFormat (BriefingRegistry),
-                    @see M08_FunctionalRoles (execution guards). Consumed by M05_SessionInit (Steps 7–8).
+                    @see M08_FunctionalRoles (execution guards). Consumed by Project_Instructions_MCP.md (Steps 7–8).
                     DATA_REGISTRY_ENTRIES superseded by M18_MarketDataFetch.
 -->
 

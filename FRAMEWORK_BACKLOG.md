@@ -61,6 +61,7 @@
 | ENG-20 | OPEN | MEDIUM | functional-gap | M14 energy_180d extended-conflict caveat not implemented in regime.py |
 | ENG-21 | OPEN | LOW | hygiene | M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback |
 | ENG-22 | OPEN | LOW | testing | Test suite needs reorganizing into unit/e2e/integration — currently flat test_stageN folders |
+| ENG-23 | CLOSED | MEDIUM | architecture | M05_SessionInit.md retired outright (ENG-2 follow-on decision #2) |
 
 ---
 
@@ -174,15 +175,15 @@ All 7 edited files re-validated against `tools/validate_manifests.py`
 
 **Why this item stays IN_PROGRESS rather than CLOSED:** the original ask
 — "review the necessity of having this many modules" — has now actually
-happened, with evidence, for all 19 files. But three real follow-on
-decisions remain open and are tracked as their own items rather than
-closed out here: (1) whether to build the `mcp_server.py` wiring for the
-unwired portfolio-math modules (ENG-16) — the single biggest factor in
-whether M07/M08/M09/M10/M13/M15 are ever actually shrinkable; (2) whether
-M05 should be deleted outright and removed from 00_INDEX.md's FILE_MAP,
-vs. its current reduced-stub state — that's a bigger architectural call
-than this pass made unilaterally; (3) the smaller hygiene/functional-gap
-findings spun out as ENG-17 through ENG-21.
+happened, with evidence, for all 19 files. Two of the three follow-on
+decisions flagged in the original pass have since been resolved: (1)
+the `mcp_server.py` wiring for the unwired portfolio-math modules — see
+ENG-16, CLOSED; (2) whether `M05_SessionInit.md` should be deleted
+outright — see ENG-23, CLOSED, deleted 2026-06-17. What remains open:
+(3) the smaller hygiene/functional-gap findings spun out as ENG-17
+through ENG-21; and the larger question of whether M07/M08/M09/M10/M13/
+M15 themselves are now shrinkable now that ENG-16 wired their Python —
+not attempted yet, flagged as the next ENG-2 sub-pass.
 
 ### ENG-16 — M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py
 <!-- ITEM
@@ -305,7 +306,7 @@ folder.
   Severity:  LOW
   Category:  documentation
   Opened:    2026-06-17
-  Area:      M02_IntelGathering.md, M04_BriefingFormat.md, M05_SessionInit.md,
+  Area:      M02_IntelGathering.md, M04_BriefingFormat.md,
              M11_CreditAndCalibration.md, M14_MarketRegime.md, M17_SystemicCascadeWarning.md,
              M19_ThesisSustainingConditions.md, FW_Types.md
   Related:   ENG-2
@@ -315,9 +316,13 @@ folder.
 `python/advisor/` — not in `mcp_server.py`, not in `orchestrator/session.py`,
 not in `types.py`. `FW_Types.md`'s own `BriefingRegistry`/
 `BriefingSectionSpec` structs were never translated into `types.py` at
-all — they remain pseudo-code only. Despite this, seven module files
+all — they remain pseudo-code only. Despite this, six module files
 contain a "Phase 2 complete: BriefingRegistry.assemble()..." annotation
-describing a working registry-based briefing-assembly system. (Contrast
+describing a working registry-based briefing-assembly system. (A seventh,
+`M05_SessionInit.md`, was originally also listed here — checked during
+ENG-23's retirement pass and confirmed it did NOT actually contain this
+annotation by the time it was deleted, so the count is six, not seven;
+removed from this item's Area.) (Contrast
 with `FetchRegistry`, which really was built as real Python and really is
 wired — so the asymmetry is real, not just consistently-stale wording
 everywhere.) Briefing rendering is, and remains, 100% Claude's job,
@@ -807,6 +812,67 @@ here so it's a known, chosen state rather than an invisible gap. If the
 codebase grows, a simple local pre-push git hook running `pytest -q`
 would close most of the risk without needing real CI infrastructure.
 
+### ENG-23 — M05_SessionInit.md retired outright (ENG-2 follow-on decision #2)
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  MEDIUM
+  Category:  architecture
+  Opened:    2026-06-17
+  Closed:    2026-06-17
+  Area:      M05_SessionInit.md (deleted), 00_INDEX.md, Project_Instructions_MCP.md,
+             FW_Types.md, M03/M04/M12/M13/M14/M15_*.md, README.md
+  Related:   ENG-2
+-->
+
+**Description:** Per the framework owner's explicit direction (2026-06-17:
+"the modules and pseudo-code must go... all the unneeded ones should get
+deleted entirely"), resolved the open question ENG-2 deliberately left
+unmade: `M05_SessionInit.md` had already been reduced to a pure
+step-cross-reference stub (no executable content of its own — see its
+v1.6 history), with the real sequence fully owned by
+`Project_Instructions_MCP.md`. A stub with zero unique content is the
+clearest possible deletion candidate in the whole module set.
+
+**What was found and fixed in the process (not just the deletion):**
+`00_INDEX.md`'s own `SESSION_START_SEQUENCE` block — a second, independent
+copy of the session sequence, never updated when M05 was first shrunk —
+was not just redundant but actively wrong: it ended in step 10,
+`M12_FileProtocol.WriteBack` / `push_files([...])`, a literal instruction
+to write back via GitHub. This directly contradicts 00_INDEX.md's own
+`NEVER` list three sections down (`write_to_GitHub_without_confirming...`)
+and M12's CoreRules. It was never executed in practice — Claude follows
+`Project_Instructions_MCP.md`, not 00_INDEX.md, for session mechanics —
+but it sat there as a live landmine for anyone (human or a future Claude
+coding session) who read 00_INDEX.md as the sequence source. Replaced
+with a pointer, same pattern as M05's own prior shrink.
+
+**Resolution:** Deleted `M05_SessionInit.md`. Updated every cross-reference
+found via repo-wide grep: `00_INDEX.md` (MODULES list, ORCHESTRATION
+sub-project, FILE_MAP, the `SESSION_START_SEQUENCE` block above, header
+changelog comment → v1.25), `Project_Instructions_MCP.md` (file map table,
+"Session start sequence" heading no longer names a file that doesn't
+exist, M01–M19 project-knowledge list corrected — it had said M01–M18,
+missing M19 entirely, a pre-existing typo fixed opportunistically while
+in the area), `FW_Types.md` (`ModuleID` enum, `SubProject.ORCHESTRATION`
+comment, a `REGISTRY TYPES` comment — version bumped 1.4→1.5), and one
+cross-reference each in `M03_ScenarioFramework.md`, `M04_BriefingFormat.md`,
+`M12_DriveProtocol.md`, `M13_GrowthObjectives.md` (three spots),
+`M14_MarketRegime.md`, `M15_InstrumentClassification.md` — all retargeted
+to `Project_Instructions_MCP.md`'s step numbering, which is unchanged
+from M05's original numbering by design (1, 1b, 3b, 6b, etc. all match).
+`README.md`'s module map and "which file do I edit" tables updated to
+reflect the retirement. Historical session-type labels ("full M05
+session") in `Session_Log.md`/`Calibration_State.md` log prose were left
+untouched — "M05" survives only as that vocabulary, decoupled from any
+file, exactly as the M05 stub's own retained `STEP_CROSS_REFERENCE` table
+anticipated.
+
+`tools/validate_manifests.py` re-run clean (19/19 — auto-discovers files
+via glob, no hardcoded count to fix). Full pytest suite re-run clean:
+535 passed, 4 skipped (one fewer than the prior 536 — `test_manifest_schema.py`
+parametrizes over the same glob, one fewer file to assert PASS on; not a
+regression).
+
 ---
 
 ## Part 2 — Calibration & Methodology Gaps (GAP-N index)
@@ -834,6 +900,6 @@ first; update this index to match, not the other way around.
    Calibration_State.md, not here.
 2. Copy the `<!-- ITEM ... -->` manifest block format from any entry above.
 3. Add a row to the Index table at the top.
-4. If it touches a tool signature, the M05 sequence, or anything
+4. If it touches a tool signature, the session sequence, or anything
    Project_Instructions_MCP.md describes, cross-check that file per the
    rule in README.md → "Keeping Project_Instructions_MCP.md in sync."
