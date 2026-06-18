@@ -675,7 +675,7 @@ def _tool_evaluate_allocation(
 
     from .exceptions import HardStopException
     from .analysis.instruments import classify_instrument, dominant_directive
-    from .portfolio.allocation import scenario_weighted_allocation, feasibility_check
+    from .portfolio.allocation import scenario_weighted_allocation, feasibility_check, recalibration_sequence
     from .portfolio.directives import DIRECTIVES
     from .portfolio.evaluation import dual_role_conflict
 
@@ -773,6 +773,46 @@ def _tool_evaluate_allocation(
             "to ~1.0) to run it. NEVER present allocation recommendations without "
             "this check having run."
         )
+
+
+    # ── RecalibrationSequence (ENG-24) — fires when feasibility check fails ────────────────────
+    if proposed_allocations and "feasibility" in result and not result["feasibility"]["feasible"]:
+        fr_feasible = result["feasibility"]
+        shortfall = (
+            fr_feasible.get("shortfall_pp")
+            or abs(fr_feasible.get("worst_return_pct") or fr_feasible.get("portfolio_return_pct") or 0.0)
+        )
+        obj_type = fr_feasible.get("objective_type", "")
+        priority = "TARGET" if "TARGET_THEN_RETURN" in obj_type else "FLOOR_PROTECTION"
+        try:
+            rec = recalibration_sequence(
+                account=account,
+                proposed_allocations=proposed_allocations,
+                probs=probs,
+                cal=cal,
+                shortfall_pp=round(shortfall or 0.0, 2),
+                priority=priority,
+            )
+            result["recalibration"] = {
+                "shortfall_pp":                 rec.shortfall_pp,
+                "priority":                     rec.priority,
+                "anchor_tickers":               rec.anchor_tickers,
+                "anchor_weight":                rec.anchor_weight,
+                "anchor_return_pct":            rec.anchor_return_pct,
+                "residual_weight":              rec.residual_weight,
+                "residual_required_return_pct": rec.residual_required_return_pct,
+                "gap_closed_by_reallocation":   rec.gap_closed_by_reallocation,
+                "revised_portfolio_return_pct": rec.revised_portfolio_return_pct,
+                "revised_gap_pp":               rec.revised_gap_pp,
+                "revised_allocations":          rec.revised_allocations,
+                "candidate_role":               rec.candidate_role,
+                "candidate_role_return_pct":    rec.candidate_role_return_pct,
+                "candidate_gap_closure_est_pp": rec.candidate_gap_closure_est_pp,
+                "no_candidate_message":         rec.no_candidate_message,
+                "quality_flags":                rec.quality_flags,
+            }
+        except Exception as e:
+            result["flags"].append(f"⚠ RecalibrationSequence failed: {e}")
 
     return _dumps(result)
 

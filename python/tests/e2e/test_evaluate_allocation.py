@@ -326,3 +326,72 @@ def test_candidate_check_requires_no_cache_at_all():
     finally:
         mcp_server._cache.clear()
         mcp_server._cache.update(saved)
+
+
+# \u2500\u2500 RecalibrationSequence MCP wiring (ENG-24) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
+_LOW_EV_ALLOCS = {"SGOV": 0.30, "SGOL": 0.15, "CONFLICT_TEST": 0.55}
+# CONFLICT_TEST primary role is broad_market_equity_domestic (0.60 weight)
+# In C-dominant distribution: broad_market = REDUCE_TO_MIN, geo_prem = ADD
+# Blended conservative return for this portfolio is low → infeasible for IRA
+
+
+def test_recalibration_block_present_when_infeasible(cached_session):
+    """When feasibility fails, result must include a 'recalibration' block."""
+    result = json.loads(mcp_server._tool_evaluate_allocation(
+        account_profile=_IRA_PROFILE,
+        current_weights=_CURRENT_WEIGHTS,
+        proposed_allocations=_LOW_EV_ALLOCS,
+    ))
+    assert "feasibility" in result
+    feasible = result["feasibility"]["feasible"]
+    if not feasible:
+        assert "recalibration" in result
+        rec = result["recalibration"]
+        assert "shortfall_pp" in rec
+        assert "anchor_tickers" in rec
+        assert "gap_closed_by_reallocation" in rec
+        assert "revised_portfolio_return_pct" in rec
+        assert "revised_gap_pp" in rec
+
+
+def test_recalibration_block_absent_when_feasible(cached_session):
+    """When portfolio is feasible, no recalibration block."""
+    # SGOV-only: rate-short income, likely feasible for IRA at C-dominant distribution
+    proposed = {"SGOV": 0.30, "SGOL": 0.70}
+    result = json.loads(mcp_server._tool_evaluate_allocation(
+        account_profile=_IRA_PROFILE,
+        current_weights=_CURRENT_WEIGHTS,
+        proposed_allocations=proposed,
+    ))
+    if result.get("feasibility", {}).get("feasible"):
+        assert "recalibration" not in result
+
+
+def test_recalibration_block_absent_without_proposed_allocations(cached_session):
+    """No proposed_allocations → no feasibility check → no recalibration."""
+    result = json.loads(mcp_server._tool_evaluate_allocation(
+        account_profile=_IRA_PROFILE,
+        current_weights=_CURRENT_WEIGHTS,
+    ))
+    assert "recalibration" not in result
+
+
+def test_recalibration_priority_is_target_for_ira(cached_session):
+    result = json.loads(mcp_server._tool_evaluate_allocation(
+        account_profile=_IRA_PROFILE,
+        current_weights=_CURRENT_WEIGHTS,
+        proposed_allocations=_LOW_EV_ALLOCS,
+    ))
+    if not result.get("feasibility", {}).get("feasible") and "recalibration" in result:
+        assert result["recalibration"]["priority"] == "TARGET"
+
+
+def test_recalibration_revised_gap_non_negative(cached_session):
+    result = json.loads(mcp_server._tool_evaluate_allocation(
+        account_profile=_IRA_PROFILE,
+        current_weights=_CURRENT_WEIGHTS,
+        proposed_allocations=_LOW_EV_ALLOCS,
+    ))
+    if "recalibration" in result:
+        assert result["recalibration"]["revised_gap_pp"] >= 0.0

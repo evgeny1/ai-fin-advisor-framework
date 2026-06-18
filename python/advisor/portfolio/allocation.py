@@ -8,6 +8,7 @@ Public functions:
   ideal_allocation()             — M13.idealAllocation() per scenario
   scenario_weighted_allocation() — M03/M13 integration: probability-weighted target
   feasibility_check()            — M13.FeasibilityCheck()
+  recalibration_sequence()       — M13.RecalibrationSequence() (ENG-24)
 
 Design:
   - Uses blended_scenario_return() for ALL return computations — no direct §4.1 lookups.
@@ -15,6 +16,9 @@ Design:
   - REDUCE_TO_MIN resolves to floor (non-circular: ComputeFloor is independent).
   - Returns are in percent units throughout (e.g. 4.6 = 4.6%) — consistent with
     blended_scenario_return() output convention.
+  - recalibration_sequence() is a pure advisory function — fires when feasibility_check
+    returns feasible=False. Caller (mcp_server) invokes it; feasibility_check does not
+    call it internally to avoid circular logic.
 """
 from __future__ import annotations
 
@@ -28,6 +32,7 @@ from ..types import (
     DirectiveCode,
     FeasibilityResult,
     ObjectiveType,
+    RecalibrationResult,
     ScenarioProbabilities,
 )
 from ..analysis.instruments import blended_scenario_return
@@ -512,3 +517,195 @@ def feasibility_check(
         objective_type=str(obj),
         quality_flags=quality_flags,
     )
+
+
+# ── recalibration_sequence ──────────────────────────────────────────────────────────────────────────────
+
+def recalibration_sequence(
+    account: AccountProfile,
+    proposed_allocations: Dict[str, float],
+    probs: ScenarioProbabilities,
+    cal: CalibrationState,
+    shortfall_pp: float,
+    priority: str,
+    high_conviction_tickers: Optional[List[str]] = None,
+) -> RecalibrationResult:
+    """
+    M13.RecalibrationSequence() — advisory gap-closing analysis.
+
+    Fires when feasibility_check() returns feasible=False.
+    Caller (mcp_server._tool_evaluate_allocation) invokes this; feasibility_check
+    does not call it internally (avoids circular logic).
+
+    Step 1: identify anchor positions + compute gap arithmetic.
+    Step 2a: reallocate non-anchors toward higher-return roles (dominant scenario).
+    Step 2b: if gap persists, identify the best unheld role from §4.1 return table.
+
+    Both steps always run; step 2b runs regardless of step 2a outcome.
+
+    Parameters
+    ----------
+    high_conviction_tickers : optional list supplied by Claude after running
+        M06.SimplicityTest(). If None, Python defaults to tickers with
+        proposed_weight > compute_floor() as a computable proxy.
+    shortfall_pp : pp gap that triggered the sequence (from FeasibilityResult).
+    priority : "TARGET" for TARGET_THEN_RETURN accounts,
+               "FLOOR_PROTECTION" for FLOOR_THEN_RETURN / PRESERVATION.
+    """
+    quality_flags: List[str] = []
+    dominant_scenario = max(_SCENARIOS, key=lambda s: getattr(probs, s))
+
+    # ── Step 1: Anchor identification and gap analysis ─────────────────────────────────────
+    if high_conviction_tickers is not None:
+        anchors = [t for t in high_conviction_tickers if t in proposed_allocations]
+    else:
+        anchors = [
+            t for t, w in proposed_allocations.items()
+            if w > compute_floor(t, account, w, cal) + 1e-6
+        ]
+        if not anchors:
+            quality_flags.append(
+                "⚠ No high-conviction anchors found (all tickers at or near floor). "
+                "SimplicityTest result not available — defaulted to above-floor proxy."
+            )
+
+    def _weighted_return(ticker: str) -> float:
+        total = 0.0
+        for s in _SCENARIOS:
+            try:
+                total += (getattr(probs, s) / 100.0) * blended_scenario_return(
+                    ticker, s, "conservative", cal
+                )
+            except (HardStopException, ValueError, KeyError):
+                pass
+        return total
+
+    anchor_weight = sum(proposed_allocations.get(t, 0.0) for t in anchors)
+    anchor_return = sum(
+        proposed_allocations.get(t, 0.0) * _weighted_return(t) for t in anchors
+    )
+    residual_weight = max(0.0, 1.0 - anchor_weight)
+
+    # required return: TARGET_THEN_RETURN uses multiplier; others target 0%
+    required = required_real_return(account, probs, cal) or 0.0
+
+    residual_required: Optional[float] = None
+    if residual_weight > 1e-6:
+        residual_required = (required - anchor_return) / residual_weight
+
+    # ── Step 2a: Reallocate non-anchor positions (dominant scenario) ──────────────────
+    non_anchors = [t for t in proposed_allocations if t not in anchors]
+    all_tickers = list(proposed_allocations.keys())
+
+    def _dominant_return(ticker: str) -> float:
+        try:
+            return blended_scenario_return(ticker, dominant_scenario, "conservative", cal)
+        except (HardStopException, ValueError, KeyError):
+            return -999.0
+
+    ranked_non_anchors = sorted(non_anchors, key=_dominant_return, reverse=True)
+
+    revised: Dict[str, float] = {t: proposed_allocations[t] for t in anchors}
+    for t in ranked_non_anchors:
+        try:
+            w, flags = ideal_allocation(
+                ticker=t,
+                scenario=dominant_scenario,
+                account=account,
+                current_weight=proposed_allocations.get(t, 0.0),
+                all_tickers=all_tickers,
+                all_current_weights=proposed_allocations,
+                cal=cal,
+            )
+            revised[t] = w
+            quality_flags.extend(flags)
+        except (HardStopException, ValueError) as e:
+            revised[t] = proposed_allocations.get(t, 0.0)
+            quality_flags.append(
+                f"⚠ idealAllocation for {t} in {dominant_scenario} failed: {e} — kept original weight."
+            )
+
+    # Compute revised portfolio return directly (no recursive feasibility_check)
+    revised_return = 0.0
+    for s in _SCENARIOS:
+        s_ret = 0.0
+        for t, w in revised.items():
+            try:
+                s_ret += w * blended_scenario_return(t, s, "conservative", cal)
+            except (HardStopException, ValueError, KeyError):
+                pass
+        revised_return += (getattr(probs, s) / 100.0) * s_ret
+
+    revised_gap = required - revised_return
+    gap_closed = revised_gap <= 1e-4  # within rounding tolerance
+
+    # ── Step 2b: Identify candidate unheld role if gap persists ───────────────────────
+    candidate_role: Optional[str] = None
+    candidate_return: Optional[float] = None
+    candidate_gap_est: Optional[float] = None
+    no_candidate_msg: Optional[str] = None
+
+    if not gap_closed:
+        held_roles: set = set()
+        for t in proposed_allocations:
+            entry = cal.instruments.get(t)
+            if entry:
+                for comp in entry.components:
+                    held_roles.add(comp.role_id)
+
+        best_role: Optional[str] = None
+        best_return_val: float = -999.0
+        for role_id, scenario_map in cal.return_table.items():
+            if role_id in held_roles:
+                continue
+            try:
+                r = scenario_map[dominant_scenario].conservative
+                if r > best_return_val:
+                    best_return_val = r
+                    best_role = role_id
+            except (KeyError, AttributeError):
+                pass
+
+        if best_role is not None and best_return_val > 0.0:
+            candidate_role = best_role
+            candidate_return = best_return_val
+            cap = account.concentration_cap
+            candidate_weight_est = min(cap, residual_weight) if residual_weight > 0 else 0.0
+            candidate_gap_est = round(candidate_weight_est * best_return_val, 2)
+        elif best_role is not None:
+            no_candidate_msg = (
+                f"No unheld role with positive conservative return in scenario {dominant_scenario}. "
+                "Target may not be achievable under current macro regime. "
+                "Consider: (1) extend planning horizon, "
+                "(2) revise target multiplier in CALIBRATION_STATE §4.2 or §4.3, "
+                "(3) accept reduced target for this regime."
+            )
+        else:
+            no_candidate_msg = (
+                "No unheld roles found in §4.1 return table — "
+                "all registered roles appear to be held."
+            )
+
+    return RecalibrationResult(
+        shortfall_pp=round(shortfall_pp, 2),
+        priority=priority,
+        anchor_tickers=anchors,
+        anchor_weight=round(anchor_weight, 4),
+        anchor_return_pct=round(anchor_return, 2),
+        residual_weight=round(residual_weight, 4),
+        residual_required_return_pct=(
+            round(residual_required, 2) if residual_required is not None else None
+        ),
+        gap_closed_by_reallocation=gap_closed,
+        revised_portfolio_return_pct=round(revised_return, 2),
+        revised_gap_pp=round(max(0.0, revised_gap), 2),
+        revised_allocations={t: round(w, 4) for t, w in revised.items()} if gap_closed else None,
+        candidate_role=candidate_role,
+        candidate_role_return_pct=(
+            round(candidate_return, 2) if candidate_return is not None else None
+        ),
+        candidate_gap_closure_est_pp=candidate_gap_est,
+        no_candidate_message=no_candidate_msg,
+        quality_flags=quality_flags,
+    )
+

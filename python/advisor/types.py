@@ -597,6 +597,37 @@ class FeasibilityResult:
 
 
 @dataclass
+class RecalibrationResult:
+    """
+    M13.RecalibrationSequence() output — fires when FeasibilityCheck returns feasible=False.
+
+    Structured gap-closing analysis:
+      Step 1 — anchor identification + gap arithmetic
+      Step 2a — reallocation of non-anchor positions (using idealAllocation per dominant scenario)
+      Step 2b — if gap persists: best unheld role suggestion from §4.1 return table
+
+    high_conviction_tickers is an optional caller-supplied anchor list (Claude runs
+    M06.SimplicityTest; Python defaults to all tickers with proposed_weight > floor).
+    """
+    shortfall_pp:                 float                       # pp gap that fired the sequence
+    priority:                     str                         # "TARGET" | "FLOOR_PROTECTION"
+    anchor_tickers:               List[str]
+    anchor_weight:                float                       # fraction
+    anchor_return_pct:            float                       # scenario-weighted blended return (%)
+    residual_weight:              float                       # 1 − anchor_weight (fraction)
+    residual_required_return_pct: Optional[float]            # pct needed from residual to close gap
+    gap_closed_by_reallocation:   bool
+    revised_portfolio_return_pct: float                      # return under revised allocations (%)
+    revised_gap_pp:               float                      # remaining gap (>0 = still infeasible)
+    revised_allocations:          Optional[Dict[str, float]] # revised weights if gap_closed
+    candidate_role:               Optional[str]              # best unheld role (if gap not closed)
+    candidate_role_return_pct:    Optional[float]            # conservative return in dominant scenario
+    candidate_gap_closure_est_pp: Optional[float]            # estimated pp closure if added at cap
+    no_candidate_message:         Optional[str]              # when no positive-return unheld role exists
+    quality_flags:                List[str] = field(default_factory=list)
+
+
+@dataclass
 class AllocationTarget:
     """Computed allocation recommendation for one ticker in one account."""
     ticker:                     str

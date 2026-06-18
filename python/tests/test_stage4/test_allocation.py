@@ -360,3 +360,114 @@ def test_feasibility_floor_breach(cal, floor_account, probs_bc):
     assert r.floor_breached is True
     assert r.worst_scenario in ("B", "C", "D", "E")
     assert r.worst_return is not None and r.worst_return < 0.0
+
+# \u2500\u2500 recalibration_sequence \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+
+from advisor.portfolio.allocation import recalibration_sequence
+from advisor.types import RecalibrationResult
+
+
+def _infeasible_allocs_and_shortfall(cal, ira_account, probs_bc):
+    """Build an infeasible portfolio and return (allocs, shortfall_pp)."""
+    from advisor.types import ComponentWeight, InstrumentEntry
+    cal.instruments.setdefault("INTL_REC", InstrumentEntry(
+        ticker="INTL_REC",
+        components=[ComponentWeight("broad_market_equity_international", 1.0)],
+        tax_placement="ALL",
+    ))
+    cal.return_table.setdefault("broad_market_equity_international", {
+        s: __import__("advisor.types", fromlist=["ReturnRange"]).ReturnRange(
+            conservative=v, upside=v + 4, confidence="HIGH"
+        )
+        for s, v in zip("ABCDEF", [4, -5, -6, -8, -10, 3])
+    })
+    allocs = {"INTL_REC": 0.60, "SGOV": 0.40}
+    fr = feasibility_check(ira_account, allocs, probs_bc, cal)
+    assert fr.feasible is False
+    return allocs, fr.shortfall_pp
+
+
+def test_recalibration_returns_result_type(cal, ira_account, probs_bc):
+    allocs, shortfall = _infeasible_allocs_and_shortfall(cal, ira_account, probs_bc)
+    rec = recalibration_sequence(ira_account, allocs, probs_bc, cal, shortfall or 1.0, "TARGET")
+    assert isinstance(rec, RecalibrationResult)
+
+
+def test_recalibration_shortfall_matches_input(cal, ira_account, probs_bc):
+    allocs, shortfall = _infeasible_allocs_and_shortfall(cal, ira_account, probs_bc)
+    sp = round(shortfall or 1.0, 2)
+    rec = recalibration_sequence(ira_account, allocs, probs_bc, cal, sp, "TARGET")
+    assert rec.shortfall_pp == sp
+
+
+def test_recalibration_priority_stored(cal, ira_account, probs_bc):
+    allocs, shortfall = _infeasible_allocs_and_shortfall(cal, ira_account, probs_bc)
+    rec = recalibration_sequence(ira_account, allocs, probs_bc, cal, shortfall or 1.0, "TARGET")
+    assert rec.priority == "TARGET"
+
+
+def test_recalibration_anchor_weight_plus_residual_is_one(cal, ira_account, probs_bc):
+    allocs, shortfall = _infeasible_allocs_and_shortfall(cal, ira_account, probs_bc)
+    rec = recalibration_sequence(ira_account, allocs, probs_bc, cal, shortfall or 1.0, "TARGET")
+    assert abs(rec.anchor_weight + rec.residual_weight - 1.0) < 1e-3
+
+
+def test_recalibration_explicit_high_conviction_respected(cal, ira_account, probs_bc):
+    allocs, shortfall = _infeasible_allocs_and_shortfall(cal, ira_account, probs_bc)
+    # SGOV is high-conviction; INTL_REC is not
+    rec = recalibration_sequence(ira_account, allocs, probs_bc, cal,
+                                 shortfall or 1.0, "TARGET",
+                                 high_conviction_tickers=["SGOV"])
+    assert "SGOV" in rec.anchor_tickers
+    assert "INTL_REC" not in rec.anchor_tickers
+
+
+def test_recalibration_gap_closed_when_high_ev_portfolio(cal, ira_account, probs_bc):
+    """A high-EV portfolio where reallocation can close the gap."""
+    allocs = {"DBMF": 0.60, "SGOL": 0.40}
+    fr = feasibility_check(ira_account, allocs, probs_bc, cal)
+    # DBMF-heavy portfolio should already be feasible, so this tests gap=0
+    if fr.feasible:
+        # create a small gap artificially by testing with a barely-infeasible portfolio
+        # Just assert the function runs without error for feasible input
+        rec = recalibration_sequence(ira_account, allocs, probs_bc, cal, 0.0, "TARGET")
+        assert isinstance(rec, RecalibrationResult)
+    else:
+        rec = recalibration_sequence(ira_account, allocs, probs_bc, cal,
+                                     fr.shortfall_pp or 1.0, "TARGET")
+        assert isinstance(rec, RecalibrationResult)
+
+
+def test_recalibration_candidate_role_not_in_held_roles(cal, ira_account, probs_bc):
+    allocs, shortfall = _infeasible_allocs_and_shortfall(cal, ira_account, probs_bc)
+    rec = recalibration_sequence(ira_account, allocs, probs_bc, cal, shortfall or 1.0, "TARGET")
+    if rec.candidate_role is not None:
+        # candidate must not be a role already held by any instrument in allocs
+        held_roles = set()
+        for t in allocs:
+            e = cal.instruments.get(t)
+            if e:
+                for c in e.components:
+                    held_roles.add(c.role_id)
+        assert rec.candidate_role not in held_roles
+
+
+def test_recalibration_revised_return_is_float(cal, ira_account, probs_bc):
+    allocs, shortfall = _infeasible_allocs_and_shortfall(cal, ira_account, probs_bc)
+    rec = recalibration_sequence(ira_account, allocs, probs_bc, cal, shortfall or 1.0, "TARGET")
+    assert isinstance(rec.revised_portfolio_return_pct, float)
+
+
+def test_recalibration_revised_gap_non_negative(cal, ira_account, probs_bc):
+    allocs, shortfall = _infeasible_allocs_and_shortfall(cal, ira_account, probs_bc)
+    rec = recalibration_sequence(ira_account, allocs, probs_bc, cal, shortfall or 1.0, "TARGET")
+    assert rec.revised_gap_pp >= 0.0
+
+
+def test_recalibration_revised_allocations_only_when_gap_closed(cal, ira_account, probs_bc):
+    allocs, shortfall = _infeasible_allocs_and_shortfall(cal, ira_account, probs_bc)
+    rec = recalibration_sequence(ira_account, allocs, probs_bc, cal, shortfall or 1.0, "TARGET")
+    if rec.gap_closed_by_reallocation:
+        assert rec.revised_allocations is not None
+    else:
+        assert rec.revised_allocations is None

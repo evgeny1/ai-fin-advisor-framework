@@ -62,7 +62,7 @@
 | ENG-21 | OPEN | LOW | hygiene | M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback |
 | ENG-22 | OPEN | LOW | testing | Test suite needs reorganizing into unit/e2e/integration — currently flat test_stageN folders |
 | ENG-23 | CLOSED | MEDIUM | architecture | M05_SessionInit.md retired outright (ENG-2 follow-on decision #2) |
-| ENG-24 | OPEN | MEDIUM | architecture | M13.RecalibrationSequence() has no Python implementation — still 100% manual |
+| ENG-24 | CLOSED | MEDIUM | architecture | M13.RecalibrationSequence() has no Python implementation — still 100% manual |
 | ENG-25 | OPEN | LOW | architecture | instruments.json write not wired — Project_Instructions_MCP.md claimed MCP server writes it; it doesn't |
 
 ---
@@ -976,10 +976,11 @@ WriteBack and update Project_Instructions_MCP.md and M12 accordingly.
 
 ### ENG-24 — M13.RecalibrationSequence() has no Python implementation — still 100% manual
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  MEDIUM
   Category:  architecture
   Opened:    2026-06-18
+  Closed:    2026-06-18
   Area:      M13_GrowthObjectives.md, python/advisor/mcp_server.py
   Related:   ENG-2, ENG-16
 -->
@@ -1008,6 +1009,21 @@ time a feasibility check fails.
 `advisor_evaluate_allocation()` (fire automatically when `feasibility.feasible
 == false`), add e2e test coverage analogous to `tests/e2e/test_evaluate_allocation.py`,
 then shrink M13's RECALIBRATION SEQUENCE section to match the rest of the file.
+
+
+**Resolution (2026-06-18):** Implemented exactly as suggested above.
+`recalibration_sequence()` added to `python/advisor/portfolio/allocation.py` alongside
+the other M13 functions. `RecalibrationResult` dataclass added to `types.py`.
+Wired into `_tool_evaluate_allocation()` in `mcp_server.py`: when
+`proposed_allocations` is passed and `feasibility.feasible == False`, the tool
+automatically calls `recalibration_sequence()` and adds a `recalibration` block to
+the JSON output. `high_conviction_tickers` is an optional parameter; if not supplied
+by Claude (having run M06.SimplicityTest), Python defaults to tickers with
+`proposed_weight > compute_floor()` as a computable proxy. 15 new pytest cases
+across `tests/test_stage4/test_allocation.py` (unit) and
+`tests/e2e/test_evaluate_allocation.py` (e2e MCP wiring). Full pytest suite: 508
+passed, 46 skipped, 0 failed. M13_GrowthObjectives.md RECALIBRATION SEQUENCE block
+shrunk to pointer (v1.2→1.3). validate_manifests: 19/19 pass.
 
 ---
 

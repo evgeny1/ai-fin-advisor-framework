@@ -1,9 +1,9 @@
 # M13 — Growth Objectives
-<!-- Version: 1.2 | Updated: see git log -->
+<!-- Version: 1.3 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M13_GrowthObjectives
-  Version:         1.2
+  Version:         1.3
   Sub-project:     PORTFOLIO_ADVISOR
   Reason to change: account objective logic, feasibility methodology, or recalibration sequence changes.
                     Return table values: go to CALIBRATION_STATE §4 only — not here.
@@ -171,108 +171,29 @@ MODULE GrowthObjectives {
   // @see python/advisor/analysis/floor_monitor.py current_holdings_floor_check()
 
   // ─── RECALIBRATION SEQUENCE ──────────────────────────────────────────────
-  // ⚠ NOT wired into any MCP tool (confirmed during ENG-2 module necessity review,
-  // 2026-06-17 — see FRAMEWORK_BACKLOG.md ENG-16's "follow-up, not done here" note).
-  // Unlike every other FUNCTION in this file, this one is still Claude's job to
-  // execute by hand, in full, per the spec below — there is no Python equivalent
-  // to call. (The two §4.1-lookup-via-M08.classifyRole() bugs this section used to
-  // have were fixed 2026-06-17 during the same pass that found this gap — both now
-  // correctly route through M15.classifyInstrument()/blendedScenarioReturn(), per
-  // the NEVER rules in Project_Instructions_MCP.md.)
-  // Fires when FeasibilityCheck returns feasible: false.
-  // Both steps always run in sequence — step 2 runs regardless of step 1 outcome.
-
-  PROCEDURE RecalibrationSequence(account, proposed_allocations, shortfall, priority) {
-
-    // STEP 1: Anchor identification and gap analysis
-    high_conviction = []
-    FOR each asset a IN account.holdings {
-      IF M06.SimplicityTest(a) == true
-         AND M03.scenarioWeightedAllocation(a, account) > ComputeFloor(a, account) {
-        high_conviction.APPEND(a)
-      }
-    }
-    // Anchors not touched in recalibration — held on structural thesis.
-
-    anchor_return = Σ [
-      proposed_allocations[a]
-      × Σ [s.probability × M15.blendedScenarioReturn(a, s, "conservative")
-           for s in [A,B,C,D,E,F]]
-      for a in high_conviction
-    ]
-    anchor_weight     = Σ [proposed_allocations[a] for a in high_conviction]
-    residual_weight   = 1.0 - anchor_weight
-    required          = RequiredRealReturn(account)
-    residual_required = IF residual_weight > 0
-                        THEN (required - anchor_return) / residual_weight
-                        ELSE null  // all weight anchored — gap cannot be closed by reallocation
-
-    OUTPUT {
-      "Anchor positions: [list with return contributions]"
-      "Anchor weight: [%] | Anchor return contribution: [%]"
-      "Residual weight available for reallocation: [%]"
-      "Return required from residual positions to close gap: [residual_required%]"
-      "Gap: [shortfall pp]"
-    }
-
-    // STEP 2a: Shift non-anchor positions toward higher-return roles
-    dominant_scenario = M02_IntelGathering.identifyPrimaryDriver().current_dominant_driver
-    non_anchor        = account.holdings EXCLUDING high_conviction
-    ranked_non_anchor = sort_descending(
-      [(a, Σ [s.probability × M15.blendedScenarioReturn(a, s, "conservative")
-              for s in [A,B,C,D,E,F]])
-       for a in non_anchor]
-    )
-
-    revised_allocations = copy(proposed_allocations)
-    FOR each asset a IN ranked_non_anchor (descending by scenario-weighted conservative return) {
-      revised_allocations[a] = idealAllocation(a, dominant_scenario, account)
-    }
-
-    revised_return = FeasibilityCheck(account, revised_allocations).portfolio_return
-    revised_gap    = required - revised_return
-
-    IF revised_gap <= 0 {
-      OUTPUT: "Gap closed by reallocation alone."
-              "Revised recommended allocations: [list with return projections per scenario]"
-      RETURN
-    }
-
-    // STEP 2b: Evaluate new instrument if gap persists after reallocation
-    OUTPUT {
-      "Reallocation reduced gap. Residual gap of [revised_gap pp] remains."
-      "Evaluating unheld functional roles."
-    }
-
-    all_roles_held = UNION(
-      c.role for a in account.holdings for c in M15.classifyInstrument(a).components
-    )
-    candidate_role = highest_conservative_return_role(
-                       scenario:       dominant_scenario,
-                       excluding:      all_roles_held,
-                       objective_type: account.objective_type
-                     )
-
-    IF candidate_role EXISTS {
-      FLAG {
-        "Consider adding instrument in role: [candidate_role]"
-        "Conservative real return in [dominant_scenario]: [X%]"
-        "Estimated gap closure if added at concentration_cap × residual_weight: [Y pp]"
-        "Next step: run M07_InstrumentEval before recommending any specific instrument."
-        "NEVER recommend a specific instrument without completing M07 evaluation."
-      }
-    } ELSE {
-      FLAG {
-        "No unheld role with positive conservative return in current dominant scenario."
-        "Target may not be achievable under current macro regime."
-        "Consider in order:"
-        "  1. Extend planning horizon — if account structure permits"
-        "  2. Revise target multiplier — document in CALIBRATION_STATE §4.2 or §4.3"
-        "  3. Accept reduced target for this regime — flag for reassessment when"
-        "     scenario probabilities shift materially"
-      }
-    }
-  }
+  // SUPERSEDED (ENG-24, 2026-06-18). Wired into `advisor_evaluate_allocation()`
+  // — when `proposed_allocations` is passed and `feasibility.feasible == False`,
+  // the tool automatically calls `recalibration_sequence()` and adds a
+  // `recalibration` block to the JSON output. No separate Claude call needed.
+  //
+  // Spec summary (Python implements all of this):
+  //   Fires when FeasibilityCheck returns feasible=False. Both steps always run.
+  //   Step 1 — anchor identification: tickers with proposed_weight > floor are
+  //     anchors (proxy for M06.SimplicityTest; Claude can pass
+  //     `high_conviction_tickers` to the function to override with the true set).
+  //     Computes: anchor_weight, anchor_return_contribution, residual_weight,
+  //     residual_required_return = (required − anchor_return) / residual_weight.
+  //   Step 2a — reallocation: rank non-anchor tickers by conservative return in
+  //     dominant scenario; re-set each to idealAllocation(t, dominant_scenario).
+  //     If revised portfolio_return >= required: gap_closed_by_reallocation=true,
+  //     revised_allocations populated. Both steps still run.
+  //   Step 2b — new instrument: if gap still persists, find the highest-return
+  //     unheld role from §4.1 return table in dominant scenario.
+  //     If positive return found: candidate_role + estimated gap closure pp.
+  //     If none: no_candidate_message with "consider: extend horizon / revise
+  //     multiplier / accept reduced target."
+  // @see python/advisor/portfolio/allocation.py recalibration_sequence()
+  // @see python/advisor/mcp_server.py _tool_evaluate_allocation() (wiring)
 
   // ─── INTEGRATION WITH M03 ────────────────────────────────────────────────
 
