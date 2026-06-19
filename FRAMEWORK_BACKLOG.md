@@ -41,8 +41,8 @@
 |---|---|---|---|---|
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | IN_PROGRESS | HIGH | architecture | Module necessity review (M01–M19) |
-| ENG-3 | OPEN | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
-| ENG-4 | OPEN | MEDIUM | architecture | Stage 5 (Pattern A) incomplete plumbing |
+| ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
+| ENG-4 | CLOSED | MEDIUM | architecture | Stage 5 (Pattern A) incomplete plumbing |
 | ENG-5 | OPEN | HIGH | hygiene | Compaction cadence mismatch (Calibration_State §3, Session_Log §8) |
 | ENG-6 | OPEN | MEDIUM | hygiene | §6 First-Audit Checklist accumulates stale content |
 | ENG-7 | OPEN | MEDIUM | hygiene | §11 stores computed EV math redundantly |
@@ -547,11 +547,13 @@ that doesn't occur.
 
 ### ENG-3 — Pattern A / Pattern B duplication & convergence decision
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  HIGH
   Category:  architecture
   Opened:    2026-06-17
-  Area:      python/advisor/orchestrator/session.py, python/advisor/mcp_server.py
+  Closed:    2026-06-18
+  Area:      python/advisor/orchestrator/session.py, python/advisor/mcp_server.py,
+             python/advisor/rendering.py
   Related:   ENG-1, ENG-2, ENG-4, ENG-11
 -->
 
@@ -579,14 +581,36 @@ should import rather than reimplement) into a shared module. If no:
 mark Pattern A explicitly archived/frozen in this backlog and in
 README.md, so future sessions don't keep half-maintaining it.
 
+**Resolution (2026-06-18):** Framework owner decided option (b) вЂ” both
+Pattern A and Pattern B are staying; neither is archived. Extracted the
+duplicated logic into a new shared module, `python/advisor/rendering.py`:
+`format_scenario_probs()`, `format_bullet_list()`, `format_numbered_list()`,
+`build_session_log_entry()` (the В§8 entry construction вЂ” the exact thing
+that had ENG-1's bug independently in both files), and
+`render_portfolio_state()` (parameterized by `generator_label` so each
+pattern's Portfolio_State.md output stays correctly attributed).
+`mcp_server.py._tool_write_back()` and
+`orchestrator/session.py._step8_write_back()` both call these shared
+functions now; the old `_render_portfolio_state()` and
+`_append_session_log_entry()` instance methods in `session.py` were
+removed entirely rather than kept as thin wrappers вЂ” there is now exactly
+one implementation, not two that happen to agree.
+New `tests/test_rendering.py` (17 tests) tests the shared module directly,
+including `test_render_portfolio_state_both_patterns_use_same_structure` вЂ”
+the direct proof of this item's resolution. `README.md` updated in 5
+places to describe the dedup instead of flagging it as an open question.
+Full suite: 535 passed, 46 skipped. See ENG-4 for the related fix this
+unblocked.
+
 
 ### ENG-4 — Stage 5 (Pattern A) incomplete plumbing
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  MEDIUM
   Category:  architecture
   Opened:    2026-06-17
-  Area:      python/advisor/orchestrator/context.py, session.py
+  Closed:    2026-06-18
+  Area:      python/advisor/orchestrator/context.py, session.py, ai_client.py
   Related:   ENG-3
 -->
 
@@ -607,6 +631,26 @@ from wherever the pipeline currently surfaces this information (briefing
 generation step, most likely), and wire them into
 `_append_session_log_entry()`. Blocked on / informed by the ENG-3 decision
 — don't invest in this if Pattern A is going to be archived.
+
+**Resolution (2026-06-18):** Unblocked by ENG-3 (Pattern A is staying).
+Added `open_triggers: List[str]` and `open_decisions: List[str]` fields
+to `SessionContext`. Rather than populate them from a separate
+extraction step, extended `AIClient.generate_briefing()`'s existing
+prompt (AI Call 3) to also append a structured `###OPEN_ITEMS###`
+trailer after the NET_ASSESSMENT section вЂ” `generate_briefing()` now
+returns `(briefing, open_triggers, open_decisions)`, parsed by a new
+`_split_open_items()` helper in `ai_client.py`. No added AI-call cost:
+the model already has full session context in that one call.
+`StubAIClient` returns clearly-labeled `[STUB] ...` placeholders rather
+than silently empty lists, consistent with its existing pattern for the
+other two AI calls. If the live model ever fails to return a parseable
+trailer, the result is an honest empty list plus a flag in
+`ctx.write_back_flags` вЂ” never a fabricated placeholder.
+`_step8_write_back()` now passes `ctx.open_triggers`/`ctx.open_decisions`
+into the shared `rendering.build_session_log_entry()` (see ENG-3) instead
+of the old hardcoded `[review session briefing]` strings. 4 new parser
+tests + an updated `test_stub_generate_briefing` in
+`tests/test_stage5/test_session.py`.
 
 ### ENG-5 — Compaction cadence mismatch (Calibration_State §3, Session_Log §8)
 <!-- ITEM
