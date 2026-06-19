@@ -131,6 +131,10 @@ advisor/
 │                           HARD_STOP / GUARD semantics.
 ├── types.py                FW_Types.md → Python. Every dataclass/enum the
 │                           framework passes between layers lives here.
+├── rendering.py            §8 entry + Portfolio_State.md rendering — the ONE
+│                           shared implementation both mcp_server.py (Pattern B)
+│                           and orchestrator/session.py (Pattern A) call. See §4
+│                           (ENG-3, resolved 2026-06-18).
 │
 ├── analysis/                ANALYSIS_ENGINE (Stage 3) — signal computation.
 │   ├── credit.py            M11 CreditSignal
@@ -200,23 +204,16 @@ advisor/
 | Where AI calls happen | Implicit — the orchestrating Claude *is* the AI, no extra API call | 3 explicit calls to `https://api.anthropic.com/v1/messages` via `AIClient`, gated by `ANTHROPIC_API_KEY` |
 | Entry point | `python -m advisor mcp-server` (stdio transport, registered in Claude Desktop config) | `python -m advisor session [--dry-run]` |
 | Cost | Zero extra — uses the conversation Claude is already in | Costs a real API call per AI boundary |
-| File: write-back | `mcp_server.py._tool_write_back()` | `orchestrator/session.py._append_session_log_entry()` |
-| Test coverage | `tests/test_mcp/` (partial — see `FRAMEWORK_BACKLOG.md` ENG-10/11) | `tests/test_stage5/` (full pipeline tests via `StubAIClient`) |
-| Known issues | No test of `_tool_run_computation`/`_tool_apply_scoring` (ENG-10) | `SessionContext` has no open_triggers/open_decisions field (ENG-4) |
+| File: write-back | `mcp_server.py._tool_write_back()` | `orchestrator/session.py._step8_write_back()` |
+| В§8 entry + Portfolio_State rendering | `rendering.py` (shared, ENG-3) | `rendering.py` (shared, ENG-3) |
+| Test coverage | `tests/test_mcp/` (full — ENG-10/ENG-11 closed 2026-06-18) | `tests/test_stage5/` (full pipeline tests via `StubAIClient`) |
+| Known issues | none currently tracked | none currently tracked — ENG-4 closed 2026-06-18 |
 
-**These two paths do not share code** for session write-back or briefing
-rendering — each reimplements it. This already caused one bug to exist
-twice independently (`FRAMEWORK_BACKLOG.md` ENG-1). Whether Pattern A
-should keep being maintained, archived, or converged with Pattern B is an
-open architectural decision (ENG-3) — **if you're about to add a feature to
-one path, check whether the other path needs the same fix, and check
-ENG-3 before investing heavily in Pattern A specifically.**
+**RESOLVED 2026-06-18 (ENG-3):** the framework owner decided both paths are valid and should stay — Pattern A is not archived. The duplication that used to exist (each path reimplementing §8 entry construction and Portfolio_State.md rendering independently, which is exactly how ENG-1's identical bug existed twice) is gone: both paths now call the single shared implementation in `rendering.py` (`build_session_log_entry()`, `render_portfolio_state()`). `mcp_server.py._tool_write_back()` and `orchestrator/session.py._step8_write_back()` are still two different call sites — they have to be, since one path is driven by an MCP tool call's parameters and the other by `SessionContext` — but neither one knows the §8 schema or the Portfolio_State.md format anymore; that knowledge lives in exactly one place. If you find yourself writing a second implementation of either, you're re-introducing the bug this section used to warn about — import from `rendering.py` instead.
 
-If you only remember one thing from this section: **Pattern B is what
-actually runs in production right now.** Pattern A is tested and
-functional but dormant. Bug fixes belong in both; new features belong in
-Pattern B unless you've checked ENG-3 first.
+ENG-4 (the other Pattern-A gap this section used to flag — `SessionContext` had no `open_triggers`/`open_decisions` field, so Pattern A wrote permanent `[review session briefing]` placeholders into §8) is also closed: `AIClient.generate_briefing()` now returns a 3-tuple `(briefing, open_triggers, open_decisions)`, extracted from a structured `###OPEN_ITEMS###` trailer the model appends to the same AI Call 3 response — no added API-call cost. See `orchestrator/ai_client.py`'s `_split_open_items()`.
 
+Both paths remain real, separately-maintained pipelines with genuinely different orchestration models (Claude-orchestrated vs. Python-orchestrated). **Pattern B is still what actually runs in production right now** — that hasn't changed. But Pattern A is no longer second-class in the sense that mattered most: a fix to the shared rendering logic now fixes both paths by construction, not by remembering to apply it twice.
 
 ---
 
@@ -411,13 +408,14 @@ means:
 
 4. **Pipeline / end-to-end tests** (`test_stage5/test_session.py`) — the
    *entire* session sequence run together, with the AI boundary stubbed
-   (`StubAIClient`) so it's deterministic and free. This exists for
-   Pattern A. **Pattern B (the active path) has no equivalent** —
-   `FRAMEWORK_BACKLOG.md` ENG-11 is the single highest-value test
-   currently missing from this repo. If you're adding a non-trivial
-   feature to the Pattern B pipeline, strongly consider adding this test
-   rather than only testing your one new piece in isolation — that's
-   exactly the gap that let ENG-1 ship undetected through 497 passing
+   (`StubAIClient`) so it's deterministic and free. Pattern B has the
+   equivalent (`tests/test_mcp/test_pattern_b_pipeline.py`, ENG-11 closed
+   2026-06-18): `_tool_run_computation()` → `_tool_apply_scoring()` →
+   `_tool_write_back(dry_run=True)` run in sequence against an isolated
+   tmp framework dir. If you're adding a non-trivial feature to either
+   pipeline, extend the matching one of these rather than only testing
+   your one new piece in isolation — that's exactly the gap that let
+   ENG-1 ship undetected through 497 passing
    tests.
 
 ### What `@pytest.mark.integration` means *here*
@@ -452,9 +450,9 @@ before just deleting the assertion.
 - New pure function → unit test, same directory pattern as its peers.
 - New thing that reads or writes a framework `.md` file → parser test
   *and* a round-trip test if it writes something later re-parsed.
-- New MCP tool, or non-trivial change to an existing one → add it to the
-  Pattern B pipeline test once ENG-11 exists; until then, at minimum
-  follow the isolated-temp-directory pattern from
+- New MCP tool, or non-trivial change to an existing one → add it to
+  `tests/test_mcp/test_pattern_b_pipeline.py` (ENG-11). Follow the
+  isolated-temp-directory pattern from
   `test_write_back_format.py` rather than testing only against canned
   inputs with no file I/O at all.
 - Changing anything in `Project_Instructions_MCP.md`'s described
@@ -547,9 +545,10 @@ should change how you approach non-trivial work right now:
   substantial work on a module `.md` file, consider whether that effort
   is better spent once this review lands, or check with the framework
   owner first.
-- **ENG-3 — Pattern A vs Pattern B.** Don't invest heavily in Pattern A
-  (`orchestrator/`) features without checking this item — its future is
-  an open decision, not a settled roadmap.
+- **ENG-3 — RESOLVED 2026-06-18.** Both Pattern A and Pattern B are
+  staying; their session write-back and Portfolio_State.md rendering
+  are now deduplicated into `rendering.py`. No longer a thing to check
+  before investing in `orchestrator/` — see §4 for the resolution.
 
 Everything else in the backlog is lower-stakes (test gaps, file hygiene,
 documentation gaps) and can be picked up opportunistically.

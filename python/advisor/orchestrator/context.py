@@ -98,6 +98,12 @@ class SessionContext:
 
     # ── AI Call 3 — briefing narrative (Step 8 / M04) ─────────────────────────
     briefing: Optional[str] = None
+    # ENG-4: populated from generate_briefing()'s structured OPEN_ITEMS
+    # trailer (see orchestrator/ai_client.py _split_open_items()). Empty
+    # list is a real, honest result (parse miss or AI returned none this
+    # session) -- never backfilled with placeholder text.
+    open_triggers:  List[str] = field(default_factory=list)
+    open_decisions: List[str] = field(default_factory=list)
 
     # ── Write-back (Step 10) ──────────────────────────────────────────────────
     write_back_commit: Optional[str] = None

@@ -858,55 +858,12 @@ def _tool_check_instrument_candidate(
 
 # ── Tool 5: advisor_write_back() ──────────────────────────────────────────────
 
-def _render_portfolio_state(cal: Any, probs: Any, session_date: str,
-                            primary_driver: str, open_triggers: List[str],
-                            open_decisions: List[str]) -> str:
-    p = probs
-    prob_str = (f"A={p.A:.0f}% / B={p.B:.0f}% / C={p.C:.0f}% / "
-                f"D={p.D:.0f}% / E={p.E:.0f}% / F={p.F:.0f}%")
-    lines = [
-        f"# Portfolio State — {session_date}",
-        "",
-        f"**Calibration State:** {cal.version}",
-        f"**Scenario probabilities:** {prob_str}",
-        f"**Primary driver:** {primary_driver}",
-        "",
-        "## Open Triggers",
-    ]
-    for t in open_triggers:
-        lines.append(f"- {t}")
-    if not open_triggers:
-        lines.append("_None this session._")
-    lines += ["", "## Open Decisions"]
-    for d in open_decisions:
-        lines.append(f"- {d}")
-    if not open_decisions:
-        lines.append("_None this session._")
-    lines += ["", "_Generated via MCP (Pattern B — Claude app)._"]
-    return "\n".join(lines)
-
-
-def _bullet_list(items: List[str]) -> str:
-    """Render as '- item' lines, matching the §8 canonical-schema list format
-    that config/session_log.py._extract_list() parses (bullet items under a
-    bare 'key:' line, terminated by a blank line)."""
-    return "\n".join(f"- {item}" for item in items) if items else "_None this session._"
-
-
-def _numbered_list(items: List[str]) -> str:
-    """Render as '1. item' lines — same parser, numbered-list branch."""
-    return "\n".join(f"{i}. {item}" for i, item in enumerate(items, 1)) if items else "_None this session._"
-
-
-def _fmt_scenario_probs(p: Any) -> str:
-    """Render as 'scenario_probabilities: { A: X%, ... }' — the exact literal
-    form config/session_log.py._parse_probs() matches via regex. Uses ':g'
-    (no forced rounding to whole numbers) so values like 12.5 are preserved
-    exactly rather than rounding inconsistently and breaking the sum-to-100
-    invariant (the bug this replaces: rounded headline values summed to 99
-    or 101 in the two malformed June 14 entries this format superseded)."""
-    return (f"{{ A: {p.A:g}%, B: {p.B:g}%, C: {p.C:g}%, "
-            f"D: {p.D:g}%, E: {p.E:g}%, F: {p.F:g}% }}")
+# Section8 entry + Portfolio_State.md rendering: shared with orchestrator/session.py
+# (Pattern A) via rendering.py -- see ENG-3 (deduplication of the two session pipelines).
+from .rendering import (
+    build_session_log_entry as _build_session_log_entry,
+    render_portfolio_state as _render_portfolio_state,
+)
 
 
 def _tool_write_back(
@@ -930,25 +887,19 @@ def _tool_write_back(
     today = datetime.date.today().isoformat()
     p = probs
 
-    # Canonical §8 schema (Session_Log.md header) — must stay byte-compatible
-    # with config/session_log.py's parser: '---' block separator, a line
-    # starting 'date:', and 'scenario_probabilities: { A: X%, ... }' exactly.
-    new_entry = (
-        f"\n\n---\n\n"
-        f"date: {today} ({session_type})\n"
-        f"scenario_probabilities: {_fmt_scenario_probs(p)}\n"
-        f"primary_driver: {primary_driver}\n"
-        f"session_type: {session_type}\n\n"
-        f"open_triggers:\n{_bullet_list(open_triggers)}\n\n"
-        f"open_decisions:\n{_numbered_list(open_decisions)}\n\n"
-        f"next_session_flags:\n{_bullet_list(next_session_flags)}\n"
+    # Canonical §8 schema — see rendering.build_session_log_entry() (ENG-3:
+    # shared with orchestrator/session.py's Pattern A write-back).
+    new_entry = _build_session_log_entry(
+        today, session_type, p, primary_driver,
+        open_triggers, open_decisions, next_session_flags,
     )
 
     log_text = _cache.get("log_text") or read_session_log()
     updated_log = log_text.rstrip() + new_entry
 
     portfolio_state = _render_portfolio_state(
-        cal, probs, today, primary_driver, open_triggers, open_decisions
+        cal.version, probs, today, primary_driver, open_triggers, open_decisions,
+        generator_label="MCP (Pattern B — Claude app)",
     )
 
     try:

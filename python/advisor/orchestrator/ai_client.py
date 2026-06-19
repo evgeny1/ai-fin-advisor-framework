@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..types import ScoringAnswers, ScoringQuestion
 
@@ -58,6 +58,57 @@ def _recover_partial_json(raw: str) -> Optional[Dict]:
         return {"answers": {k: int(v) for k, v in pairs}, "reasoning": {}}
 
     return None
+
+
+_OPEN_ITEMS_MARKER = "###OPEN_ITEMS###"
+
+
+def _split_open_items(raw: str) -> Tuple[str, List[str], List[str]]:
+    """
+    Split the AI Call 3 response into (narrative, open_triggers, open_decisions).
+
+    generate_briefing()'s prompt asks the model to append a machine-parseable
+    trailer after the human-readable narrative (ENG-4): a literal marker line,
+    then OPEN_TRIGGERS: as a bullet list and OPEN_DECISIONS: as a numbered list.
+    This keeps the existing 3-AI-call budget — no separate extraction call —
+    since the model already has full session context in this same call.
+
+    If the marker is absent (malformed response, or StubAIClient bypassing
+    this entirely), returns (raw.strip(), [], []) — caller is responsible for
+    flagging the empty result rather than fabricating placeholder content.
+    """
+    import re
+
+    if _OPEN_ITEMS_MARKER not in raw:
+        return raw.strip(), [], []
+
+    narrative, _, trailer = raw.partition(_OPEN_ITEMS_MARKER)
+
+    triggers: List[str] = []
+    decisions: List[str] = []
+
+    trig_match = re.search(r"OPEN_TRIGGERS:\s*(.*?)(?:OPEN_DECISIONS:|\Z)", trailer, re.S)
+    dec_match  = re.search(r"OPEN_DECISIONS:\s*(.*)", trailer, re.S)
+
+    if trig_match:
+        block = trig_match.group(1).strip()
+        if block and "_None this session._" not in block:
+            triggers = [
+                line.lstrip("-* ").strip()
+                for line in block.splitlines()
+                if line.strip().startswith(("-", "*"))
+            ]
+
+    if dec_match:
+        block = dec_match.group(1).strip()
+        if block and "_None this session._" not in block:
+            decisions = [
+                re.sub(r"^\d+\.\s*", "", line).strip()
+                for line in block.splitlines()
+                if re.match(r"^\d+\.", line.strip())
+            ]
+
+    return narrative.strip(), triggers, decisions
 
 
 class AIClient:
@@ -217,18 +268,19 @@ class AIClient:
 
     # ── Call 3: Briefing Generation ────────────────────────────────────────────
 
-    def generate_briefing(self, context_summary: str) -> str:
+    def generate_briefing(self, context_summary: str) -> Tuple[str, List[str], List[str]]:
         """
-        AI Call 3 — M04 Intelligence Briefing narrative.
+        AI Call 3 — M04 Intelligence Briefing narrative, PLUS open_triggers /
+        open_decisions extraction (ENG-4). Same single API call as before —
+        the model already has full session context, so the structured trailer
+        adds no extra AI-call cost.
 
         Receives a pre-rendered context summary (all signals, probabilities,
         qualitative findings, portfolio state) and produces the M04 briefing.
 
-        Parameters
-        ----------
-        context_summary:
-            Complete pre-rendered briefing context string produced by
-            SessionPipeline._render_briefing_context().
+        Returns
+        -------
+        (briefing_narrative, open_triggers, open_decisions)
         """
         prompt = (
             "You are producing an M04 Intelligence Briefing for a structured macro "
@@ -243,9 +295,21 @@ class AIClient:
             "- SCENARIO_PROBABILITIES must show all 6 probabilities summing to 100%.\n"
             "- NET_ASSESSMENT: 3-5 sentences identifying the dominant risk and recommended posture.\n"
             "- Use concise prose, no bullet lists within sections.\n\n"
+            "After NET_ASSESSMENT, append exactly one more block in this literal "
+            "machine-readable format (no extra commentary before or after it):\n"
+            "###OPEN_ITEMS###\n"
+            "OPEN_TRIGGERS:\n"
+            "- trigger description\n"
+            "(one bullet per open trigger worth tracking into next session; "
+            "write '_None this session._' instead of a list if there are none)\n"
+            "OPEN_DECISIONS:\n"
+            "1. decision description\n"
+            "(one numbered item per open decision the client needs to make; "
+            "write '_None this session._' instead of a list if there are none)\n\n"
             f"DATA:\n{context_summary}"
         )
-        return self._call(prompt, max_tokens=_MAX_TOKENS, timeout=180)
+        raw = self._call(prompt, max_tokens=_MAX_TOKENS, timeout=180)
+        return _split_open_items(raw)
 
     # ── Low-level HTTP call ────────────────────────────────────────────────────
 
@@ -303,10 +367,15 @@ class StubAIClient(AIClient):
             reasoning[q.id] = "[STUB] scored conservatively — no live AI available"
         return ScoringAnswers(answers=answers, reasoning=reasoning)
 
-    def generate_briefing(self, context_summary: str) -> str:
-        return (
+    def generate_briefing(self, context_summary: str) -> Tuple[str, List[str], List[str]]:
+        narrative = (
             "[STUB BRIEFING — AI client in offline mode]\n\n"
             "Pipeline completed with stub AI responses. "
             "Run with ANTHROPIC_API_KEY set for a live briefing.\n\n"
             + context_summary[:2000]
+        )
+        return (
+            narrative,
+            ["[STUB] open_triggers not extracted — offline mode, no live AI call"],
+            ["[STUB] open_decisions not extracted — offline mode, no live AI call"],
         )

@@ -48,9 +48,64 @@ def test_stub_answer_scoring():
 
 def test_stub_generate_briefing():
     client = StubAIClient()
-    result = client.generate_briefing("CONTEXT DATA")
-    assert isinstance(result, str)
-    assert len(result) > 0
+    briefing, open_triggers, open_decisions = client.generate_briefing("CONTEXT DATA")
+    assert isinstance(briefing, str)
+    assert len(briefing) > 0
+    # ENG-4: generate_briefing() now returns a 3-tuple (briefing, open_triggers,
+    # open_decisions). StubAIClient returns clearly-labeled stub placeholders
+    # for the latter two (offline mode, no live AI call to extract from).
+    assert isinstance(open_triggers, list)
+    assert isinstance(open_decisions, list)
+    assert all("[STUB]" in t for t in open_triggers)
+    assert all("[STUB]" in d for d in open_decisions)
+
+
+# ── _split_open_items parser (ENG-4) ───────────────────────────────────────────────
+
+def test_split_open_items_no_marker_returns_empty_lists():
+    from advisor.orchestrator.ai_client import _split_open_items
+    narrative, triggers, decisions = _split_open_items("Just a plain briefing.")
+    assert narrative == "Just a plain briefing."
+    assert triggers == []
+    assert decisions == []
+
+
+def test_split_open_items_parses_both_lists():
+    from advisor.orchestrator.ai_client import _split_open_items
+    raw = (
+        "NET_ASSESSMENT: some text.\n\n"
+        "###OPEN_ITEMS###\n"
+        "OPEN_TRIGGERS:\n"
+        "- FOMC meeting next week\n"
+        "- Watch Brent for C-trigger\n"
+        "OPEN_DECISIONS:\n"
+        "1. Decide on INFL allocation\n"
+        "2. Review MLPX position\n"
+    )
+    narrative, triggers, decisions = _split_open_items(raw)
+    assert "###OPEN_ITEMS###" not in narrative
+    assert triggers == ["FOMC meeting next week", "Watch Brent for C-trigger"]
+    assert decisions == ["Decide on INFL allocation", "Review MLPX position"]
+
+
+def test_split_open_items_handles_none_this_session():
+    from advisor.orchestrator.ai_client import _split_open_items
+    raw = (
+        "Briefing text.\n"
+        "###OPEN_ITEMS###\n"
+        "OPEN_TRIGGERS:\n_None this session._\n"
+        "OPEN_DECISIONS:\n_None this session._\n"
+    )
+    _, triggers, decisions = _split_open_items(raw)
+    assert triggers == []
+    assert decisions == []
+
+
+def test_split_open_items_strips_trailer_from_narrative():
+    from advisor.orchestrator.ai_client import _split_open_items
+    raw = "Real briefing content.\n###OPEN_ITEMS###\nOPEN_TRIGGERS:\n- x\nOPEN_DECISIONS:\n1. y\n"
+    narrative, _, _ = _split_open_items(raw)
+    assert narrative == "Real briefing content."
 
 
 # ── SessionPipeline smoke tests ────────────────────────────────────────────────
@@ -98,12 +153,16 @@ def test_pipeline_no_write_back_in_dry_run():
 
 @pytest.mark.integration
 def test_pipeline_session_log_entry_is_parseable():
-    """Regression test (2026-06-17): _append_session_log_entry() used to
-    emit a '### §8 Entry — DATE' header with no '---' separator — the
-    same format bug independently present in mcp_server._tool_write_back.
-    Confirms the Pattern-A path now produces a block parse_session_log()
-    actually recognizes as a distinct, new §8 entry."""
+    """Regression test (2026-06-17, updated 2026-06-18 for ENG-3 dedup):
+    the В§8 entry construction used to be duplicated independently in
+    mcp_server.py and session.py, and both copies independently had the
+    same format bug (missing '---' separator). ENG-3 moved both call sites
+    onto a single shared implementation in rendering.py. This test confirms
+    that shared implementation, called the same way session.py's
+    _step8_write_back() calls it, still produces a block parse_session_log()
+    recognizes as a distinct, new В§8 entry."""
     from advisor.config.session_log import parse_session_log
+    from advisor.rendering import build_session_log_entry
 
     pipeline = SessionPipeline(ai=StubAIClient(), dry_run=True)
     ctx = pipeline.run()
@@ -111,12 +170,16 @@ def test_pipeline_session_log_entry_is_parseable():
 
     seed_log = (
         "## Section 8 - Session State Log\n\n---\n\n"
-        "date: 2026-06-01 (full M05 session — seed entry)\n"
+        "date: 2026-06-01 (full M05 session вЂ” seed entry)\n"
         "scenario_probabilities: { A: 10%, B: 40%, C: 30%, D: 10%, E: 5%, F: 5% }\n"
         "primary_driver: seed entry for round-trip test\n"
         "session_type: full M05 session\n"
     )
-    updated = pipeline._append_session_log_entry(seed_log, ctx)
+    new_entry = build_session_log_entry(
+        ctx.session_date, ctx.session_type.value, ctx.scenario_probs,
+        "test driver", ctx.open_triggers, ctx.open_decisions, ctx.prob_flags,
+    )
+    updated = seed_log.rstrip() + new_entry
     state = parse_session_log(updated)
 
     assert len(state.scenario_states) == 2, (
