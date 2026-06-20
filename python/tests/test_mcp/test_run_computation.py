@@ -134,6 +134,29 @@ def test_run_computation_has_calibration_version(fresh_cache, no_network):
 
 
 @skip_if_missing
+def test_calibration_state_has_section_12_header(fresh_cache, no_network):
+    """
+    Regression guard (ENG-18): _parse_cascade() in calibration.py anchors on
+    the literal string "## Section 12" to locate §12.1-12.4. That header
+    went missing from the live file for an unknown period with no test
+    catching it — every cascade threshold silently fell back to
+    _parse_cascade()'s hardcoded Python defaults instead of ever reading
+    Calibration_State.md. This doesn't assert specific threshold values
+    (those are expected to change at calibration, e.g. the June 30 audit) —
+    just that the structural anchor the parser depends on still exists.
+    """
+    mcp_server._tool_run_computation()
+    cal_text = mcp_server._cache["cal_text"]
+    assert "## Section 12" in cal_text, (
+        "Calibration_State.md is missing the '## Section 12' header — "
+        "calibration.py._parse_cascade() will silently fall back to "
+        "hardcoded defaults instead of reading live cascade thresholds."
+    )
+    cal = mcp_server._cache["cal"]
+    assert cal.cascade is not None
+
+
+@skip_if_missing
 def test_run_computation_floor_alerts_present(fresh_cache, no_network):
     """floor_breach_alerts key must always be present in output."""
     result = json.loads(mcp_server._tool_run_computation())

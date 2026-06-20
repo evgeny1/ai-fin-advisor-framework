@@ -1,9 +1,9 @@
 # M17 — Systemic Cascade Early Warning
-<!-- Version: 1.6 | Updated: see git log -->
+<!-- Version: 1.7 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M17_SystemicCascadeWarning
-  Version:         1.6
+  Version:         1.7
   Sub-project:     ANALYSIS_ENGINE (§1–4, §6) | PORTFOLIO_ADVISOR (§5)
   Reason to change: analytical methodology for real-economy cascade chain assessment changes (§1–4, §6);
                     OR investment strategy/pre-positioning rules change (§5).
@@ -58,8 +58,7 @@ MODULE SystemicCascadeWarning {
       monitoring_vars:  [farm_chapter12_filings_YoY, KRE_vs_SPX_90d, natgas_henry_hub, farm_debt_level]
       D_alert_threshold: @see CALIBRATION_STATE §12.1
       lead_time_estimate: 6–18 months ahead of credit event
-      ACTIVE_STATUS:    ELEVATED — chapter 12 filings +46% YoY 2025; farm debt record $624.7B;
-                        urea +33% since March 2026 conflict; anhydrous ammonia $860/ton projected fall 2026
+      // Live readings + ACTIVE_STATUS: @see CALIBRATION_STATE §12.1 (moved 2026-06-20, ENG-18)
     }
 
     CHAIN CRE_to_Regional_Bank {
@@ -73,8 +72,7 @@ MODULE SystemicCascadeWarning {
       monitoring_vars:  [CMBS_delinquency_rate, KRE_vs_SPX_90d, SOFR_DFF_spread, KBE]
       D_alert_threshold: @see CALIBRATION_STATE §12.2
       lead_time_estimate: 3–12 months ahead of credit event
-      ACTIVE_STATUS:    ELEVATED — CMBS delinquency 6.59% (Q3 2025); $930B maturity wall 2026;
-                        SOFR–DFF benign at −11bp; KRE not yet showing underperformance
+      // Live readings + ACTIVE_STATUS: @see CALIBRATION_STATE §12.2 (moved 2026-06-20, ENG-18)
     }
 
     CHAIN Private_Credit_to_Margin_Cascade {
@@ -91,8 +89,7 @@ MODULE SystemicCascadeWarning {
                          MOVE, VIX, private_credit_gate_events_qualitative]
       D_alert_threshold: @see CALIBRATION_STATE §12.3
       lead_time_estimate: 0–6 months once redemption gates multiply (fast-moving)
-      ACTIVE_STATUS:    ELEVATED — margin debt $1.304T all-time nominal record (April 2026);
-                        net credit balance −$871B near record low; CLO OC breach and gate events observed
+      // Live readings + ACTIVE_STATUS: @see CALIBRATION_STATE §12.3 (moved 2026-06-20, ENG-18)
     }
 
     CHAIN Manufacturing_Supply_Chain {
@@ -108,8 +105,7 @@ MODULE SystemicCascadeWarning {
                          industrial_capacity_utilization, PE_sponsored_distressed_qualitative]
       D_alert_threshold: @see CALIBRATION_STATE §12.4
       lead_time_estimate: 6–12 months ahead of credit event
-      ACTIVE_STATUS:    ELEVATED — corporate bankruptcy pace 14-year high in 2025;
-                        manufacturing 3% below April 2018 peak; PE leverage elevated
+      // Live readings + ACTIVE_STATUS: @see CALIBRATION_STATE §12.4 (moved 2026-06-20, ENG-18)
     }
 
     CHAIN Sovereign_Fiscal_to_E_Pathway {
@@ -123,7 +119,7 @@ MODULE SystemicCascadeWarning {
       monitoring_vars:  [THREEFYTP10, UST_30Y_yield, MOVE, DXY, FMP_treasury_rates]
       E_alert_threshold: @see CALIBRATION_STATE §12.5
       lead_time_estimate: 12–36 months (slow-moving)
-      ACTIVE_STATUS:    WATCH — THREEFYTP10 at 0.81% (14-year high); 30Y at 5.07%
+      // Live readings: @see CALIBRATION_STATE §12.5 (already lived there; not moved by ENG-18)
       // ⚠ CALIBRATION GAP (Finding 7, May 29, 2026): The E_term_premium_alert threshold
       //   of 150 bps lacks documented historical calibration basis. Pre-2008 THREEFYTP10
       //   exceeded 150 bps routinely, suggesting this level may be historically normal

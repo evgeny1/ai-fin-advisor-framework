@@ -33,14 +33,14 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-20 (ENG-17, ENG-25, ENG-21 closed)
+**Last updated:** 2026-06-20 (ENG-17, ENG-25, ENG-21, ENG-18 closed)
 
 ## Index
 
 | ID | Status | Severity | Category | Title |
 |---|---|---|---|---|
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
-| ENG-2 | IN_PROGRESS | HIGH | architecture | Module necessity review (M01–M19) |
+| ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
 | ENG-4 | CLOSED | MEDIUM | architecture | Stage 5 (Pattern A) incomplete plumbing |
 | ENG-5 | CLOSED | HIGH | hygiene | Compaction cadence mismatch (Calibration_State §3, Session_Log §8) |
@@ -56,7 +56,7 @@
 | ENG-15 | OPEN | LOW | process | No CI — test suite is run manually |
 | ENG-16 | CLOSED | HIGH | architecture | M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py |
 | ENG-17 | CLOSED | LOW | documentation | BriefingRegistry described as built ("Phase 2 complete") but doesn't exist in Python anywhere |
-| ENG-18 | OPEN | LOW | hygiene | M17 CascadeChainRegistry embeds live dated figures in module file; CHAIN_5/6 not scored |
+| ENG-18 | CLOSED | LOW | hygiene | M17 CascadeChainRegistry embeds live dated figures in module file; CHAIN_5/6 not scored |
 | ENG-19 | CLOSED | MEDIUM | functional-gap | 8 of 17 RoleID roles have no M09/M10 scenario-directive coverage anywhere |
 | ENG-20 | CLOSED | MEDIUM | functional-gap | M14 energy_180d extended-conflict caveat not implemented in regime.py |
 | ENG-21 | CLOSED | LOW | hygiene | M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback |
@@ -111,12 +111,14 @@ test. This is now codified as a rule, not just a one-off fix.
 
 ### ENG-2 — Module necessity review (M01–M19)
 <!-- ITEM
-  Status:    IN_PROGRESS
+  Status:    CLOSED
   Severity:  HIGH
   Category:  architecture
   Opened:    2026-06-17
+  Closed:    2026-06-20
   Area:      M01_SourceIntegrity.md – M19_ThesisSustainingConditions.md (all 19), FW_Types.md
-  Related:   ENG-3, ENG-16, ENG-17, ENG-18, ENG-19, ENG-20, ENG-21
+  Related:   ENG-3, ENG-12, ENG-13, ENG-14, ENG-15, ENG-16, ENG-17, ENG-18, ENG-19, ENG-20, ENG-21,
+             ENG-22, ENG-23, ENG-24, ENG-25
 -->
 
 **Description:** The M01–M19 pseudo-code module files predate the Python/MCP
@@ -242,6 +244,28 @@ registration" doc-note for COPPER_SPOT/URANIUM_SPOT/CHINA_PMI_MANUFACTURING
 that M18.md FMP sources reflect FMP MCP connector context (higher-tier account)
 while Python m18_registry.py uses standalone key (lower tier, many endpoints 403).
 1,034→546 lines. validate_manifests: 19/19 pass.
+
+**Closed (2026-06-20):** all three follow-on decisions this item's own
+"Why this stays IN_PROGRESS" note conditioned closure on are now resolved:
+(1) ENG-16 (mcp_server.py wiring) — CLOSED 2026-06-17; (2) ENG-23
+(M05_SessionInit.md retirement) — CLOSED 2026-06-17; (3) the hygiene/
+functional-gap findings spun out as ENG-17 through ENG-21 — all five
+CLOSED as of today (ENG-19, ENG-20, ENG-17, ENG-21, ENG-18 all closed
+2026-06-20; ENG-25, opened slightly out of the original 17–21 numbering
+but part of the same M12 finding batch, also CLOSED 2026-06-20). ENG-18
+in particular surfaced a real functional bug, not just hygiene — see its
+own entry for detail — but it's resolved either way.
+
+Five items opened during the same investigation remain genuinely open
+but were never part of this item's own stated closure condition, and are
+independently tracked rather than holding this one open further: ENG-12
+(testing — live-file test assertions), ENG-13 (functional-gap — M19
+trailing-window tracking), ENG-14 (documentation — GAP-11 label), ENG-15
+(process — no CI), ENG-22 (testing — test suite reorg). None of these
+concern "is this module still necessary," the question this item was
+actually opened to answer; that question has been answered for all 19
+files plus FW_Types.md, with evidence, twice over (the original pass and
+the M07/M08/M13/M15/M12/M18 follow-on shrink passes above).
 
 ### ENG-16 — M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py
 <!-- ITEM
@@ -435,11 +459,14 @@ M17 1.5→1.6, M19 1.2→1.3, FW_Types 1.5→1.6, 00_INDEX v1.25→v1.26.
 
 ### ENG-18 — M17 CascadeChainRegistry embeds live dated figures in module file; CHAIN_5/6 not scored
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  LOW
   Category:  hygiene
   Opened:    2026-06-17
-  Area:      M17_SystemicCascadeWarning.md, Calibration_State.md, python/advisor/analysis/cascade.py
+  Closed:    2026-06-20
+  Area:      M17_SystemicCascadeWarning.md, Calibration_State.md, Calibration_Log.md,
+             python/advisor/config/calibration.py, python/advisor/analysis/cascade.py,
+             python/tests/test_mcp/test_run_computation.py
   Related:   ENG-2, ENG-9
 -->
 
@@ -468,6 +495,107 @@ how §13 holds M19's per-ticker data), leaving M17.md with only the
 structural chain definitions. Larger edit than a simple shrink since it
 requires touching Calibration_State.md's section numbering — not done
 as part of the ENG-2 pass.
+
+**Resolution (2026-06-20):** Implemented finding 1's suggested fix, but the
+investigation surfaced something more severe than this item's original
+"hygiene/staleness" framing — not just unversioned live data sitting in
+the wrong file, but a silently broken read path:
+
+`calibration.py`'s `_parse_cascade()` locates §12.1–12.4 by searching for
+the literal string `"## Section 12"` in `Calibration_State.md`. That
+header did not exist in the live file at all — only `### 12.5` through
+`### 12.8` existed, orphaned with no parent `## Section 12` heading above
+them (sandwiched inside what was labeled "Consolidated Target
+Allocations"), and `### 12.1`–`### 12.4` did not exist as written
+subsections anywhere. With the anchor absent, `_parse_cascade()`'s search
+came up empty every session, and **every cascade threshold silently fell
+back to the hardcoded Python defaults baked into `_parse_cascade()`
+itself, never reading this file** — `farm_filings_alert: "+50%"`,
+`natgas_alert: "$6.00"`, `KRE_alert: "15%"`, `bankruptcy_quarterly_WATCH:
+"220/quarter"`, etc. Confirmed this wasn't a parser bug:
+`tests/test_stage2/test_calibration_parser.py`'s synthetic fixture has
+always had the well-formed `## Section 12` / `### 12.1`–`### 12.4`
+structure and the parser extracts values from it correctly — the live
+file just never had matching structure built, despite
+`M17_SystemicCascadeWarning.md`'s CHAIN_1–CHAIN_4 all explicitly
+cross-referencing `@see CALIBRATION_STATE §12.1`–`§12.4`.
+
+Confirmed via direct test (parsing the real file before vs. after the fix)
+that today's computed cascade output is unchanged — §12.1–12.4 had
+apparently never been formally calibrated to begin with (§6's audit
+checklist already lists "M17 §12 first formal audit and threshold
+calibration" as outstanding June 30 work), so the Python defaults and
+what little §12.5–12.8 content did exist happened to agree. The real risk
+was forward-looking: any future edit to these thresholds — including
+whatever the June 30 audit produces — would have had **zero effect** on
+the actual computation, since the parser could never reach them.
+
+**Fix:** added the missing `## Section 12` header and `### 12.1`–`### 12.4`
+subsections to `Calibration_State.md`, populated with the exact values
+`_parse_cascade()` already defaulted to (so behavior is unchanged, but now
+visible and live-editable instead of an invisible Python fallback), each
+marked `⚠ PENDING formal calibration (Q2 audit)` for consistency with §6's
+existing audit-checklist item. Moved `ACTIVE_STATUS` prose for CHAIN_1–4
+out of `M17_SystemicCascadeWarning.md`'s `CascadeChainRegistry` into the
+corresponding new §12.x subsections (M17 bumped v1.6→v1.7); each CHAIN
+block now carries a one-line pointer instead. CHAIN_5 (already lived at
+§12.5, not moved) and CHAIN_6 (confirmed intentionally qualitative-only,
+per finding 2 above and its own `.md` text) needed no changes. A one-line
+orphaned text fragment with no identifiable parent sentence
+(`"...er) by ~74%. Would never have fired under any observed historical
+scenario."`) sat immediately above where `### 12.5` began — removed
+rather than guessed at; its likely origin (a CHAIN_4 800/quarter-threshold
+backtest note) is already captured factually in `Calibration_Log.md`'s
+existing 2026-06-01 (v1.24) archived entry.
+
+Adding the new §3 entry pushed `Calibration_State.md`'s §3 log to 11
+entries against its stated "last 10" limit (ENG-5) — compacted the oldest
+(2026-06-02, v1.30, an unrelated AIPO classification audit entry) to
+`Calibration_Log.md` to restore the invariant, in the same pass.
+`Calibration_State.md` bumped v1.40→v1.41.
+
+**Self-correction during this item:** an earlier pass at this fix placed a
+multi-paragraph `<!-- RESOLVED ... -->` HTML comment directly inside
+`Calibration_State.md` explaining the bug and fix — flagged by the
+framework owner as the wrong location (this file is live config, not a
+changelog) and removed; the explanation lives here and in a proper dated
+§3 entry instead, matching how every other module-hygiene fix in this
+backlog is documented. That same earlier pass also left a duplicate of
+the 2026-06-02 AIPO entry in `Calibration_Log.md` without actually
+removing it from §3 — apparently an incomplete, premature attempt at the
+compaction this entry's addition would eventually require — reverted, then
+the compaction was performed correctly (move, not copy) at the right
+point in the sequence above. A citation in the new §3 entry's first draft
+also incorrectly claimed the CHAIN_4 800/quarter note was "captured in
+this section's 2026-06-01 entry below" — that entry doesn't exist in live
+§3 (it was archived to `Calibration_Log.md` at v1.39's compaction, before
+v1.30); corrected to cite `Calibration_Log.md` directly.
+
+**Project_Instructions_MCP.md:** assessed for needed updates — none found.
+It already describes `Calibration_State.md` §12 as the live source for
+cascade thresholds (file-map table, Step 3 description) and M17 as owning
+"cascade chain registry" structurally; both statements were already
+correct as *intent*, they just weren't true in *practice* until this fix.
+No wording in that file assumed `ACTIVE_STATUS` lived in `M17.md` or
+referenced the missing header, so nothing there needed correcting.
+
+**Test coverage added:** `tests/test_mcp/test_run_computation.py` —
+`test_calibration_state_has_section_12_header`, a structural regression
+guard (not a value assertion, since §12.1–12.4's actual values are
+expected to change at calibration) confirming `"## Section 12"` is present
+in the live file Claude actually loads each session. Considered adding
+this to `test_calibration_parser.py` instead but that file's own docstring
+states "No file I/O — all fixtures are self-contained strings"; the
+live-file-testing pattern already exists in `test_run_computation.py` /
+`test_pattern_b_pipeline.py` (`skip_if_missing`), so the guard was added
+there to match established precedent rather than violating a different
+file's stated design.
+
+`tools/validate_manifests.py`: 19/19 pass. Full suite (`not integration`):
+663 passed, 60 deselected (+1 from this item, 0 regressions). Confirmed via
+a direct parse of the live file (both before reverting the bad earlier
+attempt and after the final version) that all 13 `CascadeBlock` fields
+read correctly and match expected values.
 
 ### ENG-19 — 8 of 17 RoleID roles have no M09/M10 scenario-directive coverage anywhere
 <!-- ITEM

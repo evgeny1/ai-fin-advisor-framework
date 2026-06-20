@@ -2,8 +2,8 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.40  Last updated: June 19, 2026 (§6/§7/§8/§9 hygiene cleanup --
-ENG-6/7/8/9; see §3 v1.40)
+# Version: 1.41  Last updated: June 20, 2026 (§12 structure restored --
+ENG-18; see §3 v1.41)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -127,6 +127,38 @@ For the 3rd CPI print (the formal trigger gate), graduated response by print lev
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-20 - Section 12 structure restored (v1.41, FRAMEWORK_BACKLOG.md ENG-18).
+Discovered the "## Section 12" header was missing from this file entirely, and
+§12.1-12.4 (agriculture/fertilizer, CRE/regional bank, private credit/margin,
+manufacturing chains) did not exist as written subsections — only §12.5-12.8
+existed, orphaned with no parent header. calibration.py's _parse_cascade()
+anchors on "## Section 12" to locate §12.1-12.4; with the header absent, every
+cascade threshold had been silently falling back to hardcoded Python defaults
+in _parse_cascade() itself rather than ever reading this file — confirmed via
+tests/test_stage2/test_calibration_parser.py, whose synthetic fixture has
+always had the well-formed structure this live file was missing, and via a
+direct parse of this file before vs. after the fix (all 13 cascade fields
+read correctly post-fix; values unchanged from the Python defaults, since
+§12.1-12.4 had never been formally calibrated to begin with — §6's audit
+checklist already lists "M17 §12 first formal audit and threshold
+calibration" as outstanding June 30 work). §12.1-12.4 added below using the
+exact values _parse_cascade() already defaulted to, marked ⚠ PENDING formal
+calibration for consistency with that audit item. ACTIVE_STATUS prose moved
+here from M17_SystemicCascadeWarning.md's CascadeChainRegistry (M17 bumped
+v1.6→1.7; retains only structural chain definitions, now points here per
+chain). A one-line orphaned text fragment immediately above where §12.5
+began ("...er) by ~74%. Would never have fired under any observed historical
+scenario.") had no identifiable parent sentence — removed rather than
+guessed at; likely origin is a CHAIN_4 800/quarter-threshold backtest note —
+already captured factually in Calibration_Log.md's 2026-06-01 (v1.24) entry,
+which documents that threshold's elimination in favor of the current
+220/300 thresholds (that entry predates this file's last §3 compaction,
+so it is archived there, not in this file's §3). CHAIN_5 (already at
+§12.5, not moved) and CHAIN_6 (qualitative-only, confirmed intentional
+per its own §12.6 text and M17.md) needed no changes. No probability, return-table, or classification value changes this
+session — structural restoration only; computed cascade output is unchanged
+from before this fix.
 
 2026-06-19 - Section 6/7/8/9 hygiene cleanup (v1.40). ENG-6: §6 item 35
 (secular_technology_growth Scenario B debate) reduced to a one-line pointer --
@@ -294,8 +326,6 @@ Iran qualitative: MOU unsigned, talks fragile, C not structurally moderated — 
 M12 PATTERN_B Step 3b added: instruments.json local write to MCP server directory.
 M12 PATTERN_A amendment drafted as artifact. instruments.json written: ["MLPX","DBMF","SGOL","VTIP","AIPO",
 "XAR","SGOV","SIVR","COPX","MAGS","XLP","PAVE","URA"]. No Sec 4.1 changes. No probability changes.
-
-2026-06-02 - Framework v1.30 (AIPO ThematicETF_ClassificationAudit() REVISED). Full holdings re-audited from T1 source (Defiance ETFs official page, 06/02/2026, 77 holdings, $750.87M AUM). Three errors corrected from v1.14/v1.23: (1) PDT reduced 0.20→0.04 — AIPO Industrials (PWR, VRT, ETN, GEV, MTZ, STRL, NVT, HUBB, DY, utilities, data centers) are commercial RAC, not policy-driven; binding driver is hyperscaler/utility demand, NOT legislative mandates. (2) IHC increased 0.05→0.11 — uranium exposure (CCJ 3.78% + NXE 0.75%, UUUU 0.50%, DNN 0.44%, LEU 0.44%) was understated or missed in prior top-holdings review; also includes Bloom Energy (BE) 4.56% energy technology, EOSE 0.62%, FLNC 0.61% energy storage. (3) STG reduced 0.30→0.16 — GEV was erroneously counted in "IT 30%" sector bucket by prior data source; confirmed Industrials/RAC. RAC increased 0.45→0.55. New UNCLASSIFIED exposure: bitcoin miners ~7% NAV (11 holdings: HUT, BTDR, HIVE, RIOT, CLSK, CIFR, MARA, CORZ, IREN, WULF, BTBT); no registered M15 role; treated as 0% EV contribution (conservative — unknown/likely negative in B/C). EV corrected: +0.13%→+3.28% (using all current operative §4.1 values: STG B=−2 ★, RAC D=−6 ★, RAC E=−10 ★, STG D=−14 ⚑ operative). ⚠ Session instructions' +3.54% used stale RAC D=+2, RAC E=+2, STG B=−6 — corrected to +3.28% using live calibration state. Rank: ~#10→#3 (above SIVR +2.93%, below URA +4.02%). v1.29/v1.23 PDT-dominant classification (0.63 PDT) was itself a prior error corrected today — the 57% Industrials weight was misclassified as PDT; binding driver test confirms commercial RAC. Q3 action required: add role for bitcoin_mining / speculative_infrastructure_growth (§6 item TBD). last_reviewed updated to June 2, 2026. No §4.1 changes. No probability changes. No target allocation changes this version.
 
 ---
 
@@ -1065,7 +1095,63 @@ Portfolio EV by account (v1.22 targets, A=7/B=36/C=41/D=5/E=4/F=7 — updated v1
 
 ---
 
-er) by ~74%. Would never have fired under any observed historical scenario.
+## Section 12 - M17 Systemic Cascade Warning Thresholds
+
+Governing module: M17_SystemicCascadeWarning.md. §12.1-12.4 structure and
+ACTIVE_STATUS prose added 2026-06-20 (ENG-18) — see FRAMEWORK_BACKLOG.md
+for full rationale.
+
+### 12.1 Agriculture / Fertilizer Chain (CHAIN_1)
+
+| Parameter | Alert Threshold | Notes |
+| --- | --- | --- |
+| farm_filings_alert | +50% YoY farm chapter 12 bankruptcies | ⚠ PENDING formal calibration (Q2 audit) — current default, not yet M16-derived |
+| natgas_alert | $6.00/mmBtu sustained 30 days | ⚠ PENDING formal calibration (Q2 audit) |
+| fertilizer_alert | +50% above 12-month average | ⚠ PENDING formal calibration (Q2 audit) |
+
+ACTIVE_STATUS (per M17.md, moved here 2026-06-20): ELEVATED — chapter 12 filings
++46% YoY 2025 (below +50% threshold — NOT fired); farm debt record $624.7B;
+natgas $2.71/mmBtu (well below $6.00 threshold — NOT fired); urea +33% since
+March 2026 conflict (below +50% fertilizer threshold — NOT fired); anhydrous
+ammonia $860/ton projected fall 2026.
+
+### 12.2 CRE / Regional Bank Chain (CHAIN_2)
+
+| Parameter | Alert Threshold | Notes |
+| --- | --- | --- |
+| KRE_alert | KRE −15% vs SPX over 90 days | ⚠ PENDING formal calibration (Q2 audit) — current default |
+| SOFR_DFF_alert | SOFR–DFF spread +10 bp sustained 5 days | ⚠ PENDING formal calibration (Q2 audit) |
+
+ACTIVE_STATUS (per M17.md, moved here 2026-06-20): ELEVATED — CMBS delinquency
+6.59% (Q3 2025); $930B maturity wall 2026; SOFR–DFF benign at −11 bp (below
++10bp threshold and in fact negative — NOT fired); KRE not yet showing
+underperformance vs SPX (NOT fired).
+
+### 12.3 Private Credit / Margin Chain (CHAIN_3, two-mode — v1.20)
+
+| Mode | Parameter | Threshold | Score | Current Status |
+| --- | --- | --- | --- | --- |
+| WATCH | margin_at_nominal_record | FINRA margin debt at all-time nominal high | 0 | WATCH — $1.304T record loaded (April 2026) |
+| FIRES | margin_MoM_decline | ≤ −5% MoM after record high | +1 | NOT fired — current +6.8% MoM |
+| FIRES | gate_count_alert | 3+ named fund gate/suspension events in 90 days | +1 | NOT fired — 2/3 observed |
+
+ACTIVE_STATUS (per M17.md, moved here 2026-06-20): ELEVATED — margin debt
+$1.304T all-time nominal record (April 2026); net credit balance −$871B near
+record low; CLO OC breach and gate events observed (2 of the 3+ FIRES
+threshold). Both threshold values above are ⚠ PENDING formal calibration
+(Q2 audit) — current defaults.
+
+### 12.4 Manufacturing / Corporate Stress Chain (CHAIN_4)
+
+| Parameter | Alert Threshold | Confidence | Notes |
+| --- | --- | --- | --- |
+| bankruptcy_quarterly_WATCH | ≥220/quarter | HIGH ★ | M16 4-layer complete, v1.24 (June 1, 2026) |
+| bankruptcy_quarterly_FIRES | ≥300/quarter | HIGH ★ | M16 4-layer complete, v1.24. Prior 800/quarter threshold eliminated same revision — see Section 3 log entry 38. |
+
+ACTIVE_STATUS (per M17.md, moved here 2026-06-20): ELEVATED — corporate
+bankruptcy pace 14-year high in 2025; manufacturing 3% below April 2018 peak;
+PE leverage elevated. Current Q1 2026 = 188/quarter — BELOW WATCH (≥220).
+ABI/Epiq AACER T1-equivalent source confirmed.
 
 ### 12.5 Sovereign Stress / Scenario E Watch
 

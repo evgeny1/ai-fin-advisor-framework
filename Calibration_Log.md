@@ -206,3 +206,10 @@ No §4.1 table changes. No probability changes. No target allocation changes thi
 AIPO target reduction (IRA/Roth 7%→3%; DBMF IRA/Roth +4pp): under client deliberation; not adopted.
 
 ---
+
+2026-06-02 - Framework v1.30 (AIPO ThematicETF_ClassificationAudit() REVISED). Full holdings re-audited from T1 source (Defiance ETFs official page, 06/02/2026, 77 holdings, $750.87M AUM). Three errors corrected from v1.14/v1.23: (1) PDT reduced 0.20→0.04 — AIPO Industrials (PWR, VRT, ETN, GEV, MTZ, STRL, NVT, HUBB, DY, utilities, data centers) are commercial RAC, not policy-driven; binding driver is hyperscaler/utility demand, NOT legislative mandates. (2) IHC increased 0.05→0.11 — uranium exposure (CCJ 3.78% + NXE 0.75%, UUUU 0.50%, DNN 0.44%, LEU 0.44%) was understated or missed in prior top-holdings review; also includes Bloom Energy (BE) 4.56% energy technology, EOSE 0.62%, FLNC 0.61% energy storage. (3) STG reduced 0.30→0.16 — GEV was erroneously counted in "IT 30%" sector bucket by prior data source; confirmed Industrials/RAC. RAC increased 0.45→0.55. New UNCLASSIFIED exposure: bitcoin miners ~7% NAV (11 holdings: HUT, BTDR, HIVE, RIOT, CLSK, CIFR, MARA, CORZ, IREN, WULF, BTBT); no registered M15 role; treated as 0% EV contribution (conservative — unknown/likely negative in B/C). EV corrected: +0.13%→+3.28% (using all current operative §4.1 values: STG B=−2 ★, RAC D=−6 ★, RAC E=−10 ★, STG D=−14 ⚑ operative). ⚠ Session instructions' +3.54% used stale RAC D=+2, RAC E=+2, STG B=−6 — corrected to +3.28% using live calibration state. Rank: ~#10→#3 (above SIVR +2.93%, below URA +4.02%). v1.29/v1.23 PDT-dominant classification (0.63 PDT) was itself a prior error corrected today — the 57% Industrials weight was misclassified as PDT; binding driver test confirms commercial RAC. Q3 action required: add role for bitcoin_mining / speculative_infrastructure_growth (§6 item TBD). last_reviewed updated to June 2, 2026. No §4.1 changes. No probability changes. No target allocation changes this version.
+
+<!-- Archived 2026-06-20 (§3 compaction, ENG-18 session) — restores §3's "last 10
+     entries" invariant after adding the v1.41 Section 12 entry. -->
+
+---
