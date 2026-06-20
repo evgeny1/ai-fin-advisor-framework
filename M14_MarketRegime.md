@@ -1,9 +1,9 @@
 # M14 — Market Regime & Entry Discipline
-<!-- Version: 1.5 | Updated: see git log -->
+<!-- Version: 1.6 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M14_MarketRegime
-  Version:         1.5
+  Version:         1.6
   Sub-project:     ANALYSIS_ENGINE
   Reason to change: market desensitization detection methodology or entry guard thresholds change.
                     Generalizes the WAR PREMIUM ENTRY GUARD (previously user-mandated, unmodularized).
@@ -138,11 +138,16 @@ MODULE MarketRegimeDiscipline {
     //   REQUIRES: formal M16 adoption at next Q-end audit to make energy_180d the canonical metric.
     //   Until then: 90d remains the operative metric; 180d is supplemental context.
     //   FLAG in briefing as: "⚠ Conflict > 90d: energy_90d may understate war premium — 180d: [value%]"
-    //   CONFIRMED during ENG-2 review (2026-06-17): analysis/regime.py's compute_divergence_signal()
-    //   does NOT implement this caveat — it only ever computes the 90d window, with no
-    //   conflict-duration awareness and no energy_180d fallback. This remains a manual
-    //   step: when a supply event is active and > 90 days old, compute energy_180d by hand
-    //   and apply the higher reading yourself before reporting commodity_fear_divergence.
+    //   IMPLEMENTED (ENG-20, 2026-06-20): analysis/regime.py's compute_divergence_signal() now
+    //   accepts an optional conflict_duration_days parameter, mirroring the same
+    //   caller-responsibility convention already used by EntryExtensionGuard's parameter of
+    //   the same name — the caller (Claude, from T1-confirmed conflict onset date) supplies
+    //   it each session; the function does not infer conflict duration on its own. When
+    //   conflict_duration_days > 90, energy_180d is computed automatically and the higher of
+    //   the two readings drives commodity_fear_divergence classification. Both readings are
+    //   always returned on DivergenceSignal (energy_90d_change, energy_180d_change) for the
+    //   briefing to surface per the FLAG format above. When the parameter is omitted (None,
+    //   the default), behavior is unchanged from before this fix — 90d-only.
 
     // ─── THRESHOLD CLASSIFICATION ─────────────────────────────────────────────────────
     // Confirmed during ENG-2 review: this scoring (energy_90d/VIX → commodity_fear_divergence;

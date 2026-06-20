@@ -1,9 +1,9 @@
 # M09 — Scenario Execution Protocols: A, B, C
-<!-- Version: 1.1 | Updated: see git log -->
+<!-- Version: 1.2 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M09_ScenariosABC
-  Version:         1.1
+  Version:         1.2
   Sub-project:     PORTFOLIO_ADVISOR
   Reason to change: execution protocol, position responses, or rotation sequence for Scenarios A, B, or C changes.
   Inputs consumed:  ScenarioProbabilities; current allocations; DataReading (energy, credit)
@@ -84,6 +84,53 @@ MODULE ScenarioA {  // Soft Landing
     broad_market_equity_international: {
       action:   Reassess via DXY_trajectory before_adding
       condition: IF DXY_strengthening → do_NOT_add  // dollar strength reverses tailwind
+      urgency:  High  // conditional on DXY assessment
+    }
+
+    // ── NEWER §11 ROLES (ENG-19, added 2026-06-20) ──────────────────────────
+    // Directives derived from §4.1 return table + each role's §11.1 binding driver.
+    // @see FRAMEWORK_BACKLOG.md ENG-19 resolution for full methodology.
+    secular_technology_growth: {
+      action:   Add
+      apply:    tax_sheltered_first
+      rationale: "AI capex cycle and multiple expansion accelerate in risk-on soft landing. §4.1 conservative +6%."
+      urgency:  Medium
+    }
+    inflation_linked_sovereign: {
+      action:   Reduce
+      rationale: "Disinflation reduces CPI accrual faster than real yield decline from Fed cuts can offset. §4.1 conservative -2%★."
+      urgency:  Low
+    }
+    real_estate_equity_income: {
+      action:   Evaluate — explicit EV calculation required before acting
+      rationale: "ALL §4.1 values LOW confidence (irreconcilable 1970s NAREIT vs 2022 VNQ analogs). Do not default to Hold without an EV calc."
+      urgency:  Evaluate
+    }
+    systematic_trend_following: {
+      action:   reduce_to minimumConvictionWeight()
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "Trend-reversal whipsaw on normalization historically severe. §4.1 conservative -12%★ (HIGH confidence)."
+      urgency:  Medium
+    }
+    consumer_defensive_equity: {
+      action:   Hold
+      rationale: "Mild positive (§4.1 [0,+4]★) but not the role's defining scenario (B/C alpha). No incremental thesis to add here."
+      urgency:  Low
+    }
+    healthcare_defensive_equity: {
+      action:   Hold
+      rationale: "Mild positive, MEDIUM confidence pending June 30. No strong directive either way."
+      urgency:  Low
+    }
+    floating_rate_credit_income: {
+      action:   Reduce
+      rationale: "Floating coupon resets down as Fed cuts; opportunity cost vs risk-on assets. Mirrors short_duration_income treatment."
+      urgency:  Low
+    }
+    emerging_market_equity: {
+      action:   Reassess via DXY_trajectory before_adding
+      condition: IF DXY_strengthening → do_NOT_add  // same mechanism as international, amplified
+      rationale: "USD_direction is an explicit §11.1 binding driver; EM sensitivity to dollar strength exceeds developed international. §4.1 conservative +10%★ if cleared."
       urgency:  High  // conditional on DXY assessment
     }
   }
@@ -210,6 +257,50 @@ MODULE ScenarioB {  // Stagflation Lock
       rationale: "Additional currency and supply chain transmission risk."
       urgency:  High  // first reduction priority
     }
+
+    // ── NEWER §11 ROLES (ENG-19, added 2026-06-20) ──────────────────────────
+    secular_technology_growth: {
+      action:   Hold
+      rationale: "Q1 2026 sustained-B analogue confirms contract lock-in roughly offsets multiple compression. §4.1 [-2,+4]★ ADOPTED HIGH — thesis intact, but not the stagflation signature trade."
+      urgency:  Low
+    }
+    inflation_linked_sovereign: {
+      action:   Add IF below_scenario_weighted_target_weight
+      apply:    @see M03_ScenarioFramework.scenarioWeightedAllocation()
+      rationale: "CPI accrual directly supportive; sovereign_credit_quality intact domestically. §4.1 conservative +1% — modest vs precious metals/commodity but thesis-aligned."
+      urgency:  Medium
+    }
+    real_estate_equity_income: {
+      action:   Evaluate — explicit EV calculation required before acting
+      rationale: "This scenario is the SPECIFIC locus of the irreconcilable 1970s NAREIT (+3-6%) vs 2022 VNQ (-26%) analog conflict driving the row's LOW confidence flag. Defer to EV calc, not default action."
+      urgency:  Evaluate
+    }
+    systematic_trend_following: {
+      action:   Add IF below_scenario_weighted_target_weight
+      rationale: "§4.1 [+15,+30]★ ADOPTED HIGH — the highest-magnitude B return of any role in the framework. Commodity/rate trend persistence is the structural driver (1973-82 proxy, DBMF/SG-CTA 2022 empirical)."
+      urgency:  High
+    }
+    consumer_defensive_equity: {
+      action:   Add IF below_scenario_weighted_target_weight
+      rationale: "Pricing power thesis. This is one of the role's two defining scenarios (B/C alpha) per §4.1 commentary. §4.1 [+2,+6]★ ADOPTED HIGH."
+      urgency:  High
+    }
+    healthcare_defensive_equity: {
+      action:   Hold
+      rationale: "Modest positive (§4.1 [1,4]⚑), MEDIUM confidence. Pricing-power benefit present but not the signature B trade."
+      urgency:  Low
+    }
+    floating_rate_credit_income: {
+      action:   Hold
+      rationale: "Fed holding rates supports floating coupon reset. Roll at elevated rates — mirrors short_duration_income treatment."
+      urgency:  Low
+    }
+    emerging_market_equity: {
+      action:   Exit
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 conservative -12%⚑ exceeds the framework's own EXIT threshold (~-8 to -10%, per broad_market_equity_international's D/E directives). EM-specific currency/political risk compounds stagflation transmission."
+      urgency:  High
+    }
   }
 
   // ─── ROTATION SEQUENCE ───────────────────────────────────────────────────
@@ -331,6 +422,49 @@ MODULE ScenarioC {  // Inflationary Shock
       apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
       rationale: "Layered transmission risk: currency devaluation, supply chain, energy import costs."
       urgency:  High  // first reduction priority
+    }
+
+    // ── NEWER §11 ROLES (ENG-19, added 2026-06-20) ──────────────────────────
+    secular_technology_growth: {
+      action:   Hold
+      rationale: "§4.1 [+2,+8] positive — AI enterprise contracts insulate from inflationary shock — but not the scenario's signature add (geopolitical_premium)."
+      urgency:  Low
+    }
+    inflation_linked_sovereign: {
+      action:   Hold  // do NOT trim
+      rationale: "CPI accrual positive but modest (§4.1 [1,4]⚑). Same treatment as precious_metals/commodity_linked in C — thesis intact, but C's signature add is geopolitical_premium only."
+      urgency:  None
+    }
+    real_estate_equity_income: {
+      action:   Evaluate — explicit EV calculation required before acting
+      rationale: "LOW confidence row across all scenarios. Explicit EV calc required before action."
+      urgency:  Evaluate
+    }
+    systematic_trend_following: {
+      action:   Add IF below_scenario_weighted_target_weight
+      rationale: "§4.1 [+18,+35]★ ADOPTED HIGH — the framework's single highest-magnitude scenario return of any role. Acute commodity trend acceleration (1973-74, 1979-80 analogs)."
+      urgency:  High
+    }
+    consumer_defensive_equity: {
+      action:   Add IF below_scenario_weighted_target_weight
+      rationale: "Second of the role's two defining scenarios (B/C alpha). §4.1 [+2,+6]★ ADOPTED HIGH — pricing power offsets input cost inflation."
+      urgency:  High
+    }
+    healthcare_defensive_equity: {
+      action:   Hold
+      rationale: "§4.1 [-2,3]⚑ straddles zero, MEDIUM confidence. No clear directive."
+      urgency:  Low
+    }
+    floating_rate_credit_income: {
+      action:   Hold
+      rationale: "§4.1 [1,3]⚑ — same reasoning as Scenario B. Stable income; credit spreads not yet stressed."
+      urgency:  Low
+    }
+    emerging_market_equity: {
+      action:   Exit
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 conservative -15%⚑ — deeper than the framework's own EXIT threshold. Layered currency, supply-chain, and commodity-import transmission compounds specifically for EM."
+      urgency:  High
     }
   }
 

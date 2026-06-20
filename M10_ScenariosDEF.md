@@ -1,9 +1,9 @@
 # M10 — Scenario Execution Protocols: D, E, F
-<!-- Version: 1.1 | Updated: see git log -->
+<!-- Version: 1.2 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M10_ScenariosDEF
-  Version:         1.1
+  Version:         1.2
   Sub-project:     PORTFOLIO_ADVISOR
   Reason to change: execution protocol, position responses, or rotation sequence for Scenarios D, E, or F changes.
                     Scenario E rate directives branch on YieldCurveSignal.e_pathway_type — pathway logic changes go to M17.
@@ -108,6 +108,55 @@ MODULE ScenarioD {  // Deflationary Recession
       rationale: "Demand collapse + dollar uncertainty = compounded transmission risk. No thesis basis to hold."
       urgency:  High  // first reduction priority
     }
+
+    // ── NEWER §11 ROLES (ENG-19, added 2026-06-20) ──────────────────────────
+    // Directives derived from §4.1 return table + each role's §11.1 binding driver.
+    // @see FRAMEWORK_BACKLOG.md ENG-19 resolution for full methodology.
+    secular_technology_growth: {
+      action:   Reduce
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 [-6,0]⚑ — multiple compression in deflationary recession. MEDIUM confidence, 1 analogue (2008-09 NDX -5.1% real, 2yr annualized)."
+      urgency:  Medium
+    }
+    inflation_linked_sovereign: {
+      action:   Hold
+      rationale: "§4.1 [0,3]★ ADOPTED HIGH — real yield decline from aggressive Fed cuts offsets deflation's drag on breakevens. Mechanism is genuinely two-sided but net positive per adopted value."
+      urgency:  Low
+    }
+    real_estate_equity_income: {
+      action:   Evaluate — explicit EV calculation required before acting
+      rationale: "LOW confidence row across all scenarios. Explicit EV calc required before action."
+      urgency:  Evaluate
+    }
+    systematic_trend_following: {
+      action:   Hold OR Add IF EV_calculation_supports
+      rationale: "§4.1 [-5,+15]★ ADOPTED HIGH — wide range IS the calibration (documented structural exception, same pattern as rate_sensitive_income_long_duration's D treatment)."
+      urgency:  Hold; Add_if_EV_confirms
+    }
+    consumer_defensive_equity: {
+      action:   Reduce
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 [-5,0]★ ADOPTED HIGH — even defensive staples drag in an extended deflationary recession; milder than broad market's D reduction."
+      urgency:  Medium
+    }
+    healthcare_defensive_equity: {
+      action:   Hold WITH monitoring
+      status:   downgrade_to watch
+      rationale: "§4.1 [-4,+1]⚑ — mild/uncertain, MEDIUM confidence. Same downgrade-to-watch pattern as real_asset_contracted_revenue's D treatment."
+      urgency:  Watch
+    }
+    floating_rate_credit_income: {
+      action:   Reduce
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 [-10,-4]⚑ — the explicit §11.1 key risk (D/E credit seizure) materializes. IG/floating-rate spreads widen even as Treasuries rally — unlike rate_sensitive_income_short_duration, which has no credit-spread exposure."
+      urgency:  High
+    }
+    emerging_market_equity: {
+      action:   Exit
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 conservative -25%⚑ — the single most severe reading in the entire return table. Demand collapse + commodity export revenue collapse + EM policy cycle stress compound."
+      urgency:  High
+    }
   }
 
   // ─── ROTATION SEQUENCE ───────────────────────────────────────────────────
@@ -199,8 +248,9 @@ MODULE ScenarioE {  // Structural Rupture
   //
   // All other directives (precious metals, equities, commodities, real assets,
   // policy thematic) are UNCHANGED — they hold in both pathway types.
-  // Only rate_sensitive_income_long_duration and rate_sensitive_income_short_duration
-  // branch by pathway.
+  // rate_sensitive_income_long_duration, rate_sensitive_income_short_duration, and
+  // inflation_linked_sovereign (ENG-19, added 2026-06-20 — its §11.1 binding driver
+  // explicitly includes sovereign_credit_quality) branch by pathway.
   //
   // ⚠ NOTE: The §4.1 return table for inflation_hedge_precious_metals Scenario E
   //   ([+10, +20] conservative) is anchored to E-Type 2 (RESERVE_EROSION).
@@ -294,6 +344,74 @@ MODULE ScenarioE {  // Structural Rupture
       apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
       rationale: "Reserve rupture creates maximum currency and transmission uncertainty in international holdings."
       urgency:  Immediate  // exit with precious metals addition as twin first actions
+    }
+
+    // ── NEWER §11 ROLES (ENG-19, added 2026-06-20) ──────────────────────────
+    secular_technology_growth: {
+      action:   reduce_to minimumConvictionWeight()
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 [-12,-3]⚑ — acute multiple compression in structural rupture, comparable magnitude to broad_market_equity_domestic's E treatment."
+      urgency:  High
+    }
+
+    // inflation_linked_sovereign is ALSO pathway-conditional — its §11.1 binding driver
+    // explicitly includes sovereign_credit_quality. Same branch structure as the two
+    // rate_sensitive_income roles above; instrument candidate VTIP is short-duration,
+    // so it is resolved like rate_sensitive_income_short_duration, not long_duration.
+    inflation_linked_sovereign: {
+      IF e_pathway_type == SYSTEMIC_LIQUIDITY {
+        action:   Hold
+        rationale: "Short-duration TIPS behave like short-duration Treasuries in classic flight-to-safety.
+                   Sovereign counterparty risk is low. CPI-linkage adds modest diversification.
+                   Hold — roll at elevated yields while crisis resolves."
+        urgency:  Low
+      }
+      IF e_pathway_type == RESERVE_EROSION {
+        action:   Evaluate — assess sovereign counterparty
+        note:     "sovereign_credit_quality is this role's explicit §11.1 binding driver.
+                   Assess whether reserve erosion impairs demand for short-duration UST/TIPS
+                   before acting — same evaluation as rate_sensitive_income_short_duration
+                   under this pathway."
+        urgency:  Evaluate
+      }
+    }
+
+    real_estate_equity_income: {
+      action:   Evaluate — explicit EV calculation required before acting
+      rationale: "LOW confidence row across all scenarios. Explicit EV calc required before action."
+      urgency:  Evaluate
+    }
+    systematic_trend_following: {
+      action:   Evaluate — assess trend P&L and correlation regime before acting
+      rationale: "§4.1 [-8,+8]★ ADOPTED HIGH — binary outcome (correlation-spike-and-reversal vs
+                 trend-acceleration); wide range IS the calibration. This is a DIFFERENT axis from
+                 e_pathway_type — assess current cross-asset correlation regime directly, not via
+                 YieldCurveSignal."
+      urgency:  Evaluate
+    }
+    consumer_defensive_equity: {
+      action:   reduce_to minimumConvictionWeight()
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 [-8,-2]⚑ — same magnitude treatment as the analogous broad-market E reduction."
+      urgency:  High
+    }
+    healthcare_defensive_equity: {
+      action:   reduce_to minimumConvictionWeight()
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 [-8,-2]⚑ — same magnitude as consumer_defensive_equity's E reading."
+      urgency:  High
+    }
+    floating_rate_credit_income: {
+      action:   Reduce
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 [-8,-2]⚑ — the explicit §11.1 key risk (D/E credit seizure) materializes in structural rupture."
+      urgency:  High
+    }
+    emerging_market_equity: {
+      action:   Exit
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 conservative -22%⚑ — second-most severe reading in the table. Reserve-system stress compounds EM-specific USD and political risk."
+      urgency:  Immediate
     }
   }
 
@@ -408,6 +526,53 @@ MODULE ScenarioF {  // Growth Overheat
       condition: IF DXY_weakening → consider_add
                  IF DXY_strengthening → hold_or_reduce
       rationale: "Dollar trajectory determines whether international equity outperforms domestic in growth overheat."
+      urgency:  Medium  // conditional on DXY
+    }
+
+    // ── NEWER §11 ROLES (ENG-19, added 2026-06-20) ──────────────────────────
+    secular_technology_growth: {
+      action:   Add
+      apply:    tax_sheltered_first
+      rationale: "§4.1 [4,11] — strong nominal demand sustains AI capex even as rates rise. Mirrors broad_market_equity_domestic's F treatment."
+      urgency:  Medium
+    }
+    inflation_linked_sovereign: {
+      action:   Reduce
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 [-1,+1]★ ADOPTED HIGH — rising real yields in growth overheat compress TIPS modestly. Duration-rate sensitivity; mirrors rate_sensitive_income_long_duration's F treatment direction."
+      urgency:  Low
+    }
+    real_estate_equity_income: {
+      action:   Evaluate — explicit EV calculation required before acting
+      rationale: "LOW confidence row across all scenarios. Explicit EV calc required before action."
+      urgency:  Evaluate
+    }
+    systematic_trend_following: {
+      action:   Reduce
+      apply:    @see M08_FunctionalRoles.ExecutionTaxPlacement
+      rationale: "§4.1 [-5,+3]★ ADOPTED HIGH — smooth uptrend in growth overheat is a structural headwind for trend-following: fewer disruptive cross-asset trends to capture."
+      urgency:  Low
+    }
+    consumer_defensive_equity: {
+      action:   Hold
+      rationale: "§4.1 [-3,+2]★ ADOPTED HIGH — straddles zero. Staples underperform growth but retain pricing power."
+      urgency:  Low
+    }
+    healthcare_defensive_equity: {
+      action:   Hold
+      rationale: "§4.1 [1,5]⚑ — mild positive, MEDIUM confidence."
+      urgency:  Low
+    }
+    floating_rate_credit_income: {
+      action:   Hold
+      rationale: "§4.1 [1,3]⚑ — floating coupon reset upward partially offsets, but row stays mild across all scenarios."
+      urgency:  Low
+    }
+    emerging_market_equity: {
+      action:   Assess via DXY_trajectory / global_growth_cycle
+      condition: IF DXY_weakening → consider_add
+                 IF DXY_strengthening → hold_or_reduce
+      rationale: "§4.1 [4,11]⚑ positive; same DXY-conditional treatment as broad_market_equity_international, amplified by EM's larger USD sensitivity."
       urgency:  Medium  // conditional on DXY
     }
   }

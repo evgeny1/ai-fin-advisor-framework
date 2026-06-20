@@ -7,6 +7,8 @@ ComputeDivergenceSignal():
   - commodity_fear_divergence: Brent 90-calendar-day change vs VIX change from rolling avg
   - equity_scenario_divergence: SPX 30-trading-day change while directive is reductive
   - composite: HIGH if either component is HIGH; MODERATE if either is MODERATE
+  - conflict_duration_days (ENG-20): when > 90, also computes energy_180d and uses the
+    higher of the two readings for classification (M14 EXTENDED CONFLICT CAVEAT)
 
 EntryExtensionGuard():
   - Checks whether current price is >= threshold% above trailing average
@@ -45,6 +47,7 @@ def compute_divergence_signal(
     cal: CalibrationState,
     *,
     equity_directive_for_dominant_scenario: Optional[str] = None,
+    conflict_duration_days: Optional[int] = None,
 ) -> DivergenceSignal:
     """
     M14.ComputeDivergenceSignal.
@@ -64,6 +67,17 @@ def compute_divergence_signal(
     equity_directive_for_dominant_scenario:
         M09/M10 directive for broad_market_equity_domestic in the current dominant scenario.
         None → equity_scenario_divergence = NOT_APPLICABLE.
+    conflict_duration_days:
+        Days since T1-confirmed onset of an active discrete supply event (e.g. Hormuz
+        closure). Caller is responsible for supplying this — mirrors the same
+        caller-responsibility convention as entry_extension_guard()'s parameter of the
+        same name. When > 90, both endpoints of the energy_90d window fall inside the
+        conflict period and the 90d signal may understate a sustained war premium
+        (ENG-20 / M14 EXTENDED CONFLICT CAVEAT). In that case, energy_180d is also
+        computed (same formula, 180 calendar days) and the higher of the two readings
+        is used for commodity_fear_divergence classification. Both readings are always
+        reported on the returned DivergenceSignal. None (default) → 90d-only behavior,
+        unchanged from before this parameter existed.
 
     Returns
     -------
@@ -97,6 +111,32 @@ def compute_divergence_signal(
     else:
         flags.append("BRENT_CRUDE: reading unavailable — commodity_fear_divergence cannot be computed")
 
+    # ── Extended conflict caveat (ENG-20): energy_180d fallback ────────────────
+    # When the active discrete supply event has run > 90 calendar days, both
+    # endpoints of the 90d window are war-elevated and the signal may understate
+    # the sustained premium. Compute energy_180d as supplemental context and use
+    # the higher of the two readings for classification. @see M14_MarketRegime.md
+    # EXTENDED CONFLICT CAVEAT.
+    energy_180d_change: Optional[float] = None
+    energy_change_for_classification = energy_90d_change
+
+    if conflict_duration_days is not None and conflict_duration_days > 90:
+        if brent_r and brent_r.is_valid:
+            hist_180 = get_history(brent_r)
+            energy_180d_change = compute_pct_change(hist_180, 180, "BRENT_CRUDE_180D", flags)
+        if energy_180d_change is not None:
+            if energy_90d_change is None or energy_180d_change > energy_90d_change:
+                energy_change_for_classification = energy_180d_change
+            flags.append(
+                f"⚠ Conflict > 90d ({conflict_duration_days}d): energy_90d may understate "
+                f"war premium — 180d: {energy_180d_change:.1%}"
+            )
+        else:
+            flags.append(
+                f"Conflict > 90d ({conflict_duration_days}d) — energy_180d fallback requested "
+                "but insufficient BRENT_CRUDE history to compute (need 181+ daily points)."
+            )
+
     # ── VIX change from 90d rolling average ───────────────────────────────────
     vix_current = get_scalar(readings.get("VIX"),        flags, "VIX")
     vix_90d_avg = get_scalar(readings.get("VIX_90D_AVG"), flags, "VIX_90D_AVG")
@@ -129,15 +169,15 @@ def compute_divergence_signal(
 
     # ── Commodity fear divergence ──────────────────────────────────────────────
     commodity_fear = DivergenceLevel.NONE
-    if energy_90d_change is not None and vix_change_90d is not None:
+    if energy_change_for_classification is not None and vix_change_90d is not None:
         e_high_thresh = r.commodity_fear_HIGH_energy_pct / 100.0
         e_mod_thresh  = r.commodity_fear_MOD_energy_pct  / 100.0
         v_high_thresh = r.commodity_fear_HIGH_vix_change
         v_mod_thresh  = r.commodity_fear_MOD_vix_change
 
-        if energy_90d_change >= e_high_thresh and vix_change_90d <= v_high_thresh:
+        if energy_change_for_classification >= e_high_thresh and vix_change_90d <= v_high_thresh:
             commodity_fear = DivergenceLevel.HIGH
-        elif energy_90d_change >= e_mod_thresh and vix_change_90d <= v_mod_thresh:
+        elif energy_change_for_classification >= e_mod_thresh and vix_change_90d <= v_mod_thresh:
             commodity_fear = DivergenceLevel.MODERATE
 
     # ── Equity scenario divergence ────────────────────────────────────────────
@@ -172,6 +212,7 @@ def compute_divergence_signal(
         equity_scenario_divergence=equity_div,
         composite=composite,
         energy_90d_change=energy_90d_change,
+        energy_180d_change=energy_180d_change,
         vix_change_90d_pts=vix_change_90d,
         broad_equity_30d=broad_equity_30d,
         quality_flags=flags,

@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-19
+**Last updated:** 2026-06-20
 
 ## Index
 
@@ -57,8 +57,8 @@
 | ENG-16 | CLOSED | HIGH | architecture | M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py |
 | ENG-17 | OPEN | LOW | documentation | BriefingRegistry described as built ("Phase 2 complete") but doesn't exist in Python anywhere |
 | ENG-18 | OPEN | LOW | hygiene | M17 CascadeChainRegistry embeds live dated figures in module file; CHAIN_5/6 not scored |
-| ENG-19 | OPEN | MEDIUM | functional-gap | 8 of 17 RoleID roles have no M09/M10 scenario-directive coverage anywhere |
-| ENG-20 | OPEN | MEDIUM | functional-gap | M14 energy_180d extended-conflict caveat not implemented in regime.py |
+| ENG-19 | CLOSED | MEDIUM | functional-gap | 8 of 17 RoleID roles have no M09/M10 scenario-directive coverage anywhere |
+| ENG-20 | CLOSED | MEDIUM | functional-gap | M14 energy_180d extended-conflict caveat not implemented in regime.py |
 | ENG-21 | OPEN | LOW | hygiene | M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback |
 | ENG-22 | OPEN | LOW | testing | Test suite needs reorganizing into unit/e2e/integration — currently flat test_stageN folders |
 | ENG-23 | CLOSED | MEDIUM | architecture | M05_SessionInit.md retired outright (ENG-2 follow-on decision #2) |
@@ -437,12 +437,13 @@ as part of the ENG-2 pass.
 
 ### ENG-19 — 8 of 17 RoleID roles have no M09/M10 scenario-directive coverage anywhere
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  MEDIUM
   Category:  functional-gap
   Opened:    2026-06-17
+  Closed:    2026-06-20
   Area:      M09_ScenariosABC.md, M10_ScenariosDEF.md, python/advisor/portfolio/directives.py,
-             FW_Types.md
+             python/advisor/types.py, python/tests/test_stage4/test_directives.py
   Related:   ENG-2, ENG-13, ENG-16
 -->
 
@@ -454,30 +455,87 @@ M09/M10 return HOLD with a quality_flag." The 8 uncovered roles:
 `secular_technology_growth`, `inflation_linked_sovereign`,
 `real_estate_equity_income`, `systematic_trend_following`,
 `consumer_defensive_equity`, `healthcare_defensive_equity`,
-`floating_rate_credit_income`, `emerging_market_equity`. This was not
-checked against whether `Calibration_State.md` §11 fills the gap some
-other way — worth a quick look before treating this as fully open.
+`floating_rate_credit_income`, `emerging_market_equity`.
 
-**Why it matters:** this is a real methodology/coverage gap, not a
-documentation problem — for these 8 roles, neither Claude nor Python has
-a defined scenario-directive table to consult; directives must be
-reasoned from general principles each session, with no consistency
-guarantee across sessions the way the other 9 roles have.
+**Pre-check (2026-06-20):** confirmed `Calibration_State.md` §11 does
+NOT fill the gap some other way as the original item speculated it
+might — §4.1 carries full per-scenario *return* values for all 8 roles
+(several ★ ADOPTED HIGH confidence, several ⚑ MEDIUM pending June 30,
+`real_estate_equity_income` entirely ⚠ LOW), but §11.1 has no
+ADD/HOLD/REDUCE/EXIT directive table for any of them — the coverage gap
+was real, not a documentation gap.
 
-**Suggested next step:** this requires the framework owner's actual
-investment judgment (defining ADD/HOLD/REDUCE/EXIT directives per role
-per scenario, 48 cells per role), not a mechanical fix — flagged here for
-prioritization, parallel to ENG-13's framing of a different M19 coverage
-gap.
+**Resolution (2026-06-20):** Added all 48 missing (role, scenario)
+entries — methodology: each cell derived from that role's §4.1
+conservative-end return value plus its §11.1 `Binding Driver` and
+account/tax context, using the same directive vocabulary and severity
+conventions already established by the original 9-role table (e.g. a
+conservative return beyond approximately -8 to -10% is treated as the
+existing `EXIT` threshold, per `broad_market_equity_international`'s own
+D/E directives; a role's two best-return scenarios get `ADD`, not every
+positive-return scenario, mirroring how `inflation_hedge_precious_metals`
+and `inflation_hedge_commodity_linked` are only `ADD` in B, not C, despite
+positive C returns). Full per-cell rationale is written inline in
+M09/M10's RESPONSES blocks under a `NEWER §11 ROLES` subsection per
+scenario — not just in this backlog entry.
+
+Three cross-cutting judgment calls worth flagging explicitly:
+
+1. **`real_estate_equity_income`** — every cell is `Evaluate` (explicit
+   EV calc required before acting), not a directional directive. Its
+   entire §4.1 row is LOW confidence — the framework's own calibration
+   notes describe an unresolved 1970s-NAREIT-vs-2022-VNQ conflict that is
+   *specific to Scenario B*, not a general data-quality footnote.
+   Encoding a directional ADD/REDUCE off that row would be asserting
+   conviction the framework itself doesn't have. This role is not
+   currently held in any account, so the practical impact today is nil.
+2. **`emerging_market_equity`** — `EXIT` in 4 of 6 scenarios (B, C, D, E).
+   This looks aggressive but is a direct read of §4.1: every one of those
+   four conservative values (-12%, -15%, -25%, -22%) exceeds the
+   framework's own existing EXIT threshold as established by
+   `broad_market_equity_international`'s D/E directives (-8%, -10%). EM
+   is explicitly the most volatile role in the entire return table by a
+   wide margin. Not currently held in any account — VWO is listed as an
+   "instrument candidate" only.
+3. **`inflation_linked_sovereign`** joined the Scenario E
+   pathway-conditional set (alongside the two `rate_sensitive_income`
+   roles) — its §11.1 binding driver explicitly lists
+   `sovereign_credit_quality`, which is directly pathway-sensitive.
+   `resolve_e_pathway_directive()` now branches on it: its instrument
+   candidate is VTIP (short-term TIPS, ~2.5yr duration per §11.1), so it
+   is resolved like `rate_sensitive_income_short_duration`
+   (SYSTEMIC_LIQUIDITY → Hold; RESERVE_EROSION → Evaluate counterparty
+   risk), not like the long-duration role.
+
+`directives.py`: `DIRECTIVES` grew from 54 to 102 entries (17 roles × 6
+scenarios); `_M09_M10_ROLES` and `_E_PATHWAY_ROLES` updated;
+`directive_count()` regression anchor updated to 102.
+`tests/test_stage4/test_directives.py`: rewritten for 17-role coverage —
+the "unregistered role" fallback tests now use a synthetic
+`placeholder_uncovered_role` name since all 17 real roles are covered
+(the fallback path itself is unchanged and still tested); added spot-check
+parametrized tests for the 8 newer roles plus a pathway test for
+`inflation_linked_sovereign`. Full suite: 575 passed (`not integration`,
+excluding the live-file `test_stage2` per ENG-12), 18 deselected.
+`tools/validate_manifests.py`: 19/19 pass. M09/M10 bumped to v1.2.
+
+**Not done in this pass:** the actual SEQUENCE/DE_ESCALATION blocks for
+these 8 roles (rotation ordering, unwind priority) were not added — only
+RESPONSES (the directive itself). The original ask and this fix are both
+scoped to directive *coverage*; rotation-sequence integration for the
+newer roles would be a reasonable follow-on if any of them moves from
+"instrument candidate" to an actual held position with meaningful weight.
 
 
 ### ENG-20 — M14 energy_180d extended-conflict caveat not implemented in regime.py
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  MEDIUM
   Category:  functional-gap
   Opened:    2026-06-17
-  Area:      M14_MarketRegime.md, python/advisor/analysis/regime.py
+  Closed:    2026-06-20
+  Area:      M14_MarketRegime.md, python/advisor/analysis/regime.py, python/advisor/types.py,
+             python/tests/test_stage3/test_regime.py
   Related:   ENG-2
 -->
 
@@ -487,25 +545,71 @@ supply event has persisted > 90 calendar days, both endpoints of the
 `energy_90d` window fall inside the conflict period, so the signal can
 understate a sustained war premium — the spec says to also compute
 `energy_180d` and use the higher reading. Confirmed during the ENG-2 pass
-that `analysis/regime.py`'s `compute_divergence_signal()` has no
-conflict-duration awareness and never computes an `energy_180d` fallback
-— it unconditionally uses the 90d window. (Note: `entry_extension_guard()`
-in the same file DOES accept a `conflict_duration_days` parameter and
-DOES support a 180-day window — but that's a different function serving
-a different guard, not this one.) This was kept fully in M14.md's text
-(not shrunk) specifically because of this gap.
+that `analysis/regime.py`'s `compute_divergence_signal()` had no
+conflict-duration awareness and never computed an `energy_180d` fallback
+— it unconditionally used the 90d window.
 
-**Why it matters:** if a supply-shock event is active and has run past
-90 days, `commodity_fear_divergence` from the MCP tool may be understating
-the signal with no automatic correction — Claude has to remember to check
-conflict duration and compute the 180d figure by hand every session. Not
-checked in this pass whether a currently-active scenario makes this live
-right now — worth checking at next session start if a supply-shock
-scenario (C) is materially in play.
+**Resolution (2026-06-20):** `compute_divergence_signal()` now accepts an
+optional `conflict_duration_days` parameter, mirroring the exact same
+caller-responsibility convention already established by
+`entry_extension_guard()`'s parameter of the same name (the caller — in
+practice, Claude, from a T1-confirmed conflict onset date — supplies it
+each session; the function does not infer conflict duration on its own).
+When `conflict_duration_days > 90`: `energy_180d_change` is computed via
+the same `compute_pct_change()` helper already used for the 90d figure
+(just with `window=180`), and the **higher** of the two readings drives
+`commodity_fear_divergence` classification, per the spec's "use the higher
+reading" instruction. Both readings are always returned on
+`DivergenceSignal` (new `energy_180d_change` field, default `None`) so the
+briefing can surface the spec's exact flag format: `"⚠ Conflict > 90d:
+energy_90d may understate war premium — 180d: [value%]"`. When the
+parameter is omitted (`None`, the default), behavior is byte-for-byte
+unchanged from before this fix — 90d-only, zero regression risk for every
+session that doesn't pass it.
 
-**Suggested next step:** add conflict-duration awareness and an
-`energy_180d` computation to `compute_divergence_signal()`, mirroring the
-pattern already used in `entry_extension_guard()`.
+Insufficient-history case handled gracefully: if `conflict_duration_days >
+90` but fewer than 181 daily Brent points are available, a flag is
+emitted ("insufficient BRENT_CRUDE history to compute") and classification
+falls back to the 90d-only value rather than raising.
+
+`M14_MarketRegime.md`'s caveat text updated in place to point at the
+implementation instead of describing it as a manual gap. M14 bumped to
+v1.6. New `tests/test_stage3/test_regime.py` (9 tests — this file didn't
+exist before; `regime.py` had no test coverage at all) covers: default
+(no-parameter) behavior unchanged, conflict ≤ 90d does not trigger the
+180d fallback, conflict > 90d with sufficient history computes 180d and
+the higher reading wins classification (and the reverse — 90d already
+higher, 180d does not override), insufficient-history graceful fallback,
+and basic return-type/empty-input sanity. Full suite (`not integration`,
+excluding `test_stage2` per ENG-12): 575 passed, 18 deselected.
+`tools/validate_manifests.py`: 19/19 pass.
+
+**Not done in this pass (pre-existing gap, not introduced or worsened
+here):** nothing in `mcp_server.py` currently passes
+`conflict_duration_days` into the automatic per-session call to
+`compute_divergence_signal()` — exactly mirroring the fact that nothing
+calls `entry_extension_guard()` from `mcp_server.py` either today. Both
+functions share the same caller-responsibility design; wiring an
+automatic conflict-duration source (e.g. a tracked onset date in
+Calibration_State.md) into `advisor_run_computation()` would be a
+reasonable follow-on, but is a different, larger question (where does
+conflict duration come from at all, for either guard) than what this item
+asked for. Separately: as of this writing the active geopolitical
+context is a US-Iran ceasefire framework moving toward de-escalation, not
+an extended live conflict, so this caveat does not appear to be
+operationally live right now — worth a fresh check if a Scenario C
+supply-shock event becomes active again.
+
+
+**Environment note (2026-06-20):** this machine's registered Python
+installations (`miniforge3` 3.12, `Program Files\Python311`) had neither
+`pytest` nor the project's other dependencies installed — the
+`C:\Python\python.exe` 3.12.10 interpreter referenced in earlier sessions
+no longer exists on this machine. Installed `pytest`, `pytest-mock`,
+`python-dotenv`, `mcp`, `pandas`, `yfinance` into `miniforge3`'s base
+environment to restore a working test run. No venv created (consistent
+with prior sessions); flagging in case this surprises a future session
+expecting the old interpreter path.
 
 
 ### ENG-21 — M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback

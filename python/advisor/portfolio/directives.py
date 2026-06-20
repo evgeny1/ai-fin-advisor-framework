@@ -1,14 +1,21 @@
 """
 portfolio/directives.py — M09/M10 RESPONSES table as Python data.
 
-Maps (role_id, scenario) → DirectiveCode for the nine roles explicitly
-defined in M09_ScenariosABC.md and M10_ScenariosDEF.md.
+Maps (role_id, scenario) → DirectiveCode for all 17 roles defined in §11.1.ROLE_REGISTRY.
 
 Design:
-  - Covers the original nine M08.Role roles. Newer §11 roles not in M09/M10
-    return HOLD with a quality_flag via get_directive().
+  - Covers all 17 roles (ENG-19, 2026-06-20). The original 9 (M08.Role) roles have
+    directives defined directly in M09/M10's RESPONSES blocks; the 8 newer §11 roles
+    (added v1.7-v1.13) have directives derived from the §4.1 return table + each
+    role's binding driver, documented inline in M09/M10's RESPONSES blocks under a
+    dedicated "NEWER §11 ROLES" subsection per scenario. @see FRAMEWORK_BACKLOG.md
+    ENG-19 resolution for the full methodology and rationale.
+  - Any future role with no DIRECTIVES entry still returns HOLD with a quality_flag
+    via get_directive() — the fallback path is unchanged.
   - Scenario E rate directives are PATHWAY_CONDITIONAL; resolve via
     resolve_e_pathway_directive() after reading YieldCurveSignal.e_pathway_type.
+    inflation_linked_sovereign joined this set in the ENG-19 pass (its binding driver
+    explicitly includes sovereign_credit_quality — directly pathway-sensitive).
   - OCP: adding a role → add rows to this table + §11. No other edits needed.
   - Role names sourced from §11.ROLE_REGISTRY (not hardcoded against M08 enum).
 """
@@ -44,6 +51,16 @@ DIRECTIVES: Dict[Tuple[str, str], DirectiveCode] = {
     ("broad_market_equity_domestic",        "A"): DirectiveCode.ADD,
     ("broad_market_equity_international",   "A"): DirectiveCode.EVALUATE,
 
+    # ── Scenario A — newer §11 roles (ENG-19, derived from §4.1 + binding driver) ──
+    ("secular_technology_growth",           "A"): DirectiveCode.ADD,
+    ("inflation_linked_sovereign",          "A"): DirectiveCode.REDUCE,
+    ("real_estate_equity_income",           "A"): DirectiveCode.EVALUATE,
+    ("systematic_trend_following",          "A"): DirectiveCode.REDUCE_TO_MIN,
+    ("consumer_defensive_equity",           "A"): DirectiveCode.HOLD,
+    ("healthcare_defensive_equity",         "A"): DirectiveCode.HOLD,
+    ("floating_rate_credit_income",         "A"): DirectiveCode.REDUCE,
+    ("emerging_market_equity",              "A"): DirectiveCode.EVALUATE,
+
     # ── Scenario B: Stagflation Lock (M09.ScenarioB.RESPONSES) ───────────────
     ("geopolitical_premium",                "B"): DirectiveCode.HOLD,
     ("inflation_hedge_precious_metals",     "B"): DirectiveCode.ADD,
@@ -54,6 +71,16 @@ DIRECTIVES: Dict[Tuple[str, str], DirectiveCode] = {
     ("rate_sensitive_income_long_duration", "B"): DirectiveCode.REDUCE,
     ("broad_market_equity_domestic",        "B"): DirectiveCode.REDUCE_TO_MIN,
     ("broad_market_equity_international",   "B"): DirectiveCode.REDUCE,
+
+    # ── Scenario B — newer §11 roles (ENG-19) ─────────────────────────────────
+    ("secular_technology_growth",           "B"): DirectiveCode.HOLD,
+    ("inflation_linked_sovereign",          "B"): DirectiveCode.ADD,
+    ("real_estate_equity_income",           "B"): DirectiveCode.EVALUATE,
+    ("systematic_trend_following",          "B"): DirectiveCode.ADD,
+    ("consumer_defensive_equity",           "B"): DirectiveCode.ADD,
+    ("healthcare_defensive_equity",         "B"): DirectiveCode.HOLD,
+    ("floating_rate_credit_income",         "B"): DirectiveCode.HOLD,
+    ("emerging_market_equity",              "B"): DirectiveCode.EXIT,
 
     # ── Scenario C: Inflationary Shock (M09.ScenarioC.RESPONSES) ─────────────
     ("geopolitical_premium",                "C"): DirectiveCode.ADD,
@@ -66,6 +93,16 @@ DIRECTIVES: Dict[Tuple[str, str], DirectiveCode] = {
     ("broad_market_equity_domestic",        "C"): DirectiveCode.REDUCE_TO_MIN,
     ("broad_market_equity_international",   "C"): DirectiveCode.REDUCE,
 
+    # ── Scenario C — newer §11 roles (ENG-19) ─────────────────────────────────
+    ("secular_technology_growth",           "C"): DirectiveCode.HOLD,
+    ("inflation_linked_sovereign",          "C"): DirectiveCode.HOLD,
+    ("real_estate_equity_income",           "C"): DirectiveCode.EVALUATE,
+    ("systematic_trend_following",          "C"): DirectiveCode.ADD,
+    ("consumer_defensive_equity",           "C"): DirectiveCode.ADD,
+    ("healthcare_defensive_equity",         "C"): DirectiveCode.HOLD,
+    ("floating_rate_credit_income",         "C"): DirectiveCode.HOLD,
+    ("emerging_market_equity",              "C"): DirectiveCode.EXIT,
+
     # ── Scenario D: Deflationary Recession (M10.ScenarioD.RESPONSES) ─────────
     ("geopolitical_premium",                "D"): DirectiveCode.REDUCE,
     ("inflation_hedge_precious_metals",     "D"): DirectiveCode.EVALUATE,
@@ -76,6 +113,16 @@ DIRECTIVES: Dict[Tuple[str, str], DirectiveCode] = {
     ("rate_sensitive_income_long_duration", "D"): DirectiveCode.HOLD_EVALUATE,
     ("broad_market_equity_domestic",        "D"): DirectiveCode.REDUCE_TO_MIN,
     ("broad_market_equity_international",   "D"): DirectiveCode.EXIT,
+
+    # ── Scenario D — newer §11 roles (ENG-19) ─────────────────────────────────
+    ("secular_technology_growth",           "D"): DirectiveCode.REDUCE,
+    ("inflation_linked_sovereign",          "D"): DirectiveCode.HOLD,
+    ("real_estate_equity_income",           "D"): DirectiveCode.EVALUATE,
+    ("systematic_trend_following",          "D"): DirectiveCode.HOLD_EVALUATE,
+    ("consumer_defensive_equity",           "D"): DirectiveCode.REDUCE,
+    ("healthcare_defensive_equity",         "D"): DirectiveCode.HOLD_WATCH,
+    ("floating_rate_credit_income",         "D"): DirectiveCode.REDUCE,
+    ("emerging_market_equity",              "D"): DirectiveCode.EXIT,
 
     # ── Scenario E: Structural Rupture (M10.ScenarioE.RESPONSES) ─────────────
     # Rate directives are pathway-conditional — resolve via resolve_e_pathway_directive().
@@ -89,6 +136,18 @@ DIRECTIVES: Dict[Tuple[str, str], DirectiveCode] = {
     ("broad_market_equity_domestic",        "E"): DirectiveCode.REDUCE_TO_MIN,
     ("broad_market_equity_international",   "E"): DirectiveCode.EXIT,
 
+    # ── Scenario E — newer §11 roles (ENG-19) ─────────────────────────────────
+    # inflation_linked_sovereign is ALSO pathway-conditional — its binding driver
+    # explicitly includes sovereign_credit_quality. @see resolve_e_pathway_directive().
+    ("secular_technology_growth",           "E"): DirectiveCode.REDUCE_TO_MIN,
+    ("inflation_linked_sovereign",          "E"): DirectiveCode.PATHWAY_CONDITIONAL,
+    ("real_estate_equity_income",           "E"): DirectiveCode.EVALUATE,
+    ("systematic_trend_following",          "E"): DirectiveCode.EVALUATE,
+    ("consumer_defensive_equity",           "E"): DirectiveCode.REDUCE_TO_MIN,
+    ("healthcare_defensive_equity",         "E"): DirectiveCode.REDUCE_TO_MIN,
+    ("floating_rate_credit_income",         "E"): DirectiveCode.REDUCE,
+    ("emerging_market_equity",              "E"): DirectiveCode.EXIT,
+
     # ── Scenario F: Growth Overheat (M10.ScenarioF.RESPONSES) ────────────────
     ("geopolitical_premium",                "F"): DirectiveCode.HOLD,
     ("inflation_hedge_precious_metals",     "F"): DirectiveCode.REDUCE_TO_MIN,
@@ -99,9 +158,19 @@ DIRECTIVES: Dict[Tuple[str, str], DirectiveCode] = {
     ("rate_sensitive_income_long_duration", "F"): DirectiveCode.REDUCE,
     ("broad_market_equity_domestic",        "F"): DirectiveCode.ADD,
     ("broad_market_equity_international",   "F"): DirectiveCode.EVALUATE,
+
+    # ── Scenario F — newer §11 roles (ENG-19) ─────────────────────────────────
+    ("secular_technology_growth",           "F"): DirectiveCode.ADD,
+    ("inflation_linked_sovereign",          "F"): DirectiveCode.REDUCE,
+    ("real_estate_equity_income",           "F"): DirectiveCode.EVALUATE,
+    ("systematic_trend_following",          "F"): DirectiveCode.REDUCE,
+    ("consumer_defensive_equity",           "F"): DirectiveCode.HOLD,
+    ("healthcare_defensive_equity",         "F"): DirectiveCode.HOLD,
+    ("floating_rate_credit_income",         "F"): DirectiveCode.HOLD,
+    ("emerging_market_equity",              "F"): DirectiveCode.EVALUATE,
 }
 
-# Roles explicitly covered by M09/M10 RESPONSES tables
+# Roles explicitly covered by M09/M10 RESPONSES tables (all 17 §11 roles, ENG-19)
 _M09_M10_ROLES: frozenset = frozenset({
     "geopolitical_premium",
     "inflation_hedge_precious_metals",
@@ -112,12 +181,21 @@ _M09_M10_ROLES: frozenset = frozenset({
     "rate_sensitive_income_long_duration",
     "broad_market_equity_domestic",
     "broad_market_equity_international",
+    "secular_technology_growth",
+    "inflation_linked_sovereign",
+    "real_estate_equity_income",
+    "systematic_trend_following",
+    "consumer_defensive_equity",
+    "healthcare_defensive_equity",
+    "floating_rate_credit_income",
+    "emerging_market_equity",
 })
 
 # Roles that are pathway-conditional in Scenario E
 _E_PATHWAY_ROLES: frozenset = frozenset({
     "rate_sensitive_income_short_duration",
     "rate_sensitive_income_long_duration",
+    "inflation_linked_sovereign",
 })
 
 _VALID_SCENARIOS: frozenset = frozenset("ABCDEF")
@@ -190,7 +268,9 @@ def resolve_e_pathway_directive(
     Parameters
     ----------
     role_id : str
-        Must be "rate_sensitive_income_short_duration" or "rate_sensitive_income_long_duration".
+        Must be "rate_sensitive_income_short_duration",
+        "rate_sensitive_income_long_duration", or "inflation_linked_sovereign"
+        (ENG-19 — its binding driver explicitly includes sovereign_credit_quality).
     pathway_type : EPathwayType
         From YieldCurveSignal.e_pathway_type.
 
@@ -242,14 +322,40 @@ def resolve_e_pathway_directive(
             ),
         )
 
+    if role_id == "inflation_linked_sovereign":
+        # Instrument candidate is VTIP (short-term TIPS, ~2.5yr duration) per §11.1 —
+        # treated like the short-duration role for pathway purposes, not long-duration.
+        if pathway_type == EPathwayType.SYSTEMIC_LIQUIDITY:
+            return DirectiveResult(
+                code=DirectiveCode.HOLD,
+                role_id=role_id,
+                pathway_note=(
+                    "SYSTEMIC_LIQUIDITY: short-duration TIPS behave like short-duration "
+                    "Treasuries in classic flight-to-safety — sovereign counterparty risk "
+                    "is low. CPI-linkage adds modest diversification. Hold — roll at "
+                    "elevated yields while crisis resolves."
+                ),
+            )
+        # RESERVE_EROSION
+        return DirectiveResult(
+            code=DirectiveCode.EVALUATE,
+            role_id=role_id,
+            pathway_note=(
+                "RESERVE_EROSION: sovereign_credit_quality is this role's explicit binding "
+                "driver. Assess whether reserve erosion impairs demand for short-duration "
+                "UST/TIPS before acting — same evaluation as "
+                "rate_sensitive_income_short_duration under this pathway."
+            ),
+        )
+
     # Non-pathway-conditional role — shouldn't reach here in normal flow
     return DirectiveResult(
         code=DirectiveCode.EVALUATE,
         role_id=role_id,
         quality_flags=[
             f"resolve_e_pathway_directive() called for non-pathway-conditional role "
-            f"'{role_id}'. Expected rate_sensitive_income_short_duration or "
-            f"rate_sensitive_income_long_duration."
+            f"'{role_id}'. Expected rate_sensitive_income_short_duration, "
+            f"rate_sensitive_income_long_duration, or inflation_linked_sovereign."
         ],
     )
 
@@ -261,5 +367,5 @@ def is_covered_role(role_id: str) -> bool:
 
 def directive_count() -> int:
     """Return number of (role, scenario) entries in DIRECTIVES table.
-    Regression anchor: 9 roles × 6 scenarios = 54 entries."""
+    Regression anchor: 17 roles × 6 scenarios = 102 entries (ENG-19, 2026-06-20)."""
     return len(DIRECTIVES)

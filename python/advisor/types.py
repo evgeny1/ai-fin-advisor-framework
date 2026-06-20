@@ -406,9 +406,10 @@ class DivergenceSignal:
     equity_scenario_divergence: DivergenceLevel
     composite:                  DivergenceLevel
     energy_90d_change:          Optional[float]  # fraction (0.12 = +12% over 90 cal days)
-    vix_change_90d_pts:         Optional[float]  # pts (VIX current − VIX 90d rolling avg)
-    broad_equity_30d:           Optional[float]  # fraction (30 trading-day SPX/VTI return)
-    quality_flags:              List[str]
+    energy_180d_change:         Optional[float] = None  # fraction — ENG-20 extended-conflict fallback
+    vix_change_90d_pts:         Optional[float] = None  # pts (VIX current − VIX 90d rolling avg)
+    broad_equity_30d:           Optional[float] = None  # fraction (30 trading-day SPX/VTI return)
+    quality_flags:              List[str] = field(default_factory=list)
     role_repricing_warnings:    List["InstrumentRepricingWarning"] = field(default_factory=list)
     # Update 1: instrument-level repricing signals vs broad market (§9.5)
 
