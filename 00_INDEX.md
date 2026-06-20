@@ -1,10 +1,12 @@
 # 00 — Index & Module Map
 <!-- Personal Financial Advisor Framework — Pseudo-Code Edition -->
 <!-- Source documents: Framework_Main_v1, Framework_Extension_v1, Calibration_State, Amendment 1, Amendment 2 -->
-<!-- Last updated: June 17, 2026 (v1.25: M05_SessionInit retired per ENG-2 — removed from
-     MODULES/ORCHESTRATION/FILE_MAP; SESSION_START_SEQUENCE block (stale, ended in a GitHub
-     push_files write-back) replaced with a pointer to Project_Instructions_MCP.md, the
-     actual authoritative sequence) -->
+<!-- Last updated: June 20, 2026 (v1.26: ENG-17 — corrected three false "Phase 2 complete:
+     BriefingRegistry.assemble()" claims found here during the ENG-2 follow-up pass (not
+     caught in the original ENG-17 scope, which only covered the 6 module .md files +
+     FW_Types.md) — SUB_PROJECTS comment, market_data cross-reference, and
+     BriefingRegistry_is_extension_point all corrected to state Claude applies the
+     position_after ordering manually; no BriefingRegistry class exists in Python) -->
 
 ```
 FRAMEWORK PersonalFinancialAdvisor {
@@ -47,7 +49,9 @@ FRAMEWORK PersonalFinancialAdvisor {
 
   // ─── SUB-PROJECTS ────────────────────────────────────────────────────────────────────
   // Each sub-project has exactly ONE reason to change. @see FW_Types.md for contracts.
-  // Phase 2 complete: M02 integrates FetchRegistry.fetchAll(); M04 integrates BriefingRegistry.assemble().
+  // M02 integrates FetchRegistry.fetchAll() — this one is real Python (M18-wired).
+  // BriefingRegistry.assemble() is a Claude-applied convention, not executed code
+  //   (no Python implementation exists anywhere — see ENG-17).
   //   Adding new data → register DATA_REGISTRY_ENTRIES in M18_MarketDataFetch only; M02 does not change.
   //   Adding new briefing section → register BRIEFING_REGISTRY_ENTRY in the owning module; M04 does not change.
   // Phase 3 target: M11 splits into M11_CreditData (DATA_INTELLIGENCE) + M11_CreditAnalysis (ANALYSIS_ENGINE).
@@ -203,7 +207,8 @@ FRAMEWORK PersonalFinancialAdvisor {
       → M02_IntelGathering.GatherIntel (Steps 2–5)
       → M02_IntelGathering.identifyPrimaryDriver()
       → M03_ScenarioFramework.RecalibrationRule?
-      → BriefingRegistry.assemble(readings)  // Phase 2 complete (M04_BriefingFormat.IntelligenceBriefing)
+      → Claude assembles sections per BriefingRegistry order (M04_BriefingFormat.IntelligenceBriefing;
+        no executed registry — see ENG-17)
 
     credit_spreads
       → M11_CreditAndCalibration.SignalConvergenceTest()
@@ -408,7 +413,8 @@ FRAMEWORK PersonalFinancialAdvisor {
                                            FetchRegistry.fetchAll() picks it up; M02 does not change;
                                            owning-module registration is superseded by M18 (v1.21)
     BriefingRegistry_is_extension_point: add new briefing section → BRIEFING_REGISTRY_ENTRY in owning module;
-                                           BriefingRegistry.assemble() picks it up; M04 does not change
+                                           Claude applies position_after ordering manually — no executed
+                                           registry (see ENG-17); M04 does not change
     canonical_briefing_section_ids:      PRIMARY_DRIVER | SCENARIO_PROBABILITIES | ENERGY_AND_COMMODITIES
                                            | EQUITY_MARKETS | MARKET_REGIME_SIGNAL | FIXED_INCOME_AND_RATES
                                            | CREDIT_SIGNALS | CASCADE_EARLY_WARNING

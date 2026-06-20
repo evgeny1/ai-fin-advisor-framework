@@ -1,9 +1,9 @@
 # M14 — Market Regime & Entry Discipline
-<!-- Version: 1.6 | Updated: see git log -->
+<!-- Version: 1.7 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M14_MarketRegime
-  Version:         1.6
+  Version:         1.7
   Sub-project:     ANALYSIS_ENGINE
   Reason to change: market desensitization detection methodology or entry guard thresholds change.
                     Generalizes the WAR PREMIUM ENTRY GUARD (previously user-mandated, unmodularized).
@@ -39,7 +39,8 @@ MODULE MarketRegimeDiscipline {
   // @see M18_MarketDataFetch.DATA_REGISTRY_ENTRIES
 
   // ─── BRIEFING REGISTRY ENTRY ──────────────────────────────────────────────────────────
-  // Phase 2 complete: BriefingRegistry.assemble() in M04 iterates this entry.
+  // Claude assembles this entry into the briefing in position_after order
+  // (no executed BriefingRegistry — see ENG-17).
   // M04 FIXED_INCOME_AND_RATES uses position_after: "MARKET_REGIME_SIGNAL" — this id.
 
   BRIEFING_REGISTRY_ENTRY {
@@ -285,7 +286,7 @@ MODULE MarketRegimeDiscipline {
     RETURN warnings
   }
 
-  // ─── BRIEFING BLOCK (render function — called by BriefingRegistry.assemble()) ─────────
+  // ─── BRIEFING BLOCK (render function — applied by Claude, no executed registry) ───────
 
   BriefingBlock MarketRegimeSignal {
     VIX_current vs 30d avg vs 90d avg:   ___ vs ___ vs ___  ([+/-] pts vs 90d avg)
@@ -308,7 +309,7 @@ MODULE MarketRegimeDiscipline {
             → RoleRepricingDivergence(holdings_30d_returns, broad_market_30d)
                // Advisory only — surface in briefing; feed PassiveMandateAbsentWarning check
                // Skip with flag if holdings_30d_returns unavailable
-    Step 8: → Phase 2 complete: BriefingRegistry.assemble() includes MARKET_REGIME_SIGNAL
+    Step 8: → Claude includes MARKET_REGIME_SIGNAL when assembling the briefing
     Step 9: → EntryExtensionGuard(asset, account) — before any ADD
   }
 

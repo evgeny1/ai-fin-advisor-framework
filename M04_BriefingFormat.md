@@ -1,9 +1,9 @@
 # M04 — Briefing Format
-<!-- Version: 2.1 | Updated: see git log -->
+<!-- Version: 2.2 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M04_BriefingFormat
-  Version:         2.1
+  Version:         2.2
   Sub-project:     ORCHESTRATION
   Reason to change: session output format changes; OR M04-owned briefing section content changes.
                     Adding a new module's briefing section: register BRIEFING_REGISTRY_ENTRY
@@ -30,7 +30,9 @@ MODULE BriefingFormat {
 
 
   // ─── BRIEFING REGISTRY ENTRIES (M04-owned sections) ─────────────────────────────────
-  // Phase 2 complete: BriefingRegistry.assemble() iterates all entries from all modules.
+  // No BriefingRegistry class exists in Python (see ENG-17) — this is a Claude-applied
+  // convention, not executed code. Claude assembles sections by walking position_after
+  // across all modules' registry entries manually, each session.
   // M11 (CREDIT_SIGNALS), M14 (MARKET_REGIME_SIGNAL), M17 (CASCADE_EARLY_WARNING)
   //   register their own entries independently; M04 references their ids in position_after.
 
@@ -141,7 +143,8 @@ MODULE BriefingFormat {
 
 
   // ─── SECTION RENDER FUNCTIONS (M04-owned) ────────────────────────────────────────────
-  // Called by BriefingRegistry.assemble(readings). Each produces one BriefingSection.
+  // Applied by Claude when assembling the briefing (no executed registry — see ENG-17).
+  // Each produces one BriefingSection.
   // Content format specs are definitive — follow exactly when producing briefing output.
   // render_MARKET_REGIME_SIGNAL → M14.BriefingBlock
   // render_CREDIT_SIGNALS       → M11.BriefingBlock
@@ -268,8 +271,8 @@ MODULE BriefingFormat {
 
 
   // ─── TEMPLATE ────────────────────────────────────────────────────────────────────────
-  // Phase 2 complete: HEADER hardcoded (always first, always same structure).
-  // Section body produced by BriefingRegistry.assemble(readings).
+  // HEADER hardcoded (always first, always same structure).
+  // Section body assembled by Claude (no executed registry — see ENG-17).
 
   TEMPLATE IntelligenceBriefing(readings: List<DataReading>) {
 
@@ -282,7 +285,7 @@ MODULE BriefingFormat {
       ═══════════════════════════════════════════════
     }
 
-    BriefingRegistry.assemble(readings)
+    // Claude assembles sections here, in position_after order (no executed registry):
     // Iterates all registered BriefingSectionSpec entries in position_after order.
     // Calls render_fn for each — M04-owned and module-owned sections assembled together.
     //

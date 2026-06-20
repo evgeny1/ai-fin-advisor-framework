@@ -1,9 +1,9 @@
 # M11 — Credit Signal Protocol & Calibration Discipline
-<!-- Version: 1.4 | Updated: see git log -->
+<!-- Version: 1.5 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M11_CreditAndCalibration
-  Version:         1.4
+  Version:         1.5
   Sub-project:     ANALYSIS_ENGINE (CreditSignal) | FRAMEWORK_CORE (CalibrationDiscipline)
   Reason to change: credit signal methodology or spread thresholds change (CreditSignal);
                     OR calibration review process or schedule changes (CalibrationDiscipline).
@@ -34,7 +34,8 @@ MODULE CreditSignal {
   }
 
   // ─── BRIEFING REGISTRY ENTRY ──────────────────────────────────────────────────────────
-  // Phase 2 complete: BriefingRegistry.assemble() in M04 iterates this entry.
+  // Claude assembles this entry into the briefing in position_after order
+  // (no executed BriefingRegistry — see ENG-17).
   // CASCADE_EARLY_WARNING (M17) is registered with position_after: "CREDIT_SIGNALS" — this id.
 
   BRIEFING_REGISTRY_ENTRY {
@@ -47,7 +48,7 @@ MODULE CreditSignal {
     }
   }
 
-  // ─── BRIEFING BLOCK (render function — called by BriefingRegistry.assemble()) ─────────
+  // ─── BRIEFING BLOCK (render function — applied by Claude, no executed registry) ───────
 
   BriefingBlock {
     HY_OAS_composite:    ___ bps  [Δ vs 30d / 90d]

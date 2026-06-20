@@ -1,9 +1,9 @@
 # M19 — Thesis Sustaining Conditions
-<!-- Version: 1.2 | Updated: see git log -->
+<!-- Version: 1.3 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M19_ThesisSustainingConditions
-  Version:         1.2
+  Version:         1.3
   Sub-project:     THESIS_MONITORING
   Reason to change: thesis-sustaining condition evaluation methodology, status taxonomy, or
                     AI-boundary routing changes. New tickers: add a CALIBRATION_STATE §13
@@ -139,8 +139,9 @@ MODULE ThesisSustainingConditions {
     treat_absence_of_a_section_13_entry_as_UNKNOWN__absence_is_a_scope_decision_see_preamble
   }
 
-  // ─── BRIEFING REGISTRY ENTRY (Phase 2 pattern) ───────────────────────────────
-  // BriefingRegistry.assemble() in M04 iterates this entry. M04 does not change.
+  // ─── BRIEFING REGISTRY ENTRY ───────────────────────────────────────────────────
+  // Claude assembles this entry into the briefing in position_after order. M04 does
+  // not change (no executed BriefingRegistry — see ENG-17).
 
   BRIEFING_REGISTRY_ENTRY
   REGISTER BriefingSectionSpec {

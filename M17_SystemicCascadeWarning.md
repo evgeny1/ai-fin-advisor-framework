@@ -1,9 +1,9 @@
 # M17 — Systemic Cascade Early Warning
-<!-- Version: 1.5 | Updated: see git log -->
+<!-- Version: 1.6 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M17_SystemicCascadeWarning
-  Version:         1.5
+  Version:         1.6
   Sub-project:     ANALYSIS_ENGINE (§1–4, §6) | PORTFOLIO_ADVISOR (§5)
   Reason to change: analytical methodology for real-economy cascade chain assessment changes (§1–4, §6);
                     OR investment strategy/pre-positioning rules change (§5).
@@ -521,8 +521,9 @@ MODULE SystemicCascadeWarning {
   }
 
 
-  // ─── BRIEFING REGISTRY ENTRY (Phase 2 complete) ─────────────────────────────
-  // BriefingRegistry.assemble() in M04 iterates this entry.
+  // ─── BRIEFING REGISTRY ENTRY ──────────────────────────────────────────────────
+  // Claude assembles this entry into the briefing in position_after order
+  // (no executed BriefingRegistry — see ENG-17).
   // position_after: "CREDIT_SIGNALS" = M11's registered section id.
 
   BRIEFING_REGISTRY_ENTRY {

@@ -1,9 +1,9 @@
 # FW_Types — Framework Shared Type Definitions
-<!-- Version: 1.5 | Updated: see git log -->
+<!-- Version: 1.6 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              FW_Types
-  Version:         1.5
+  Version:         1.6
   Sub-project:     FRAMEWORK_CORE
   Reason to change: a new shared contract is needed (rare).
                     NEVER add business logic here — types only.
@@ -252,8 +252,9 @@ TYPES FrameworkCore {
   }
 
   STRUCT BriefingRegistry {
-    // Accumulates BriefingSectionSpec from all modules. Replaces M04 hardcoded sections.
-    // Phase 2 complete: all modules register their own BRIEFING_REGISTRY_ENTRY.
+    // Spec only — no Python implementation exists (see ENG-17). All modules register
+    // their own BRIEFING_REGISTRY_ENTRY in their .md files; Claude applies the resulting
+    // position_after ordering manually when assembling the briefing each session.
     sections: List<BriefingSectionSpec>
     FUNCTION register(spec: BriefingSectionSpec) → void
     FUNCTION assemble(readings: List<DataReading>) → OrderedList<BriefingSection>

@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-20
+**Last updated:** 2026-06-20 (ENG-17 closed)
 
 ## Index
 
@@ -55,7 +55,7 @@
 | ENG-14 | OPEN | LOW | documentation | GAP-11 label has no description anywhere |
 | ENG-15 | OPEN | LOW | process | No CI — test suite is run manually |
 | ENG-16 | CLOSED | HIGH | architecture | M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py |
-| ENG-17 | OPEN | LOW | documentation | BriefingRegistry described as built ("Phase 2 complete") but doesn't exist in Python anywhere |
+| ENG-17 | CLOSED | LOW | documentation | BriefingRegistry described as built ("Phase 2 complete") but doesn't exist in Python anywhere |
 | ENG-18 | OPEN | LOW | hygiene | M17 CascadeChainRegistry embeds live dated figures in module file; CHAIN_5/6 not scored |
 | ENG-19 | CLOSED | MEDIUM | functional-gap | 8 of 17 RoleID roles have no M09/M10 scenario-directive coverage anywhere |
 | ENG-20 | CLOSED | MEDIUM | functional-gap | M14 energy_180d extended-conflict caveat not implemented in regime.py |
@@ -360,13 +360,14 @@ folder.
 
 ### ENG-17 — BriefingRegistry described as built ("Phase 2 complete") but doesn't exist in Python anywhere
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  LOW
   Category:  documentation
   Opened:    2026-06-17
+  Closed:    2026-06-20
   Area:      M02_IntelGathering.md, M04_BriefingFormat.md,
              M11_CreditAndCalibration.md, M14_MarketRegime.md, M17_SystemicCascadeWarning.md,
-             M19_ThesisSustainingConditions.md, FW_Types.md
+             M19_ThesisSustainingConditions.md, FW_Types.md, 00_INDEX.md
   Related:   ENG-2
 -->
 
@@ -398,6 +399,39 @@ Python-owned than it is.
 complete: BriefingRegistry.assemble()..." with an accurate one-line
 note that this section ordering is a Claude-applied convention, not
 executed code. Cosmetic, low-risk, batchable in one pass.
+
+**Resolution (2026-06-20):** Implemented as suggested, plus one expansion of
+scope found during the fix. Corrected the false "Phase 2 complete:
+BriefingRegistry.assemble()..." annotation in all six files that actually
+contained it — `M04_BriefingFormat.md` (4 occurrences: registry-entries
+header, render-functions header, template header, template body call),
+`M11_CreditAndCalibration.md` (2), `M14_MarketRegime.md` (3, including a
+SESSION_HOOKS step-line), `M17_SystemicCascadeWarning.md` (1),
+`M19_ThesisSustainingConditions.md` (1), and `FW_Types.md`'s own
+`BriefingRegistry` struct comment (1) — each replaced with a note that
+Claude applies the `position_after` ordering manually each session, no
+registry class executes. (`M02_IntelGathering.md` was correctly left
+untouched — its own "Phase 2 complete" comment is about `FetchRegistry`/M18,
+which really is wired; that file was in this item's Area only for
+contrast, not because it carried the false claim — confirmed six files
+had it, not seven, matching this item's own description.)
+
+**Scope expansion found while fixing:** a repo-wide grep for the same
+pattern (not just the Area-listed files) turned up three more instances in
+`00_INDEX.md` that the original 2026-06-17 investigation missed — the
+`SUB_PROJECTS` comment block, the `market_data` cross-reference chain, and
+the `BriefingRegistry_is_extension_point` architecture rule. All three
+corrected the same way. `00_INDEX.md` added to this item's Area
+retroactively since it was actually in scope; bumped to v1.26 (its own
+"Last updated" convention, not a MODULE MANIFEST — see ENG-23 precedent).
+Worth flagging for future hygiene passes: grep the *pattern*, not just the
+file list a prior session already identified — Area fields can themselves
+be incomplete.
+
+`tools/validate_manifests.py`: 19/19 pass. Full suite (`not integration`):
+651 passed, 60 deselected — 0 regressions, as expected for a docs-only
+change. Module versions bumped: M04 2.1→2.2, M11 1.4→1.5, M14 1.6→1.7,
+M17 1.5→1.6, M19 1.2→1.3, FW_Types 1.5→1.6, 00_INDEX v1.25→v1.26.
 
 ### ENG-18 — M17 CascadeChainRegistry embeds live dated figures in module file; CHAIN_5/6 not scored
 <!-- ITEM
