@@ -31,13 +31,14 @@ and conflating them is the most common source of confusion:
 2. **It is also a pseudo-code specification framework** (`M01_*.md` through
    `M19_*.md`, `FW_Types.md`, `00_INDEX.md`) written to be read and executed
    *by an LLM* during advisory sessions — not by a computer. These files
-   predate the Python implementation and are, by the framework owner's own
+   predate the Python implementation and were, by the framework owner's own
    description, **artifacts of the pre-MCP architecture, at least some of
-   them.** A review of which modules still earn their place is explicitly
-   planned (`FRAMEWORK_BACKLOG.md` → ENG-2). Do not assume a module `.md`
-   file is still the executable source of truth for a given concern —
-   check whether `python/advisor/` already owns it (see §2 below for how
-   to tell).
+   them.** That review happened (`FRAMEWORK_BACKLOG.md` → ENG-2, **CLOSED
+   2026-06-20**) — §2 below reflects its findings. Don't take §2 as
+   permanent gospel, though: it's a reviewed snapshot, and a future code
+   change can still drift it out of sync without anyone updating the table.
+   Check whether `python/advisor/` already owns a concern before assuming
+   a module `.md` file still does (see §2 for how to tell).
 
 
 ---
@@ -49,10 +50,10 @@ and conflating them is the most common source of confusion:
 │ LAYER 1 — Pseudo-code specification (advisory project knowledge) │
 │   M01-M19_*.md, FW_Types.md, 00_INDEX.md                         │
 │   Read by: Claude, during ADVISORY sessions only.                │
-│   Status:  partially superseded by Layer 3. Review pending       │
-│            (FRAMEWORK_BACKLOG.md ENG-2). Treat each module's     │
-│            "is this still load-bearing" status as unverified     │
-│            until that review happens.                            │
+│   Status:  partially superseded by Layer 3. Review completed     │
+│            (FRAMEWORK_BACKLOG.md ENG-2, closed 2026-06-20) — see │
+│            §2 for per-module findings. Re-verify if you suspect  │
+│            drift; it's a snapshot, not a standing guarantee.     │
 ├──────────────────────────────────────────────────────────────────┤
 │ LAYER 2 — Live data (mutable state, git-tracked)                 │
 │   Calibration_State.md, Session_Log.md, Portfolio_State.md,      │
@@ -104,8 +105,20 @@ of intent than executable specification.
 | M16 Return Table Calibration | — | **AI-judgment-only, genuinely authoritative.** This is a methodology doc; the 4-layer procedure is applied by an LLM, not executed by Python |
 | M17 Systemic Cascade Warning | `analysis/cascade.py` | Python owns sector stress / yield curve / cascade-level computation |
 | M18 Market Data Fetch | `data/m18_registry.py`, `data/fetchers/` | Fully Python — this module is the registry-as-data pattern at its purest |
-| M19 Thesis Sustaining Conditions | `analysis/thesis.py` | Python owns evaluation; §13 conditions are config consumed by it |
+| M19 Thesis Sustaining Conditions | `analysis/thesis.py`, `analysis/trend.py` | Python owns evaluation; §13 conditions are config consumed by it. Trailing-window conditions (`sustained`/`consecutive`/`trend`/etc.) route through `trend.py`'s primitives as of ENG-13 (closed 2026-06-20) — one case remains genuinely unevaluable: MAGS's "consecutive sessions" condition needs persisted cross-session SIGNAL history, not a price series (ENG-26, open) |
 | FW_Types | `types.py` | Direct translation; keep both in sync if you add a type |
+
+**One file with no module mapping:** `analysis/range_position.py` (GAP-16,
+closed 2026-06-20) doesn't correspond to any single M0X module — it's a
+new advisory layer of its own (within-scenario sub-condition flagging for
+wide-range roles, currently scoped to `inflation_hedge_precious_metals`).
+It reuses `trend.py`'s primitives and the `*_TREND` readings ENG-13 added,
+but is wired separately in `mcp_server.py`. If you extend it to other
+roles (the original ask named `systematic_trend_following`,
+`real_asset_contracted_revenue`, `inflation_hedge_commodity_linked` as
+in-scope but undocumented), that's a `Calibration_State.md` §11
+documentation task (name the 1-2 sub-condition drivers) followed by a
+small per-role branch in the module — not a structural change.
 
 **Stage 4/Stage 5 naming** you'll see in code comments and test directory
 names refers to the migration stages that built this table out — Stage 1
@@ -146,6 +159,16 @@ advisor/
 │   ├── floor_monitor.py       M13 CurrentHoldingsFloorCheck (FLOOR_THEN_RETURN
 │                              accounts only — the two Relative accounts)
 │   ├── thesis.py              M19 thesis sustaining condition evaluation
+│   ├── trend.py                pure trend primitives (directional_trend,
+│                              all_weeks_meet, decline_from_high_pct,
+│                              mean_reversion_mode) on a List[float] of
+│                              weekly closes — closes ENG-13; feeds both
+│                              thesis.py and range_position.py
+│   ├── range_position.py       GAP-16 within-scenario sub-condition
+│                              advisory (real-yield/DXY direction for
+│                              wide-range roles, currently IHP only) —
+│                              advisory only, never touches
+│                              blendedScenarioReturn()/EV/allocation
 │   └── _utils.py              shared helpers
 │
 ├── config/                  Parsers — Layer 2 text ↔ Layer 3 dataclasses.
@@ -293,6 +316,43 @@ invisible to `latest_probs`/`prior_probs`. This exact failure mode shipped
 to production once already (`FRAMEWORK_BACKLOG.md` ENG-1). See §8's
 round-trip-testing rule before writing any code that touches this file.
 
+**`Calibration_State.md` §3 is calibration/methodology rationale ONLY —
+never engineering narrative, never a restatement of something
+`Session_Log.md` §8 already covers.** Even when a coding-session fix
+legitimately touches this file's structure (e.g. restoring a missing
+section header), the §3 entry for it should be a one-line pointer to
+`FRAMEWORK_BACKLOG.md`'s full writeup, not a re-narration of the bug/fix.
+This file is loaded as Project Knowledge every advisory session — §3
+drifted into mixing engineering changelog content with genuine
+calibration rationale across several sessions before a retroactive
+cleanup (2026-06-20) caught roughly half its entries had zero advisory
+value. Don't reintroduce the mix; it's not a one-time slip, it's the
+default thing to do wrong if you're not watching for it.
+
+### Tooling gotchas encountered in practice (not the framework's own rules
+— quirks of the coding-session tools themselves, worth knowing anyway)
+
+- **Desktop Commander's `write_file` defaults to full overwrite, not
+  append.** Always pass `mode: "append"` explicitly when extending an
+  existing file — omitting it silently replaces the entire file with just
+  the new content, no warning. This came within one `git checkout` of
+  destroying `FRAMEWORK_BACKLOG_ARCHIVE.md`'s full history in a 2026-06-20
+  session (recovered cleanly from git — nothing was actually lost — but it
+  cost real time and should not have happened). Get in the habit of
+  specifying `mode` on every call to this tool, not just when you remember.
+- **Google Drive Desktop can lock an exact filename for several minutes**
+  if its content changes drastically and suddenly within a Drive-synced
+  folder (observed after the incident above: writes, deletes, and even
+  reads to the exact path returned access-denied, while `dir` reported
+  the file simply didn't exist). This is not a git problem, not a
+  permissions problem, and `icacls`/`attrib` won't show anything wrong —
+  it's Drive's sync engine treating a sudden 98%+ size drop as a
+  possible mass-deletion event. Recovery that worked: write the recovered
+  content to a *different* filename, then `ren` it into the original name
+  once the lock clears (rename succeeded well before direct writes to the
+  exact original name did). Waiting it out (a few minutes) also works;
+  there's no need to restart Drive or anything more invasive.
+
 
 ---
 
@@ -364,10 +424,10 @@ cd python && python3 -m pytest -q          # full suite
 python3 -m pytest tests/test_mcp/ -v       # one area, verbose
 ```
 
-523 tests pass / 4 skip as of 2026-06-17 (the skips are `test_stage2`'s
-`skip_if_missing`-guarded tests, which require the live framework files —
-see ENG-12 below). No CI exists (`FRAMEWORK_BACKLOG.md` ENG-15) — running
-this before every push is on you.
+645 tests pass / 18 deselected as of 2026-06-20 (the deselected ones carry
+the `integration` marker — network/credential-gated, see below; nothing in
+the standard run is currently skipped). No CI exists (`FRAMEWORK_BACKLOG.md`
+ENG-15) — running this before every push is on you.
 
 ### The four kinds of test in this repo, and what each one is *for*
 
@@ -534,17 +594,20 @@ advisory session:
 
 ---
 
-## 11. Open architecture questions — check before making structural changes
+## 11. Architecture questions — resolved, and what to watch for next
 
-Full detail in `FRAMEWORK_BACKLOG.md`. The two biggest open questions that
-should change how you approach non-trivial work right now:
+Full detail in `FRAMEWORK_BACKLOG.md`. The two biggest architecture
+questions this framework has faced are both resolved as of 2026-06-20 —
+keeping them here as the pattern for what "biggest open question" looks
+like, not because anything of comparable scale is open right now:
 
-- **ENG-2 — module necessity review.** The framework owner is planning a
-  review of whether all 19 `M*.md` files still need to exist now that
-  `python/advisor/` implements most of their logic. If you're about to do
-  substantial work on a module `.md` file, consider whether that effort
-  is better spent once this review lands, or check with the framework
-  owner first.
+- **ENG-2 — RESOLVED 2026-06-20.** The module-necessity review happened —
+  all 19 `M*.md` files plus `FW_Types.md` were checked against
+  `python/advisor/`, twice over (an original pass plus a follow-on shrink
+  pass). §2's table reflects the findings. Not a permanent guarantee —
+  if you're about to do substantial work on a module `.md` file and
+  suspect it's drifted since, that's worth a quick re-check, not a
+  blocker.
 - **ENG-3 — RESOLVED 2026-06-18.** Both Pattern A and Pattern B are
   staying; their session write-back and Portfolio_State.md rendering
   are now deduplicated into `rendering.py`. No longer a thing to check
