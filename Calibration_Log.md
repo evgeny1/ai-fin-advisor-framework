@@ -4,6 +4,12 @@
 <!-- Entries are moved here from Calibration_State.md §3 at each Q-end audit when §3 exceeds 10 entries -->
 <!-- Archived annually into year-specific files (e.g., Archive_2026Q2.md) per M12 compaction rules -->
 <!-- Do NOT edit historical entries — append only -->
+<!-- SCOPE RULE (added 2026-06-20, alongside Calibration_State.md §3's retroactive cleanup):
+     this file inherits §3's scope — calibration/methodology rationale only. Going forward,
+     do NOT append pure engineering/code/doc-hygiene entries here, even when a §3 compaction
+     would otherwise move them — those live in FRAMEWORK_BACKLOG_ARCHIVE.md only. This rule
+     is NOT applied retroactively to entries already archived below (append-only, see above) --
+     some predate the engineering/calibration split convention entirely. -->
 
 ---
 

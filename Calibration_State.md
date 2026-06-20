@@ -2,9 +2,9 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.42  Last updated: June 20, 2026 (GAP-16 IHP range-position
-advisory added; §11 SGOL/SIVR sub-condition drivers documented --
-ENG-13/ENG-26 closed engineering-side, see FRAMEWORK_BACKLOG.md)
+# Version: 1.43  Last updated: June 20, 2026 (§3 retroactively cleaned --
+scope rule added: calibration/methodology rationale only, no engineering
+narrative and no Session_Log §8 duplication; see §3 header)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -129,143 +129,61 @@ For the 3rd CPI print (the formal trigger gate), graduated response by print lev
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
 
-2026-06-20 - GAP-16 added and closed same session (v1.42): within-scenario
-sub-condition advisory for wide-range roles (design gap identified June 18,
-2026 companion session). Framework's EV math uses a single conservative
-value per role per scenario; nothing previously flagged whether current
-conditions favor the upper or lower end of a wide [conservative, upside]
-band. Scope: inflation_hedge_precious_metals (IHP) — priority role per the
-originating note. Corrected the note's own worked example: cited "IHP B =
-[-2,+6], 8pp wide" — actual §4.1 IHP B = [6,12] (6pp); the [-2,+6] figure and
-8pp width both match Scenario C, not B. New analysis/range_position.py
-(GAP-16): for held IHP instruments (SGOL, SIVR) with a §4.1 range >=6pp wide
-in the session's dominant scenario, flags real-yield (THREEFYTP10) and DXY
-direction as favorable/unfavorable/mixed/inconclusive — advisory only, never
-feeds blendedScenarioReturn()/EV/allocation math (per the original note's own
-"not a hard gate" requirement). Reuses THREEFYTP10_TREND/DXY_TREND readings
-added closing ENG-13 (FRAMEWORK_BACKLOG.md) rather than re-fetching. §11
-SGOL/SIVR entries below now document these two sub-condition drivers
-explicitly. STF/RAC/IHC (named in the originating note as "assess at same
-time") remain out of scope — their sub-condition drivers haven't been
-identified yet; that's a §11 documentation task for a future session, not a
-code change (range_position.py already generalizes once a role's drivers are
-named). No §4.1, probability, or classification value changes this entry —
-advisory infrastructure only.
+**Scope rule (added 2026-06-20, retroactive cleanup):** this section logs WHY a
+live calibration value (§1/§2/§4/§9/§11/§12/§13) is what it is — M16 4-layer
+rationale, threshold corrections, classification revisions. It does NOT log:
+(a) engineering/code/parser/doc changes, even when the same commit happens to
+touch this file's structure — those go in FRAMEWORK_BACKLOG.md only; (b)
+session-level probability/trigger/trade narrative that Session_Log.md §8
+already covers authoritatively — point to the date instead of restating it.
+This file is loaded as Project Knowledge every advisory session; engineering
+narrative here costs every session for zero advisory benefit. See
+FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
+trimmed out in this cleanup.
 
-2026-06-20 - Section 12 structure restored (v1.41, FRAMEWORK_BACKLOG.md ENG-18).
-Discovered the "## Section 12" header was missing from this file entirely, and
-§12.1-12.4 (agriculture/fertilizer, CRE/regional bank, private credit/margin,
-manufacturing chains) did not exist as written subsections — only §12.5-12.8
-existed, orphaned with no parent header. calibration.py's _parse_cascade()
-anchors on "## Section 12" to locate §12.1-12.4; with the header absent, every
-cascade threshold had been silently falling back to hardcoded Python defaults
-in _parse_cascade() itself rather than ever reading this file — confirmed via
-tests/test_stage2/test_calibration_parser.py, whose synthetic fixture has
-always had the well-formed structure this live file was missing, and via a
-direct parse of this file before vs. after the fix (all 13 cascade fields
-read correctly post-fix; values unchanged from the Python defaults, since
-§12.1-12.4 had never been formally calibrated to begin with — §6's audit
-checklist already lists "M17 §12 first formal audit and threshold
-calibration" as outstanding June 30 work). §12.1-12.4 added below using the
-exact values _parse_cascade() already defaulted to, marked ⚠ PENDING formal
-calibration for consistency with that audit item. ACTIVE_STATUS prose moved
-here from M17_SystemicCascadeWarning.md's CascadeChainRegistry (M17 bumped
-v1.6→1.7; retains only structural chain definitions, now points here per
-chain). A one-line orphaned text fragment immediately above where §12.5
-began ("...er) by ~74%. Would never have fired under any observed historical
-scenario.") had no identifiable parent sentence — removed rather than
-guessed at; likely origin is a CHAIN_4 800/quarter-threshold backtest note —
-already captured factually in Calibration_Log.md's 2026-06-01 (v1.24) entry,
-which documents that threshold's elimination in favor of the current
-220/300 thresholds (that entry predates this file's last §3 compaction,
-so it is archived there, not in this file's §3). CHAIN_5 (already at
-§12.5, not moved) and CHAIN_6 (qualitative-only, confirmed intentional
-per its own §12.6 text and M17.md) needed no changes. No probability, return-table, or classification value changes this
-session — structural restoration only; computed cascade output is unchanged
-from before this fix.
+2026-06-20 - GAP-16: within-scenario sub-condition advisory for wide-range
+roles (design gap identified June 18, 2026 companion session). Framework's
+EV math uses a single conservative value per role per scenario; nothing
+flagged whether current conditions favor the upper or lower end of a wide
+[conservative, upside] band. Scope: inflation_hedge_precious_metals (IHP) —
+priority role per the originating note; systematic_trend_following/
+real_asset_contracted_revenue/inflation_hedge_commodity_linked named as
+in-scope but their sub-condition drivers haven't been identified yet —
+deferred to a future session. Corrected the note's own worked example: cited
+"IHP B = [-2,+6], 8pp wide" — actual §4.1 IHP B = [6,12] (6pp); those figures
+match Scenario C, not B. Resolution: for held IHP instruments (SGOL, SIVR),
+flags real-yield (THREEFYTP10) and DXY direction as favorable/unfavorable/
+mixed/inconclusive when the dominant scenario's range is >=6pp wide —
+advisory only, never changes blendedScenarioReturn()/EV (per the note's own
+"not a hard gate" requirement). §11 SGOL/SIVR entries now document these two
+drivers explicitly. Engineering implementation: FRAMEWORK_BACKLOG.md (closed
+alongside ENG-13).
 
-2026-06-19 - Section 6/7/8/9 hygiene cleanup (v1.40). ENG-6: §6 item 35
-(secular_technology_growth Scenario B debate) reduced to a one-line pointer --
-§3 v1.27 shows it was ADOPTED HIGH confidence weeks ago; §4.1 already carried the
-adopted value. ENG-7: §11.3's per-scenario EV arithmetic walkthroughs (11 instruments)
-removed -- that math is recomputed fresh every session by
-M15.blendedScenarioReturn() and was going stale between sessions, requiring manual
-"stale -- do not use" annotations. ComponentVector, target allocations, guard status,
-and qualitative sensitivity notes retained. ENG-8: PAVE's orphaned §11.3 entry
-deleted -- position fully exited at v1.33, reconfirmed exited at v1.37, entry never
-removed. Added PROCEDURE RemoveInstrument() to M15_InstrumentClassification.md (v1.2)
-with a NEVER rule: an exited instrument loses its §11.3 entry in the same
-session/version bump that logs the exit. ENG-9: §13's methodology preamble (status
-taxonomy, briefing-suppression behavior, scope) moved into
-M19_ThesisSustainingConditions.md (v1.2) -- most of it was already duplicated there
-(ENUM ThesisStatus, BRIEFING BLOCK comments, NEVER rules); only the Scope
-exclusion-list paragraph was genuinely new content, added as its own section. §13
-now carries a one-line pointer instead. No probability, threshold, or classification
-value changes this session -- hygiene only.
+2026-06-20 - §12.1-12.4 structure restored (v1.41) — values unchanged (had
+never been formally calibrated; §6 audit item already covers this), but the
+parser's anchor for reading them live had gone missing for an unknown
+period. Detail: FRAMEWORK_BACKLOG.md ENG-18.
 
-2026-06-19 - Section 3 compaction (v1.39). Archived 17 entries (v1.12-v1.28) to Calibration_Log.md, restoring the "last 10 entries" invariant stated in this section's own header — §3 had grown to 26 entries against that limit (FRAMEWORK_BACKLOG.md ENG-5). No probability, threshold, or classification changes this session; compaction only. Trigger condition for future compactions also decoupled from the quarterly Q-end audit cadence to a per-session check — see M12 CompactSessionLog and ENG-5 resolution note.
+2026-06-19 - Documentation hygiene pass (v1.40) — §6 stale-item pruning, §11.3
+redundant EV-math removal, orphaned PAVE entry deletion, §13 preamble
+relocation. No calibration values changed. Detail: FRAMEWORK_BACKLOG.md
+ENG-6/7/8/9.
 
-2026-06-17 - Framework v1.38 (M19 Python implementation — completes the work the v1.37 entry
-flagged as pending). All Python layers built and verified:
-types.py: ThesisStatus enum, ThesisConditionEntry/ThesisEvaluation dataclasses,
-CalibrationState.thesis_conditions field, ScoringQuestion.consumer tag (all backward-compatible
-defaults). config/calibration.py: _parse_thesis_conditions() — tested directly against the
-live file, all 10 §13 tickers parse correctly including DBMF's literal {BZUSD, GCUSD, DXY,
-^GSPC} braces inside quoted text and MLPX's optional degraded_signals field.
-data/m18_registry.py: COPPER_SPOT (yfinance HG=F) and CHINA_PMI_MANUFACTURING (WEBSEARCH_T1,
-CPI_YOY pattern) registered and confirmed working; URANIUM_SPOT (yfinance UX=F) registered but
-confirmed via live test NOT to return data — CME's UxC contract is real but too illiquid for
-yfinance; fails gracefully to a flagged DataReading via the existing fetch_all() error handling,
-no crash. analysis/thesis.py (new file): evaluate_thesis_conditions() — point-in-time numeric
-conditions (B+C/scenario probability thresholds, BZUSD, THREEFYTP10, HY_OAS,
-equity_scenario_divergence) evaluated directly; conditions containing "sustained"/
-"consecutive"/"rolling"/"trend"/"reversal" explicitly skipped with a quality_flag rather than
-guessed at — no historical trend-tracking infrastructure exists yet for the 6-12 week windows
-§13 specifies. Judgment conditions route through 5 new Call 2 questions (orchestrator/
-scoring_questions.py: generate_m19_judgment_questions(), kept separate from generate_questions()
-so the existing 20-question-count test stays untouched) — added a 5th question
-(M19_COPX_CHINA_PMI) beyond the 4 in the original registry, since China PMI is WEBSEARCH_T1
-and can't be auto-scored from a DataReading the way the gold/uranium checks can (same
-limitation as CPI_YOY). mcp_server.py: M19 questions appended to advisor_run_computation()'s
-returned list; tsc_evaluations computed inside advisor_apply_scoring() (not run_computation) —
-required because several §13 conditions reference B+C/scenario probability, which only exists
-post-scoring. Full pytest suite: 497 passed, 4 skipped (pre-existing), 0 failed (one expected
-maintenance-test count bump, 31→34 specs, per that test's own "update when adding series"
-instruction). Functional smoke test against live data: 25 scoring questions generated (20 M03
-+ 5 M19), scenario probabilities summed to 100, tsc_evaluations populated correctly — MLPX
-DEGRADED under live B+C/D conditions, all others ACTIVE; URA/INFL correctly absent from results
-(both still §11.4 CANDIDATE, not held). COPX and URA §13 data_dependencies/notes updated to
-drop stale "pending M18 registration" language now that those series are actually live.
-Deferred (explicitly out of scope, confirmed separate-session by client): GAP-3 regime
-duration/crowding-adjustment to M13.idealAllocation() sizing — distinct from and larger than
-this M19 hand-off.
+2026-06-19 - §3 compacted, 26→10 entries (v1.39); compaction trigger
+decoupled from the quarterly cadence to a per-session check. No calibration
+values changed. Detail: FRAMEWORK_BACKLOG.md ENG-5.
 
-2026-06-17 - Framework v1.37 (§13 M19 Thesis Sustaining Conditions added — DBMF,
-SGOL, SIVR, MLPX, XAR, MAGS, URA, COPX, AIPO, INFL; PAVE dropped (exited); COPX note corrected
-(was held all along); §13.1 VNQ/VEA placeholders).
-New module M19_ThesisSustainingConditions registered (00_INDEX SUB_PROJECT THESIS_MONITORING).
-§13 added: DBMF, SGOL, SIVR (full standalone block — no INHERITS), MLPX (+degraded_signals
-tier), XAR, MAGS, URA, COPX, AIPO, INFL (new — replaces PAVE/XLP). PAVE dropped entirely (exited
-June 10, v1.33 — fully logged, no thesis monitoring needed for an unheld position). COPX note
-corrected: prior draft incorrectly stated "not currently held" — COPX is an active Acc4 holding
-(220 sh); also corrected a copy-paste data-dependency error (SIUSD → COPPER_SPOT, pending M18).
-§13.1 added: VNQ/VEA placeholders (§11.4 CANDIDATE, zero allocation — no live entry).
-AI-boundary mechanism: numeric TSC conditions evaluated in pure Python (no AI). Judgment-based
-conditions (SGOL/SIVR reserve-narrative, URA nuclear-policy, XAR conflict-status) route through
-existing M02 QualitativeGatherList + new Call 2 ScoringQuestions tagged consumer:M19 — stays
-within the framework's 3-AI-boundary cap, no new boundary added.
-M02 v2.2: two new QUALITATIVE_GATHER_LIST items (cb_gold_reserve_accumulation,
-nuclear_policy_trajectory) added to feed M19 Call 2 questions.
-Pending (not yet implemented, flagged for follow-up): M18 entries for COPPER_SPOT,
-CHINA_PMI_MANUFACTURING, URANIUM_SPOT (source verification required — Cameco/UxC have no clean
-public API); scoring_questions.py M19-tagged questions; advisor_run_computation() tsc_evaluations
-field; M19 module file itself (M19_ThesisSustainingConditions.md).
-INFL/XLP factual note: client confirmed XLP exited and INFL purchased (June 17, 2026) ahead of
-the formal trades_executed log entry — Session_Log still shows this as "recommended, pending
-client confirmation" (June 14 entry). Per client direction, formal execution logging (price,
-date, share count) is deferred to the next full M05 session; §13 treats INFL as held now for
-thesis-monitoring purposes only — this is a documentation convenience, not a portfolio write-back.
-No §4.1 changes. No probability changes. No allocation target changes.
+2026-06-17 - §13 M19 Thesis Sustaining Conditions added (v1.37/v1.38): new
+monitoring structure for DBMF, SGOL, SIVR, MLPX, XAR, MAGS, URA, COPX, AIPO,
+INFL — each carries sustaining_conditions/failure_signals tracking whether
+its structural thesis (not just its EV) still holds. PAVE dropped (exited
+June 10, v1.33 — see Session_Log §8). COPX note corrected: a prior draft had
+said "not currently held" — wrong, COPX is an active Acc4 holding (220 sh).
+§13.1 VNQ/VEA placeholders added (CANDIDATE only, zero allocation).
+GAP-3 (DBMF regime-duration/crowding-risk sizing adjustment to
+M13.idealAllocation()) flagged during this hand-off as separate, larger
+scope — deferred, confirmed by client. Engineering implementation (Python
+evaluation engine, AI Call-2 question routing): FRAMEWORK_BACKLOG.md.
 
 2026-06-15 - Framework v1.36 (MLPX ComponentVector revision — IHC weight).
 M16.CalibrationMethodology() 4-layer run for MLPX IHC component weight (§11 parameter; M15 domain):
@@ -297,42 +215,27 @@ TPL and LandBridge classified as inflation_hedge_commodity_linked (not RAC): rev
 commodity_price × volume; zero capex; quality note for CL D conservative floor refinement at Q2.
 M07: PASS. Foreign exposure flag (FNV/WPM dual-listed TSX; PSK Toronto) — does NOT disqualify taxable
 (equity ETF, qualified dividends, 1099). ER 0.85% acceptable for active management.
-EV +3.51% at current session vector (A=18.8/B=37.6/C=25.1/D=3.0/E=12.5/F=3.0). Rank #4.
+EV +3.51% at the time of this decision (A=18.8/B=37.6/C=25.1/D=3.0/E=12.5/F=3.0). Rank #4.
 EntryExtensionGuard CLEARS under 180d override: 180d avg ≈ $47.00; current $51.02 = +8.5% above (threshold 20%).
-Proposed allocation: IRA 3% (from XAR 12%→9%); Roth 3% (from XAR 12%→9%); Acc4 2% (from COPX 7%→5%).
-Pending client confirmation; allocation sheet update; instruments.json add.
 
 §9.3 EntryExtensionGuard CONFLICT DURATION OVERRIDE enacted (HIGH confidence — logical necessity, no M16 return
 table calibration required). When conflict_duration > 90 calendar days from T1-confirmed onset:
   EntryExtensionGuard uses 180d trailing average as canonical baseline for CL and IHP roles.
 Current status: US-Iran war onset Feb 28, 2026 (T1: AP). Duration = 105 days. OVERRIDE ACTIVE.
 Deactivation: T1-confirmed signed agreement + 30 calendar days, or Q2 June 30 review.
-Prior session discussion: June 8, 2026 framework audit — client raised issue; Claude proposed 180d fix
-for energy_90d divergence signal; same principle now extended to EntryExtensionGuard §9.3.
-No §4.1 changes. No probability changes this version. Session probs: A=18.8/B=37.6/C=25.1/D=3.0/E=12.5/F=3.0.
+Prior session discussion: client raised the issue at the June 8 framework audit.
+No §4.1 changes.
 
-2026-06-10 - Framework v1.33 (B formal trigger FIRED; probability revision; PAVE exit executed).
-May CPI 4.2% YoY (T1 BLS USDL-26-0824) — Print 3/3 (Mar 3.3%, Apr 3.8%, May 4.2%). §2.3 B formal
-trigger fires per protocol. Iran T1 escalation (AP/Britannica June 9-10): US Army helicopter downed,
-mutual airstrikes, Trump "will pay the price." DeriveScenarioProbabilities() run.
-Probabilities: A: 7%→5% (deal track broken, T1-confirmed airstrikes); B: 36%→41% (formal trigger);
-C: 41%→38% (B/C split per protocol; BZ=F $91.45 no Hormuz re-closure confirmed). D/E/F unchanged.
-Sum=100% ✓. Session cap: 5pp max shift (B) << 25pp ✓.
-PAVE exit: 502sh Acc4 @~$56.095. Realized gain ~+$984 absorbed by −$2,778 YTD realized losses. Tax zero.
-Proceeds redeployed: Acc4 DBMF 10%→15%, SGOV 15%→21%. M14: energy_90d −0.58% NOT FIRING;
-broad_equity_30d +3.56% MODERATE. M14 composite MODERATE. BZ=F $91.45 (Jun 9 T1). C-trigger INACTIVE.
-MOVE 77.03 (approaching ELEVATED 80). CCC divergence watch: 946bps. EV recomputation under new vector
-deferred to June 30 audit. No §4.1 changes this session.
+2026-06-10 - B formal trigger fired (May CPI 4.2% YoY, Print 3/3) — applies
+the existing §2.3 trigger protocol (no new calibration decision). Full
+probability/trade narrative: Session_Log §8, 2026-06-10.
 
-2026-06-07 - Framework v1.32 (audit — framework gap identification and fixes; no probability changes).
+2026-06-07 - Audit: 3 GAP fixes (v1.32).
 GAP-08: §2.1 C-trigger clock T1-confirmed (max 3 consecutive closes ≥$110: Mar 27/30/31). Prior T2 ~5-6 WRONG.
 GAP-06: §11.2 STG B updated to [-2,+4]★ ADOPTED. Prior stale [-6,-1] + pending [-12,-3] both incorrect.
 GAP-15: B_WATCH_LEVEL_3 graduated protocol added to §2.3 (<3.5% / 3.5-3.9% / ≥4.0% branches).
-§1.1/§1.2/§1.3: Inline session observations pruned (live readings in §7 only).
-§11.4: CANDIDATE INSTRUMENTS subsection created (VNQ, VEA, XLV, FLOT separated from §11.3).
-M05 Step 0 added. M12 SOURCE_MAP cleaned (no hardcoded folder ID).
-M14: Explicit window definitions (energy_90d=90 calendar days; broad_equity_30d=30 trading days).
-M16: Layer 4 neutral distribution reminder (A=35/B=15/C=15/D=10/E=5/F=20 mandatory).
+M14: Explicit window definitions (energy_90d=90 calendar days; broad_equity_30d=30 trading days) — were previously implicit/ambiguous.
+M16: Layer 4 neutral distribution reminder (A=35/B=15/C=15/D=10/E=5/F=20 mandatory) — was being applied inconsistently.
 BZ=F Jun 5 T1: $93.09. M14 composite MODERATE (step-down from HIGH). No §4.1 changes.
 
 ---
