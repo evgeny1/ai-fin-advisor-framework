@@ -1,9 +1,9 @@
 # M12 — File Access Protocol
-<!-- Version: Amendment 7 | Updated: see git log -->
+<!-- Version: Amendment 8 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M12_DriveProtocol
-  Version:         Amendment 7
+  Version:         Amendment 8
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: file access sources, write toolchain, or session type rules change.
   Inputs consumed:  (infrastructure — reads and writes framework files; no domain inputs)
@@ -29,10 +29,27 @@ MODULE FileProtocol {
   }
 
   // ─── SOURCE MAP ───────────────────────────────────────────────────────────────
-  // READ HIERARCHY for framework .md files:
+  // READ HIERARCHY for framework .md files — this describes CLAUDE's own direct-tool
+  // read path (Desktop Commander / GitHub MCP calls Claude makes itself, e.g. in a
+  // READONLY_MOBILE or coding session):
   //   1st: Desktop Commander (local git path) — FULL_DESKTOP sessions, fast, no decode
   //   2nd: GitHub MCP — backup for READONLY_MOBILE or local read failure
-  //   NOT used for .md reads: Google Drive (Drive is for Allocation sheet only)
+  //   NOT used for .md reads (by Claude): Google Drive (Drive is for Allocation sheet only)
+  //
+  // RESOLVED 2026-06-20 (ENG-21): this is a SEPARATE system from the
+  // `financial-advisor` Python MCP server's OWN internal read fallback
+  // (file_protocol.read_framework_file(): local filesystem → Google Drive API,
+  // never GitHub). The two don't conflict — they're different actors with
+  // different failure modes — but the Python server's Drive fallback is
+  // currently dormant by design, not a live alternate path: it reuses
+  // allocation_sheet.py's _get_drive_service(), which requires a service-account
+  // or OAuth credential file under ~/.advisor/ that isn't configured (the
+  // Allocation sheet itself is read by Claude via the Google Drive MCP connector
+  // directly, not through this Python-native client — that client is a possible
+  // future feature, not needed today). Confirmed via test coverage
+  // (tests/test_stage1/test_file_protocol_read_fallback.py) that the failure mode
+  // is clean either way: a missing local file with no Drive credentials raises a
+  // HardStopException naming both causes, not an unhandled exception.
 
   SOURCE_MAP {
     drive: {
@@ -43,6 +60,11 @@ MODULE FileProtocol {
         search: by title in Drive root — NEVER hardcode file ID
         // Prices live via GOOGLEFINANCE — treat as current at time of fetch
         // Framework never writes to Allocation sheet
+        // Read by Claude via the Google Drive MCP connector — NOT by Python.
+        // allocation_sheet.py also contains a Python-native FRED/FINRA-via-sheet
+        // fetcher (fetch_fred_series, fetch_finra_margin) for a possible future
+        // feature; it is not registered in advisor_run_computation()'s live
+        // FetchRegistry today and requires no action (ENG-21).
       }
       // NOTE: framework .md files live in Drive but are read via local Desktop Commander,
       // not via Drive API. Drive syncs the local folder bidirectionally.

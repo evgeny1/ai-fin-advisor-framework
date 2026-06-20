@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-20 (ENG-17, ENG-25 closed)
+**Last updated:** 2026-06-20 (ENG-17, ENG-25, ENG-21 closed)
 
 ## Index
 
@@ -59,7 +59,7 @@
 | ENG-18 | OPEN | LOW | hygiene | M17 CascadeChainRegistry embeds live dated figures in module file; CHAIN_5/6 not scored |
 | ENG-19 | CLOSED | MEDIUM | functional-gap | 8 of 17 RoleID roles have no M09/M10 scenario-directive coverage anywhere |
 | ENG-20 | CLOSED | MEDIUM | functional-gap | M14 energy_180d extended-conflict caveat not implemented in regime.py |
-| ENG-21 | OPEN | LOW | hygiene | M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback |
+| ENG-21 | CLOSED | LOW | hygiene | M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback |
 | ENG-22 | OPEN | LOW | testing | Test suite needs reorganizing into unit/e2e/integration — currently flat test_stageN folders |
 | ENG-23 | CLOSED | MEDIUM | architecture | M05_SessionInit.md retired outright (ENG-2 follow-on decision #2) |
 | ENG-24 | CLOSED | MEDIUM | architecture | M13.RecalibrationSequence() has no Python implementation — still 100% manual |
@@ -648,11 +648,13 @@ expecting the old interpreter path.
 
 ### ENG-21 — M12's documented GitHub read-fallback vs file_protocol.py's actual Drive fallback
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  LOW
   Category:  hygiene
   Opened:    2026-06-17
-  Area:      M12_DriveProtocol.md, python/advisor/data/file_protocol.py
+  Closed:    2026-06-20
+  Area:      M12_DriveProtocol.md, python/advisor/data/file_protocol.py,
+             python/advisor/data/fetchers/allocation_sheet.py
   Related:   ENG-2
 -->
 
@@ -681,6 +683,46 @@ actually fired in practice?) before deciding whether M12.md's absolute
 existing tests). If it's genuinely dead code in practice, simplest fix
 is removing it rather than reconciling two systems for an edge case
 that doesn't occur.
+
+**Resolution (2026-06-20):** Investigated as suggested rather than guessing.
+Confirmed `_read_from_drive()` had zero test coverage anywhere in the
+suite, and traced its credential dependency: it reuses
+`allocation_sheet._get_drive_service()`, which requires a service-account
+or OAuth credential file under `~/.advisor/`. Confirmed with the framework
+owner that this Python-native Google Drive client is not configured and
+not currently needed — the Allocation spreadsheet is read by Claude
+directly via the Google Drive MCP connector, not through this code path;
+the Python-native client (this fallback, plus `allocation_sheet.py`'s
+unwired `fetch_fred_series`/`fetch_finra_margin` FRED-via-sheet fetchers)
+is a possible future feature.
+
+Decided against outright removal — the suggested-next-step's "simplest
+fix" framing assumed dead code with no future value, but the owner wants
+to keep the option open. Instead: documented the actual state precisely
+rather than reconciling two systems that were never in real conflict.
+`M12_DriveProtocol.md`'s SOURCE_MAP comment block now explicitly scopes
+the Desktop-Commander→GitHub hierarchy to Claude's own direct-tool read
+path, and adds a paragraph distinguishing it from the Python server's
+separate, currently-dormant local→Drive fallback (naming the missing
+credential requirement and pointing at the Allocation-sheet/MCP-connector
+split). Added a matching docstring note to `_read_from_drive()` in
+`file_protocol.py` and a one-line note on the unwired FRED/FINRA
+fetchers in `allocation_sheet.py`'s SOURCE_MAP entry — both flagged
+"no action needed," not reopened as new items. M12 bumped Amendment 7→8.
+
+**Test coverage added:** new
+`tests/test_stage1/test_file_protocol_read_fallback.py` (4 tests) —
+confirms `read_framework_file()` never touches Drive when the local file
+is present, that it does attempt Drive when local is missing, that a
+Drive failure produces a clean `HardStopException` naming both causes
+(not an unhandled exception), and directly verifies
+`_get_drive_service()` raises `EnvironmentError("Google credentials not
+found")` with no credential files configured — empirically confirming the
+"dormant by design" claim above rather than asserting it from code
+inspection alone.
+
+`tools/validate_manifests.py`: 19/19 pass. Full suite (`not integration`):
+662 passed, 60 deselected (+4 from this item, 0 regressions).
 
 
 ### ENG-3 — Pattern A / Pattern B duplication & convergence decision

@@ -284,6 +284,14 @@ def _read_from_drive(filename: str) -> str:
     """
     Fallback: download file from Google Drive framework folder.
     Uses google-api-python-client. Only called when local file is missing.
+
+    Dormant by design (ENG-21, 2026-06-20): requires a service-account or
+    OAuth credential file under ~/.advisor/ that is not currently configured
+    — this is a possible future feature, not an active path. The expected
+    outcome today, if this is ever reached, is a clean EnvironmentError from
+    _get_drive_service(), which read_framework_file() wraps into a
+    HardStopException naming both the missing-local and Drive failure. See
+    tests/test_stage1/test_file_protocol_read_fallback.py.
     """
     import base64
     from googleapiclient.discovery import build
