@@ -1,16 +1,16 @@
 """
-rendering.py — Shared В§8 entry and Portfolio_State.md rendering (ENG-3).
+rendering.py — Shared §8 entry and Portfolio_State.md rendering (ENG-3).
 
 Single canonical implementation used by BOTH session pipelines:
   - mcp_server.py (Pattern B — Claude orchestrates via 3 MCP tools, active path)
   - orchestrator/session.py (Pattern A — Python orchestrates, Stage 5 target)
 
-Before this module existed, each path reimplemented В§8 entry construction and
+Before this module existed, each path reimplemented §8 entry construction and
 Portfolio_State.md rendering independently. ENG-1 was direct proof of the cost:
-the identical В§8-format bug (missing '---' separator, rounded probabilities
+the identical §8-format bug (missing '---' separator, rounded probabilities
 breaking sum-to-100) existed independently in both files and had to be fixed
 twice. This module is the fix for that pattern recurring — there is now
-exactly one place that knows the В§8 schema and the Portfolio_State.md format.
+exactly one place that knows the §8 schema and the Portfolio_State.md format.
 
 Output here MUST stay byte-compatible with config/session_log.py's parser:
 '---' block separator, a line starting 'date:', and a literal
@@ -33,7 +33,7 @@ def format_scenario_probs(p: Any) -> str:
 
 
 def format_bullet_list(items: List[str]) -> str:
-    """Render as '- item' lines, matching the В§8 canonical-schema list format
+    """Render as '- item' lines, matching the §8 canonical-schema list format
     that config/session_log.py._extract_list() parses (bullet items under a
     bare 'key:' line, terminated by a blank line)."""
     return "\n".join(f"- {item}" for item in items) if items else "_None this session._"
@@ -54,7 +54,7 @@ def build_session_log_entry(
     next_session_flags: List[str],
 ) -> str:
     """
-    Canonical В§8 Session_Log.md entry — used by both mcp_server._tool_write_back
+    Canonical §8 Session_Log.md entry — used by both mcp_server._tool_write_back
     (Pattern B) and orchestrator/session.py._step8_write_back (Pattern A).
 
     Returns ONLY the new entry text (including its own leading separator).

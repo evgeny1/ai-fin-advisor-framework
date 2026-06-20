@@ -1,9 +1,9 @@
 # M19 — Thesis Sustaining Conditions
-<!-- Version: 1.1 | Updated: see git log -->
+<!-- Version: 1.2 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M19_ThesisSustainingConditions
-  Version:         1.1
+  Version:         1.2
   Sub-project:     THESIS_MONITORING
   Reason to change: thesis-sustaining condition evaluation methodology, status taxonomy, or
                     AI-boundary routing changes. New tickers: add a CALIBRATION_STATE §13
@@ -41,6 +41,17 @@ MODULE ThesisSustainingConditions {
     FAILED,    // a failure_signals condition fired (original thesis broken)
     UNKNOWN    // a required data_dependency was unavailable this session
   }
+
+  // ─── SCOPE ────────────────────────────────────────────────────────────────────────────
+  // (ENG-9, moved here from CALIBRATION_STATE §13’s preamble — this is methodology,
+  // not a calibration-dated value, so it belongs here rather than duplicated per ticker.)
+  //
+  // Applies to active-conviction / thematic positions only. Defensive and floor-sleeve
+  // holdings (consumer_defensive_equity, rate_sensitive_income_short, cash-equivalents)
+  // have no commodity/duration/war-premium degradation mechanism to monitor — same
+  // "N/A, guard does not apply" precedent already used for those roles in §9.3. No §13
+  // entry for those roles, and (per the NEVER rule above) that absence is this scope
+  // decision, not a data gap — it must never resolve to UNKNOWN.
 
   // ─── AI BOUNDARY ROUTING ──────────────────────────────────────────────────
   // §13 conditions split into two evaluation paths. Both are declared here so the

@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-18
+**Last updated:** 2026-06-19
 
 ## Index
 
@@ -43,11 +43,11 @@
 | ENG-2 | IN_PROGRESS | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
 | ENG-4 | CLOSED | MEDIUM | architecture | Stage 5 (Pattern A) incomplete plumbing |
-| ENG-5 | OPEN | HIGH | hygiene | Compaction cadence mismatch (Calibration_State §3, Session_Log §8) |
-| ENG-6 | OPEN | MEDIUM | hygiene | §6 First-Audit Checklist accumulates stale content |
-| ENG-7 | OPEN | MEDIUM | hygiene | §11 stores computed EV math redundantly |
-| ENG-8 | OPEN | LOW | hygiene | Orphaned exited-instrument entries not pruned |
-| ENG-9 | OPEN | LOW | hygiene | §13 preamble mixes methodology with live data |
+| ENG-5 | CLOSED | HIGH | hygiene | Compaction cadence mismatch (Calibration_State §3, Session_Log §8) |
+| ENG-6 | CLOSED | MEDIUM | hygiene | §6 First-Audit Checklist accumulates stale content |
+| ENG-7 | CLOSED | MEDIUM | hygiene | §11 stores computed EV math redundantly |
+| ENG-8 | CLOSED | LOW | hygiene | Orphaned exited-instrument entries not pruned |
+| ENG-9 | CLOSED | LOW | hygiene | §13 preamble mixes methodology with live data |
 | ENG-10 | CLOSED | HIGH | testing | No test coverage for advisor_run_computation / advisor_apply_scoring |
 | ENG-11 | CLOSED | HIGH | testing | No Pattern-B end-to-end pipeline test |
 | ENG-12 | OPEN | MEDIUM | testing | Tests assert against live, not snapshotted, framework files |
@@ -581,11 +581,11 @@ should import rather than reimplement) into a shared module. If no:
 mark Pattern A explicitly archived/frozen in this backlog and in
 README.md, so future sessions don't keep half-maintaining it.
 
-**Resolution (2026-06-18):** Framework owner decided option (b) вЂ” both
+**Resolution (2026-06-18):** Framework owner decided option (b) — both
 Pattern A and Pattern B are staying; neither is archived. Extracted the
 duplicated logic into a new shared module, `python/advisor/rendering.py`:
 `format_scenario_probs()`, `format_bullet_list()`, `format_numbered_list()`,
-`build_session_log_entry()` (the В§8 entry construction вЂ” the exact thing
+`build_session_log_entry()` (the §8 entry construction — the exact thing
 that had ENG-1's bug independently in both files), and
 `render_portfolio_state()` (parameterized by `generator_label` so each
 pattern's Portfolio_State.md output stays correctly attributed).
@@ -593,10 +593,10 @@ pattern's Portfolio_State.md output stays correctly attributed).
 `orchestrator/session.py._step8_write_back()` both call these shared
 functions now; the old `_render_portfolio_state()` and
 `_append_session_log_entry()` instance methods in `session.py` were
-removed entirely rather than kept as thin wrappers вЂ” there is now exactly
+removed entirely rather than kept as thin wrappers — there is now exactly
 one implementation, not two that happen to agree.
 New `tests/test_rendering.py` (17 tests) tests the shared module directly,
-including `test_render_portfolio_state_both_patterns_use_same_structure` вЂ”
+including `test_render_portfolio_state_both_patterns_use_same_structure` —
 the direct proof of this item's resolution. `README.md` updated in 5
 places to describe the dedup instead of flagging it as an open question.
 Full suite: 535 passed, 46 skipped. See ENG-4 for the related fix this
@@ -637,7 +637,7 @@ Added `open_triggers: List[str]` and `open_decisions: List[str]` fields
 to `SessionContext`. Rather than populate them from a separate
 extraction step, extended `AIClient.generate_briefing()`'s existing
 prompt (AI Call 3) to also append a structured `###OPEN_ITEMS###`
-trailer after the NET_ASSESSMENT section вЂ” `generate_briefing()` now
+trailer after the NET_ASSESSMENT section — `generate_briefing()` now
 returns `(briefing, open_triggers, open_decisions)`, parsed by a new
 `_split_open_items()` helper in `ai_client.py`. No added AI-call cost:
 the model already has full session context in that one call.
@@ -645,7 +645,7 @@ the model already has full session context in that one call.
 than silently empty lists, consistent with its existing pattern for the
 other two AI calls. If the live model ever fails to return a parseable
 trailer, the result is an honest empty list plus a flag in
-`ctx.write_back_flags` вЂ” never a fabricated placeholder.
+`ctx.write_back_flags` — never a fabricated placeholder.
 `_step8_write_back()` now passes `ctx.open_triggers`/`ctx.open_decisions`
 into the shared `rendering.build_session_log_entry()` (see ENG-3) instead
 of the old hardcoded `[review session briefing]` strings. 4 new parser
@@ -654,10 +654,11 @@ tests + an updated `test_stub_generate_briefing` in
 
 ### ENG-5 — Compaction cadence mismatch (Calibration_State §3, Session_Log §8)
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  HIGH
   Category:  hygiene
   Opened:    2026-06-17
+  Closed:    2026-06-19
   Area:      Calibration_State.md §3, Session_Log.md §8, M12_DriveProtocol.md
   Related:   ENG-6, ENG-7, GAP-7
 -->
@@ -685,13 +686,38 @@ STEP 1-4 sequence for §3 (it currently only handles §3 as an
 afterthought — "Calibration_State.md (if §3 trimmed)" — with no
 dedicated retain-count logic the way §7/§8 have).
 
+**Resolution (2026-06-19):** Both halves fixed.
+
+§7/§8 (Session_Log.md): fully automated. Added `_compact_session_log()` to
+`file_protocol.py`, called automatically from `write_back()` on every call — no
+longer something Claude executes by hand at all. Checks §7 > 10 rows / §8 > 3
+entries; archives overflow into the current quarter's Archive_[Year]Q[N].md
+(creating it if absent, appending and merging into existing sections if not) in
+the SAME git commit as the write-back. 24 new tests in
+`tests/test_stage1/test_compaction.py` cover no-overflow, §7-only, §8-only, both
+together, archive creation vs. append, and the same-quarter repeated-compaction
+merge case (a real bug found and fixed during this implementation — the second
+same-quarter compaction was creating a duplicate "## Archived §8" section instead
+of merging into the first one).
+
+§3 (Calibration_State.md): one-time catch-up performed manually (26 entries →
+10; 17 archived to Calibration_Log.md, v1.12-v1.28) plus the trigger condition
+fixed going forward — M12_DriveProtocol.md's `CompactSessionLog` rewritten as
+`CompactCalibrationLog` (Amendment 6), checked per-session rather than quarterly.
+Stays manual by design — `write_back()` never touches Calibration_State.md (see
+the NEVER rule above) — but the stale quarterly gate that let this recur is gone.
+
+Also closed in the same pass: ENG-6, ENG-7, ENG-8, ENG-9 (all downstream of this
+item's §3 bloat). See each item below for specifics.
+
 
 ### ENG-6 — §6 First-Audit Checklist accumulates stale content
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  MEDIUM
   Category:  hygiene
   Opened:    2026-06-17
+  Closed:    2026-06-19
   Area:      Calibration_State.md §6
   Related:   ENG-5
 -->
@@ -707,13 +733,23 @@ entry should be reduced to a one-line pointer ("see §3 v1.27") or deleted
 outright in the same version bump that resolves it — not left for
 "cleanup later," which in practice means cleanup never.
 
+**Resolution (2026-06-19):** Confirmed via the live §4.1 table (which already
+showed secular_technology_growth Scenario B = [-2,+4]★) plus Calibration_Log.md's
+v1.27 entry ("STG B [-6,-1]→[-2,+4] ADOPTED HIGH confidence... 3 clean analogues
+(1973-82, Q1 2026, + 2022 acute-phase partial)") that item 35's ~15-line MEDIUM-
+confidence debate was fully superseded weeks before this fix — the table had
+already moved on, only the checklist hadn't. Reduced to a 6-line pointer citing
+§3 v1.27; full adoption rationale remains intact in Calibration_Log.md, not lost,
+just not duplicated in two places.
+
 
 ### ENG-7 — §11 stores computed EV math redundantly
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  MEDIUM
   Category:  hygiene
   Opened:    2026-06-17
+  Closed:    2026-06-19
   Area:      Calibration_State.md §11.3, python/advisor/analysis/instruments.py
   Related:   ENG-5
 -->
@@ -733,12 +769,21 @@ walkthrough. If an EV-at-decision-time audit trail is wanted, it belongs
 in the (already compacted, per ENG-5) §3 log, not duplicated per
 instrument on every revision.
 
+**Resolution (2026-06-19):** Removed all 11 per-scenario EV arithmetic
+walkthroughs (XAR, MLPX, SGOL, SGOV, PAVE, AIPO, MAGS, DBMF, SIVR, VTIP, XLP) —
+replaced each with a one-line pointer to M15.blendedScenarioReturn(). Kept
+ComponentVector, target allocations, guard status, and qualitative sensitivity
+notes (e.g. MLPX's IHC-E-recalibration-risk note) untouched — those sit AFTER
+the removed block boundary and have lasting value independent of any specific
+stale number. §11.3 shrunk by ~3,450 characters across the 11 entries.
+
 ### ENG-8 — Orphaned exited-instrument entries not pruned
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  LOW
   Category:  hygiene
   Opened:    2026-06-17
+  Closed:    2026-06-19
   Area:      Calibration_State.md §11.3
   Related:   ENG-5, ENG-7
 -->
@@ -751,13 +796,30 @@ the classification entry when the position was closed.
 its §11.3 entry in the same session/version bump that logs the exit, not
 on a future cleanup pass. PAVE is the concrete example to fix first.
 
+**Resolution (2026-06-19):** Confirmed via §3 (PAVE exit: 502sh Acc4 @~$56.095,
+v1.33, reconfirmed exited at v1.37/v1.38) that the position has been fully closed
+for weeks. Deleted PAVE's entire §11.3 entry (ComponentVector, target allocations,
+the pre-exit hold/exit-trigger constituent analysis — all of it; none of it has
+forward decision use for a closed position). Checked 15 other PAVE mentions
+outside §3 across the document: all are either dated historical snapshots
+(e.g. the v1.22 Consolidated Target Allocations table, correctly labeled with
+its as-of date, predating the exit), permanent audit-log tables (§10), or
+illustrative protocol text — none were live/current references needing
+cleanup. (Found, but left for a future pass as a separate smaller instance of
+this same pattern: a few §6 checklist items still reference PAVE-specific
+follow-ups like an IIJA reauthorization assessment that are now moot.)
+Added `PROCEDURE RemoveInstrument()` to `M15_InstrumentClassification.md`
+(v1.1→1.2) with the requested NEVER rule, right after the existing
+`RemoveRole()` procedure it's modeled on.
+
 
 ### ENG-9 — §13 preamble mixes methodology with live data
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  LOW
   Category:  hygiene
   Opened:    2026-06-17
+  Closed:    2026-06-19
   Area:      Calibration_State.md §13, M19_ThesisSustainingConditions.md
   Related:   ENG-2
 -->
@@ -769,6 +831,17 @@ explanation is methodology ("why/how"), not a calibration-dated value
 **Suggested next step:** move the explanatory preamble into M19.md;
 leave only the per-ticker data blocks in §13. Low priority — §13's
 per-entry structure is otherwise appropriately lean (unlike §3/§6/§11).
+
+**Resolution (2026-06-19):** Found, while implementing, that M19.md already
+duplicated most of this preamble in distributed form: the ENUM ThesisStatus
+comments cover the status taxonomy, the BRIEFING BLOCK comment covers the
+suppression behavior, and a NEVER rule already said "see preamble" for the
+scope exclusions — meaning M19 already structurally expected §13 to carry that
+one piece. Only the Scope paragraph (which roles are excluded and why) was
+genuinely new content; added it to M19.md as its own section, right after the
+ENUM. Everything else in §13's old preamble was simply deleted rather than
+duplicated again, since M19 already said the same thing. §13 now carries a
+6-line pointer instead of the original ~25-line preamble.
 
 
 ### ENG-10 — No test coverage for advisor_run_computation / advisor_apply_scoring
@@ -1023,7 +1096,7 @@ comment in Project_Instructions_MCP.md's Step 9 block read:
 "instruments.json - written by MCP server automatically" (lowercase dash,
 no em-dash). Confirmed via grep across all of `python/advisor/` that this
 is false: no production code calls `.write_text()` on `_INSTRUMENTS_FILE`
-вЂ” only test fixtures do. `advisor_run_computation()` (`_tool_run_computation`)
+— only test fixtures do. `advisor_run_computation()` (`_tool_run_computation`)
 and `advisor_write_back()` (`_tool_write_back`) / `file_protocol.write_back()`
 contain zero calls that create or update instruments.json.
 
@@ -1035,7 +1108,7 @@ claim was just wrong.
 **Resolution so far:** Project_Instructions_MCP.md corrected to say
 "written manually via Desktop Commander:write_file during WriteBack Step 4b
 (@see M12_DriveProtocol.md WriteBack STEP 4b)". M12_DriveProtocol.md's
-STEP 4b already correctly described the manual write; added a вљ  note
+STEP 4b already correctly described the manual write; added a ⚠ note
 confirming the automation gap and referencing this item.
 
 **Suggested next step (LOW priority — fallback works):** Wire the

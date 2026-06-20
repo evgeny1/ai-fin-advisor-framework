@@ -154,13 +154,13 @@ def test_pipeline_no_write_back_in_dry_run():
 @pytest.mark.integration
 def test_pipeline_session_log_entry_is_parseable():
     """Regression test (2026-06-17, updated 2026-06-18 for ENG-3 dedup):
-    the В§8 entry construction used to be duplicated independently in
+    the §8 entry construction used to be duplicated independently in
     mcp_server.py and session.py, and both copies independently had the
     same format bug (missing '---' separator). ENG-3 moved both call sites
     onto a single shared implementation in rendering.py. This test confirms
     that shared implementation, called the same way session.py's
     _step8_write_back() calls it, still produces a block parse_session_log()
-    recognizes as a distinct, new В§8 entry."""
+    recognizes as a distinct, new §8 entry."""
     from advisor.config.session_log import parse_session_log
     from advisor.rendering import build_session_log_entry
 
@@ -170,7 +170,7 @@ def test_pipeline_session_log_entry_is_parseable():
 
     seed_log = (
         "## Section 8 - Session State Log\n\n---\n\n"
-        "date: 2026-06-01 (full M05 session вЂ” seed entry)\n"
+        "date: 2026-06-01 (full M05 session — seed entry)\n"
         "scenario_probabilities: { A: 10%, B: 40%, C: 30%, D: 10%, E: 5%, F: 5% }\n"
         "primary_driver: seed entry for round-trip test\n"
         "session_type: full M05 session\n"

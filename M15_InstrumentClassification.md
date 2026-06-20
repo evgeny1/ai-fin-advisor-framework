@@ -1,9 +1,9 @@
 # M15 — Instrument Classification
-<!-- Version: 1.1 | Updated: see git log -->
+<!-- Version: 1.2 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M15_InstrumentClassification
-  Version:         1.1
+  Version:         1.2
   Sub-project:     ANALYSIS_ENGINE
   Reason to change: classification logic, blendedScenarioReturn methodology, or ValidateClassifications() rules change.
                     Role registry and instrument decomposition: add to CALIBRATION_STATE §11 only — not here.
@@ -135,6 +135,27 @@ MODULE InstrumentClassification {
     // 3: Archive §4.1 row in §3 Calibration Log (do not delete — audit trail)
     // 4: Log rationale in §3
     NEVER: remove role while any §11 classification entry references it
+  }
+
+  PROCEDURE RemoveInstrument(ticker) {
+    // ENG-8 (2026-06-19): added after PAVE’s §11.3 entry sat orphaned for two
+    // versions after the position was fully exited and logged in §3 (v1.33,
+    // reconfirmed v1.37) — nobody deleted the classification entry when the
+    // position closed. PAVE is the concrete example this procedure fixes.
+    // 1: Confirm exit is fully logged in §3 (proceeds, realized gain/loss, tax
+    //    treatment, redeployment) before removing the §11.3 entry — never the
+    //    reverse order
+    // 2: Delete the ticker’s entire §11.3 entry (ComponentVector, target
+    //    allocations, guard status, hold/exit-trigger analysis — all of it, not a
+    //    partial trim; an exited position has no forward decision use for any of
+    //    this)
+    // 3: Do NOT archive the §11.3 entry text anywhere — unlike §3/§4.1 rows,
+    //    §11.3 is current-state configuration, not an audit trail. The §3 exit
+    //    entry IS the permanent record of why and when the position closed.
+    // 4: If any other module (e.g. M19 §13 thesis conditions) carries a parallel
+    //    entry for this ticker, remove that too in the same pass — same principle
+    NEVER: leave an exited instrument’s §11.3 entry past the same session/version
+      bump that logs its exit in §3 — "cleanup later" in practice means never
   }
 
   // ─── INTEGRATION WITH EXISTING FRAMEWORK ─────────────────────────────────

@@ -134,7 +134,7 @@ def test_render_portfolio_state_probabilities_formatted(probs):
     out = render_portfolio_state(
         "1.0", probs, "2026-06-18", "test driver", [], [], "TEST",
     )
-    assert "A=14%" in out  # :.0f rounds for display only, not the В§8 entry
+    assert "A=14%" in out  # :.0f rounds for display only, not the §8 entry
     assert "B=43%" in out
 
 

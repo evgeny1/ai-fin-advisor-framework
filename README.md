@@ -45,25 +45,25 @@ and conflating them is the most common source of confusion:
 ## 1. The three layers
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────────┐
 │ LAYER 1 — Pseudo-code specification (advisory project knowledge) │
 │   M01-M19_*.md, FW_Types.md, 00_INDEX.md                         │
 │   Read by: Claude, during ADVISORY sessions only.                │
 │   Status:  partially superseded by Layer 3. Review pending       │
-│            (FRAMEWORK_BACKLOG.md ENG-2). Treat each module's      │
+│            (FRAMEWORK_BACKLOG.md ENG-2). Treat each module's     │
 │            "is this still load-bearing" status as unverified     │
 │            until that review happens.                            │
-├─────────────────────────────────────────────────────────────────┤
+├──────────────────────────────────────────────────────────────────┤
 │ LAYER 2 — Live data (mutable state, git-tracked)                 │
 │   Calibration_State.md, Session_Log.md, Portfolio_State.md,      │
 │   Calibration_Log.md, Archive_[Year]Q[N].md                      │
 │   Read/written by: both advisory sessions (via MCP tools or      │
-│            Desktop Commander) and python/advisor/ directly.       │
-├─────────────────────────────────────────────────────────────────┤
-│ LAYER 3 — Python implementation (executable, tested)              │
+│            Desktop Commander) and python/advisor/ directly.      │
+├──────────────────────────────────────────────────────────────────┤
+│ LAYER 3 — Python implementation (executable, tested)             │
 │   python/advisor/  — the real source of truth for HOW a number   │
 │            gets computed. This is what a coding session edits.   │
-└─────────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 **Rule of thumb for "which file do I edit":**
@@ -205,7 +205,7 @@ advisor/
 | Entry point | `python -m advisor mcp-server` (stdio transport, registered in Claude Desktop config) | `python -m advisor session [--dry-run]` |
 | Cost | Zero extra — uses the conversation Claude is already in | Costs a real API call per AI boundary |
 | File: write-back | `mcp_server.py._tool_write_back()` | `orchestrator/session.py._step8_write_back()` |
-| В§8 entry + Portfolio_State rendering | `rendering.py` (shared, ENG-3) | `rendering.py` (shared, ENG-3) |
+| §8 entry + Portfolio_State rendering | `rendering.py` (shared, ENG-3) | `rendering.py` (shared, ENG-3) |
 | Test coverage | `tests/test_mcp/` (full — ENG-10/ENG-11 closed 2026-06-18) | `tests/test_stage5/` (full pipeline tests via `StubAIClient`) |
 | Known issues | none currently tracked | none currently tracked — ENG-4 closed 2026-06-18 |
 

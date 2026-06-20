@@ -1,9 +1,9 @@
 # M12 — File Access Protocol
-<!-- Version: Amendment 5 | Updated: see git log -->
+<!-- Version: Amendment 6 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M12_DriveProtocol
-  Version:         Amendment 5
+  Version:         Amendment 6
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: file access sources, write toolchain, or session type rules change.
   Inputs consumed:  (infrastructure — reads and writes framework files; no domain inputs)
@@ -248,30 +248,64 @@ MODULE FileProtocol {
     }
   }
 
-  // ─── COMPACTION PROCEDURE (quarterly — Q-end audit) ──────────────────────────
-  // Execute at: June 30, September 30, December 31, March 31
+  // ─── COMPACTION PROCEDURE (ENG-5: per-session / per-write-back, NOT quarterly-gated) ─────────
+  // CORRECTED 2026-06-19 (ENG-5): this procedure used to be gated to four
+  // calendar dates (June 30 / Sep 30 / Dec 31 / Mar 31). That guaranteed §3,
+  // §7, and §8 would overrun their stated retention limits between audits —
+  // by the time of the 2026-06-19 fix, §3 had grown to 26 entries against a
+  // stated 10, and §7/§8 similarly overran. Trigger is now per-session, and
+  // §7/§8 specifically is now automated (no longer something Claude executes
+  // by hand at all).
 
-  PROCEDURE CompactSessionLog {
+  // §7/§8 (Session_Log.md): AUTOMATED. advisor_write_back() /
+  // file_protocol.write_back() calls _compact_session_log() on every call —
+  // checks §7 > 10 rows and §8 > 3 entries, and archives any overflow into
+  // the current quarter’s Archive_[Year]Q[N].md (creating it if absent this
+  // quarter, appending if it already exists) in the SAME git commit as the
+  // session write-back. No manual Claude action needed — if you find yourself
+  // about to hand-edit §7/§8 row/entry counts, stop: the tool already did it.
 
-    STEP 1: identify {
-      archive: all §7 rows except 10 most recent
-      archive: all §8 entries except 3 most recent
+  // §3 (Calibration_State.md): MANUAL, by design — advisor_write_back() NEVER
+  // writes Calibration_State.md (see the NEVER rule above: "Calibration_State.md
+  // amendments... Desktop Commander + git only"). Trigger condition is now
+  // per-session rather than quarterly: check §3’s entry count any time you are
+  // about to add a new §3 entry, not only at Q-end.
+
+  PROCEDURE CompactCalibrationLog {
+    REQUIRE: about to write or have just written a new §3 entry this session
+
+    STEP 1: count {
+      IF §3 entry count (including the new entry just added) <= 10 → STOP,
+        no compaction needed this session
     }
-    STEP 2: create Archive_[Year]Q[N].md {
-      header: "# Session Log Archive — [Year] Q[N]\nArchived: [date]\n"
-      body:   [archived §7 rows] + [archived §8 entries]
+    STEP 2: identify {
+      archive: all §3 entries except the 10 most recent, by file position —
+        preserve their existing relative order, do NOT reorder by version number
+        (§3 entries are not always version-monotonic — e.g. a same-day v1.14 may
+        legitimately appear before v1.15 if that was the actual edit order; trust
+        file position, not the version number, as the source of truth for order)
     }
-    STEP 3: compact Session_Log.md {
-      retain: last 10 §7 rows, last 3 §8 entries
-      add compaction note: "Entries before [cutoff] archived to Archive_[Year]Q[N].md"
+    STEP 3: append to Calibration_Log.md {
+      header: "## Section 3 Archive — Calibration History (Entries Archived
+        [date]; [oldest_version]-[newest_version])"
+      body:   [archived entries], reversed into chronological (oldest-first)
+        order — matches Calibration_Log.md’s existing append-only convention,
+        which is the opposite direction from §3’s own newest-first ordering
     }
-    STEP 4: write_and_push via PATTERN_A {
-      files:   Archive_[Year]Q[N].md (new), Session_Log.md (compacted),
-               Calibration_State.md (if §3 trimmed), Portfolio_State.md (re-rendered)
-      message: "Q[N] session log compaction — archive [Year]Q[N]"
+    STEP 4: trim Calibration_State.md §3 {
+      retain: the 10 most recent entries only
+      version bump: this compaction is itself a framework change — bump
+        Calibration_State.md’s own version number and add a brief §3 entry
+        documenting the compaction itself (precedent: v1.12 "File split
+        implemented..." and v1.39 "Section 3 compaction...")
+    }
+    STEP 5: write_and_push via Desktop Commander + git {
+      files:   Calibration_State.md (trimmed), Calibration_Log.md (extended)
+      message: "Section 3 compaction — archive [N] entries to Calibration_Log.md"
     }
 
-    ARCHIVE_NAMING: "Archive_[Year]Q[N].md" (quarterly) | "Archive_[Year].md" (annual)
+    ARCHIVE_NAMING: "Archive_[Year]Q[N].md" (§7/§8, quarterly, automated) |
+                    "Calibration_Log.md" (§3, single permanent file, manual)
   }
 
 }

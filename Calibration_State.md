@@ -2,10 +2,8 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.38  Last updated: June 17, 2026 (M19 Python implementation complete — types.py,
-calibration.py §13 parser, m18_registry.py, analysis/thesis.py, scoring_questions.py M19
-questions, mcp_server.py wiring; COPX/URA §13 data_dependencies updated from "pending" to
-verified-live status)
+# Version: 1.40  Last updated: June 19, 2026 (§6/§7/§8/§9 hygiene cleanup --
+ENG-6/7/8/9; see §3 v1.40)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -129,6 +127,27 @@ For the 3rd CPI print (the formal trigger gate), graduated response by print lev
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-19 - Section 6/7/8/9 hygiene cleanup (v1.40). ENG-6: §6 item 35
+(secular_technology_growth Scenario B debate) reduced to a one-line pointer --
+§3 v1.27 shows it was ADOPTED HIGH confidence weeks ago; §4.1 already carried the
+adopted value. ENG-7: §11.3's per-scenario EV arithmetic walkthroughs (11 instruments)
+removed -- that math is recomputed fresh every session by
+M15.blendedScenarioReturn() and was going stale between sessions, requiring manual
+"stale -- do not use" annotations. ComponentVector, target allocations, guard status,
+and qualitative sensitivity notes retained. ENG-8: PAVE's orphaned §11.3 entry
+deleted -- position fully exited at v1.33, reconfirmed exited at v1.37, entry never
+removed. Added PROCEDURE RemoveInstrument() to M15_InstrumentClassification.md (v1.2)
+with a NEVER rule: an exited instrument loses its §11.3 entry in the same
+session/version bump that logs the exit. ENG-9: §13's methodology preamble (status
+taxonomy, briefing-suppression behavior, scope) moved into
+M19_ThesisSustainingConditions.md (v1.2) -- most of it was already duplicated there
+(ENUM ThesisStatus, BRIEFING BLOCK comments, NEVER rules); only the Scope
+exclusion-list paragraph was genuinely new content, added as its own section. §13
+now carries a one-line pointer instead. No probability, threshold, or classification
+value changes this session -- hygiene only.
+
+2026-06-19 - Section 3 compaction (v1.39). Archived 17 entries (v1.12-v1.28) to Calibration_Log.md, restoring the "last 10 entries" invariant stated in this section's own header — §3 had grown to 26 entries against that limit (FRAMEWORK_BACKLOG.md ENG-5). No probability, threshold, or classification changes this session; compaction only. Trigger condition for future compactions also decoupled from the quarterly Q-end audit cadence to a per-session check — see M12 CompactSessionLog and ENG-5 resolution note.
 
 2026-06-17 - Framework v1.38 (M19 Python implementation — completes the work the v1.37 entry
 flagged as pending). All Python layers built and verified:
@@ -277,184 +296,6 @@ M12 PATTERN_A amendment drafted as artifact. instruments.json written: ["MLPX","
 "XAR","SGOV","SIVR","COPX","MAGS","XLP","PAVE","URA"]. No Sec 4.1 changes. No probability changes.
 
 2026-06-02 - Framework v1.30 (AIPO ThematicETF_ClassificationAudit() REVISED). Full holdings re-audited from T1 source (Defiance ETFs official page, 06/02/2026, 77 holdings, $750.87M AUM). Three errors corrected from v1.14/v1.23: (1) PDT reduced 0.20→0.04 — AIPO Industrials (PWR, VRT, ETN, GEV, MTZ, STRL, NVT, HUBB, DY, utilities, data centers) are commercial RAC, not policy-driven; binding driver is hyperscaler/utility demand, NOT legislative mandates. (2) IHC increased 0.05→0.11 — uranium exposure (CCJ 3.78% + NXE 0.75%, UUUU 0.50%, DNN 0.44%, LEU 0.44%) was understated or missed in prior top-holdings review; also includes Bloom Energy (BE) 4.56% energy technology, EOSE 0.62%, FLNC 0.61% energy storage. (3) STG reduced 0.30→0.16 — GEV was erroneously counted in "IT 30%" sector bucket by prior data source; confirmed Industrials/RAC. RAC increased 0.45→0.55. New UNCLASSIFIED exposure: bitcoin miners ~7% NAV (11 holdings: HUT, BTDR, HIVE, RIOT, CLSK, CIFR, MARA, CORZ, IREN, WULF, BTBT); no registered M15 role; treated as 0% EV contribution (conservative — unknown/likely negative in B/C). EV corrected: +0.13%→+3.28% (using all current operative §4.1 values: STG B=−2 ★, RAC D=−6 ★, RAC E=−10 ★, STG D=−14 ⚑ operative). ⚠ Session instructions' +3.54% used stale RAC D=+2, RAC E=+2, STG B=−6 — corrected to +3.28% using live calibration state. Rank: ~#10→#3 (above SIVR +2.93%, below URA +4.02%). v1.29/v1.23 PDT-dominant classification (0.63 PDT) was itself a prior error corrected today — the 57% Industrials weight was misclassified as PDT; binding driver test confirms commercial RAC. Q3 action required: add role for bitcoin_mining / speculative_infrastructure_growth (§6 item TBD). last_reviewed updated to June 2, 2026. No §4.1 changes. No probability changes. No target allocation changes this version.
-
-2026-06-02 - Framework v1.29 (§11 EV corrections; URA entry guard cleared; COPX price note).
-URA EntryExtensionGuard CLEARED: 90d avg $51.71 (63 trading days March 3–June 1, T2 FinancialContent/
-Investing.com). Threshold $62.05 (90d avg × 1.20). Current $50.76 < $62.05. Safety margin $11.29
-(18.2% below trigger). Estimation sensitivity: ±$2 on 5 unconfirmed March days shifts threshold ±$0.80;
-conclusion unchanged. ADD eligible: retirement accounts only (foreign exposure flag).
-§11 EV corrections — applying v1.26/v1.27 adoptions not previously propagated to instrument entries:
-URA: +4.17%→+4.02% (RAC D=-6 v1.26, RAC E=-10 v1.26, STG B=-2 v1.27 now in §11 computation).
-SIVR: +3.03%→+2.93% (IHP A=-2 v1.27, IHP D=-3 v1.27 now in §11 computation).
-SGOL: §11 body text corrected to +1.24% (v1.27 §3 log had correct value; §11 text showed stale +1.43%).
-COPX: $93.66 June 2 close (+4.00%); entry guard threshold ~$102-106; re-verify before any ADD.
-No §4.1 table changes. No probability changes. No target allocation changes this version.
-AIPO target reduction (IRA/Roth 7%→3%; DBMF IRA/Roth +4pp): under client deliberation; not adopted.
-
-2026-06-01 - Framework v1.28 (§4.1 multi-role adoption; EV corrections; AIPO flag closed).
-STF E=[-8,+8] and F=[-5,+3] ADOPTED HIGH confidence. L2: E: 2008 Q4 SG CTA ~-4% quarterly,
-2020 March DBMF ~-5%, 1987 mixed; binary structure (whipsaw vs trend acceleration) is the
-calibration — wide range correct. F: 2017 ~-1%, 2018 ~-5%, 2019 ~+6%; growth trend desert.
-L4: documented structural exception for both (same as D).
-ILS A=[-2,1], D=[0,3], F=[-1,1] ADOPTED HIGH confidence (status upgrade; values unchanged).
-L2: A: 2019/2016/2003-04 TIPS (0 to +1% real); D: 2008/2020/1990-91 (+0 to +5% real);
-F: 2018/2017/2015 (-1 to +1% real). B/C/E remain MEDIUM (insufficient analogues).
-CDQ D=[-5,0] and F=[-3,+2] ADOPTED HIGH confidence. L2: D: 2008-09 2yr -1.5% real,
-2020 flat, 1990-91 flat; F: 2017 F-type +3-5%, 2003-07 +2-4%, 2018 ~-2%. E remains MEDIUM.
-EV corrections: XLP +0.14%→+0.76% (C=0 bug fixed; C was adopted at +2 in v1.22).
-MAGS line items corrected (D/E inputs showed pending values; corrected to operative D=-14, E=-10;
-total -0.94% was accidentally correct).
-AIPO track record: AUM $732.94M (June 1); ETF.com Best New Thematic ETF; 12-month July 24 2026.
-Flag substantially closed. No probability changes this version.
-
-2026-06-01 - Framework v1.27 (STG B + IHP A + IHP D adopted HIGH confidence).
-STG B [-6,-1]→[-2,+4] ADOPTED HIGH confidence. M16 complete: Q1 2026 contamination call
-reversed — Hormuz war does not affect rate/multiple mechanics defining B for secular tech.
-Q1 2026 (Azure +40%, AWS +28%, GCP +63%, FOMC 3.62%, CPI 3.8%, zero withdrawals) is valid
-sustained B analogue. 3 clean analogues (1973-82, Q1 2026, + 2022 acute-phase partial).
-[-12,-3] definitively rejected: L4 -1.5pp below anchor wrong side; ignores L3 lock-in.
-L4: neutral +1.00% = exact anchor. Sustained vs acute B distinction now explicit in framework.
-STG D rederived: [-20,-8] WRONG (1yr acute, not 2-3yr framework convention). Corrected:
-[-6,0]⚑ from 2008-09 2yr annualized NDX (-5.1% real). MEDIUM (1 analogue). Pending June 30.
-STG E rederived: [-18,-6] → [-12,-3]⚑. MEDIUM (1 analogue). Pending June 30.
-IHP A [0,4]→[-2,+2] ADOPTED HIGH confidence. Anchor recalibrated to post-1980 2% real
-(excl. 1970s supercycle). L2: 3 analogues (1996-99, 2013-15, 2016). War premium unwind adj.
-IHP D [-2,4]→[-3,+3] ADOPTED HIGH confidence. Same anchor. L2: 3 analogues (2008, 2020, 1990-91).
-War premium at $3,300+ limits upside vs 2020 baseline.
-EVs updated: SGOL +1.43%→+1.24%; MAGS -2.17%→-0.94%; AIPO +0.02%→+0.13%.
-All account EVs updated. All accounts remain feasible.
-No probability changes this version.
-
-2026-06-01 - Framework v1.26 (§4.1 items 9-10 of §6 item 23 adopted; M16 work complete on all 10).
-real_asset_contracted_revenue D [2,6]→[-6,+2] and E [2,5]→[-10,0] ADOPTED HIGH confidence.
-M16 4-layer: L1 infrastructure anchor 4-5% real; L2 primary analogue 2008 AMZ -53% price
-+10% distribution = ~-30% total nominal real (worst on record); 2020 AMZ ~-20%;
-L3 MLPX contracted revenue quality above broad AMZ → D conservative -8%→-6%;
-L4 neutral-weighted +2.65% vs anchor 4-5%, gap -1.35 to -2.35pp, PASS ±3pp.
-STG D [-20,-8] and E [-18,-6]: direction correct, empirically supported (NDX -41.7% 2008),
-BLOCKED L4 — must adopt jointly with STG B upward revision at June 30.
-IHP A [-2,2] and D [-5,3]: direction correct, BLOCKED L4 — full precious metals row
-coherence review required at June 30 (C value interaction).
-GP A [-4,+1] (revised from [-6,0]): BLOCKED MEDIUM confidence (2 clean analogues);
-L4 exception documented (role definition inherently underperforms neutral anchor).
-MLPX EV updated: +5.67%→+5.10% (RAC D/E corrections; -0.57pp impact).
-No probability changes this version.
-
-2026-06-01 - Framework v1.25 (§4.1 return table — items 6-7 of §6 item 23 adopted).
-rate_sensitive_income_short_duration A [0,2]→[1,3] and D [0,3]→[1,4] ADOPTED HIGH confidence.
-M16 4-layer complete: L1 real T-bill anchor ~1.5-2% real; L2: 3 analogues each scenario
-(A: 2003/2016/1991; D: 2008/2020/1990-91) + starting rate 3.62% structural upward adj;
-L3: ≤1yr duration caps price appreciation — rejects [2,6] D upside (implausible deflation
-depth required); L4: neutral-weighted +0.85% vs anchor, gap -0.65 to -1.15pp, PASS ±3pp.
-STG B: [-12,-3] proposal formally rejected — L3 ignores contract lock-in, L4 sits -1.5pp
-below anchor on wrong side. June 30 adjudication is [-2,+4] vs status quo [-6,-1].
-§6 item 23 enumerated: 10 confirmed proposals written out; 4 unrecoverable from v1.12 split.
-SGOV EV updated: +0.76%→+0.89% (A and D conservative values both increase by +1pp).
-No probability changes this version.
-
-2026-06-01 - Framework v1.24 (CHAIN_4 calibration). §12.4 revised: prior bankruptcy_quarterly_alert
-of 800/quarter eliminated — undocumented, no M16 basis, exceeded empirical GFC peak (~459/quarter)
-by ~74%, would never fire under any observed historical scenario. Canonical series confirmed:
-S&P Global Market Intelligence large-company (public co. with ≥$2M public debt; private co. with
-≥$10M assets/liabilities). T1 source amended: ABI/Epiq AACER press releases qualify as
-T1-equivalent — same underlying data as direct AACER access, published within days of month-end.
-M16 4-layer calibration complete (HIGH confidence):
-  L1: GFC peak ~459/quarter empirical ceiling; normal baseline ~100-150/quarter.
-  L2: 2009 GFC ~459/quarter (full systemic), 2010 aftermath ~207/quarter (confirmed stress),
-      2024-2026 ~170-200/quarter (elevated, not stress regime). 3 clean analogues.
-  L3: (a) CHAIN_4 is early-warning signal — thresholds should fire before GDP/HY confirm
-      recession; argues lower end of stress range. (b) S&P series includes ≥$2M floor;
-      some small-company noise at elevated baseline; argues WATCH not too close to current
-      readings. Net: adjustments roughly offset; proposed thresholds held.
-  L4: neutral distribution (A=35/B=15/C=15/D=10/E=5/F=20) — 300/quarter consistent with
-      D-weight environment; A=35/F=20 growth-dominant → ~90-120/quarter, well clear of WATCH.
-      Consistency check PASS.
-New thresholds: WATCH ≥220/quarter ★ HIGH; FIRES ≥300/quarter ★ HIGH.
-Current Q1 2026: 188/quarter — BELOW WATCH. CHAIN_4 score = 0. CascadeLevel remains MONITORING.
-§6 item 38 updated. No probability changes this version.
-
-2026-05-30 - Framework v1.23 (Q2 audit session continuation). §4.1 adoption: emerging_market_equity
-A revised [+4,+9]⚑ → [+10,+20]★ HIGH confidence. L2: 3 analogues (1991 Gulf drawdown +15-20%
-real, 2003 Iraq drawdown +15-20% real, 2016 commodity rebound +10-15% real). L3: VWO
-Taiwan/China 56.7% concentration depresses D/E conservative values vs broad EM benchmark
-(structural adj applied — D/E remain PENDING). L4: gap to institutional anchor (+5.5%) documented
-as (a)+(d); gap expected given VWO concentration vs blended EM unconditional. Client confirmed.
-§11 AIPO classification weights updated for confirmed sector drift (May 30 T1 data: Industrials
-57.09%, Technology 16.46%, Utilities 14.42%, Energy 6.91%, FinSvcs 3.60%): PDT 0.20→0.63,
-STG 0.30→0.16, RAC+IHC restructured → RAC 0.14 (utilities/power gen), IHC 0.07 (energy/Cameco).
-AIPO EV recomputed: +1.54% (↓ from +2.16%; STG weight reduction at B/C primary driver; see §11).
-§11 PAVE: explicit exit triggers encoded (4 triggers: B formal fire, Aug 15 no-bill, reduced-level
-extension, CascadeLevel ALERT; hold conditions: A≥20% on T1 deal, clean extension). Constituent
-bucket analysis complete: Bucket A ~35-45% insulated (Eaton, Trane, CSX, UP, Basic Materials);
-Bucket B ~30-40% partial (Quanta, E&C backlog 12-24mo); Bucket C ~20-25% at-risk (highway
-formula contractors). §11 XAR: forward PE corrected to ~35.5x (not 66.59x trailing artifact);
-classification and target confirmed. §11 MAGS: hold-only override confirmed; no ADD at EV −2.17%.
-§6 items 8/13/14/15/21/32/33 marked COMPLETE. Scenario probs: A=7/B=36/C=41/D=5/E=4/F=7 unchanged.
-
-2026-05-29 - Framework v1.22 (Q2 audit session). §4.1 adoptions: consumer_defensive_equity C
-revised [0,+4]→[+2,+6] and upgraded ⚑→★ (HIGH confidence; L2: 1974 +4-6% real, 1979-80 +3-5%
-real, 2022 XLP +6% real; 3 analogues; L4 pass); consumer_defensive_equity A status ⚑→★ (values
-[0,+4] confirmed); systematic_trend_following D status ⚑→★ (values [-5,+15] confirmed; L2: 2008
-SG CTA +18.5%, 2020 +2.5%, 1987 positive; L4 gap documented (c)). §9: MOVE thresholds formally
-encoded (NORMAL<80, ELEVATED 80-100, STRESS 100-130, CRISIS 130-160, SYSTEMIC>160; HIGH confidence
-on 80 and 130 anchors; MEDIUM on 100). §11: URA (Global X Uranium ETF) added — M07 PASS (foreign
-exposure flag; AUM $7.81B, ER 0.69%); ComponentVector RAC(0.50)+IHC(0.30)+STG(0.20); EV +4.17%
-(rank #3); targets IRA 3%, Roth 3% (funded: MAGS IRA 5%→3%, Roth 6%→4%; AIPO IRA 8%→7%,
-Roth 8%→7%). Session_Log §7 compacted; Archive_2026Q2.md created. Scenario probs unchanged
-(A=7/B=36/C=41/D=5/E=4/F=7). Iran MOU at negotiator level; Trump NOT signed; A held at 7%.
-
-2026-05-26 - Framework v1.21 (corrections only). Four surgical fixes applied:
-(1) §3 duplicate May-25 v1.19 log entries merged; (2) §11 PAVE stale CascadeLevel ALERT
-reference updated to MONITORING; (3) §11 SIVR B-component arithmetic error corrected
-(blended B was listed as 5.70% — both components are 6% → correct blended = 6.00%;
-EV corrected from +2.92% to +3.03%); (4) §12.8 cascade level mapping table rebuilt
-(duplicate Score=0 row removed, Score=2 ALERT row restored). No threshold or probability
-changes this version. May 26 session notes: BZ=F ~$97 (recovering from Memorial Day −6%
-plunge on US-Iran deal optimism); deal NOT signed as of May 26; A=7% unchanged per M01
-NEVER rule (T2 cluster, no T1 signed agreement). VIX_30D_AVG=17.99, VIX_90D_AVG=21.24
-(computed from FMP historical EOD data — M18 update confirms FMP:chart as approved source
-for these series). M14 composite: HIGH unchanged.
-
-2026-05-25 - Framework v1.20 (same session day). **FW-BUG-01 CHAIN_3 two-mode scoring fix.**
-Prior v1.19 session scored CHAIN_3 as FIRES based on margin debt record + gate events.
-Corrected: FIRES requires MARGIN_MOM_DECLINE ≤−5% after record OR gate_count ≥3. Neither
-met in Apr 2026 data (MoM was +6.8% rising to record; gate count = 2). CHAIN_3 = WATCH
-(record loaded; score 0). Revised formal sectorStressScore = 0. CascadeLevel = MONITORING.
-D_precursor_binding clarified = sectorStressScore only (0 formal); yield curve
-D_timing_signal = RECESSION_ONSET_PATTERN is informational timing context, not a binding
-variable count. D=5% maintained by prior client approval (qualitative grounds); revisit at
-Q2 audit with T1 CHAIN_4 count (AACER/PACER). Phase 2 confirmed complete: M02 v2.0,
-M04 v2.0, M11/M14/M17 v1.1+ all have DATA_REGISTRY_ENTRIES and BRIEFING_REGISTRY_ENTRY.
-
-2026-05-25 - Full M05 session (v1.19). §12 M17 Systemic Cascade Warning thresholds first
-formally applied. sectorStressScore()=2 at time of session (corrected to 0 in v1.20 — see
-above). CascadeLevel ALERT at session (corrected to MONITORING in v1.20). D_precursor_binding=2
-per v1.19 logic (corrected to 0 in v1.20). Probabilities updated: A=7%(unch), B=36%(unch),
-C=44%→41%(−3pp), D=3%→5%(+2pp), E=3%→4%(+1pp), F=7%(unch). Client approved. C-trigger
-clock: Day 0 confirmed T2 — max ~5–6 consecutive closes ≥$110 (~May 13–19); reset ~May 20 on
-deal optimism + Hormuz satellite data (3 supertankers crossing); 10-day requirement NOT met.
-BZ=F overnight (Memorial Day) ~$107.60 (T2). FRED credit (May 21, T1 via spreadsheet tab):
-HY=278, IG=75, CCC=939 — all thresholds clear; CCC quiet re-widening (+2 bps) vs HY tightening
-noted. MOVE=78.43 (GOOGLEFINANCE). VIX=16.70. S&P=7,473.47 (May 22 close). S&P Futures
-overnight −2.7% (7,268 — Asia-led; confirm Tuesday). THREEFYTP10=0.8117% (14-yr high). FINRA
-margin debt $1.304T (Apr-26 record). Yield curve D_timing_signal=RECESSION_ONSET_PATTERN
-(post-inversion re-steepening). M14 composite: HIGH unchanged. EVs updated throughout §11 at
-new probability vector. All accounts at v1.18 targets (max drift: Rel Roth MLPX +1.71pp). No
-rebalancing needed. Portfolio total ~$775k.
-
-2026-05-22 - Full M05 session (v1.18). Gold reallocation CONFIRMED EXECUTED — Relative IRA and Relative Roth allocation sheet targets match v1.17 recommendations exactly. Targets updated: Relative IRA SGOL 26%→20%, SIVR 3%→6%, DBMF 12%→15%; Relative Roth SGOL 22%→16%, SIVR new 4%, DBMF 18%→20%. Relative IRA EV: +3.53%→+3.89% (+0.36pp); Relative Roth EV: +4.45%→+4.73% (+0.28pp). FRED T1 credit (May 21 close via embedded spreadsheet tab): HY=278 bps (−4 from May 12), IG=75 bps (−2), CCC=939 bps (+2) — all thresholds clear. MOVE=79.72 (GOOGLEFINANCE, rising +9.0 pts from 70.74 on May 11 — approaching 80; no formal threshold yet; flag for Q2 formal integration). VIX=16.52, S&P=7,494.81. BZ=F pre-market ~$109.11 (T2, Yahoo Finance) — C-trigger clock STATUS UNRESOLVED (Brent 52-wk high $126.41 achieved between May 13 and May 22; BZ=F daily closes May 14-21 not confirmed; clock may have started and reset; requires verification at next session). Geopolitical: Iran + Oman "Persian Gulf Strait Authority" (permanent Hormuz toll system; Trump rejected — new structural C escalation); Iran uranium directive hardened (counter-deal T1 via Reuters); Rubio "encouraging signs" (soft A-signal, T1 unconfirmed); SPR ~10M barrel release (largest on record, T2). Probabilities: carry forward A=7/B=36/C=44/D=3/E=3/F=7 — no new binary events warranting re-derive. Main session: rebalancing strategy analysis — sell-winners/buy-losers thesis; conclusion: EV-optimal targets should update with scenario probabilities, not mechanically revert price drift; 1-2pp current drifts below all action thresholds. Secondary: AI capex sustainability; private credit AI; prisoner's dilemma analysis; hyperscaler knowledge asymmetry. No allocation changes.
-
-2026-05-13 - Full M05 session (v1.17). CPI April 2026 = 3.8% YoY (BLS T1) — C check_cpi 1→2; C raw 5→6. Scenario probabilities updated: A=7%(−5pp), B=36%(−1pp), C=44%(+6pp), D=3%(unch), E=3%(unch), F=7%(unch). MLPX EntryExtensionGuard CLEARED: 90d avg $72.31 (Feb 5 close $66.54, client-confirmed T2); threshold $86.77; current $74.40 (+2.9% above avg — well below 20%). WAR PREMIUM ENTRY GUARD also CLEARED (same threshold). BZ=F established as canonical Brent session reference (Fortune spot rejected after $3-4 discrepancy confirmed). FRED credit data via embedded spreadsheet tab (T1, May 12 close): HY=282, IG=77, CCC=937 — no thresholds fired. Gold reallocation recommended for relative accounts (Rel IRA: SGOL 26%→20%, SIVR 3%→6%, DBMF 12%→15%; Rel Roth: SGOL 22%→16%, SIVR new 4%, DBMF 18%→20%) — EV improvement +0.36pp/+0.28pp respectively — pending client execution. Portfolio total ~$775k.
-
-2026-05-11 - Full M05 session (v1.16). Scenario probabilities updated: A=12%(-3pp), B=37%(+1pp), C=38%(+2pp), D=3%(unch), E=3%(unch), F=7%(unch). check_energy reverted to 0 (Brent $107.67 rising; May 8 day-5 check FAILED — streak reversed up; Saudi Aramco CEO T1 conference call May 11: normalization into 2027 even if Hormuz opened today). FRED DATA GAP RESOLVED — first T1 credit readings in multiple sessions: HY=281 bps, IG=79 bps, CCC=920 bps (all May 8 close via FRED screenshots). MOVE=70.74 T1 confirmed (NYSE Global Indexes). Approved FRED+MOVE source URLs logged in §1. All v1.13 trades confirmed executed per allocation sheet (all 6 accounts at targets ±1pp). Portfolio total ~$769k (+$7k vs May 7 on price appreciation). No allocation changes this session. CPI May 12 binary event pending — run DeriveScenarioProbabilities() immediately on 8:30am ET release.
-
-2026-05-07 - AIPO reclassification + guard clearance (v1.14). Session type: ad-hoc analysis (no allocation fetch — full M05 session required for share count targets). AIPO ThematicETF_ClassificationAudit() COMPLETE. Holdings confirmed from T1 sources: Industrials 50%, IT 30%, Utilities 20%. Top holdings: Quanta Services 8.6%, GE Vernova 8.2%, Eaton 7.9%, Vertiv 7.9%, NVDA 4.2%, AVGO 3.9%, AMD 2.1%. Revised components: RAC 0.55→0.45; STG 0.20→0.30; BMD 0.15→0.00 (ELIMINATED — no qualifying undifferentiated domestic equity; all holdings have specific AI/power binding drivers); new PDT 0.20; IHC 0.10→0.05. CORRECTION: prior session analysis (May 7 ad-hoc) erroneously stated "B improves" — WRONG. Actual revised AIPO EV = +2.42% (↓ from +2.95%), rank drops to #5 (below SIVR +2.86%). EV reduction driven by PDT B conservative = -3% and more STG weight at B = -6%. A-regime improves: +4.05% (↑ from +3.80%) due to STG A = +6% and PDT A = +4%. SIVR entry guard CLEARED: confirmed price anchors (March 14 = $76.31, March 26 = ~$63.64, April 2 = $69.11, April 24 = $72.28, May 6 = $73.79); 90d avg ~$78-82; threshold ~$94-98; current $73.79 below threshold. v1.13 estimated avg ($55-65) was incorrect — all confirmed data points above $63. COPX entry guard CLEARED: confirmed anchors (Feb 6 = $81.31, April 28 = $78.69, May 6 = $78.21); 90d avg ~$85-90; threshold ~$102-106; current $78.21 below threshold. v1.13 estimated avg ($55-65) was significantly incorrect — Feb 6 anchor $81.31 alone exceeds entire estimated range. Execution notes updated: SIVR and COPX now immediate. AI application layer instrument screen conducted: no M07-compliant pure-play instrument available (track record and/or AUM constraints). NVDA overlap noted: AIPO holds NVDA 4.2%, AVGO 3.9%, AMD 2.1% — partial overlap with MAGS. Monitor at Q2.
-
-2026-05-07 - Full M05 session (v1.15). Scenario probabilities updated: A=15%(-3pp), B=36%(+1pp), C=36%(+2pp), D=3%(unch), E=3%(unch), F=7%(unch). check_energy=1 this session (Brent declining 4 consecutive days vs ≥5 threshold). CPI May 12 binary event upcoming — highest priority. M14 composite HIGH unchanged. M16 analysis: secular_technology_growth Scenario B full 4-layer run completed; MEDIUM confidence; upward pending proposal logged (§6 item 35). Primary Taxable deployment complete: DBMF 854sh, XLP 196sh, COPX 212sh executed; $51,950 cash fully deployed (Open Decision #4 CLOSED). v1.13 targets confirmed live in allocation file; remaining trades executing through May 8. Portfolio total ~$762,097.
-
-2026-05-06 - Comprehensive instrument expansion (v1.13). Probability update: A=18%(+3pp), B=35%(-1pp), C=34%(-2pp), D=3%, E=3%, F=7%. Full M14 ComputeDivergenceSignal: composite HIGH (equity_scenario_divergence HIGH at S&P 30d +10.3%). XAR confirmed sold to 12% target across all accounts — Open Decision #2 CLOSED. Five new roles added to §11.1: systematic_trend_following, consumer_defensive_equity, healthcare_defensive_equity, floating_rate_credit_income, emerging_market_equity. §4.1 return table fully calibrated for all roles using M16.CalibrationMethodology() 4-layer procedure. ADOPTED (HIGH confidence): systematic_trend_following A/B/C values; consumer_defensive_equity B value. Nine new instruments classified in §11.3: DBMF, SIVR, COPX, VTIP, XLP, VNQ, VEA, XLV, FLOT. Primary IRA structural gap RESOLVED: achievable EV +3.62% with DBMF adoption (required: 3.2%). MLPX EntryExtensionGuard preliminary analysis: guard may be clearing (estimated 90d avg ~$66; current $73.63 ~12% above avg vs 15% threshold). Verification from approved price source required before ADD executes. New target allocations issued for all 6 accounts. Relative IRA MLPX drawdown breach RESOLVED by reducing target to 24% (24% × 67% = 16.1% < 20% floor). MOVE index: ~76.8 (TradingView T2). Brent close: $101.27. S&P 500 record high: +1.46%.
-
-2026-05-06 - Architecture session (v1.12). File split implemented: §7 and §8 moved to Session_Log.md; §3 entries 1-4 archived to Calibration_Log.md. M16_ReturnTableCalibration.md authored (governs §4.1 revision methodology). M12, M05, 00_INDEX updated for two-file session protocol. New roles added to §11.1 and §4.1: inflation_linked_sovereign and real_estate_equity_income (LOW confidence, [TBD] values, pending June 30 empirical audit). No portfolio analysis this session.
 
 ---
 
@@ -695,19 +536,12 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
 31. Healthcare_defensive_equity (XLV): confirm §11 classification. Run ThematicETF_ClassificationAudit() — sector composition has shifted toward biotech/tech-adjacent REITs; verify role weights. Full M16 calibration for all scenario values.
 32. Floating_rate_credit_income (FLOT): full M07 screen. Confirm no foreign concentration issue. Compute D scenario (-10% to -4%) empirical basis using 2008 IG spread data.
 33. Emerging_market_equity (VWO): full M07 screen. Confirm China (~30.8%) + Taiwan (~18-22%) combined regional concentration — determine if Taiwan Strait geopolitical risk warrants amber flag. Apply M07 regional ruling from item 26.
-34. Consumer_defensive_equity (XLP): complete M16 calibration for A/C/D/E/F scenarios (PENDING). Primary analog: A = 2003-2007 XLP vs market underperformance; C = 1973-74 input cost squeeze; D = 2008 XLP -15% nominal.
-35. secular_technology_growth Scenario B PENDING UPWARD REVISION (logged May 7, 2026 — full M16.CalibrationMethodology() 4-layer run completed this session):
-  - Proposed revision: [-6,-1] → [-2,+4]. MEDIUM confidence.
-  - Layer 1: unconditional anchor ~0-2% real (VCMM Mar 2026: 0-2% real US growth equities; RA: ~1% real; GMO: -6% real pessimistic anchor).
-  - Layer 2 analogues: (a) 1973-82 — weak proxy, no AI enterprise contract structure; IBM returned ~-2% to +3% real/yr; growth factor underperformed value 15-20% cumulative. (b) 2022 direct — secular tech -28-33% nominal despite 20-25% cloud revenue growth; multiple compression from 35x→20x dominated earnings growth. (c) Q1 2026 — Azure +40%, AWS +28%, META +33%, AMZN EPS $2.78 vs $1.64 est.; ONE QUARTER only; contaminated by A-scenario re-pricing from deal optimism. Analog count: 2 clean + 1 contaminated.
-  - Layer 3 structural adjustments: (a) AI enterprise contract lock-in (+2-4% upward): multi-year committed spend clauses absent from 2022 analog. Falsification: if renewal rates fall below 85% in sustained B environment. (b) Sustained multiple compression (-5-10% downward): FOMC at 3.5-3.75% for years → growth P/E 30x→20x even with 35% revenue growth → net negative price return. HIGH confidence on compression mechanism. (c) AI capex sustainability (uncertain, ±2%): capex strain signals emerging (MSFT considering abandoning 2030 renewable goals). Net structural adjustment: mildly supports current [-6,-1] range; provides only weak evidence for significant upward revision.
-  - Layer 4 consistency check (neutral A=35/B=15/C=15/D=10/E=5/F=20): proposed conservative=-2% → weighted avg +1.0% vs anchor midpoint ~1.0%. Gap = 0.0pp. PASS within ±3pp tolerance.
-  - Competing proposal: [-12,-3] REJECTED (June 1, 2026): L4 sits -1.5pp below anchor on wrong side; L3 structurally ignores AI enterprise contract lock-in that did not exist in 2022 analogue. Not a viable proposal.
-  - Confidence level: MEDIUM — 2 clean analogues (2022, 1973-82); Q1 2026 confirmed contaminated (C-dominant environment). HIGH requires 3+. BLOCKED intra-session.
-  - June 30 adjudication: effectively [-2,+4] vs status quo [-6,-1]. [-12,-3] removed from table.
-  - Q1 2026 data (Azure +40%, AWS +28%, GCP +63%, zero guidance withdrawals; Google backlog $460B QoQ near-double): strengthens L3 contract lock-in argument for [-2,+4]. Does not constitute clean B analogue — C-dominant environment contaminates. Still only 2 clean analogues.
-  - Upgrade path to HIGH: Q2 2026 Mag7 earnings (reporting May-July 2026) with >25% revenue growth + zero guidance withdrawals in a confirmed B-shifting environment → 3rd data point → HIGH confidence eligible.
-  - Current §4.1 B value [-6,-1] remains operative until June 30 adjudication.
+34. Consumer_defensive_equity (XLP): complete M16 calibration for A/C/D/E/F scenarios (PENDING). Primary analog: A = 2003-2007 XLP vs market underperformance; C = 1973-74 input cost squeeze; D = 2008 XLP -15% nomina35. secular_technology_growth Scenario B — RESOLVED, see §3 v1.27 (June 1, 2026):
+  ADOPTED HIGH confidence, [-6,-1]→[-2,+4]. §4.1 table already reflects this value.
+  This item used to carry a ~15-line walkthrough of the now-superseded MEDIUM-
+  confidence debate (FRAMEWORK_BACKLOG.md ENG-6, removed 2026-06-19) — the full
+  adoption rationale (4-layer analysis, 3 clean analogues, L4 consistency check)
+  is preserved in Calibration_Log.md’s v1.27 entry, not duplicated here.
 36. GOOGLEFINANCE ticker setup (v1.17): New allocation spreadsheet tab added for market data "Other Indexes". Confirmed working: VIX (INDEXCBOE:VIX), S&P 500 (INDEXSP:.INX), MOVE (INDEXNYSEGIS:MOVE). FRED series: use existing spreadsheet "FRED Series" tab. BZ=F is canonical Brent reference for C-trigger clock per v1.17.
 37. AI capex / secular_technology_growth context note (v1.18, May 22, 2026): Session intelligence — hyperscaler AI capex $660-830B committed for 2026 (nearly doubling 2025). Capex intensity 45-57% of revenue (vs 10-15% in 2020). Revenue growth 15-16% vs capex growth 60-80%; FCF projected to decline 90% across Big Four. Private credit ($800B+ in AI infrastructure financing) opacity flagged as tail risk not visible in HY/IG spread series. AI utility pricing emerging (62% usage-based by 2027). Prisoner's dilemma / war-of-attrition structure confirmed: no coordination mechanism among 5+ hyperscalers; 18-36 month infrastructure commitment periods prevent exit. Fiber optic 1999 analogy: technology correct, equity returns poor due to timing, cost of capital, and competitive dynamics. Portfolio implication: AIPO (infrastructure layer, contracted revenue) positive EV in B/C; MAGS (hyperscaler equity) negative EV in B/C — distinction maintained. No §4.1 changes warranted from session analysis.
 38. M17 §12 thresholds (v1.19, corrected v1.20): First formal application May 25, 2026. sectorStressScore()=0 (formal, v1.20 corrected). CascadeLevel=MONITORING. CHAIN_3_WATCH=TRUE ($1.304T margin debt record loaded; FIRES on ≥−5% MoM or 3+ gate events). CHAIN_4 CALIBRATED v1.24 (June 1, 2026): canonical series = S&P Global large-company; T1-equivalent = ABI/Epiq AACER press releases; WATCH ≥220/quarter, FIRES ≥300/quarter (HIGH confidence, M16 4-layer complete); current Q1 2026 = 188/quarter — BELOW WATCH. Prior 800/quarter threshold eliminated. D=5% maintained by prior client approval (qualitative). Formal Q2 audit: calibrate remaining §12 thresholds; formal integration of yield curve D_timing_signal; M18 allocation spreadsheet series gap resolution.
@@ -914,14 +748,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - ThematicETF_ClassificationAudit COMPLETED April 29. Confirmed.
 - Last reviewed: 2026-05-30 (v1.23 — staleness check complete; classification confirmed)
 - ⚠ Valuation note: Forward P/E ~35.5x (war-premium elevated; within thesis range for geopolitical_premium; peacetime norm 18-22x. Watch for compression if A-probability rises above 20%. 66.59x trailing PE seen in some sources is a stale artifact — use forward PE only.)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+1.46%**
-  - A: (0.90×(-2)+0.10×5)×0.07 = -1.30×0.07 = -0.091%
-  - B: (0.90×2+0.10×(-8))×0.36 = 1.00×0.36 = +0.360%
-  - C: (0.90×4+0.10×(-4))×0.41 = 3.20×0.41 = +1.312%
-  - D: (0.90×(-4)+0.10×(-12))×0.05 = -4.80×0.05 = -0.240%
-  - E: (0.90×1+0.10×(-8))×0.04 = 0.10×0.04 = +0.004%
-  - F: (0.90×1+0.10×7)×0.07 = 1.60×0.07 = +0.112%
-  - Total: +1.457% ≈ +1.46%.
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
 - Target: 12% structural across applicable accounts (Primary IRA, Primary Roth, Taxable Acc4). CONFIRMED AT TARGET.
 - Client preference: exit excess XAR at ~$265 on a conflict-resumption spike. EXECUTED — reduction to 12% confirmed via allocation sheet May 6.
 - HoldJustification: break-even peace probability <5.6%; opportunity cost vs MLPX -4.21%/year (at v1.19 probs).
@@ -931,14 +758,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - Components: real_asset_contracted_revenue (0.50) + inflation_hedge_commodity_linked (0.50)
 - passive_mandate_eligible: false
 - Last reviewed: 2026-06-15 (v1.36 — ComponentVector revised RAC(0.65)/IHC(0.35)→RAC(0.50)/IHC(0.50); M16 4-layer complete; client confirmed)
-- EV (A=18.8/B=37.6/C=25.1/D=3.0/E=12.5/F=3.0): **+3.97%** (v1.36). Prior: +5.10% at A=7/B=36/C=41/D=5/E=4/F=7 (stale vector — do not use). Ranked #2 at prior vector; rank TBD pending full v1.34-vector recompute across all instruments.
-  - A: (0.50×3+0.50×2)×0.188 = 2.50×0.188 = +0.470%
-  - B: (0.50×6+0.50×6)×0.376 = 6.00×0.376 = +2.256%
-  - C: (0.50×8+0.50×7)×0.251 = 7.50×0.251 = +1.883%
-  - D: (0.50×(-6)+0.50×(-8))×0.030 = -7.00×0.030 = -0.210%
-  - E: (0.50×(-10)+0.50×2)×0.125 = -4.00×0.125 = -0.500%
-  - F: (0.50×3+0.50×2)×0.030 = 2.50×0.030 = +0.075%
-  - Total: +3.974% ≈ +3.97%.
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
   - ⚠ EV improvement vs prior weights (+0.14pp) driven by IHC E=+2% (RESERVE_EROSION) gaining weight vs RAC E=-10%. If IHC E recalibrated negative at June 30 (SYSTEMIC_LIQUIDITY pathway), improvement reverses.
 - Target allocation (v1.13 consolidated targets):
   - Primary IRA: 30%
@@ -955,14 +775,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - passive_mandate_eligible: false
 - Last reviewed: 2026-04-28
 - CALIBRATION ANOMALY RESOLVED Apr 30 (v1.8): §4.1 Scenario C revised [+7%,+14%]->[-2%,+6%]. C-hawk regime empirical basis.
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+1.24%** (revised v1.29; IHP A=-2 and D=-3 adopted v1.27; §11 text corrected from stale +1.43%). Ranked #7.
-  - A: (-2%)×0.07 = -0.140%  [IHP A=-2 adopted v1.27]
-  - B: 6%×0.36 = +2.160%
-  - C: (-2%)×0.41 = -0.820%
-  - D: (-3%)×0.05 = -0.150%  [IHP D=-3 adopted v1.27]
-  - E: 10%×0.04 = +0.400%
-  - F: (-3%)×0.07 = -0.210%
-  - Total: +1.240%.
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
 - Target allocation (v1.18 CONFIRMED):
   - Primary IRA: 16%
   - Primary Roth: 14%
@@ -975,44 +788,12 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - Components: rate_sensitive_income_short_duration (1.00)
 - passive_mandate_eligible: false
 - Last reviewed: 2026-06-01 (v1.25 — A and D values adopted HIGH confidence)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.89%** (revised v1.25; prior: +0.76%). Ranked #9.
-  - A: 1%×0.07=+0.070; B: 1%×0.36=+0.360; C: 1%×0.41=+0.410; D: 1%×0.05=+0.050; E: (-2%)×0.04=-0.080; F: 1%×0.07=+0.070
-  - Total: +0.880% ≈ +0.89%.
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
 - Target allocation (v1.13):
   - Primary Taxable: 15%
   - Taxable Preservation: 100%
   - Relative IRA: 14%
 - ✅ A [0,2]→[1,3] ADOPTED HIGH confidence (v1.25). D [0,3]→[1,4] ADOPTED HIGH confidence (v1.25). Original proposals [1,4] and [2,6] rejected — see §4.1 footnote.
-
-#### PAVE
-- Components: broad_market_equity_domestic (0.82) + policy_driven_thematic_equity (0.18)
-- passive_mandate_eligible: false
-- ThematicETF_ClassificationAudit conducted Apr 28. Status: watch (not FLAGGED).
-- Last reviewed: 2026-05-06 (status reconfirmed — no new legislation; IIJA core programs intact)
-- Cost basis: $54.09/share. Current: ~$56.31 (May 30). Embedded gain: ~$1,111 on 502 shares. Target: ~11% in Taxable Acc4.
-- **HOLD with explicit exit triggers (v1.23, May 30, 2026). Constituent-level analysis complete:**
-  - Bucket A (~35-45% NAV) — INSULATED: Eaton (ETN), Trane Technologies, CSX, Union Pacific, Basic Materials (~19%). Revenue driven by private capex, freight volume, data center buildout, reshoring. IIJA expiration impact: LOW.
-  - Bucket B (~30-40% NAV) — PARTIAL: Quanta Services (~60% utility/grid revenue, not highway), E&C firms with multi-year backlogs. Backlog insulates 12-24 months. IIJA expiration impact: MODERATE, LAGGED.
-  - Bucket C (~20-25% NAV) — AT-RISK: Highway/bridge formula contractors. Formula funding reverts from ~$66B/yr to ~$46B/yr on hard expiration. Discretionary grants (BUILD, RAISE, PROTECT) cease new awards immediately. IIJA expiration impact: MATERIAL, NEAR-TERM.
-  - Modal congressional outcome: short-term extension at some level (historical base rate ~1/3 of cycles since 1991). Not a clean resolution — slows new award activity even if funding continues.
-  - PDT 18% weight may OVERSTATE IIJA dependency: Bucket A/B largest holdings are not mandate-driven. Reduces both risk and the hold thesis (PDT A upside).
-- **EXIT TRIGGERS (any one fires → exit at next rebalancing):**
-  1. CPI mid-June ≥4.0% → B formal trigger fires. B scenario = worst simultaneous outcome for Bucket C + domestic equity compression.
-  2. No congressional action of any kind on IIJA by August 15, 2026 (6 weeks before expiration). Hard lapse or panic extension becomes modal; get ahead of construction firm re-rating.
-  3. IIJA extension or new bill passed at REDUCED funding levels. Bucket C mandate impairment confirmed.
-  4. CascadeLevel reaches ALERT (sectorStressScore ≥2). M17 §12 FLAGGED instrument exit window protocol.
-- **HOLD CONDITIONS (reassess before any exit):**
-  - Iran deal T1 confirmed → A-probability rises to ≥20%: Bucket A/B (Eaton, Trane, CSX, UP, Basic Materials) benefit materially from A-scenario reflation; IIJA reauthorization odds also improve.
-  - IIJA short-term extension at current levels: acute cliff risk removed; continue monitoring.
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **−4.03%**. EV unchanged; IIJA risk partially embedded in PDT B/C values.
-  - A: (0.82×5+0.18×4)×0.07 = 4.82×0.07 = +0.337%
-  - B: (0.82×(-8)+0.18×(-3))×0.36 = -7.10×0.36 = -2.556%
-  - C: (0.82×(-4)+0.18×(-1))×0.41 = -3.46×0.41 = -1.419%
-  - D: (0.82×(-12)+0.18×(-5))×0.05 = -10.74×0.05 = -0.537%
-  - E: (0.82×(-8)+0.18×(-6))×0.04 = -7.64×0.04 = -0.306%
-  - F: (0.82×7+0.18×4)×0.07 = 6.46×0.07 = +0.452%
-  - Total: -4.029% ≈ −4.03%.
-- Monitor IIJA reauthorization September 30, 2026.
 
 #### AIPO
 - Components: real_asset_contracted_revenue (0.55) + secular_technology_growth (0.16) + inflation_hedge_commodity_linked (0.11) + policy_driven_thematic_equity (0.04) + UNCLASSIFIED_bitcoin_miners (0.07)
@@ -1029,14 +810,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - ⚠ PAVE overlap: ETN (Eaton) in both AIPO and PAVE — confirmed immaterial.
 - ✅ TRACK RECORD FLAG SUBSTANTIALLY CLOSED (v1.28, June 1, 2026): AUM $750.87M (June 2). Named Best New Thematic ETF at 2026 ETF.com Awards. 12-month milestone: July 24, 2026 (~7.5 weeks). Confirm at June 30.
 - Last reviewed: 2026-06-02 (v1.30 — full T1 re-audit)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+3.28%** (v1.30 corrected; all current operative §4.1 values applied). Ranked **#3**.
-  - A:  (0.55×3 + 0.16×6 + 0.11×2 + 0.04×4) = 2.99% × 0.07 = +0.209%
-  - B:  (0.55×6 + 0.16×(−2) + 0.11×6 + 0.04×(−3)) = 3.52% × 0.36 = +1.267%  [STG B=−2 ★ operative]
-  - C:  (0.55×8 + 0.16×2 + 0.11×7 + 0.04×(−1)) = 5.45% × 0.41 = +2.235%
-  - D:  (0.55×(−6) + 0.16×(−14) + 0.11×(−8) + 0.04×(−5)) = −6.62% × 0.05 = −0.331%  [RAC D=−6 ★; STG D=−14 ⚑ operative]
-  - E:  (0.55×(−10) + 0.16×(−10) + 0.11×2 + 0.04×(−6)) = −7.12% × 0.04 = −0.285%  [RAC E=−10 ★; STG E=−10 ⚑ operative]
-  - F:  (0.55×3 + 0.16×4 + 0.11×2 + 0.04×4) = 2.67% × 0.07 = +0.187%
-  - Total: +3.282% ≈ +3.28%
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
   - ⚠ UNCLASSIFIED 0.07 (bitcoin miners) treated as 0% in all scenarios — actual contribution unknown, likely negative in B/C/D. True EV may be modestly below +3.28%.
   - ⚠ Session instructions computed +3.54% using stale §4.1 values (RAC D=+2, RAC E=+2, STG B=−6). Corrected to +3.28% using current operative calibration state.
   - NOTE: EV improves further if STG D/E adopted at June 30 (D component currently using operative −14; rederived −6 pending). Adoption of STG D=−6 would shift D contribution to −4.04%×0.05=−0.202% (vs −0.331% now) — net +0.13pp EV improvement.
@@ -1049,14 +823,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - Last reviewed: 2026-05-30 (v1.23 — hold-only override confirmed)
 - ⚠ EV deterioration: from −1.77% (C=44, D=3) to −2.17% (C=41, D=5). D scenario deeply negative (−13.70% blended) — increasing D weight amplifies drag. Override remains in force but EV trendline is worsening.
 - **HOLD-ONLY OVERRIDE CONFIRMED (v1.23, May 30, 2026): No ADD at EV −2.17%. Override justified solely by absence of positive-EV secular_technology_growth alternative (URA covers RAC/IHC/STG partially; application-layer gap remains unresolved). Revisit if secular_technology_growth B adjudication at June 30 produces a materially different B conservative value.**
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): approximately **−0.94%** (revised v1.27; STG B=-2 adopted). Ranked #10.
-  - A:  (0.85×6+0.15×5)×0.07 = 5.85×0.07 = +0.410%
-  - B:  (0.85×(-2)+0.15×(-8))×0.36 = -2.90×0.36 = -1.044%
-  - C:  (0.85×2+0.15×(-4))×0.41 = 1.10×0.41 = +0.451%
-  - D:  (0.85×(-14)+0.15×(-12))×0.05 = -13.70×0.05 = -0.685%  // operative STG D=-14 (⚑ rederived -6 not yet adopted)
-  - E:  (0.85×(-10)+0.15×(-8))×0.04 = -9.70×0.04 = -0.388%  // operative STG E=-10 (⚑ rederived -12 not yet adopted)
-  - F:  (0.85×4+0.15×7)×0.07 = 4.45×0.07 = +0.312%
-  - Total: −0.942% ≈ −0.94%
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
   - NOTE: STG B adoption improves MAGS EV from −2.17% to −0.94%. HOLD-only override basis
     partially changes: EV is now −0.94% (below zero but less negative). Override remains in
     force — still negative EV; no secular_technology_growth positive-EV alternative confirmed.
@@ -1072,14 +839,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - K-1: NONE — 1940 Act registered fund (ETF structure). No K-1 issued.
 - AUM: $3.51B. Expense ratio: 0.85%. Inception: 2019-05-08. 1-year total return: +27.3%.
 - Last reviewed: 2026-05-06 (v1.13, initial classification)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7, D/E/F PENDING): **+11.02%** (updated v1.19; prior at C=44: +11.74%). Ranked #1.
-  - A: -12% × 0.07 = -0.840%
-  - B: +15% × 0.36 = +5.400% ★ADOPTED
-  - C: +18% × 0.41 = +7.380% ★ADOPTED
-  - D: -5% × 0.05 = -0.250% ⚑PENDING
-  - E: -8% × 0.04 = -0.320% ⚑PENDING
-  - F: -5% × 0.07 = -0.350% ⚑PENDING
-  - Total: +11.020%
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
 - TAX PLACEMENT: ALL ACCOUNTS. No K-1. No swap phantom gain issue.
 - ENTRY EXTENSION GUARD: N/A — systematic_trend_following role is explicitly exempt (§9.3).
 - KEY RISK: Trend-reversal events (Scenario A normalization) produce material losses (-12% conservative). A=7% weight creates -0.84% EV drag — priced into EV computation. DBMF and MLPX are partially inversely correlated in A (MLPX appreciates as energy normalizes; DBMF loses as commodity trends reverse) — portfolio diversification benefit.
@@ -1096,14 +856,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - Basis: Aberdeen Standard Physical Silver Shares ETF. Tracks spot silver price via physical silver bullion. Lower cost alternative to SLV (0.30% ER vs 0.50%)
 - AUM: ~$5.5B. Expense ratio: 0.30%. Custodian: ICBC Standard Bank (UK).
 - Last reviewed: 2026-05-26 (v1.21 — B-component arithmetic corrected)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+2.93%** (revised v1.29; IHP A=-2 and D=-3 from v1.27 now applied). Ranked #4.
-  - A:  (0.55×(-2) + 0.45×2) = -0.20% × 0.07 = -0.014%  [IHP A=-2 adopted v1.27]
-  - B:  (0.55×6 + 0.45×6) = 6.00% × 0.36 = +2.160%  [unchanged]
-  - C:  (0.55×(-2) + 0.45×7) = 2.05% × 0.41 = +0.841%  [unchanged]
-  - D:  (0.55×(-3) + 0.45×(-8)) = -5.25% × 0.05 = -0.263%  [IHP D=-3 adopted v1.27]
-  - E:  (0.55×10 + 0.45×2) = 6.40% × 0.04 = +0.256%  [unchanged]
-  - F:  (0.55×(-3) + 0.45×2) = -0.75% × 0.07 = -0.053%  [unchanged]
-  - Total: +2.927% ≈ +2.93%.
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
 - TAX PLACEMENT: Retirement accounts preferred. Physical silver ETF is classified as a collectible; capital gains taxed at 28% max rate in taxable accounts.
 - ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026). 90d trailing average ~$78-82; guard threshold ~$94-98; current ~$71.82 — well below threshold.
 - Target allocation (v1.18 CONFIRMED):
@@ -1140,9 +893,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - passive_mandate_eligible: false
 - Basis: Vanguard Short-Term Inflation-Protected Securities ETF. AUM: $66.6B. Expense ratio: 0.03%. Beta: 0.22.
 - Last reviewed: 2026-06-01 (v1.28 — A/D/F adopted HIGH confidence; B/C/E remain MEDIUM)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.52%** (unchanged — values same as prior ⚑; status upgrade only).
-  - A: -2%×0.07=-0.140 ★; B: 1%×0.36=+0.360 ⚑; C: 1%×0.41=+0.410 ⚑; D: 0%×0.05=0 ★; E: -1%×0.04=-0.040 ⚑; F: -1%×0.07=-0.070 ★
-  - Total: +0.520%. Values unchanged — A/D/F confidence upgraded to HIGH (★); B/C/E remain MEDIUM (⚑).
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
 - TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY. Inflation accrual on TIPS taxed as ordinary income annually.
 - ENTRY EXTENSION GUARD: N/A.
 - Target allocation (v1.13): 8% Primary IRA; 10% Primary Roth; 12% Relative IRA; 10% Relative Roth.
@@ -1152,9 +903,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - passive_mandate_eligible: false
 - Basis: State Street Consumer Staples Select Sector SPDR ETF. AUM: $14.5B. Expense ratio: 0.08%. 100% US domestic.
 - Last reviewed: 2026-05-06 (v1.13, initial classification)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+0.76%** (corrected v1.28; prior +0.14% used C=0 — bug; C was adopted at +2 in v1.22). Ranked #8.
-  - A: 0%×0.07=0; B: 2%×0.36=+0.720; C: 2%×0.41=+0.820; D: -5%×0.05=-0.250; E: -8%×0.04=-0.320; F: -3%×0.07=-0.210
-  - Total: +0.760%.
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
 - TAX PLACEMENT: ALL ACCOUNTS.
 - ENTRY EXTENSION GUARD: N/A.
 - Target allocation (v1.13): 7% Primary Taxable.
@@ -1316,58 +1065,7 @@ Portfolio EV by account (v1.22 targets, A=7/B=36/C=41/D=5/E=4/F=7 — updated v1
 
 ---
 
-## Section 12 - M17 Systemic Cascade Warning Thresholds
-
-Governing module: M17_SystemicCascadeWarning.md (v1.1, added May 25, 2026; PR #14 and #15 merged to master).
-First formal application: May 25, 2026 (research/dev session). sectorStressScore()=0 (formal, v1.20 corrected), CascadeLevel=MONITORING.
-All values CALIBRATION_DATED. First audit: June 30, 2026.
-
-### 12.1 Agriculture / Fertilizer Chain
-
-| Parameter | Alert Threshold | Notes |
-| --- | --- | --- |
-| farm_filings_alert | +50% YoY farm chapter 12 bankruptcies | Current (May 25): +46% YoY (USDA quarterly). Below threshold. CHAIN_1 NOT fired. |
-| natgas_alert | $6.00/mmBtu sustained 30 days | Current (May 26): $2.71–$2.85 (futures). Well below threshold. CHAIN_1 NOT fired. |
-| fertilizer_alert | +50% above 12-month average | Hormuz → Iranian urea exports disrupted → structural food CPI floor. Monitor. |
-
-### 12.2 CRE / Regional Bank Chain
-
-| Parameter | Alert Threshold | Notes |
-| --- | --- | --- |
-| KRE_alert | KRE −15% vs SPX over 90 days | Current: KRE $69.37 (May 22). Not fired. CHAIN_2 NOT fired. |
-| SOFR_DFF_alert | SOFR–DFF spread +10 bp sustained 5 days | Current: −11 bp (normal). CHAIN_2 NOT fired. |
-
-### 12.3 Private Credit / Margin Chain (two-mode — v1.20)
-
-| Mode | Parameter | Threshold | Score | Current Status |
-| --- | --- | --- | --- | --- |
-| **WATCH** | margin_at_nominal_record | FINRA margin debt at all-time nominal high | 0 (precursor loaded; not firing) | **WATCH: $1.304T Apr 2026 all-time record. MoM was +6.8% (rising to record).** |
-| **FIRES** | margin_MoM_decline | ≤ −5% MoM after record high | +1 | NOT fired. Watch for reversal month. |
-| **FIRES** | gate_count_alert | 3+ named fund gate/suspension events in 90 days | +1 (OR with above) | NOT fired. 2 events observed (BlackRock CLO OC breach; Blue Owl gate). |
-
-Design rationale: record high = leveraged stack maximally loaded (WATCH).
-The −5% decline = cascade onset, forced selling begins (FIRES). Two separate signals.
-CHAIN_3_WATCH surfaces in briefing watch_chains field regardless of formal score.
-
-### 12.4 Manufacturing / Corporate Stress Chain
-
-**Canonical data source (v1.24, June 1, 2026):** S&P Global Market Intelligence large-company series.
-Scope: public companies with public debt and assets/liabilities ≥$2M, OR private companies with assets/liabilities ≥$10M at time of filing.
-**T1-equivalent source:** ABI monthly/quarterly press releases citing Epiq AACER data. Direct AACER/PACER database access not required — ABI/Epiq AACER press releases qualify as T1-equivalent for CHAIN_4 scoring.
-
-Historical reference (S&P series, quarterly rates):
-- Normal baseline (2022-2023): ~90-120/quarter
-- Elevated/stress-adjacent (2024-2026): ~170-200/quarter
-- Post-GFC aftermath (2010): ~207/quarter
-- GFC acute peak (2009): ~459/quarter (empirical ceiling on record)
-
-| Parameter | Alert Threshold | Confidence | Notes |
-| --- | --- | --- | --- |
-| bankruptcy_quarterly_WATCH | ≥220/quarter | HIGH ★ | Above post-GFC 2010 level; stress regime confirmed. M16 4-layer complete June 1, 2026. |
-| bankruptcy_quarterly_FIRES | ≥300/quarter | HIGH ★ | ~65% of GFC peak; systemic cascade signal. Fires CHAIN_4 score (+1). M16 4-layer complete June 1, 2026. |
-
-Current (Q1 2026): 188/quarter (S&P Global, large-company) — BELOW WATCH threshold. CHAIN_4 NOT fired.
-Prior threshold of 800/quarter ELIMINATED — was undocumented, lacked M16 basis, and exceeded the empirical GFC peak (~459/quarter) by ~74%. Would never have fired under any observed historical scenario.
+er) by ~74%. Would never have fired under any observed historical scenario.
 
 ### 12.5 Sovereign Stress / Scenario E Watch
 
@@ -1443,30 +1141,13 @@ Integration with M08 execution (portfolio actions):
 
 ## Section 13 - M19 Thesis Sustaining Conditions
 
-Governing module: M19_ThesisSustainingConditions.md (v1.0, added June 17, 2026).
-Conditions reference role IDs, DataReading keys, and M02 QualitativeGatherList keys only —
-no evaluation logic lives in this section; M19 reads these values and never hardcodes them.
-
-Status taxonomy (per ticker, per session):
-  ACTIVE   — all sustaining_conditions hold; no degraded_signals or failure_signals fired.
-  DEGRADED — a degraded_signals condition fired (tailwind fading — not thesis failure).
-  FAILED   — a failure_signals condition fired (original thesis broken).
-  UNKNOWN  — required data unavailable this session. NEVER silently default to ACTIVE on a
-             data gap — an unresolved dependency is reported as UNKNOWN, not treated as a pass.
-
-degraded_signals is an optional field (most tickers omit it). Where absent, status resolves
-directly between ACTIVE and FAILED.
-
-Briefing behavior: THESIS_CONDITION_STATUS section (position_after: CURRENT_HOLDINGS;
-@see M04 BRIEFING_REGISTRY_ENTRY registered by M19) SUPPRESSES rows for ACTIVE instruments
-unless every tracked instrument is ACTIVE this session (then show a single all-clear line).
-DEGRADED / FAILED / UNKNOWN rows always surface, with the underlying M02 qualitative
-narrative attached for those statuses only — not for ACTIVE rows.
-
-Scope: applies to active-conviction / thematic positions only. Defensive and floor-sleeve
-holdings (consumer_defensive_equity, rate_sensitive_income_short, cash-equivalents) have no
-commodity/duration/war-premium degradation mechanism to monitor — same "N/A, guard does not
-apply" precedent already used for those roles in §9.3. No §13 entry for those roles.
+Governing module: M19_ThesisSustainingConditions.md (v1.2, added June 17, 2026;
+preamble methodology moved here 2026-06-19, ENG-9). Status taxonomy, briefing-
+suppression behavior, and excluded-role scope are defined there (ENUM ThesisStatus,
+BRIEFING BLOCK, and the SCOPE section) — not duplicated per ticker here.
+Conditions reference role IDs, DataReading keys, and M02 QualitativeGatherList keys
+only — no evaluation logic lives in this section; M19 reads these values and never
+hardcodes them.
 
 All values CALIBRATION_DATED. First audit: June 30, 2026.
 
