@@ -313,3 +313,97 @@ class TestLoadInstruments:
             assert len(result) > 0
         finally:
             m._INSTRUMENTS_FILE = original
+
+
+class TestWriteInstrumentsJson:
+    """
+    write_instruments_json() (ENG-25) — the write half of the read/fallback
+    pair above. Source of truth is the §11.3 active-instrument list Claude
+    derives from THIS session's Calibration_State.md parse; this just
+    confirms the function writes it correctly and round-trips with
+    load_instruments().
+    """
+
+    def test_writes_expected_shape(self, tmp_path):
+        import advisor.data.fetchers.yfinance_fetcher as m
+        instruments_file = tmp_path / "instruments.json"
+        original = m._INSTRUMENTS_FILE
+        m._INSTRUMENTS_FILE = instruments_file
+        try:
+            tickers = ["MLPX", "SGOV", "AIPO"]
+            returned_path = m.write_instruments_json(tickers)
+            assert returned_path == instruments_file
+            data = json.loads(instruments_file.read_text())
+            assert data["instruments"] == tickers
+            assert "last_updated" in data
+            assert "session" in data
+            assert data["session"].endswith("advisory")
+        finally:
+            m._INSTRUMENTS_FILE = original
+
+    def test_creates_parent_directory_if_missing(self, tmp_path):
+        import advisor.data.fetchers.yfinance_fetcher as m
+        nested = tmp_path / "market_data_mcp_does_not_exist_yet"
+        instruments_file = nested / "instruments.json"
+        original_file = m._INSTRUMENTS_FILE
+        original_dir = m._MCP_DIR
+        m._INSTRUMENTS_FILE = instruments_file
+        m._MCP_DIR = nested
+        try:
+            assert not nested.exists()
+            m.write_instruments_json(["XAR"])
+            assert instruments_file.exists()
+        finally:
+            m._INSTRUMENTS_FILE = original_file
+            m._MCP_DIR = original_dir
+
+    def test_overwrites_existing_content(self, tmp_path):
+        import advisor.data.fetchers.yfinance_fetcher as m
+        instruments_file = tmp_path / "instruments.json"
+        instruments_file.write_text(json.dumps({
+            "instruments": ["STALE_TICKER", "PAVE"],
+            "last_updated": "2026-01-01",
+            "session": "2026-01-01 advisory",
+        }))
+        original = m._INSTRUMENTS_FILE
+        m._INSTRUMENTS_FILE = instruments_file
+        try:
+            m.write_instruments_json(["MLPX", "SGOV"])
+            data = json.loads(instruments_file.read_text())
+            assert data["instruments"] == ["MLPX", "SGOV"]
+            assert "PAVE" not in data["instruments"]
+        finally:
+            m._INSTRUMENTS_FILE = original
+
+    def test_round_trips_with_load_instruments(self, tmp_path):
+        """write then load should return exactly what was written, not the fallback."""
+        import advisor.data.fetchers.yfinance_fetcher as m
+        instruments_file = tmp_path / "instruments.json"
+        original = m._INSTRUMENTS_FILE
+        m._INSTRUMENTS_FILE = instruments_file
+        try:
+            written = ["MLPX", "SGOV", "DBMF", "AIPO", "XAR", "SGOL", "SIVR", "VTIP", "XLP"]
+            m.write_instruments_json(written)
+            loaded = m.load_instruments()
+            assert loaded == written
+        finally:
+            m._INSTRUMENTS_FILE = original
+
+    def test_empty_list_does_not_silently_fall_back_on_next_load(self, tmp_path):
+        """
+        Writing an empty list is a legitimate (if unusual) caller decision —
+        but load_instruments() treats an empty 'instruments' key as a signal
+        to fall back (see TestLoadInstruments.test_fallback_when_json_empty_instruments_list
+        above). Documenting that interaction here so a future change to either
+        function doesn't silently break the contract between them.
+        """
+        import advisor.data.fetchers.yfinance_fetcher as m
+        instruments_file = tmp_path / "instruments.json"
+        original = m._INSTRUMENTS_FILE
+        m._INSTRUMENTS_FILE = instruments_file
+        try:
+            m.write_instruments_json([])
+            loaded = m.load_instruments()
+            assert loaded == m._FALLBACK_INSTRUMENTS
+        finally:
+            m._INSTRUMENTS_FILE = original

@@ -101,6 +101,29 @@ def load_instruments() -> List[str]:
     return _FALLBACK_INSTRUMENTS
 
 
+def write_instruments_json(tickers: List[str]) -> Path:
+    """
+    Write the active §11.3 instrument list to instruments.json (ENG-25).
+
+    Called once per session from _tool_run_computation() right after
+    Calibration_State.md §11.3 is parsed — never from memory. Local-only:
+    instruments.json lives outside the framework git repo (sibling
+    market_data_mcp/ folder) and is NEVER committed (@see M12 STEP 4b).
+
+    Raises on failure (caller wraps in try/except and flags rather than
+    hard-stopping the session — see mcp_server.py _tool_run_computation).
+    """
+    payload = {
+        "instruments": list(tickers),
+        "last_updated": datetime.date.today().isoformat(),
+        "session": f"{datetime.date.today().isoformat()} advisory",
+    }
+    _MCP_DIR.mkdir(parents=True, exist_ok=True)
+    _INSTRUMENTS_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    logger.info(f"Wrote {len(tickers)} instruments to {_INSTRUMENTS_FILE}")
+    return _INSTRUMENTS_FILE
+
+
 def fetch_holdings_prices(spec: FetchSpec) -> List[DataReading]:
     """Current price + day-change for all portfolio instruments."""
     symbols = load_instruments()

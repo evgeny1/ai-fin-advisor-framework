@@ -206,6 +206,16 @@ def _tool_run_computation(floor_account_weights_json: Optional[str] = None) -> s
     # Validate classifications — HARD_STOP surface
     alloc_tickers = [t for t, e in cal.instruments.items()
                      if not e.is_candidate]
+
+    # Write instruments.json (ENG-25) — local-only, never committed to git.
+    # Source is THIS session's §11.3 parse, never memory. A failure here is
+    # non-fatal: yfinance_fetcher.load_instruments() falls back to its
+    # hardcoded list, so this is flagged, not a HARD_STOP.
+    try:
+        yf.write_instruments_json(alloc_tickers)
+    except Exception as e:
+        result["flags"].append(f"⚠ instruments.json write failed: {e}")
+
     try:
         warns = validate_classifications(alloc_tickers, cal)
         if warns:

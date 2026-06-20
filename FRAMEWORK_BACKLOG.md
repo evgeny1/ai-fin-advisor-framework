@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-20 (ENG-17 closed)
+**Last updated:** 2026-06-20 (ENG-17, ENG-25 closed)
 
 ## Index
 
@@ -63,7 +63,7 @@
 | ENG-22 | OPEN | LOW | testing | Test suite needs reorganizing into unit/e2e/integration — currently flat test_stageN folders |
 | ENG-23 | CLOSED | MEDIUM | architecture | M05_SessionInit.md retired outright (ENG-2 follow-on decision #2) |
 | ENG-24 | CLOSED | MEDIUM | architecture | M13.RecalibrationSequence() has no Python implementation — still 100% manual |
-| ENG-25 | OPEN | LOW | architecture | instruments.json write not wired — Project_Instructions_MCP.md claimed MCP server writes it; it doesn't |
+| ENG-25 | CLOSED | LOW | architecture | instruments.json write not wired — Project_Instructions_MCP.md claimed MCP server writes it; it doesn't |
 
 ---
 
@@ -1220,12 +1220,13 @@ regression).
 
 ### ENG-25 — instruments.json write not wired — Project_Instructions_MCP.md claimed MCP server writes it
 <!-- ITEM
-  Status:    OPEN
+  Status:    CLOSED
   Severity:  LOW
   Category:  architecture
   Opened:    2026-06-18
-  Area:      python/advisor/mcp_server.py, python/advisor/data/file_protocol.py,
-             M12_DriveProtocol.md (WriteBack STEP 4b), Project_Instructions_MCP.md
+  Closed:    2026-06-20
+  Area:      python/advisor/mcp_server.py, python/advisor/data/fetchers/yfinance_fetcher.py,
+             M12_DriveProtocol.md (STEP 4b), Project_Instructions_MCP.md
   Related:   ENG-2
 -->
 
@@ -1255,6 +1256,60 @@ instruments.json write into `file_protocol.write_back()` or
 active tickers from `cal.instruments`, serialize to JSON, write to
 `_MCP_DIR / "instruments.json"`. Then remove the manual step from
 WriteBack and update Project_Instructions_MCP.md and M12 accordingly.
+
+**Resolution (2026-06-20):** Implemented as suggested, wired at
+`_tool_run_computation()` rather than `write_back()` — the source data
+(§11.3 active tickers) is freshest right when `Calibration_State.md` is
+parsed at session Step 3, and wiring it there means the write happens
+even on sessions where write-back is skipped or fails later. Added
+`write_instruments_json(tickers)` to `yfinance_fetcher.py` (co-located
+with `load_instruments()`, which already owns `_MCP_DIR`/`_INSTRUMENTS_FILE`
+path resolution — avoids duplicating that logic in `file_protocol.py`,
+which writes to a different directory entirely and has no reason to know
+about this path). Called from `_tool_run_computation()` right after
+`alloc_tickers` is computed (the exact same §11.3-active, not-§11.4-candidate
+list `validate_classifications()` already uses), wrapped in try/except —
+a write failure is flagged (`result["flags"]`), not a `HARD_STOP`, since
+`load_instruments()`'s existing fallback means a session can proceed
+without a fresh write.
+
+Format matches what M12 STEP 4b already specified for the manual version:
+`{"instruments": [...], "last_updated": "[date]", "session": "[date] advisory"}`.
+`instruments.json` continues to live outside the framework git repo
+(sibling `market_data_mcp/` folder) and is never committed — this was
+always a local-filesystem write, never a git operation, so the existing
+NEVER rule is unaffected.
+
+Updated `Project_Instructions_MCP.md` (removed the manual-write line under
+Step 9; added a one-line note to Step 3 instead, since that's where it now
+actually happens) and `M12_DriveProtocol.md` STEP 4b (marked AUTOMATED,
+clarified it no longer executes as part of the WriteBack procedure at all
+— it runs earlier, at session Step 3 — kept at this numbering only for
+continuity with existing cross-references). M12 bumped Amendment 6→7.
+
+**Test coverage added:** `tests/test_stage1/test_dispatcher_and_instruments.py`
+— new `TestWriteInstrumentsJson` class (5 tests: correct shape, creates
+missing parent directory, overwrites stale content, round-trips with
+`load_instruments()`, and documents the empty-list/fallback interaction
+between the two functions). `tests/test_mcp/test_run_computation.py` — 2
+new tests confirming `_tool_run_computation()` calls
+`write_instruments_json()` with exactly the §11.3 active set (not §11.4
+candidates), and that a write failure is flagged rather than propagated
+as a `HARD_STOP`.
+
+**Side-effect risk found and fixed while adding coverage:** the existing
+`no_network` fixtures in `test_run_computation.py` and
+`test_pattern_b_pipeline.py` mock `FetchRegistry.fetch_all()` but, before
+this fix, would have let every `_tool_run_computation()` call in both
+files write straight through to the **real** `instruments.json` on disk —
+it lives outside both the framework git repo and `test_pattern_b_pipeline`'s
+`tmp_path` sandbox (keyed off `ADVISOR_MCP_DIR`, not `ADVISOR_FRAMEWORK_PATH`),
+so nothing was isolating it. Added a `write_instruments_json` no-op patch to
+both fixtures. Confirmed via the real file's mtime (unchanged, predates this
+session) that no test run actually touched it before or after this fix.
+
+`tools/validate_manifests.py`: 19/19 pass. Full suite (`not integration`):
+658 passed, 60 deselected (+7 from this item's new tests, 0 regressions).
 
 
 ### ENG-24 — M13.RecalibrationSequence() has no Python implementation — still 100% manual

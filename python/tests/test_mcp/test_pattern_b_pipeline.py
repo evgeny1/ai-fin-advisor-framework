@@ -97,6 +97,12 @@ def no_network(monkeypatch):
         monkeypatch.setattr(_yf, "download", lambda *args, **kwargs: pd.DataFrame())
     except ImportError:
         pass
+    # ENG-25: instruments.json lives outside both the framework repo and
+    # pipeline_dir's tmp_path sandbox (it's keyed off ADVISOR_MCP_DIR, not
+    # ADVISOR_FRAMEWORK_PATH) — without this, every run_computation() call
+    # in this file would overwrite the REAL instruments.json on disk.
+    from advisor.data.fetchers import yfinance_fetcher as _yfm
+    monkeypatch.setattr(_yfm, "write_instruments_json", lambda tickers: None)
 
 
 def _make_stub_answers(cache):

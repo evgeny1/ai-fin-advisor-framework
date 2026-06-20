@@ -1,9 +1,9 @@
 # M12 — File Access Protocol
-<!-- Version: Amendment 6 | Updated: see git log -->
+<!-- Version: Amendment 7 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M12_DriveProtocol
-  Version:         Amendment 6
+  Version:         Amendment 7
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: file access sources, write toolchain, or session type rules change.
   Inputs consumed:  (infrastructure — reads and writes framework files; no domain inputs)
@@ -224,14 +224,19 @@ MODULE FileProtocol {
       // _render_portfolio_state() in mcp_server.py constructs it automatically.
     }
 
-    STEP 4b: writeInstrumentsJson (LOCAL ONLY — does not go to git) {
-      // ⚠ NOT currently automated: Python write_back() does NOT write instruments.json.
-      // The yfinance fetcher reads instruments.json and falls back if missing.
-      // Until this is wired (see FRAMEWORK_BACKLOG.md ENG-25), write manually:
-      path:   market_data_mcp/instruments.json (sibling folder — path set by ADVISOR_FRAMEWORK_PATH)
+    STEP 4b: writeInstrumentsJson — AUTOMATED, NOT part of this WriteBack procedure {
+      // RESOLVED 2026-06-20 (ENG-25): wired into advisor_run_computation() itself —
+      // it runs at session Step 3 (right after §11.3 is parsed), not here at
+      // session end. Retained at this numbering only for historical continuity
+      // with Project_Instructions_MCP.md's old step references.
+      path:   market_data_mcp/instruments.json (sibling folder — path set by ADVISOR_MCP_DIR,
+                                                  defaults to a path computed relative to
+                                                  ADVISOR_FRAMEWORK_PATH's sibling)
       format: { "instruments": [§11.3 active tickers], "last_updated": "[date]", "session": "[date] advisory" }
-      source: §11.3 from Calibration_State.md loaded this session — never from memory
-      tool:   Desktop Commander:write_file (mode: rewrite)
+      source: §11.3 from Calibration_State.md loaded THIS session — never from memory
+      impl:   yfinance_fetcher.write_instruments_json(), called from
+              mcp_server._tool_run_computation() — non-fatal on failure (flagged;
+              load_instruments() falls back to its own hardcoded list)
       GUARD:
         NEVER: include instruments with 0% target in ALL accounts
         NEVER: push instruments.json to git

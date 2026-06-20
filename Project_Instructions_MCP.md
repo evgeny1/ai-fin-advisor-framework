@@ -129,6 +129,9 @@ Execute the sequence below, in strict order. (This section is itself the authori
                                     FLAG: "No recent §8 — 25pp session cap not applicable."
                                 Runs M15.ValidateClassifications() — HARD_STOP if any
                                   allocation instrument is absent from §11.
+                                Writes instruments.json (local only, never git) from THIS
+                                  session's §11.3 active tickers — non-fatal if it fails
+                                  (flagged; yfinance fetcher falls back to its own list).
                                 Fetches all M18 DataReadings (FetchRegistry.fetchAll()).
                                 Fetches holdings 30d returns via yfinance (for RoleRepricingDivergence).
                                 Computes: CreditSignal (M11), DivergenceSignal (M14),
@@ -197,8 +200,9 @@ Execute the sequence below, in strict order. (This section is itself the authori
                                   session, update separately via Desktop Commander + git
                                   (advisor_write_back does not touch Calibration_State.md).
                                 Local only (no git):
-                                  instruments.json — written manually via Desktop Commander:write_file
-                                  during WriteBack Step 4b (@see M12_DriveProtocol.md WriteBack STEP 4b)
+                                  instruments.json — written automatically by
+                                  advisor_run_computation() (Step 3), from THIS session's
+                                  §11.3 active tickers (@see M12_DriveProtocol.md STEP 4b)
                                   NEVER push instruments.json to git
 ```
 

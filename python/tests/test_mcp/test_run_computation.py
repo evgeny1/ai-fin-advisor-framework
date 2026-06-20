@@ -51,6 +51,12 @@ def no_network(monkeypatch):
     Patch FetchRegistry.fetch_all and yfinance.download to avoid real
     network calls. All DataReadings will be missing (FETCH_FAILED), but
     downstream analysis handles this gracefully via quality_flags.
+
+    Also patches write_instruments_json (ENG-25) to a no-op — without this,
+    every test in this file would overwrite the REAL instruments.json on
+    disk (it lives outside the framework git repo and outside any tmp_path
+    sandbox, so there is nothing else isolating it). Tests that want to
+    assert on the write itself patch it again locally with their own stub.
     """
     monkeypatch.setattr(FetchRegistry, "fetch_all", lambda self: [])
     try:
@@ -58,6 +64,8 @@ def no_network(monkeypatch):
         monkeypatch.setattr(_yf, "download", lambda *args, **kwargs: pd.DataFrame())
     except ImportError:
         pass  # yfinance unavailable in this env
+    from advisor.data.fetchers import yfinance_fetcher as _yfm
+    monkeypatch.setattr(_yfm, "write_instruments_json", lambda tickers: None)
 
 def _make_stub_answers(cache):
     """Build minimal scoring answers: use auto_score if set, else min(valid_scores)."""
@@ -165,6 +173,53 @@ def test_run_computation_caches_readings(fresh_cache, no_network):
     mcp_server._tool_run_computation()
     assert "readings" in mcp_server._cache
     assert isinstance(mcp_server._cache["readings"], list)
+
+
+# ── run_computation: instruments.json write (ENG-25) ───────────────────────────
+
+@skip_if_missing
+def test_run_computation_writes_instruments_json_with_active_tickers(fresh_cache, no_network, monkeypatch):
+    """
+    _tool_run_computation() must call write_instruments_json() with exactly
+    the §11.3 active tickers (is_candidate == False) parsed from THIS
+    session's Calibration_State.md — not §11.4 candidates, not memory.
+    """
+    from advisor.data.fetchers import yfinance_fetcher as yfm
+    calls = []
+    monkeypatch.setattr(yfm, "write_instruments_json", lambda tickers: calls.append(tickers))
+
+    mcp_server._tool_run_computation()
+
+    assert len(calls) == 1, "write_instruments_json should be called exactly once per session"
+    written = calls[0]
+    cal = mcp_server._cache["cal"]
+    expected = {t for t, e in cal.instruments.items() if not e.is_candidate}
+    assert set(written) == expected
+    candidates = {t for t, e in cal.instruments.items() if e.is_candidate}
+    assert not (set(written) & candidates), (
+        "§11.4 candidate instruments must never appear in instruments.json"
+    )
+
+
+@skip_if_missing
+def test_run_computation_survives_instruments_json_write_failure(fresh_cache, no_network, monkeypatch):
+    """
+    A write failure (e.g. unwritable ADVISOR_MCP_DIR) must be flagged, not
+    HARD_STOP the whole session — yfinance_fetcher.load_instruments() has
+    its own fallback, so a session can proceed without a fresh write.
+    """
+    from advisor.data.fetchers import yfinance_fetcher as yfm
+
+    def _boom(tickers):
+        raise OSError("disk full")
+    monkeypatch.setattr(yfm, "write_instruments_json", _boom)
+
+    result = json.loads(mcp_server._tool_run_computation())
+
+    assert result["status"] == "OK", "A non-fatal instruments.json write failure must not HARD_STOP"
+    assert any("instruments.json" in f for f in result["flags"]), (
+        "Write failure must be surfaced as a flag in the output"
+    )
 
 
 # ── apply_scoring: preconditions ──────────────────────────────────────────────
