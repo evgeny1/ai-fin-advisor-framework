@@ -129,6 +129,62 @@ class TestFredFetcherMocked:
         assert readings[0].source == DataSource.FRED_SPREADSHEET_TAB
 
 
+# ── ENG-13: THREEFYTP10_TREND ──────────────────────────────────────────────────
+
+def _trend_spec() -> FetchSpec:
+    return FetchSpec(
+        id="THREEFYTP10_TREND", source=DataSource.FRED_SPREADSHEET_TAB,
+        description="test", update_frequency=UpdateFrequency.WEEKLY,
+        acceptable_lag_days=10,
+    )
+
+
+class TestFredTrendSeries:
+
+    def _mock_history(self, values: list) -> MagicMock:
+        mock = MagicMock()
+        mock.raise_for_status = MagicMock()
+        mock.json.return_value = {
+            "observations": [{"date": f"2026-{i+1:02d}-01", "value": v}
+                              for i, v in enumerate(values)]
+        }
+        return mock
+
+    def test_returns_oldest_first_closes(self, monkeypatch):
+        monkeypatch.setenv("FRED_API_KEY", "test_key")
+        from advisor.data.fetchers import fred_fetcher as m
+        vals = ["0.70", "0.72", "0.75", "0.81"]
+        with patch("advisor.data.fetchers.fred_fetcher.requests.get",
+                   return_value=self._mock_history(vals)):
+            readings = m.fetch_yield_curve_fred(_trend_spec())
+        assert readings[0].value["closes"] == [0.70, 0.72, 0.75, 0.81]
+        assert readings[0].is_valid
+
+    def test_no_api_key_unavailable(self, monkeypatch):
+        monkeypatch.delenv("FRED_API_KEY", raising=False)
+        from advisor.data.fetchers import fred_fetcher as m
+        readings = m.fetch_yield_curve_fred(_trend_spec())
+        assert not readings[0].is_valid
+        assert any("FRED_API_KEY" in f for f in readings[0].quality_flags)
+
+    def test_no_observations_unavailable(self, monkeypatch):
+        monkeypatch.setenv("FRED_API_KEY", "test_key")
+        from advisor.data.fetchers import fred_fetcher as m
+        with patch("advisor.data.fetchers.fred_fetcher.requests.get",
+                   return_value=self._mock_history([])):
+            readings = m.fetch_yield_curve_fred(_trend_spec())
+        assert not readings[0].is_valid
+        assert any("UNAVAILABLE" in f for f in readings[0].quality_flags)
+
+    def test_skips_missing_observations(self, monkeypatch):
+        monkeypatch.setenv("FRED_API_KEY", "test_key")
+        from advisor.data.fetchers import fred_fetcher as m
+        with patch("advisor.data.fetchers.fred_fetcher.requests.get",
+                   return_value=self._mock_history(["0.70", ".", "0.75"])):
+            readings = m.fetch_yield_curve_fred(_trend_spec())
+        assert readings[0].value["closes"] == [0.70, 0.75]
+
+
 class TestFredFetcherIntegration:
     """Live FRED API calls — require FRED_API_KEY in environment."""
 

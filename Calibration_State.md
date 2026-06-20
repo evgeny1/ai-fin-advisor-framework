@@ -2,8 +2,9 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.41  Last updated: June 20, 2026 (§12 structure restored --
-ENG-18; see §3 v1.41)
+# Version: 1.42  Last updated: June 20, 2026 (GAP-16 IHP range-position
+advisory added; §11 SGOL/SIVR sub-condition drivers documented --
+ENG-13/ENG-26 closed engineering-side, see FRAMEWORK_BACKLOG.md)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -127,6 +128,29 @@ For the 3rd CPI print (the formal trigger gate), graduated response by print lev
 ---
 
 ## Section 3 - Calibration Log (last 10 entries; prior entries in Calibration_Log.md)
+
+2026-06-20 - GAP-16 added and closed same session (v1.42): within-scenario
+sub-condition advisory for wide-range roles (design gap identified June 18,
+2026 companion session). Framework's EV math uses a single conservative
+value per role per scenario; nothing previously flagged whether current
+conditions favor the upper or lower end of a wide [conservative, upside]
+band. Scope: inflation_hedge_precious_metals (IHP) — priority role per the
+originating note. Corrected the note's own worked example: cited "IHP B =
+[-2,+6], 8pp wide" — actual §4.1 IHP B = [6,12] (6pp); the [-2,+6] figure and
+8pp width both match Scenario C, not B. New analysis/range_position.py
+(GAP-16): for held IHP instruments (SGOL, SIVR) with a §4.1 range >=6pp wide
+in the session's dominant scenario, flags real-yield (THREEFYTP10) and DXY
+direction as favorable/unfavorable/mixed/inconclusive — advisory only, never
+feeds blendedScenarioReturn()/EV/allocation math (per the original note's own
+"not a hard gate" requirement). Reuses THREEFYTP10_TREND/DXY_TREND readings
+added closing ENG-13 (FRAMEWORK_BACKLOG.md) rather than re-fetching. §11
+SGOL/SIVR entries below now document these two sub-condition drivers
+explicitly. STF/RAC/IHC (named in the originating note as "assess at same
+time") remain out of scope — their sub-condition drivers haven't been
+identified yet; that's a §11 documentation task for a future session, not a
+code change (range_position.py already generalizes once a role's drivers are
+named). No §4.1, probability, or classification value changes this entry —
+advisory infrastructure only.
 
 2026-06-20 - Section 12 structure restored (v1.41, FRAMEWORK_BACKLOG.md ENG-18).
 Discovered the "## Section 12" header was missing from this file entirely, and
@@ -310,22 +334,6 @@ M05 Step 0 added. M12 SOURCE_MAP cleaned (no hardcoded folder ID).
 M14: Explicit window definitions (energy_90d=90 calendar days; broad_equity_30d=30 trading days).
 M16: Layer 4 neutral distribution reminder (A=35/B=15/C=15/D=10/E=5/F=20 mandatory).
 BZ=F Jun 5 T1: $93.09. M14 composite MODERATE (step-down from HIGH). No §4.1 changes.
-
-2026-06-04 - Framework v1.31 (M18 v1.2 regime re-verification; M14 re-computation; STG B challenge closed).
-BZ=F Feb 25 2026 actual $70.85 T1 (estimate $70 accurate, +$0.85). energy_90d May 26 corrected +36.9%
-(vs estimate +38.6%) — HIGH tier CONFIRMED unchanged. VIX Feb 25 = 17.93 confirmed as actual T1 close
-(was NOT an estimate). VIX_change_90d_pts -1.23 pts confirmed exact. Prior M14 composite HIGH: FULLY CONFIRMED.
-Today (June 4): energy_90d = BZ=F $97.81 (Jun 3 T1) vs $92.69 (Mar 6 T1 — 90d anchor) = +5.52% ->
-commodity_fear_divergence NOT FIRING (war premium now inside 90d window; below 10% MODERATE threshold).
-VIX_change_90d_pts = 16.06 - 29.49 = -13.43 pts. broad_equity_30d = SPY Apr 22->Jun 3 +6.05% ->
-equity_scenario_divergence HIGH. M14 composite = HIGH (equity-driven only). UnderweightReviewTrigger NOT fired.
-STG B challenge CLOSED: MAGS +4.79% YTD (Jun 4 live) confirms [-2,+4] * adoption (v1.27). Stale -6% YTD challenge refuted.
-Sec 11.2 descriptor update (editorial: "-6% to -1%" -> "[-2,+4] *") deferred to June 30.
-PAVE EV confirmed -4.03% at current price $57.61 and current probability vector. No exit triggers fired.
-Iran qualitative: MOU unsigned, talks fragile, C not structurally moderated — CARRY A=7/B=36/C=41/D=5/E=4/F=7.
-M12 PATTERN_B Step 3b added: instruments.json local write to MCP server directory.
-M12 PATTERN_A amendment drafted as artifact. instruments.json written: ["MLPX","DBMF","SGOL","VTIP","AIPO",
-"XAR","SGOV","SIVR","COPX","MAGS","XLP","PAVE","URA"]. No Sec 4.1 changes. No probability changes.
 
 ---
 
@@ -576,6 +584,7 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
 37. AI capex / secular_technology_growth context note (v1.18, May 22, 2026): Session intelligence — hyperscaler AI capex $660-830B committed for 2026 (nearly doubling 2025). Capex intensity 45-57% of revenue (vs 10-15% in 2020). Revenue growth 15-16% vs capex growth 60-80%; FCF projected to decline 90% across Big Four. Private credit ($800B+ in AI infrastructure financing) opacity flagged as tail risk not visible in HY/IG spread series. AI utility pricing emerging (62% usage-based by 2027). Prisoner's dilemma / war-of-attrition structure confirmed: no coordination mechanism among 5+ hyperscalers; 18-36 month infrastructure commitment periods prevent exit. Fiber optic 1999 analogy: technology correct, equity returns poor due to timing, cost of capital, and competitive dynamics. Portfolio implication: AIPO (infrastructure layer, contracted revenue) positive EV in B/C; MAGS (hyperscaler equity) negative EV in B/C — distinction maintained. No §4.1 changes warranted from session analysis.
 38. M17 §12 thresholds (v1.19, corrected v1.20): First formal application May 25, 2026. sectorStressScore()=0 (formal, v1.20 corrected). CascadeLevel=MONITORING. CHAIN_3_WATCH=TRUE ($1.304T margin debt record loaded; FIRES on ≥−5% MoM or 3+ gate events). CHAIN_4 CALIBRATED v1.24 (June 1, 2026): canonical series = S&P Global large-company; T1-equivalent = ABI/Epiq AACER press releases; WATCH ≥220/quarter, FIRES ≥300/quarter (HIGH confidence, M16 4-layer complete); current Q1 2026 = 188/quarter — BELOW WATCH. Prior 800/quarter threshold eliminated. D=5% maintained by prior client approval (qualitative). Formal Q2 audit: calibrate remaining §12 thresholds; formal integration of yield curve D_timing_signal; M18 allocation spreadsheet series gap resolution.
 39. M18 FMP data fetch (v1.21, May 26, 2026): FMP:chart historical-price-eod-light confirmed working for ^VIX and SPY. VIX_30D_AVG=17.99 and VIX_90D_AVG=21.24 computed from 62 trading days of FMP EOD data. SPY 30-trading-day return=+8.68% (Apr 13→May 22). FMP:indexes endpoint ACCESS DENIED for ^SPX (requires higher plan tier) — SPY via FMP:chart is the confirmed working substitute for BROAD_EQUITY_TRAILING. M18 updated accordingly (v1.1).
+40. GAP-16 (v1.42, June 20, 2026): within-scenario sub-condition advisory for wide-range roles — RESOLVED for IHP, see §3 v1.42 entry for full description. analysis/range_position.py flags real-yield/DXY direction for held IHP instruments (SGOL, SIVR) whose dominant-scenario §4.1 range is >=6pp wide; advisory only. STF/RAC/IHC sub-condition identification (named in the originating note as in-scope) remains open — assign at a future session once those roles' 1-2 governing variables are identified; no code change needed, range_position.py already generalizes.
 
 ---
 
@@ -813,6 +822,13 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   - Relative Roth: 16% (CONFIRMED EXECUTED v1.18 — reduced from 22%)
   - Note: SIVR added as complement; SGOL + SIVR combined restores precious metals exposure
 - ⚠ IHP A and D proposals from prior sessions: ADOPTED v1.27 (A [-2,+2] ★; D [-3,+3] ★). §11 EV updated v1.29.
+- **GAP-16 sub-condition drivers (within-scenario range position, v1.42):** the 2 variables
+  that determine where SGOL lands within a wide [conservative, upside] §4.1 band — real yield
+  (THREEFYTP10) direction and DXY direction. Rising real yield + appreciating DXY = headwind
+  (tracks toward the conservative end); falling real yield + weakening DXY = tailwind (tracks
+  toward upside). Evaluated each session by analysis/range_position.py, advisory only — does
+  NOT change blendedScenarioReturn()/EV. Same two variables already tracked as M19 §13
+  sustaining/failure conditions below — reused, not duplicated.
 
 #### SGOV
 - Components: rate_sensitive_income_short_duration (1.00)
@@ -889,6 +905,10 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
 - TAX PLACEMENT: Retirement accounts preferred. Physical silver ETF is classified as a collectible; capital gains taxed at 28% max rate in taxable accounts.
 - ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026). 90d trailing average ~$78-82; guard threshold ~$94-98; current ~$71.82 — well below threshold.
+- **GAP-16 sub-condition drivers (within-scenario range position, v1.42):** same two
+  drivers as SGOL — real yield (THREEFYTP10) and DXY direction — since SIVR's 0.55 IHP
+  weight inherits the same monetary-debasement mechanism. Evaluated each session by
+  analysis/range_position.py; advisory only.
 - Target allocation (v1.18 CONFIRMED):
   - Primary IRA: 4%
   - Primary Roth: 5%

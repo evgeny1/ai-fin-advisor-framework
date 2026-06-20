@@ -29,11 +29,13 @@ class TestM18Registry:
         assert len(ids) == len(set(ids)), "Duplicate FetchSpec IDs in M18 registry"
 
     def test_expected_spec_count(self):
-        # 34 specs defined in M18 (update this when adding new series).
-        # +3 vs prior count: COPPER_SPOT, URANIUM_SPOT, CHINA_PMI_MANUFACTURING
-        # (added for §13 M19 thesis-sustaining conditions, June 17, 2026).
-        assert len(_ALL_SPECS) == 34, (
-            f"Expected 34 specs, found {len(_ALL_SPECS)}. "
+        # 43 specs defined in M18 (update this when adding new series).
+        # +9 vs prior count: DXY_TREND, BRENT_TREND, GOLD_TREND, SP500_TREND,
+        # COPPER_TREND, URANIUM_TREND, COPX_PRICE_TREND, THREEFYTP10_TREND,
+        # NASDAQ_30D_RETURN (added closing ENG-13 — trailing-window §13
+        # conditions, June 20, 2026).
+        assert len(_ALL_SPECS) == 43, (
+            f"Expected 43 specs, found {len(_ALL_SPECS)}. "
             "Update this count when adding/removing series."
         )
 

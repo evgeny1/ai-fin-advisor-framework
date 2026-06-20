@@ -64,6 +64,21 @@ _SYMBOL_MAP: Dict[str, str] = {
     "YIELD_CURVE_3M":  "^IRX",
 }
 
+# Weekly trend specs: spec.id -> (yfinance ticker, weeks of history) ───────
+# Added to close ENG-13: trailing-window §13 conditions need N weeks of
+# history, fetchable in one call — same single-request pattern as
+# VIX_30D_AVG/BROAD_EQUITY_TRAILING below. See analysis/trend.py for the
+# pure evaluation logic these feed.
+_TREND_SPECS: Dict[str, tuple] = {
+    "DXY_TREND":        ("DX-Y.NYB", 8),
+    "BRENT_TREND":      ("BZ=F",     8),
+    "GOLD_TREND":       ("GC=F",     8),
+    "SP500_TREND":      ("^GSPC",    8),
+    "COPPER_TREND":     ("HG=F",    12),
+    "URANIUM_TREND":    ("UX=F",    12),
+    "COPX_PRICE_TREND": ("COPX",     8),
+}
+
 
 # ── Public dispatcher — register this ONE function for DataSource.YFINANCE ────
 
@@ -78,6 +93,11 @@ def yfinance_dispatcher(spec: FetchSpec) -> List[DataReading]:
         return fetch_vix_history(spec)
     if spec.id == "BROAD_EQUITY_TRAILING":
         return fetch_broad_equity_trailing(spec)
+    if spec.id == "NASDAQ_30D_RETURN":
+        return fetch_nasdaq_trailing(spec)
+    if spec.id in _TREND_SPECS:
+        symbol, weeks = _TREND_SPECS[spec.id]
+        return fetch_weekly_trend(spec, symbol, weeks)
     if spec.id == "YIELD_CURVE":
         return fetch_yield_curve_partial(spec)
     if spec.id == "HISTORICAL_INSTRUMENT_PRICES":
@@ -203,6 +223,74 @@ def fetch_broad_equity_trailing(spec: FetchSpec) -> List[DataReading]:
         value={"return_30d_pct": pct(22), "return_90d_pct": pct(64),
                "current": round(current, 2)},
         source=DataSource.YFINANCE, fetched_at=datetime.datetime.utcnow(),
+    )]
+
+
+# ── NASDAQ 30d trailing return (MAGS §13 failure signal) ──────────────────────
+
+def fetch_nasdaq_trailing(spec: FetchSpec) -> List[DataReading]:
+    """NASDAQ_30D_RETURN: ^IXIC 30-trading-day pct-change. Same pattern as
+    fetch_broad_equity_trailing — added so MAGS's "Nasdaq 30d return <= -10%"
+    failure_signal (analysis/thesis.py) has data to evaluate against; it
+    previously had no FetchSpec or regex pattern at all (fell through to
+    "no evaluator recognizes condition" every session)."""
+    today = datetime.date.today()
+    start = today - datetime.timedelta(days=60)
+    df = yf.download("^IXIC", start=start.isoformat(), progress=False, auto_adjust=True)
+    if df.empty or "Close" not in df.columns:
+        raise RuntimeError("^IXIC history returned empty")
+    raw = df["Close"].dropna()
+    closes = raw.values.flatten().tolist()
+    if not closes:
+        raise RuntimeError("^IXIC history returned empty")
+    n = min(22, len(closes))
+    pct30 = round((closes[-1] / closes[-n] - 1) * 100, 2)
+    return [DataReading(
+        spec_id=spec.id,
+        value={"return_30d_pct": pct30, "current": round(closes[-1], 2)},
+        source=DataSource.YFINANCE, fetched_at=datetime.datetime.utcnow(),
+    )]
+
+
+# ── Generic N-week trend history (ENG-13) ─────────────────────────────────────
+
+def fetch_weekly_trend(spec: FetchSpec, symbol: str, weeks: int) -> List[DataReading]:
+    """
+    Generic weekly-resampled closes for analysis/trend.py's pure functions.
+    One request covers the whole window — no cross-session persistence needed.
+    Gracefully degrades (quality_flag, no exception) on an empty/illiquid
+    series — same contract as the rest of this file (e.g. URANIUM_SPOT).
+    """
+    today = datetime.date.today()
+    start = today - datetime.timedelta(weeks=weeks + 3)
+    try:
+        df = yf.download(symbol, start=start.isoformat(), interval="1wk",
+                         progress=False, auto_adjust=True)
+    except Exception as e:
+        return [DataReading(spec_id=spec.id, value=None, source=DataSource.YFINANCE,
+                            fetched_at=datetime.datetime.utcnow(),
+                            quality_flags=[f"FETCH_FAILED: {e}"])]
+    if df.empty or "Close" not in df.columns:
+        return [DataReading(spec_id=spec.id, value=None, source=DataSource.YFINANCE,
+                            fetched_at=datetime.datetime.utcnow(),
+                            quality_flags=[f"UNAVAILABLE: {symbol} weekly history empty "
+                                          "(illiquid contract or delisted)"])]
+    closes_raw = df["Close"].dropna()
+    closes = [round(float(c), 4) for c in closes_raw.values.flatten().tolist()]
+    if not closes:
+        return [DataReading(spec_id=spec.id, value=None, source=DataSource.YFINANCE,
+                            fetched_at=datetime.datetime.utcnow(),
+                            quality_flags=[f"UNAVAILABLE: {symbol} weekly history empty"])]
+    n = min(weeks, len(closes))
+    recent = closes[-n:]
+    flags = []
+    if n < weeks:
+        flags.append(f"PARTIAL: only {n}/{weeks} weeks of {symbol} history available")
+    return [DataReading(
+        spec_id=spec.id,
+        value={"closes": recent, "n_weeks": n, "symbol": symbol},
+        source=DataSource.YFINANCE, fetched_at=datetime.datetime.utcnow(),
+        quality_flags=flags,
     )]
 
 

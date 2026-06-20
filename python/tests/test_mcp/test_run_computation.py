@@ -319,3 +319,30 @@ def test_apply_scoring_enables_write_back(fresh_cache, no_network):
     mcp_server._tool_apply_scoring(answers)
     assert "scenario_probs" in mcp_server._cache
     assert "cal" in mcp_server._cache
+
+
+# ── apply_scoring: GAP-16 range_position_advisories ───────────────────────────
+
+@skip_if_missing
+def test_apply_scoring_has_range_position_advisories_key(fresh_cache, no_network):
+    """Key must always be present (possibly empty) — Claude should never
+    have to special-case its absence when building the briefing."""
+    mcp_server._tool_run_computation()
+    answers = _make_stub_answers(mcp_server._cache)
+    result = json.loads(mcp_server._tool_apply_scoring(answers))
+    assert "range_position_advisories" in result
+    assert isinstance(result["range_position_advisories"], list)
+
+
+@skip_if_missing
+def test_range_position_advisory_shape_when_present(fresh_cache, no_network):
+    """With no_network (empty readings), any emitted advisory must still
+    be 'inconclusive' with two quality_flags — never a guessed signal."""
+    mcp_server._tool_run_computation()
+    answers = _make_stub_answers(mcp_server._cache)
+    result = json.loads(mcp_server._tool_apply_scoring(answers))
+    for adv in result["range_position_advisories"]:
+        assert adv["role_id"] == "inflation_hedge_precious_metals"
+        assert adv["range_width_pp"] >= 6.0
+        assert adv["signal"] == "inconclusive"
+        assert len(adv["quality_flags"]) == 2

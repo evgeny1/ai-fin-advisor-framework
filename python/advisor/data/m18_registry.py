@@ -374,4 +374,102 @@ _ALL_SPECS: list[FetchSpec] = [
         acceptable_lag_days=1,
         consumer=["M16", "M13", "M07"],
     ),
+
+    # ── TREND SERIES (ENG-13) ─────────────────────────────────────────────────
+    # §13 conditions containing "sustained"/"consecutive"/"rolling"/"trend"/
+    # "reversal" were previously always skipped (analysis/thesis.py) — no
+    # FetchSpec existed for the multi-week history they need. One call per
+    # series per session covers the whole lookback window; see analysis/trend.py.
+
+    FetchSpec(
+        id="DXY_TREND",
+        source=DataSource.YFINANCE,
+        description="DX-Y.NYB, 8 weekly closes. Feeds SGOL/SIVR DXY sustaining/"
+                    "failure conditions (§13) and DBMF's 4-market directional check. "
+                    "Also feeds GAP-16 IHP range-position advisory (analysis/range_position.py).",
+        update_frequency=UpdateFrequency.WEEKLY,
+        acceptable_lag_days=7,
+        consumer=["M19", "M15"],
+    ),
+
+    FetchSpec(
+        id="BRENT_TREND",
+        source=DataSource.YFINANCE,
+        description="BZ=F, 8 weekly closes. Feeds DBMF's directional check and "
+                    "MLPX's 'BZUSD sustained < 65 for >= 6 consecutive weeks' failure signal.",
+        update_frequency=UpdateFrequency.WEEKLY,
+        acceptable_lag_days=7,
+        consumer=["M19"],
+    ),
+
+    FetchSpec(
+        id="GOLD_TREND",
+        source=DataSource.YFINANCE,
+        description="GC=F, 8 weekly closes. Feeds DBMF's directional check.",
+        update_frequency=UpdateFrequency.WEEKLY,
+        acceptable_lag_days=7,
+        consumer=["M19"],
+    ),
+
+    FetchSpec(
+        id="SP500_TREND",
+        source=DataSource.YFINANCE,
+        description="^GSPC, 8 weekly closes. Feeds DBMF's directional check.",
+        update_frequency=UpdateFrequency.WEEKLY,
+        acceptable_lag_days=7,
+        consumer=["M19"],
+    ),
+
+    FetchSpec(
+        id="COPPER_TREND",
+        source=DataSource.YFINANCE,
+        description="HG=F, 12 weekly closes. Feeds COPX/URA 'stable or upward trend' "
+                    "sustaining conditions and SIVR/COPX 'sustained decline' failure signals.",
+        update_frequency=UpdateFrequency.WEEKLY,
+        acceptable_lag_days=7,
+        consumer=["M19"],
+    ),
+
+    FetchSpec(
+        id="URANIUM_TREND",
+        source=DataSource.YFINANCE,
+        description="⚠ Same illiquid-contract caveat as URANIUM_SPOT (UX=F). Feeds "
+                    "URA's 'stable or upward trend' / '20% decline from high' §13 conditions. "
+                    "Falls back to FETCH_FAILED gracefully — never silently treated as data.",
+        update_frequency=UpdateFrequency.WEEKLY,
+        acceptable_lag_days=7,
+        consumer=["M19"],
+    ),
+
+    FetchSpec(
+        id="COPX_PRICE_TREND",
+        source=DataSource.YFINANCE,
+        description="COPX ETF price, 8 weekly closes. Feeds SIVR's "
+                    "'COPX sustained decline > 15% over 8 weeks' failure signal.",
+        update_frequency=UpdateFrequency.WEEKLY,
+        acceptable_lag_days=7,
+        consumer=["M19"],
+    ),
+
+    FetchSpec(
+        id="THREEFYTP10_TREND",
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        description="THREEFYTP10, 10 weekly observations. Feeds SGOL/SIVR's "
+                    "'real yield sustained > 2.0% for >= 4 weeks' failure signal "
+                    "and GAP-16 IHP range-position advisory.",
+        update_frequency=UpdateFrequency.WEEKLY,
+        acceptable_lag_days=10,
+        consumer=["M19", "M15"],
+    ),
+
+    FetchSpec(
+        id="NASDAQ_30D_RETURN",
+        source=DataSource.YFINANCE,
+        description="^IXIC 30-trading-day pct-change. Feeds MAGS's "
+                    "'Nasdaq 30d return <= -10%' failure signal — previously had "
+                    "no FetchSpec or regex pattern at all (silently unevaluable).",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M19"],
+    ),
 ]

@@ -53,6 +53,7 @@ from .floor_monitor import (
     PassiveMandateAbsentWarning,
 )
 from .thesis import evaluate_thesis_conditions
+from .range_position import evaluate_range_position_advisories, RangePositionAdvisory
 
 __all__ = [
     # M11
@@ -83,4 +84,7 @@ __all__ = [
     "PassiveMandateAbsentWarning",
     # M19 thesis sustaining conditions
     "evaluate_thesis_conditions",
+    # GAP-16 range-position advisory
+    "evaluate_range_position_advisories",
+    "RangePositionAdvisory",
 ]

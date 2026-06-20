@@ -213,3 +213,24 @@ AIPO target reduction (IRA/Roth 7%→3%; DBMF IRA/Roth +4pp): under client delib
      entries" invariant after adding the v1.41 Section 12 entry. -->
 
 ---
+
+2026-06-04 - Framework v1.31 (M18 v1.2 regime re-verification; M14 re-computation; STG B challenge closed).
+BZ=F Feb 25 2026 actual $70.85 T1 (estimate $70 accurate, +$0.85). energy_90d May 26 corrected +36.9%
+(vs estimate +38.6%) — HIGH tier CONFIRMED unchanged. VIX Feb 25 = 17.93 confirmed as actual T1 close
+(was NOT an estimate). VIX_change_90d_pts -1.23 pts confirmed exact. Prior M14 composite HIGH: FULLY CONFIRMED.
+Today (June 4): energy_90d = BZ=F $97.81 (Jun 3 T1) vs $92.69 (Mar 6 T1 — 90d anchor) = +5.52% ->
+commodity_fear_divergence NOT FIRING (war premium now inside 90d window; below 10% MODERATE threshold).
+VIX_change_90d_pts = 16.06 - 29.49 = -13.43 pts. broad_equity_30d = SPY Apr 22->Jun 3 +6.05% ->
+equity_scenario_divergence HIGH. M14 composite = HIGH (equity-driven only). UnderweightReviewTrigger NOT fired.
+STG B challenge CLOSED: MAGS +4.79% YTD (Jun 4 live) confirms [-2,+4] * adoption (v1.27). Stale -6% YTD challenge refuted.
+Sec 11.2 descriptor update (editorial: "-6% to -1%" -> "[-2,+4] *") deferred to June 30.
+PAVE EV confirmed -4.03% at current price $57.61 and current probability vector. No exit triggers fired.
+Iran qualitative: MOU unsigned, talks fragile, C not structurally moderated — CARRY A=7/B=36/C=41/D=5/E=4/F=7.
+M12 PATTERN_B Step 3b added: instruments.json local write to MCP server directory.
+M12 PATTERN_A amendment drafted as artifact. instruments.json written: ["MLPX","DBMF","SGOL","VTIP","AIPO",
+"XAR","SGOV","SIVR","COPX","MAGS","XLP","PAVE","URA"]. No Sec 4.1 changes. No probability changes.
+
+<!-- Archived 2026-06-20 (§3 compaction, GAP-16/ENG-13 session) — restores §3's
+     "last 10 entries" invariant after adding the v1.42 GAP-16 entry. -->
+
+---

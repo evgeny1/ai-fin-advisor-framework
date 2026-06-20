@@ -1379,3 +1379,131 @@ session) that no test run actually touched it before or after this fix.
 
 `tools/validate_manifests.py`: 19/19 pass. Full suite (`not integration`):
 658 passed, 60 deselected (+7 from this item's new tests, 0 regressions).
+
+---
+
+### ENG-13 — M19 trailing-window conditions have no tracking infrastructure
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  MEDIUM
+  Category:  functional-gap
+  Opened:    2026-06-17 (originally noted in Calibration_State.md v1.38 log entry)
+  Closed:    2026-06-20
+  Area:      python/advisor/analysis/thesis.py, trend.py (new), range_position.py (new),
+             python/advisor/data/fetchers/yfinance_fetcher.py, fred_fetcher.py,
+             python/advisor/data/m18_registry.py, python/advisor/mcp_server.py
+  Related:   GAP-16, ENG-26 (split out of this item on closing it)
+-->
+
+**Description:** §13 conditions containing "sustained" / "consecutive" /
+"rolling" / "trend" / "reversal" (6-12 week windows) were explicitly
+skipped with a `quality_flag` rather than evaluated — there was no
+historical-trend-tracking infrastructure. Documented behavior, not a
+silent gap, but the underlying capability didn't exist.
+
+**Suggested next step (original):** design a small rolling-window store
+that `thesis.py` can query for "has X trended directionally over the
+last N weeks."
+
+
+**Resolution (2026-06-20):** Closed the price-series half of this item —
+the half that didn't actually need persisted history. Key insight:
+yfinance and FRED both serve arbitrary historical lookback windows in a
+single request (already proven by the pre-existing VIX_30D_AVG/
+VIX_90D_AVG/BROAD_EQUITY_TRAILING fetchers), so DBMF/SGOL/SIVR/MLPX/URA/
+COPX's trend conditions don't need cross-session persistence — one fetch
+per session covering the full window is sufficient.
+
+New `analysis/trend.py`: pure functions on a `List[float]` of weekly
+closes — `directional_trend()` (DBMF's own stated definition: net move
+>= threshold% in one direction "without full reversal," operationalized
+as never crossing back through the window's starting value),
+`all_weeks_meet()` (every week satisfies a comparator — for "sustained <
+threshold for N weeks" conditions), `decline_from_high_pct()` (for
+"decline from most recent high" conditions), `mean_reversion_mode()`
+(negation of `directional_trend` over the same window/threshold — an
+earlier draft used a separate short trailing sub-window with the SAME
+threshold as the full window, which is a real bug: a steady multi-week
+trend routinely moves less than the materiality threshold within any
+short sub-window of itself, so it would have been systematically
+misclassified as "mean-reversion." Caught by the DBMF test suite before
+shipping — see `test_two_trending_markets_satisfies_sustaining` in
+`test_thesis.py`.)
+
+9 new `*_TREND`/`NASDAQ_30D_RETURN` FetchSpecs registered in
+`m18_registry.py` (DXY_TREND, BRENT_TREND, GOLD_TREND, SP500_TREND,
+COPPER_TREND, URANIUM_TREND, COPX_PRICE_TREND, THREEFYTP10_TREND,
+NASDAQ_30D_RETURN) — mirrors the existing VIX/broad-equity pattern in
+`yfinance_fetcher.py` (`fetch_weekly_trend()`, `fetch_nasdaq_trailing()`)
+and a new `_fetch_history()`/`_fetch_trend_series()` pair in
+`fred_fetcher.py` for THREEFYTP10 (FRED's observations endpoint already
+supports a date range — no new capability needed, just a multi-row
+variant of the existing single-value fetch). All degrade gracefully
+(quality_flag, no exception) on empty/illiquid series — same contract as
+the rest of these files (e.g. URANIUM_SPOT's existing UX=F caveat).
+`tests/test_stage1/test_fetchers.py::test_expected_spec_count` bumped
+34→43 per its own "update when adding series" instruction.
+
+`thesis.py`'s `_eval_trend()` dispatches each recognized §13 phrasing
+(DBMF's 2-of-4 directional count and mean-reversion failure; SGOL/SIVR's
+DXY-trend sustaining/failure and THREEFYTP10-sustained failure; SIVR's
+COPX-decline failure; MLPX's BZUSD-sustained-low failure; URA/COPX's
+stable-or-upward sustaining and sustained-decline failure) against the
+new readings. Found and fixed while wiring this: `_evaluate_one_condition`
+previously gated `_eval_trend` behind the same `_needs_trailing_window()`
+keyword check used for flagging — but at least one real §13 condition
+("DXY appreciation > 8% over 8 weeks") doesn't contain any of the five
+skip keywords, so it was silently falling through to "no evaluator
+recognizes condition" via a completely different path than the one this
+item was meant to fix. `_eval_trend` is now attempted unconditionally
+(cheap string matching); the keyword check is now used only to choose
+which generic flag message to show when nothing recognizes a condition.
+
+Also fixed in the same pass, found via the MAGS test: "Nasdaq 30d return
+<= -10%" had no skip keyword AND no regex pattern in
+`_eval_simple_numeric` — it was falling through to the generic
+unrecognized-condition flag for an entirely separate reason (missing
+data source, not missing trend logic). Added `NASDAQ_30D_RETURN` (point-
+in-time, same pattern as `BROAD_EQUITY_TRAILING`) and a regex pattern for
+it.
+
+**Split out, not solved here — ENG-26:** MAGS's failure signal
+"equity_scenario_divergence shifts to MODERATE for >= 2 consecutive
+sessions" is a condition over a COMPUTED SIGNAL across sessions, not a
+raw price series — no amount of yfinance/FRED history-fetching solves
+"what was M14's divergence level last session," because nothing
+persists it. `_eval_trend()` flags this specific case distinctly (cites
+"ENG-26" in the quality_flag text) rather than lumping it in with the
+now-solved price-trend conditions.
+
+**Enabled directly by this fix — GAP-16:** the new trend infrastructure
+(specifically `THREEFYTP10_TREND` and `DXY_TREND`) is reused as-is by
+`analysis/range_position.py`, closing GAP-16's within-scenario IHP
+sub-condition advisory in the same session. See GAP-16 in
+`Calibration_State.md` §6 for that half.
+
+**Bug found and fixed in `mcp_server.py` while adding test coverage:**
+`_tool_apply_scoring()`'s M19 block was gated `if cal_for_tsc is not None
+and readings_list:` — an empty readings list (e.g. every fetcher failed
+this session) is falsy in Python, so the ENTIRE M19 block — including
+`tsc_evaluations` and the new GAP-16 block — silently never ran, despite
+both being specifically designed to degrade to UNKNOWN/"inconclusive"
+with quality_flags on missing data, not crash. Caught via the existing
+`no_network` test fixture (`FetchRegistry.fetch_all` mocked to return
+`[]`) when adding `test_apply_scoring_has_range_position_advisories_key`
+— no pre-existing test had ever asserted on `tsc_evaluations`'s presence,
+so this had been silently true since M19 shipped (v1.37) without being
+caught. Fixed: gate is now `if cal_for_tsc is not None:` only.
+
+New tests: `tests/test_stage3/test_trend.py` (22, pure-function unit
+tests on `analysis/trend.py`), `tests/test_stage3/test_thesis.py` (16 —
+no dedicated test file existed for `thesis.py` before this at all; only
+ever exercised via the live-data smoke test mentioned in the v1.37 log
+entry, never via committed pytest), plus fetcher tests in
+`test_stage1/test_yfinance_unit.py` (9) and `test_stage1/test_fred_fetcher.py`
+(5), plus MCP-level shape tests in `test_mcp/test_run_computation.py` (2).
+`tools/validate_manifests.py`: 19/19 pass (no module `.md` files needed
+changes — the trailing-window limitation was never documented in
+`M19_ThesisSustainingConditions.md` itself, only in `thesis.py`'s
+docstring and this backlog). Full suite (`not integration`): 645 passed,
+18 deselected, 0 regressions.

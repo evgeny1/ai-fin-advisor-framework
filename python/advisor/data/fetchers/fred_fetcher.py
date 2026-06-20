@@ -84,6 +84,36 @@ def _fetch_latest(series_id: str) -> Optional[float]:
     return None
 
 
+def _fetch_history(series_id: str, weeks: int) -> List[float]:
+    """
+    Fetch up to `weeks` most-recent non-missing observations, oldest-first.
+    Added to close ENG-13: THREEFYTP10's §13 sustaining/failure conditions
+    ("sustained >= N weeks") need a short trailing window, not just the
+    latest print — _fetch_latest() alone can't evaluate those.
+    """
+    key = _api_key()
+    if not key:
+        return []
+    params = {
+        "series_id":         series_id,
+        "api_key":           key,
+        "file_type":         "json",
+        "sort_order":        "asc",
+        "observation_start": (datetime.date.today() - datetime.timedelta(weeks=weeks + 2)).isoformat(),
+    }
+    resp = requests.get(_BASE, params=params, timeout=_TIMEOUT)
+    resp.raise_for_status()
+    vals: List[float] = []
+    for obs in resp.json().get("observations", []):
+        v = obs.get("value", ".")
+        if v not in (".", ""):
+            try:
+                vals.append(float(v))
+            except ValueError:
+                continue
+    return vals[-weeks:] if vals else []
+
+
 # ── Public dispatcher ──────────────────────────────────────────────────────────
 
 def fetch_yield_curve_fred(spec: FetchSpec) -> List[DataReading]:
@@ -102,6 +132,9 @@ def fetch_yield_curve_fred(spec: FetchSpec) -> List[DataReading]:
 
     if spec.id == "YIELD_CURVE":
         return _fetch_yield_curve(spec)
+
+    if spec.id == "THREEFYTP10_TREND":
+        return _fetch_trend_series(spec, "THREEFYTP10", weeks=10)
 
     if spec.id in _SINGLE_SERIES:
         return _fetch_single_series(spec)
@@ -176,4 +209,30 @@ def _fetch_single_series(spec: FetchSpec) -> List[DataReading]:
         source=DataSource.FRED_SPREADSHEET_TAB,
         fetched_at=datetime.datetime.utcnow(),
         quality_flags=flags,
+    )]
+
+
+def _fetch_trend_series(spec: FetchSpec, series_id: str, weeks: int) -> List[DataReading]:
+    """THREEFYTP10_TREND dispatcher target — see _fetch_history() above."""
+    try:
+        vals = _fetch_history(series_id, weeks)
+    except Exception as e:
+        logger.warning(f"FRED {series_id} trend fetch failed: {e}")
+        return [DataReading(spec_id=spec.id, value=None,
+                            source=DataSource.FRED_SPREADSHEET_TAB,
+                            fetched_at=datetime.datetime.utcnow(),
+                            quality_flags=[f"FETCH_FAILED: {e}"])]
+    if not vals:
+        return [DataReading(spec_id=spec.id, value=None,
+                            source=DataSource.FRED_SPREADSHEET_TAB,
+                            fetched_at=datetime.datetime.utcnow(),
+                            quality_flags=[f"UNAVAILABLE: no observations for {series_id} "
+                                          "(FRED_API_KEY missing or series empty)"])]
+    return [DataReading(
+        spec_id=spec.id,
+        value={"closes": vals, "n_weeks": len(vals)},
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        fetched_at=datetime.datetime.utcnow(),
+        quality_flags=([] if len(vals) >= weeks else
+                       [f"PARTIAL: only {len(vals)}/{weeks} weeks available"]),
     )]

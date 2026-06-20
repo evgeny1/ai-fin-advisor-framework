@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-20 (closed ENG items archived to FRAMEWORK_BACKLOG_ARCHIVE.md)
+**Last updated:** 2026-06-20 (ENG-13 closed, ENG-26 opened, GAP-16 closed — trailing-window trend infra + IHP range-position advisory)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -53,7 +53,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-10 | CLOSED | HIGH | testing | No test coverage for advisor_run_computation / advisor_apply_scoring |
 | ENG-11 | CLOSED | HIGH | testing | No Pattern-B end-to-end pipeline test |
 | ENG-12 | OPEN | MEDIUM | testing | Tests assert against live, not snapshotted, framework files |
-| ENG-13 | OPEN | MEDIUM | functional-gap | M19 trailing-window conditions have no tracking infrastructure |
+| ENG-13 | CLOSED | MEDIUM | functional-gap | M19 trailing-window conditions have no tracking infrastructure |
 | ENG-14 | OPEN | LOW | documentation | GAP-11 label has no description anywhere |
 | ENG-15 | OPEN | LOW | process | No CI — test suite is run manually |
 | ENG-16 | CLOSED | HIGH | architecture | M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py |
@@ -66,6 +66,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-23 | CLOSED | MEDIUM | architecture | M05_SessionInit.md retired outright (ENG-2 follow-on decision #2) |
 | ENG-24 | CLOSED | MEDIUM | architecture | M13.RecalibrationSequence() has no Python implementation — still 100% manual |
 | ENG-25 | CLOSED | LOW | architecture | instruments.json write not wired — Project_Instructions_MCP.md claimed MCP server writes it; it doesn't |
+| ENG-26 | OPEN | LOW | functional-gap | MAGS's "consecutive sessions" §13 condition needs cross-session SIGNAL history — different problem from ENG-13's price-series trends |
 
 ---
 
@@ -96,28 +97,34 @@ known-good values) onto static fixture files committed under
 `tests/fixtures/`, so they test parser logic rather than a snapshot of
 production data that's expected to keep changing.
 
-### ENG-13 — M19 trailing-window conditions have no tracking infrastructure
+### ENG-26 — MAGS "consecutive sessions" condition needs cross-session SIGNAL history
 <!-- ITEM
   Status:    OPEN
-  Severity:  MEDIUM
+  Severity:  LOW
   Category:  functional-gap
-  Opened:    2026-06-17 (originally noted in Calibration_State.md v1.38 log entry)
+  Opened:    2026-06-20 (split out of ENG-13 on closing it)
   Area:      python/advisor/analysis/thesis.py
-  Related:   —
+  Related:   ENG-13 (closed — see FRAMEWORK_BACKLOG_ARCHIVE.md)
 -->
 
-**Description:** §13 conditions containing "sustained" / "consecutive" /
-"rolling" / "trend" / "reversal" (6-12 week windows) are explicitly
-skipped with a `quality_flag` rather than evaluated — there is no
-historical-trend-tracking infrastructure yet. This is intentional,
-documented behavior (not a silent gap), but the underlying capability
-doesn't exist.
+**Description:** ENG-13 closed the price-series half of §13's trailing-window
+gap (DBMF/SGOL/SIVR/MLPX/URA/COPX — all evaluable in one yfinance/FRED call
+per session, no persistence needed). One condition remains genuinely
+unsolved: MAGS's failure signal "equity_scenario_divergence shifts to
+MODERATE for >= 2 consecutive sessions." That's a condition over a
+COMPUTED SIGNAL's value across sessions, not a raw price series — yfinance/
+FRED can't serve "what was M14's divergence level last session," because
+nothing persists it. `analysis/thesis.py`'s `_eval_trend()` explicitly
+flags this case (`"ENG-26"` in the quality_flag text) rather than lumping
+it in with the now-solved price-trend conditions.
 
-**Suggested next step:** design a small rolling-window store (could be as
-simple as a CSV/JSON history file per tracked series, updated each
-session) that `thesis.py` can query for "has X trended directionally over
-the last N weeks" — needed before any §13 condition using that language
-can move from UNKNOWN to a real ACTIVE/DEGRADED/FAILED evaluation.
+**Suggested next step:** a small per-session signal-history file (mirrors
+the existing local-only `instruments.json` write pattern — JSON, outside
+the git repo, never committed) recording M14's `equity_scenario_divergence`
+level each session would let `thesis.py` check "was it MODERATE last
+session too." Low priority — MAGS already carries a HOLD-only override for
+unrelated EV reasons, so this one failure signal not firing doesn't change
+current execution; it just means a real exit trigger is currently inert.
 
 ### ENG-14 — GAP-11 label has no description anywhere
 <!-- ITEM
@@ -240,6 +247,10 @@ folder.
 **CLOSED** 2026-06-18 (HIGH, testing). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 
+### ENG-13 — M19 trailing-window conditions have no tracking infrastructure
+**CLOSED** 2026-06-20 (MEDIUM, functional-gap). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+
 ### ENG-16 — M07/M08/M09/M10/M13/M15 portfolio-math Python implemented but never called by mcp_server.py
 **CLOSED** 2026-06-17 (HIGH, architecture). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
@@ -293,6 +304,7 @@ first; update this index to match, not the other way around.
 | GAP-8 | CLOSED v1.32 | §2.1 C-trigger clock T1-confirmed (max 3 consecutive closes ≥$110) | Calibration_State.md §3 |
 | GAP-11 | OPEN | M07 EV floor — see ENG-14, no description recovered yet | Session_Log.md |
 | GAP-15 | CLOSED v1.32 | B_WATCH_LEVEL_3 graduated protocol added to §2.3 | Calibration_State.md §3 |
+| GAP-16 | CLOSED v1.42 | Within-scenario sub-condition advisory (range-position) for wide-range roles — IHP (real yield/DXY) implemented; STF/RAC/IHC sub-conditions not yet identified, separate follow-on | Calibration_State.md §6 |
 
 ---
 

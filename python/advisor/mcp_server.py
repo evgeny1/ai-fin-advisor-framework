@@ -554,7 +554,15 @@ def _tool_apply_scoring(answers: Dict[str, int]) -> str:
     # used above for RoleRepricingDivergence's DivergenceSignal recompute.
     cal_for_tsc = _cache.get("cal")
     readings_list = _cache.get("readings", [])
-    if cal_for_tsc is not None and readings_list:
+    if cal_for_tsc is not None:
+        # Note: readings_list may legitimately be empty (all fetchers failed
+        # this session) — evaluate_thesis_conditions() and
+        # evaluate_range_position_advisories() are both designed to degrade
+        # to UNKNOWN/"inconclusive" with quality_flags on missing data, not
+        # crash, so there is no reason to skip the whole block on that case
+        # alone (a prior version did `and readings_list`, which silently
+        # disabled M19 entirely whenever every fetch failed — found via the
+        # no_network test fixture while adding GAP-16 coverage).
         try:
             from .analysis import compute_divergence_signal, evaluate_thesis_conditions
 
@@ -596,6 +604,35 @@ def _tool_apply_scoring(answers: Dict[str, int]) -> str:
                     f"⚠ M19: {len(unknown)} ticker(s) UNKNOWN this session "
                     f"(no evaluable §13 condition — not the same as ACTIVE): {unknown}"
                 )
+
+            # ── GAP-16: within-scenario range-position advisory ────────────
+            # Advisory only — never feeds blendedScenarioReturn()/EV/allocation.
+            try:
+                from .analysis import evaluate_range_position_advisories
+
+                range_advisories = evaluate_range_position_advisories(
+                    held_tickers=held_tickers, probs=probs,
+                    cal=cal_for_tsc, readings=readings_by_id,
+                )
+                if range_advisories:
+                    result["range_position_advisories"] = [
+                        {
+                            "ticker":             a.ticker,
+                            "role_id":            a.role_id,
+                            "scenario":           a.scenario,
+                            "range_pct":          [a.range_conservative, a.range_upside],
+                            "range_width_pp":     a.range_width_pp,
+                            "signal":             a.signal,
+                            "drivers":            a.drivers,
+                            "note":               a.note,
+                            "quality_flags":      a.quality_flags,
+                        }
+                        for a in range_advisories
+                    ]
+                else:
+                    result["range_position_advisories"] = []
+            except Exception as e:
+                result["flags"].append(f"⚠ GAP-16 range-position advisory failed: {e}")
         except Exception as e:
             result["flags"].append(f"⚠ M19 thesis evaluation failed: {e}")
     else:

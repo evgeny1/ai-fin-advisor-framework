@@ -201,6 +201,9 @@ class TestFetchSingle:
         dispatcher_handled = {
             "HOLDINGS_PRICES", "VIX_30D_AVG", "VIX_90D_AVG",
             "BROAD_EQUITY_TRAILING", "YIELD_CURVE", "HISTORICAL_INSTRUMENT_PRICES",
+            "NASDAQ_30D_RETURN",
+            "DXY_TREND", "BRENT_TREND", "GOLD_TREND", "SP500_TREND",
+            "COPPER_TREND", "URANIUM_TREND", "COPX_PRICE_TREND",
         }
         yfinance_specs = [
             s for s in _ALL_SPECS
@@ -213,3 +216,74 @@ class TestFetchSingle:
             f"These YFINANCE specs have no entry in _SYMBOL_MAP: {missing}. "
             "Add them to _SYMBOL_MAP in yfinance_fetcher.py."
         )
+
+
+# ── ENG-13: weekly trend history ──────────────────────────────────────────────
+
+class TestFetchWeeklyTrend:
+
+    def test_returns_closes_list(self):
+        from advisor.data.fetchers.yfinance_fetcher import fetch_weekly_trend
+        closes = [100.0, 102.0, 104.0, 106.0, 108.0, 110.0, 112.0, 114.0]
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.download",
+                   return_value=_mock_download(closes)):
+            readings = fetch_weekly_trend(_spec("DXY_TREND"), "DX-Y.NYB", 8)
+        val = readings[0].value
+        assert val["closes"] == closes
+        assert val["n_weeks"] == 8
+        assert val["symbol"] == "DX-Y.NYB"
+        assert readings[0].is_valid
+
+    def test_trims_to_requested_window(self):
+        from advisor.data.fetchers.yfinance_fetcher import fetch_weekly_trend
+        closes = list(range(20))  # 20 weeks of history, only want last 8
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.download",
+                   return_value=_mock_download([float(c) for c in closes])):
+            readings = fetch_weekly_trend(_spec("BRENT_TREND"), "BZ=F", 8)
+        assert readings[0].value["closes"] == [float(c) for c in closes[-8:]]
+
+    def test_partial_history_flagged_not_failed(self):
+        from advisor.data.fetchers.yfinance_fetcher import fetch_weekly_trend
+        closes = [50.0, 51.0, 52.0]  # only 3 weeks available, wanted 12
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.download",
+                   return_value=_mock_download(closes)):
+            readings = fetch_weekly_trend(_spec("URANIUM_TREND"), "UX=F", 12)
+        assert readings[0].is_valid
+        assert any("PARTIAL" in f for f in readings[0].quality_flags)
+        assert readings[0].value["n_weeks"] == 3
+
+    def test_empty_history_degrades_gracefully(self):
+        """Illiquid contracts (e.g. UX=F) must degrade, never raise."""
+        from advisor.data.fetchers.yfinance_fetcher import fetch_weekly_trend
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.download",
+                   return_value=pd.DataFrame()):
+            readings = fetch_weekly_trend(_spec("URANIUM_TREND"), "UX=F", 12)
+        assert not readings[0].is_valid
+        assert readings[0].value is None
+        assert any("UNAVAILABLE" in f for f in readings[0].quality_flags)
+
+    def test_download_exception_degrades_gracefully(self):
+        from advisor.data.fetchers.yfinance_fetcher import fetch_weekly_trend
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.download",
+                   side_effect=RuntimeError("network down")):
+            readings = fetch_weekly_trend(_spec("DXY_TREND"), "DX-Y.NYB", 8)
+        assert not readings[0].is_valid
+        assert any("FETCH_FAILED" in f for f in readings[0].quality_flags)
+
+
+class TestFetchNasdaqTrailing:
+
+    def test_30d_return_computed(self):
+        from advisor.data.fetchers.yfinance_fetcher import fetch_nasdaq_trailing
+        closes = [100.0] * 29 + [89.0] * 21   # -11% over the trailing window
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.download",
+                   return_value=_mock_download(closes)):
+            readings = fetch_nasdaq_trailing(_spec("NASDAQ_30D_RETURN"))
+        assert readings[0].value["return_30d_pct"] == pytest.approx(-11.0, abs=0.1)
+
+    def test_empty_history_raises(self):
+        from advisor.data.fetchers.yfinance_fetcher import fetch_nasdaq_trailing
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.download",
+                   return_value=pd.DataFrame()):
+            with pytest.raises(RuntimeError, match="empty"):
+                fetch_nasdaq_trailing(_spec("NASDAQ_30D_RETURN"))
