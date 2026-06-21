@@ -1706,7 +1706,10 @@ of the underlying advisory signal itself.
 both before and after this change (no existing test asserted on the exact
 note text for the flat-data case, so nothing needed updating — a gap worth
 closing: no dedicated `test_range_position.py` exists yet covering the
-flat-vs-unavailable distinction). `tools/validate_manifests.py`: 19/19. Live
-re-verification deferred to next MCP server restart (this fix landed after
-the same-session restart that confirmed ENG-27/28/29, so the running
-process does not yet have it).
+flat-vs-unavailable distinction). `tools/validate_manifests.py`: 19/19. **Live-verified** after a second
+same-session restart: SGOL/SIVR `range_position_advisories` now read
+"real yield (THREEFYTP10) flat over the window (move below 5% materiality
+threshold) — no lean; DXY flat over the window (move below 5% materiality
+threshold) — no lean" instead of the previous "no trend data available
+this session" — `quality_flags` empty in both cases, confirming the data
+was present all along and only the message was wrong.
