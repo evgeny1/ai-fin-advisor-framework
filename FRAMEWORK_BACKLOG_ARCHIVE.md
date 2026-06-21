@@ -1713,3 +1713,54 @@ threshold) — no lean; DXY flat over the window (move below 5% materiality
 threshold) — no lean" instead of the previous "no trend data available
 this session" — `quality_flags` empty in both cases, confirming the data
 was present all along and only the message was wrong.
+
+
+---
+
+### ENG-36 — dominant_directive() crashed on MAGS/MLPX/COPX (DirectiveCode.upper())
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  MEDIUM
+  Category:  bug
+  Opened:    2026-06-20
+  Closed:    2026-06-20
+  Area:      python/advisor/analysis/instruments.py
+  Related:   discovered while running advisor_evaluate_allocation in-process
+             to test ENG-33 and produce the floor-breach remediation numbers
+-->
+
+**Found:** `dominant_directive()` returned `"⚠ {ticker}: dominantDirective
+failed — 'DirectiveCode' object has no attribute 'upper'"` for MAGS, MLPX,
+and COPX, but not for DBMF, SGOL, SGOV, SIVR, VTIP, or AIPO held in the same
+accounts.
+
+**Root cause:** `DIRECTIVES: Dict[Tuple[str,str], DirectiveCode]`
+(`portfolio/directives.py`) maps every (role, scenario) pair to a
+`DirectiveCode` enum member — a plain `Enum`, not a `str` subclass.
+`dominant_directive()`'s lookup `directives_table.get((role, scenario),
+"HOLD")` returns either that enum (found) or the literal string `"HOLD"`
+(the fallback default) — a mixed-type return depending on whether the
+lookup hits. `_directive_direction(directive: str)` and `_most_conservative()`
+both called `.upper()` directly on whatever they received, which only
+works for the string fallback. Single-component tickers (DBMF, SGOL, ...)
+and tickers whose material components happen to share an identical
+directive (SIVR: both components ADD in scenario B) short-circuit before
+ever reaching `.upper()`, so they never hit the bug. MAGS, MLPX, and COPX
+all have two material (≥15% weight) components with genuinely *different*
+directives in scenario B — exactly the case `dominant_directive()` exists
+to resolve — so they hit `direction_sets = {_directive_direction(d) for d
+in directives}`, calling `.upper()` on real `DirectiveCode` enum members
+and crashing every time. The function worked in every trivial case and
+crashed in precisely the substantive one.
+
+**Fix:** both `_directive_direction()` and `_most_conservative()`'s inner
+`_rank()` now normalize via `d.value if hasattr(d, "value") else d` before
+calling `.upper()`, handling either a `DirectiveCode` enum or the plain-str
+fallback.
+
+**Verification:** full suite (`not integration`): 645 passed, 0 regressions.
+`tools/validate_manifests.py`: 19/19. Live-verified with real
+`Calibration_State.md` data (no network fetch needed — loaded via
+`parse_calibration_state()` directly): `dominant_directive()` now resolves
+cleanly for MAGS, MLPX, and COPX across all six scenarios with zero
+errors, where it previously crashed on at least scenario B for all three.

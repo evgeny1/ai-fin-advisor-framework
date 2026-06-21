@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-20 (ENG-27/28/29/32 closed — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, range_position.py flat-vs-unavailable note bug; ENG-30/31 opened — DBMF 3M-return condition, AIPO capex dependency; all found/fixed live the same session)
+**Last updated:** 2026-06-20/21 (ENG-27/28/29/32/36 closed — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, range_position.py flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; ENG-33 open, investigated not root-caused — evaluate_allocation MCP transport hang; all found/fixed live across one extended session)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -74,6 +74,10 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-31 | OPEN | LOW | functional-gap | AIPO's hyperscaler capex guidance §13 sustaining condition has no data source |
 | ENG-32 | CLOSED | LOW | hygiene | range_position.py conflated "trend data flat" with "trend data unavailable" in GAP-16 advisory note text |
 | ENG-33 | OPEN | HIGH | infrastructure | advisor_evaluate_allocation MCP tool call hangs ~4min in live use; underlying Python verified fast/correct, suspect MCP transport layer |
+| ENG-34 | OPEN | LOW | functional-gap | XAR's "Defense budget trajectory positive" §13 sustaining condition has no Call-2 question or data source |
+| ENG-35 | OPEN | MEDIUM | performance | advisor_run_computation took 244.8s in-process post-ENG-27 (vs sub-4min MCP ceiling) -- likely yfinance lock serialization cost, possibly compounded by session's repeated test-call rate limiting; needs isolated measurement |
+| ENG-36 | CLOSED | MEDIUM | bug | dominant_directive() crashed on MAGS/MLPX/COPX -- _directive_direction()/_most_conservative() called .upper() on DirectiveCode enum members, which only worked for the str fallback default |
+| ENG-37 | OPEN | MEDIUM | functional-gap | recalibration_sequence()'s "anchor = above-floor proxy" heuristic produces a degenerate no-op when every holding is above its own floor (the normal case) -- gap_closed_by_reallocation reports true without any actual reallocation |
 
 ---
 
@@ -382,6 +386,109 @@ get a stack trace at the point it stalls). Until root-caused, the existing
 fallback holds: don't retry more than once live; fall back to the manually
 documented EV figures in `Calibration_State.md` §11 for the session and
 flag that a live recompute wasn't available.
+
+
+### ENG-34 — XAR's "Defense budget trajectory positive" §13 condition has no Call-2 question or data source
+<!-- ITEM
+  Status:    OPEN
+  Severity:  LOW
+  Category:  functional-gap
+  Opened:    2026-06-20
+  Area:      python/advisor/analysis/thesis.py, orchestrator/scoring_questions.py
+  Related:   ENG-29 (same ticker, different condition)
+-->
+
+**Description:** Found while re-scoring `M19_XAR_CONFLICT_GATE` correctly
+(see Session_Log for the geopolitical correction this session) — once XAR's
+de-escalation gate is answered 0 (conflict still active, correctly), the
+evaluation proceeds past the failure check into XAR's sustaining conditions,
+surfacing a previously-hidden gap: "Defense budget trajectory positive (not
+subject to emergency cuts)" has no Call-2 question wired and no quantitative
+source. Same pattern as ENG-31 (AIPO capex) — masked while XAR was
+incorrectly resolving to FAILED, since failed tickers don't reach the
+sustaining-conditions loop.
+
+**Suggested next step:** same options as ENG-31 — new Call-2 judgment
+question (cheapest) vs. a quantitative defense-budget data source. Low
+priority on its own.
+
+
+### ENG-35 — advisor_run_computation latency: 244.8s measured in-process post-ENG-27
+<!-- ITEM
+  Status:    OPEN
+  Severity:  MEDIUM
+  Category:  performance
+  Opened:    2026-06-20
+  Area:      python/advisor/data/fetchers/yfinance_fetcher.py, data/fetch_registry.py
+  Related:   ENG-27 (introduced the lock that may be the cause)
+-->
+
+**Description:** Running `_tool_run_computation()` in-process (bypassing
+MCP, to test ENG-33/36) timed in at 244.8 seconds — uncomfortably close to
+the ~4-minute MCP call ceiling that's been intermittently hit this session
+for a different tool (ENG-33). ENG-27's fix serialized all yfinance calls
+behind one lock to fix data corruption; that necessarily trades fetch
+parallelism for correctness, and ~15-20 yfinance call sites now run
+sequentially instead of 8-wide. However, this single measurement also
+came after four prior `advisor_run_computation` calls in the same session
+(each hitting ~12+ yfinance symbols), and the run's own stderr showed
+repeated "HTTP Error 401: Invalid Crumb" — a known Yahoo Finance
+rate-limit/session-invalidation symptom — so some or most of the 244.8s
+may be retry/backoff delay from session-level rate limiting rather than
+the lock itself. Not isolated; don't attribute confidently to ENG-27 yet.
+
+**Suggested next step:** measure `fetch_all()` wall-clock on a cold session
+(no recent prior calls) both with and without `_YF_LOCK` to isolate the
+two effects. If the lock itself is the dominant cost, consider batching
+yfinance calls via `yf.download()`'s native multi-ticker support (one
+request for all _SYMBOL_MAP point-quotes, instead of looping under a lock)
+rather than removing the lock and reintroducing ENG-27's race.
+
+
+### ENG-36 — dominant_directive() crashed on MAGS/MLPX/COPX (DirectiveCode.upper())
+**CLOSED** 2026-06-20 (MEDIUM, bug). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+
+### ENG-37 — recalibration_sequence() anchor heuristic produces a degenerate no-op for small floor breaches
+<!-- ITEM
+  Status:    OPEN
+  Severity:  MEDIUM
+  Category:  functional-gap
+  Opened:    2026-06-20
+  Area:      python/advisor/portfolio/allocation.py (recalibration_sequence)
+  Related:   ENG-24 (introduced this function)
+-->
+
+**Description:** When `high_conviction_tickers` isn't supplied, the
+function defaults anchors to "every ticker with weight > its own floor."
+In the normal case — a healthy portfolio where every position is, by
+definition, held above its (small, ~2-8%) floor — this proxy captures the
+ENTIRE portfolio as "anchors," leaving a near-zero residual_weight with
+nothing left to actually reallocate. The function then reports
+`gap_closed_by_reallocation: true` with `revised_allocations` identical to
+the input — technically not wrong (rounding tolerance is met because
+residual_weight ~0), but not an actual remediation either. Found live this
+session on a real floor breach (Relative IRA/Roth, scenario F, -0.45%/
+-0.13%): the function returned a no-op "fixed" result instead of either
+(a) a genuine reallocation suggestion or (b) an honest "no low-conviction
+positions available to trim" message.
+
+**Manual analysis this session** (see Session_Log) found the actual
+F-scenario drag comes overwhelmingly from DBMF (-0.78pp/-1.02pp contribution)
+and SGOL (-0.57pp/-0.45pp), both of which the framework's OWN
+`scenario_weighted_allocation()` output ranks as currently UNDER their
+ideal weight (i.e. the systematic framework wants MORE of both, not less,
+once all six scenarios are probability-weighted) — meaning the mechanically
+"correct" fix here may genuinely be to hold as-is, but the function should
+say that explicitly rather than silently no-op.
+
+**Suggested next step:** when the above-floor proxy selects the entire
+portfolio as anchors (residual_weight below some small threshold, e.g.
+1pp), have the function report `gap_closed_by_reallocation: false` with an
+explicit message ("no low-conviction positions available to trim; consider
+this floor exposure an accepted cost of the optimal allocation, or supply
+high_conviction_tickers manually to force a smaller anchor set") instead of
+a misleadingly-affirmative true.
 
 
 ---

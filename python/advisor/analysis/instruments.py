@@ -292,9 +292,21 @@ def dominant_directive(
     return _most_conservative(directives)
 
 
-def _directive_direction(directive: str) -> str:
-    """Normalize directive to ADD/HOLD/REDUCE for conflict detection."""
-    upper = directive.upper()
+def _directive_direction(directive) -> str:
+    """
+    Normalize directive to ADD/HOLD/REDUCE for conflict detection.
+
+    Accepts either a DirectiveCode enum (the normal case -- DIRECTIVES table
+    values are all DirectiveCode members) or a plain str (the "HOLD" fallback
+    default used when a (role, scenario) pair is missing from the table).
+    DirectiveCode is a plain Enum, not a str subclass, so .upper() only works
+    once normalized via .value -- found 2026-06-20 when dominant_directive()
+    crashed on MAGS/MLPX/COPX with "'DirectiveCode' object has no attribute
+    'upper'", precisely in the case where material components have genuinely
+    different directives (the one case this function exists to resolve).
+    """
+    code = directive.value if hasattr(directive, "value") else directive
+    upper = code.upper()
     if any(x in upper for x in ("ADD", "INCREASE", "BUY")):
         return "ADD"
     if any(x in upper for x in ("REDUCE", "TRIM", "EXIT", "SELL")):
@@ -315,9 +327,11 @@ def _most_conservative(directives: List[str]) -> str:
         "HOLD": 3,
         "ADD": 4, "INCREASE": 5,
     }
-    def _rank(d: str) -> int:
+    def _rank(d) -> int:
+        code = d.value if hasattr(d, "value") else d
+        upper = code.upper()
         for key, rank in priority.items():
-            if key in d.upper():
+            if key in upper:
                 return rank
         return 3  # default HOLD
     return min(directives, key=_rank)
