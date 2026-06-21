@@ -165,3 +165,18 @@ next_session_flags:
 - INFL: classify in Section 11 before the next EV comparison for the Acc4 AIPO/COPX/INFL/XLP decision -- currently held at 0% with a 7% sheet target and no framework-computed blended return.
 - DBMF M19 status is FAILED on verified-correct data for the first time -- worth a deliberate decision on whether to treat it as actionable now that ENG-27/30's data-quality caveats are resolved (ENG-30's second condition is still unevaluated, so treat as a partial signal).
 
+---
+
+date: 2026-06-21 (test)
+scenario_probabilities: { A: 8.0833%, B: 48.5%, C: 16.1667%, D: 3%, E: 8.0833%, F: 16.1667% }
+primary_driver: TEST CALL — verifying ENG-33/38 fixes, dry_run=true, no actual write intended.
+session_type: test
+
+open_triggers:
+- test
+
+open_decisions:
+1. test
+
+next_session_flags:
+_None this session._

@@ -58,6 +58,37 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from pydantic import BaseModel
+
+
+class AccountProfileInput(BaseModel):
+    """
+    Precise, fully-typed replacement for account_profile's original
+    Dict[str, Any] parameter type on advisor_evaluate_allocation.
+
+    ENG-33: advisor_evaluate_allocation hung completely at the MCP
+    transport layer -- proven by the fact that the defensive
+    _with_timeout() wrapper around the underlying function never fired
+    during the hang, meaning the function body was never even reached.
+    advisor_write_back, which has no Dict-typed parameters at all, works
+    instantly through the same transport; apply_scoring's Dict[str, int]
+    (a concrete value type) also works fine. account_profile's loose
+    Dict[str, Any] -- an unconstrained-value dict -- is the most
+    plausible remaining differentiator. This model removes the Any
+    entirely in favor of concrete fields matching exactly what
+    _parse_account_profile() already expects. Not a confirmed fix --
+    the next reasonable experiment given everything else has been ruled
+    out.
+    """
+    account_id: str
+    planning_horizon_years: int
+    objective_type: str
+    owner: str = "primary"
+    floor_nominal_loss: bool = False
+    concentration_cap: float = 0.40
+    drawdown_tolerance: float = 0.30
+
+
 # ENG-33: advisor_evaluate_allocation and advisor_write_back both hung at
 # the MCP client's ~4-minute call ceiling this session with no diagnostic
 # output. Both proved sub-second when run in-process bypassing the MCP
@@ -1134,7 +1165,7 @@ def build_server():
 
     @srv.tool()
     def advisor_evaluate_allocation(
-        account_profile: Dict[str, Any],
+        account_profile: AccountProfileInput,
         current_weights: Dict[str, float],
         tickers: Optional[List[str]] = None,
         proposed_allocations: Optional[Dict[str, float]] = None,
@@ -1184,7 +1215,7 @@ def build_server():
         """
         return _with_timeout(
             _tool_evaluate_allocation, 30.0,
-            account_profile=account_profile,
+            account_profile=account_profile.model_dump(),
             current_weights=current_weights,
             tickers=tickers,
             proposed_allocations=proposed_allocations,

@@ -73,7 +73,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-30 | OPEN | MEDIUM | functional-gap | DBMF's "3M return < -3% while B+C>=55%" §13 failure condition has no FetchSpec/evaluator |
 | ENG-31 | OPEN | LOW | functional-gap | AIPO's hyperscaler capex guidance §13 sustaining condition has no data source |
 | ENG-32 | CLOSED | LOW | hygiene | range_position.py conflated "trend data flat" with "trend data unavailable" in GAP-16 advisory note text |
-| ENG-33 | OPEN | MEDIUM | infrastructure | advisor_evaluate_allocation's MCP transport-layer hang remains unconfirmed (root cause), but a defensive timeout wrapper (_with_timeout) now bounds the blast radius for it and advisor_write_back -- any future hang fails fast with a clear diagnostic instead of a silent 4min wait + risk of duplicate writes. Severity downgraded from CRITICAL now that ENG-38 fixed the confirmed write_back cause and the timeout wrapper structurally prevents the duplicate-write scenario from recurring either way. |
+| ENG-33 | OPEN | MEDIUM | infrastructure | advisor_evaluate_allocation's MCP transport-layer hang remains unconfirmed (root cause), but a defensive timeout wrapper (_with_timeout) bounds the blast radius. New experiment live-pending-verification: replaced account_profile's Dict[str, Any] with a precise AccountProfileInput pydantic model, since write_back (no Dict params) and apply_scoring (Dict[str, int]) both work fine through MCP while evaluate_allocation (the one Dict[str, Any] param) still hangs completely -- timeout wrapper never even fires, proving the hang is pre-function-entry. Requires a server restart to test. |
 | ENG-34 | OPEN | LOW | functional-gap | XAR's "Defense budget trajectory positive" §13 sustaining condition has no Call-2 question or data source |
 | ENG-35 | OPEN | MEDIUM | performance | advisor_run_computation took 244.8s in-process post-ENG-27 (vs sub-4min MCP ceiling) -- likely yfinance lock serialization cost, possibly compounded by session's repeated test-call rate limiting; needs isolated measurement |
 | ENG-36 | CLOSED | MEDIUM | bug | dominant_directive() crashed on MAGS/MLPX/COPX -- _directive_direction()/_most_conservative() called .upper() on DirectiveCode enum members, which only worked for the str fallback default |
@@ -392,11 +392,38 @@ back to MEDIUM now that the worst consequence (silent duplicate writes) is
 structurally prevented regardless of whether the underlying transport-layer
 cause is ever found.
 
-**Suggested next step:** capture the MCP server process's stderr during a
-live hang (Claude Desktop's MCP logs, or run the server manually in a
-visible terminal and trigger the same call shape via an MCP CLI client to
-get a stack trace at the point it stalls) — this is now a lower-urgency
-diagnostic exercise rather than a live operational risk.
+**Live-tested post-mitigation, negative result (2026-06-21):** with the
+`_with_timeout()` wrapper live, `evaluate_allocation` still hung the full
+~4 minutes with zero response — meaning the wrapper's own 30s timeout
+never fired. This proves the hang happens before the wrapped Python
+function is ever invoked (the timeout wraps the function call itself;
+if it never fires, the function was never entered) — i.e. somewhere in
+FastMCP's request handling or the MCP transport, not in this codebase's
+execution. Useful negative result: rules out anything inside
+`_tool_evaluate_allocation`'s call path with certainty.
+
+**New experiment (2026-06-21, untested as of this writing):** the same
+session also showed `advisor_write_back` — which has zero `Dict`-typed
+parameters — working instantly through the live MCP transport (tested
+via `dry_run=true`). `advisor_apply_scoring`'s `Dict[str, int]` (a
+concrete value type) also works fine. `evaluate_allocation`'s
+`account_profile: Dict[str, Any]` — an unconstrained-value dict — is
+now the most plausible remaining differentiator. Replaced it with a
+precise `AccountProfileInput` pydantic model (concrete fields matching
+exactly what `_parse_account_profile()` already expects), removing the
+bare `Any` entirely. `current_weights`/`proposed_allocations` were left
+as `Dict[str, float]` (concrete value type, matching the working
+`apply_scoring` precedent) — only the `Any`-valued dict was changed.
+Full suite passes (645/0 regressions) and the module compiles cleanly;
+not yet verified live — requires an MCP server restart to test.
+
+**Suggested next step:** restart and re-test live. If `evaluate_allocation`
+now works, this was the cause and ENG-33 should close. If it still hangs,
+this hypothesis is also ruled out, and the remaining honest options are:
+capture the MCP server's stderr during a live hang (requires access this
+session didn't have), or accept the fallback (manual EV figures, or the
+in-process bypass route demonstrated earlier this session) as the
+permanent workaround.
 
 
 ### ENG-34 — XAR's "Defense budget trajectory positive" §13 condition has no Call-2 question or data source
