@@ -73,7 +73,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-30 | OPEN | MEDIUM | functional-gap | DBMF's "3M return < -3% while B+C>=55%" §13 failure condition has no FetchSpec/evaluator |
 | ENG-31 | OPEN | LOW | functional-gap | AIPO's hyperscaler capex guidance §13 sustaining condition has no data source |
 | ENG-32 | CLOSED | LOW | hygiene | range_position.py conflated "trend data flat" with "trend data unavailable" in GAP-16 advisory note text |
-| ENG-33 | OPEN | MEDIUM | infrastructure | advisor_evaluate_allocation's MCP transport-layer hang remains unconfirmed (root cause), but a defensive timeout wrapper (_with_timeout) bounds the blast radius. New experiment live-pending-verification: replaced account_profile's Dict[str, Any] with a precise AccountProfileInput pydantic model, since write_back (no Dict params) and apply_scoring (Dict[str, int]) both work fine through MCP while evaluate_allocation (the one Dict[str, Any] param) still hangs completely -- timeout wrapper never even fires, proving the hang is pre-function-entry. Requires a server restart to test. |
+| ENG-33 | OPEN | MEDIUM | infrastructure | advisor_evaluate_allocation's MCP transport-layer hang remains unconfirmed (root cause) after two falsified hypotheses (execution-layer timeout never fires; Dict[str, Any]->pydantic model made no difference). Defensive timeout wrapper (_with_timeout) still bounds the blast radius. Decision: stop experimenting, use the in-process bypass as the standing workaround until server-side stderr access is available. |
 | ENG-34 | OPEN | LOW | functional-gap | XAR's "Defense budget trajectory positive" §13 sustaining condition has no Call-2 question or data source |
 | ENG-35 | OPEN | MEDIUM | performance | advisor_run_computation took 244.8s in-process post-ENG-27 (vs sub-4min MCP ceiling) -- likely yfinance lock serialization cost, possibly compounded by session's repeated test-call rate limiting; needs isolated measurement |
 | ENG-36 | CLOSED | MEDIUM | bug | dominant_directive() crashed on MAGS/MLPX/COPX -- _directive_direction()/_most_conservative() called .upper() on DirectiveCode enum members, which only worked for the str fallback default |
@@ -417,13 +417,34 @@ as `Dict[str, float]` (concrete value type, matching the working
 Full suite passes (645/0 regressions) and the module compiles cleanly;
 not yet verified live — requires an MCP server restart to test.
 
-**Suggested next step:** restart and re-test live. If `evaluate_allocation`
-now works, this was the cause and ENG-33 should close. If it still hangs,
-this hypothesis is also ruled out, and the remaining honest options are:
-capture the MCP server's stderr during a live hang (requires access this
-session didn't have), or accept the fallback (manual EV figures, or the
-in-process bypass route demonstrated earlier this session) as the
-permanent workaround.
+**Second negative result (2026-06-21, after server restart):** the
+`AccountProfileInput` pydantic model change was tested live and
+`evaluate_allocation` still hung the full ~4 minutes with zero response,
+identical to every prior attempt. This rules out the `Dict[str, Any]`
+hypothesis as cleanly as the timeout-wrapper test ruled out anything inside
+the function body. `AccountProfileInput` was left in place regardless (a
+genuine type-safety improvement on its own merits -- concrete fields beat a
+loose dict either way) but it is not the fix.
+
+**Where this leaves things:** two reasonable, falsifiable hypotheses have
+now been tested and ruled out in a single session (execution-layer hang;
+input-schema hang). Both `_with_timeout()` (mcp_server.py) and the ENG-38
+git-push hardening (file_protocol.py) remain in place and are independently
+verified to do what they claim -- this account is just for
+`evaluate_allocation` specifically. Continuing to guess at the transport
+layer from this side, at ~4 minutes of dead time per failed attempt, has a
+worse cost/information ratio than just using the established, reliable
+workaround.
+
+**Decision: stop experimenting on ENG-33 for now.** Permanent workaround
+until someone can capture the MCP server's stderr during a live hang
+(requires access this session never had -- Claude Desktop's own MCP logs,
+or running the server manually in a visible terminal): use the in-process
+bypass demonstrated repeatedly this session (`python -c` or a small script
+importing `advisor.mcp_server` directly and calling `_tool_evaluate_allocation`
+with cached `cal`/`scenario_probs` populated by hand, or via `parse_calibration_state()`
+directly) -- proven fast, correct, and reliable every single time it was
+tried, as opposed to four-for-four live MCP failures.
 
 
 ### ENG-34 — XAR's "Defense budget trajectory positive" §13 condition has no Call-2 question or data source
