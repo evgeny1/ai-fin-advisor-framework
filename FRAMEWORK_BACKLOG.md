@@ -73,6 +73,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-30 | OPEN | MEDIUM | functional-gap | DBMF's "3M return < -3% while B+C>=55%" §13 failure condition has no FetchSpec/evaluator |
 | ENG-31 | OPEN | LOW | functional-gap | AIPO's hyperscaler capex guidance §13 sustaining condition has no data source |
 | ENG-32 | CLOSED | LOW | hygiene | range_position.py conflated "trend data flat" with "trend data unavailable" in GAP-16 advisory note text |
+| ENG-33 | OPEN | HIGH | infrastructure | advisor_evaluate_allocation MCP tool call hangs ~4min in live use; underlying Python verified fast/correct, suspect MCP transport layer |
 
 ---
 
@@ -337,6 +338,50 @@ folder.
 **Description:** AIPO's §13 sustaining condition "AI infrastructure capital expenditure cycle intact (hyperscaler capex guidance positive)" and failure condition "Hyperscaler capex guidance revised down >=2 consecutive quarters" have no Call-2 judgment question wired (unlike SGOL/SIVR/URA/XAR/COPX, which each route through a `M19_{TICKER}_*` scoring question) and no quantitative data source either. Surfaced 2026-06-20 as `missing_dependencies` on an otherwise-ACTIVE evaluation — not a crash, just permanently unevaluable as-is.
 
 **Suggested next step:** decide whether this should be a new Call-2 judgment question (qualitative, Claude answers from hyperscaler earnings-call research each session — cheapest fix, same pattern as `M19_URA_NUCLEAR_POLICY`) or a quantitative consecutive-quarters tracker (harder — needs cross-session persistence like ENG-26, since "2 consecutive quarters" of guidance can't be derived from one session's data alone). Given AIPO's UNCLASSIFIED-weight EV flag is already a standing item, low priority relative to that.
+
+
+### ENG-33 — advisor_evaluate_allocation hangs ~4min in live MCP use
+<!-- ITEM
+  Status:    OPEN
+  Severity:  HIGH
+  Category:  infrastructure
+  Opened:    2026-06-20
+  Area:      python/advisor/mcp_server.py (_tool_evaluate_allocation), MCP transport
+  Related:   ENG-16 (introduced this tool), ENG-28 (similar-looking symptom, different
+             root cause — that one WAS in the Python code and is fixed)
+-->
+
+**Description:** `advisor_evaluate_allocation` timed out at the ~4-minute MCP
+call ceiling four times this session (twice before the ENG-27/28/29 fixes,
+twice after, across two separate server restarts) with no partial output and
+no server-side error surfaced to the caller. `advisor_run_computation` and
+`advisor_apply_scoring` both worked normally throughout, including on the
+same restarted process immediately before/after the hung calls — so this
+isn't "the server is generally wedged."
+
+**Investigated and ruled out:** read every function in the call path end to
+end — `_tool_evaluate_allocation` → `classify_instrument`,
+`scenario_weighted_allocation` → `ideal_allocation` (loops over 6 scenarios
+and a small ranked ticker list), `dominant_directive`, `dual_role_conflict`,
+`get_directive` (plain dict lookups). Nothing unbounded, no recursion, no
+network I/O, no locks. `tests/e2e/test_evaluate_allocation.py` exercises
+this exact function in-process with realistic fixtures and passes in
+under a second as part of the regular 645-test suite run (same session,
+same machine). That combination — correct and fast in-process, hangs at
+the MCP layer specifically for this tool — points at the MCP
+transport/serialization layer (FastMCP's handling of the `Dict[str, Any]`
+`account_profile` / `Dict[str, float]` `current_weights` params, or a
+stdio buffering issue specific to this tool's call shape) rather than
+application code. Not confirmed; no access to server-side stderr/logs from
+the calling side to pin it further.
+
+**Suggested next step:** capture the MCP server process's stderr during a
+live hang (Claude Desktop's MCP logs, or run the server manually in a
+visible terminal and trigger the same call shape via an MCP CLI client to
+get a stack trace at the point it stalls). Until root-caused, the existing
+fallback holds: don't retry more than once live; fall back to the manually
+documented EV figures in `Calibration_State.md` §11 for the session and
+flag that a live recompute wasn't available.
 
 
 ---
