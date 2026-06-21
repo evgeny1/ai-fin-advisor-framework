@@ -73,7 +73,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-30 | OPEN | MEDIUM | functional-gap | DBMF's "3M return < -3% while B+C>=55%" §13 failure condition has no FetchSpec/evaluator |
 | ENG-31 | OPEN | LOW | functional-gap | AIPO's hyperscaler capex guidance §13 sustaining condition has no data source |
 | ENG-32 | CLOSED | LOW | hygiene | range_position.py conflated "trend data flat" with "trend data unavailable" in GAP-16 advisory note text |
-| ENG-33 | OPEN | HIGH | infrastructure | advisor_evaluate_allocation MCP tool call hangs ~4min in live use; underlying Python verified fast/correct, suspect MCP transport layer |
+| ENG-33 | OPEN | CRITICAL | infrastructure | advisor_evaluate_allocation AND advisor_write_back MCP tool calls hang ~4min in live use; underlying Python verified fast/correct (transport-layer issue) -- BUT the underlying operation completes server-side regardless, so a blind retry on a write-capable tool silently duplicates writes (demonstrated: duplicate Session_Log.md §8 entry this session, manually cleaned up) |
 | ENG-34 | OPEN | LOW | functional-gap | XAR's "Defense budget trajectory positive" §13 sustaining condition has no Call-2 question or data source |
 | ENG-35 | OPEN | MEDIUM | performance | advisor_run_computation took 244.8s in-process post-ENG-27 (vs sub-4min MCP ceiling) -- likely yfinance lock serialization cost, possibly compounded by session's repeated test-call rate limiting; needs isolated measurement |
 | ENG-36 | CLOSED | MEDIUM | bug | dominant_directive() crashed on MAGS/MLPX/COPX -- _directive_direction()/_most_conservative() called .upper() on DirectiveCode enum members, which only worked for the str fallback default |
@@ -386,6 +386,22 @@ get a stack trace at the point it stalls). Until root-caused, the existing
 fallback holds: don't retry more than once live; fall back to the manually
 documented EV figures in `Calibration_State.md` §11 for the session and
 flag that a live recompute wasn't available.
+
+**Addendum (same session, more serious than initially scoped):**
+`advisor_write_back` hit the identical ~4-minute hang later in this same
+session. Worse: the underlying operation had actually **completed and
+committed server-side** before the client-side wait gave up — the timeout
+is purely client-side; the server keeps running and finishing the call
+regardless. Not realizing this, a second (in-process, bypassing MCP) call
+was made to "complete" the write-back, producing a real duplicate §8 entry
+in `Session_Log.md` and an extra, premature compaction/archive pass —
+required manual cleanup (see `Calibration_State.md`/`Session_Log.md` git
+history, 2026-06-21). This means the hang isn't just an annoyance for
+read-only tools like `advisor_evaluate_allocation` — for any tool with
+side effects (writes, commits), blindly retrying after a timeout risks
+silent duplication. **Going forward: after any timeout on a write-capable
+tool, check `git log` for a new commit before assuming the call failed and
+retrying.**
 
 
 ### ENG-34 — XAR's "Defense budget trajectory positive" §13 condition has no Call-2 question or data source
