@@ -66,104 +66,7 @@ b_watch_level_3: [active | inactive] (include when CPI print 3 is 3.5–3.9%)
 
 // COMPACTED: 2026-06-19 — entries 2026-05-25 through 2026-06-07 (7 entries) archived to Archive_2026Q2.md, restoring the last-3 retention rule (FRAMEWORK_BACKLOG.md ENG-5); retained: 2026-06-10, 2026-06-14 (x2)
 
----
-
-date: 2026-06-10 (full M05 — B formal trigger execution session; v1.33)
-scenario_probabilities: { A: 5%, B: 41%, C: 38%, D: 5%, E: 4%, F: 7% }
-  // UPDATED from June 7 carry (A=7/B=36/C=41/D=5/E=4/F=7)
-  // B formal trigger FIRES: May CPI 4.2% YoY (T1 BLS USDL-26-0824) — Print 3/3
-  //   Sequential: Mar 3.3%, Apr 3.8%, May 4.2%. Monthly decel: +0.5% vs +0.6% Apr (B-limiting).
-  //   Core CPI +2.9% (contained); energy >60% of monthly increase (C-consistent overlap).
-  // A: 7%→5% (−2pp): T1-confirmed mutual US-Iran airstrikes June 9 (AP/Britannica).
-  //   Trump "will pay the price" June 10 (T1 AP). Deal track broken.
-  //   BZ=F fell to $91.45 on June 9 despite escalation — market sees limited/posturing.
-  // B: 36%→41% (+5pp): B formal trigger fires per §2.3 protocol.
-  // C: 41%→38% (−3pp): B/C split per protocol; Iran escalation partially protects C.
-  //   BZ=F $91.45 — no confirmed Hormuz closure limits C upward repricing.
-  // D: 5% unchanged. KRE +1.46% today; credit clear; no new recession evidence.
-  // E: 4% unchanged. THREEFYTP10 0.7541% vs 100bp — below by ~24.6bp.
-  // F: 7% unchanged. Core CPI 2.9% consistent with F-type resilience.
-  // Sum: 5+41+38+5+4+7 = 100% ✓
-  // Session cap: 5pp max shift (B) << 25pp ✓ (§8 June 7 = 3 days ago, within 7-day window)
-  // derivation_method: DeriveScenarioProbabilities() — §2.3 B formal trigger + Iran T1 evidence
-primary_driver: May CPI 4.2% YoY (T1 BLS) — B formal trigger fires (Print 3/3). Iran escalation:
-  US helicopter downed June 9 + mutual airstrikes + Trump "will pay the price" June 10 (T1 AP/Britannica).
-session_type: full M05 (B formal trigger execution)
-
-calibration_changes_this_session:
-  - Calibration_State.md v1.33:
-  - §2.3: CPI B trigger status updated to FIRED (June 10, 2026; May CPI 4.2% T1 BLS)
-  - §3: v1.32 retroactive entry added (June 7 session had no §3 entry); v1.33 entry added
-  - Version header 1.32→1.33, date June 7→June 10
-
-credit_readings (June 4 T1 via spreadsheet — most recent FRED; live T1 market_data + Schwab screenshot):
-  HY: 274bps | IG: 74bps | CCC: 946bps | MOVE: 77.03 | VIX: 20.43 | S&P: 7,362.65 | KRE: $72.10
-  BZ=F: $91.45 (Jun 9 T1). DXY: 99.85. BBB OAS: 93bps. SOFR: 3.62%. DFF: 3.62%. KBE: $65.73.
-  All credit thresholds CLEAR. MOVE approaching ELEVATED (<80). CCC divergence: 5th session quiet widening.
-  Schwab T1: MLPX $74.37 (+1.46%), XLP $85.17 (+1.27%), DBMF $30.85 (+0.23%) — B-scenario consistent.
-  AIPO $29.71 (−3.94%), COPX $78.64 (−1.87%), XAR $269.27 (−1.50%) — risk-off in growth/commodity.
-
-m14_recomputation_results:
-  energy_90d: BZ=F $91.45 (Jun 9) vs $91.98 (Mar 11, 90d anchor) = −0.58% → NOT FIRING.
-  ⚠ Extended conflict >90d: 180d BZ=F anchor ~$71 (Dec 2025) → supplemental +29% informational only.
-  broad_equity_30d: SPY $737.05 (Jun 9) vs $711.69 (Apr 28, 30 trading days) = +3.56% → MODERATE.
-  M14 composite: MODERATE. UnderweightReviewTrigger: NOT fired (all positions ≤2pp of targets).
-
-cascade_signals:
-  sectorStressScore: 0. CascadeLevel: MONITORING.
-  CHAIN_3_WATCH: $1.304T FINRA record (Apr). May data pending. No FIRE condition.
-  CHAIN_4: Q1 188/qtr vs WATCH ≥220. T1 AACER/PACER pending → score=0.
-  D_timing_signal: RECESSION_ONSET_PATTERN (carry — 10Y-2Y +42bp post-inversion re-steepening).
-  THREEFYTP10: 0.7541% (May 29 carry) vs 100bp E_term_premium_warning (~24.6bp gap).
-
-trades_executed:
-  PAVE: SOLD 502sh Acc4 at ~$56.095. Cost basis $27,175.63; realized gain ~+$984.
-  Gain absorbed by −$2,778 YTD realized losses. Tax cost: zero.
-  DBMF Acc4: ADD executed. Target 10%→15%.
-  SGOV Acc4: ADD executed. Target 15%→21%.
-
-open_triggers:
-  - FOMC June 17-18 (7 days): rate decision + dot plot. 4.2% CPI reinforces hawkish path. Key MOVE catalyst.
-  - US-Iran escalation: helicopter downed June 9, mutual airstrikes June 10 (T1 AP). Deal track broken.
-    A=5%. Update immediately on T1 ceasefire resumption or signed agreement.
-  - Bab el-Mandeb: T2 adversarial (June 2). WATCH for T1 confirmation.
-  - BZ=F $91.45: C-trigger INACTIVE (<$110 restart threshold). If Hormuz physically re-closes → reassess C.
-  - MOVE 77.03: approaching ELEVATED threshold (80). Post-FOMC catalyst. Monitor.
-  - THREEFYTP10: 0.7541% vs 100bp E_term_premium_warning (~24.6bp gap). Rising trend.
-  - CHAIN_3_WATCH: $1.304T April record. May FINRA data pending.
-  - CHAIN_4: Q1 188/qtr vs WATCH ≥220. Q2 data pending (AACER/PACER T1).
-  - Q2 audit: June 30, 2026 (20 days).
-  - CCC divergence: 946bps, 5th consecutive session quiet widening. Monitor post-FOMC.
-
-open_decisions:
-  1. MAGS: HOLD-only override. EV −0.94%. Targets IRA 3%, Roth 4%. Sheet shows 5%/6% — update with URA trade.
-  2. URA ADD: IRA 3%, Roth 3%. Guard CLEARED (v1.29). Sheet shows IRA 1% (discrepancy — clarify before executing).
-     Fund via: MAGS IRA 5%→3%, Roth 6%→4%; AIPO IRA 8%→7%, Roth 8%→7%.
-  3. Acc4 allocation sheet update: Client to set PAVE→0%, DBMF→15%, SGOV→21% (trades already executed).
-  4. AIPO target reduction: UNDER CLIENT DELIBERATION. IRA/Roth 7%→3% + DBMF +4pp. EV +3.28% (#3 rank).
-  5. §6 item 23: 5 blocked proposals pending June 30 (STG D/E joint; IHP A/D full row; GP A MEDIUM→HIGH).
-  6. XOM post-Hormuz ramp-up lag (~2mo): not encoded. Monitor if deal signed.
-  7. Bitcoin miners Q3: create bitcoin_mining_hpc role + M16 calibration (AIPO UNCLASSIFIED 7%).
-  8. §11.2 STG B descriptor: editorial update to [-2,+4]★ at June 30.
-  9. EV recomputation under new vector (A=5/B=41/C=38): deferred to June 30 audit.
-  10. Primary IRA EV buffer: monitor at June 30 after STG D/E and IHP revisions (+0.48pp above req).
-  11. AIPO track record flag: inception Jul 2025; 12-month milestone ~Jul 24. Re-verify at June 30.
-  12. M14 energy_180d formal calibration: June 30 (conflict >90d; 180d lookback as canonical supplemental).
-
-next_session_flags:
-  - LOAD: "Calibration State loaded, last update: June 10, 2026 | Session Log loaded"
-  - LOAD via Desktop Commander local path — NOT GitHub MCP, NOT Google Drive for .md files
-  - DECLARE session type (Step 0) before Step 1
-  - FIRST: Iran deal status — T1 confirmation of resumed talks or further escalation; gates A probability
-  - FIRST: BZ=F current close — C-trigger clock ($110 restart); Iran escalation = watch closely
-  - FOMC June 17-18: rate decision + dot plot; watch for MOVE crossing 80 ELEVATED threshold
-  - URA: clarify 1% vs 3% sheet discrepancy; execute ADD (IRA +2pp, Roth +3pp remaining)
-  - AIPO: client decision pending on 7%→3% + DBMF bump
-  - Acc4 sheet: confirm PAVE→0%, DBMF→15%, SGOV→21% reflected in allocation spreadsheet
-  - COPX: $78.64, −7.93% unrealized loss; entry guard re-verify before any ADD
-  - June 30 Q2 audit: STG B/D/E joint; IHP A/D row; GP A MEDIUM→HIGH; EV recomputation new vector;
-    all §5/§6 items; AIPO formal target review; bitcoin_mining role design; M14 energy_180d calibration
-  - Framework gaps deferred to June 30: GAP-11 (M07 EV floor); GAP-07 (§8 compaction annotation)
+// COMPACTED: 2026-06-21 — 1 oldest entry(ies) archived to Archive_2026Q2.md, restoring the last-3 retention rule (FRAMEWORK_BACKLOG.md ENG-5)
 
 ---
 
@@ -275,4 +178,42 @@ next_session_flags:
 - GP A confidence upgrade
 - EV full recomputation
 - COPX 90d avg recompute.
+
+---
+
+date: 2026-06-21 (full M05 session)
+scenario_probabilities: { A: 8.0833%, B: 48.5%, C: 16.1667%, D: 3%, E: 8.0833%, F: 16.1667% }
+primary_driver: Iran conflict premise RE-ESCALATED despite June 17 MOU signing: IRGC Navy re-closed Strait of Hormuz June 20 (disputed by US), conditioned reopening on Israel curbing Lebanon ops; Israel continuing Lebanon operations "without restrictions" per Defense Minister -- Lebanon ceasefire not holding. Burgenstock, Switzerland talks ongoing June 21 (Vance/Ghalibaf) precisely because none of this is settled. Corrected mid-session from an initial post-signing de-escalation read that was stale within ~48hrs. Combined with FOMC June 17 hawkish turn (held 3.50-3.75%, dropped easing bias, dot plot median 3.4%->3.8%) and confirmed May CPI 4.2% YoY (BLS June 10, B trigger formally met): M19_XAR_CONFLICT_GATE corrected 1->0 (XAR thesis ACTIVE not FAILED), A_check_energy corrected 1->0. Net effect: F (Growth Overheat) rose substantially 7.1%->16.2%, E/D eased modestly, B/C firmed.
+session_type: full M05 session
+
+open_triggers:
+- Hormuz Strait RE-CLOSED by IRGC Navy June 20 -- disputed by US (T1/T2 conflict, not neutral-source-confirmed); Iran conditions reopening on Israel curbing Lebanon operations. NOT a clean de-escalation despite the June 17 MOU signing -- do not re-score C_check_chokepoint/M19_XAR_CONFLICT_GATE toward de-escalation again without fresh T1 confirmation.
+- Israel-Hezbollah Lebanon operations continuing 'without restrictions' per Israeli Defense Minister Katz (June 21) -- the June 19 ceasefire announcement is not holding operationally.
+- Section 9.3 EntryExtensionGuard 180d override: MOU signing nominally starts a 30-day countdown (~July 19), but the Hormuz re-closure argues against treating this as resolved -- flag for manual judgment, do not auto-deactivate on schedule alone.
+- Brent +3.0% day move (to $80.59) on the Hormuz re-closure news -- market is pricing some credibility to the claim even though it's unconfirmed by neutral T1.
+- FOMC June 17: held 3.50-3.75%, dropped easing-bias language, hawkish dot plot (9/18 project a hike, median 3.8% vs March 3.4%).
+- May CPI confirmed 4.2% YoY / core 2.9% (BLS June 10) -- B trigger formally met, 3rd consecutive accelerating print.
+- Q1 GDP second estimate 1.6% (BEA); third estimate due June 25 -- watch for revision.
+- Unemployment steady 4.3% for 3rd month; payrolls +172K May -- D not supported by labor data.
+- THREEFYTP10 0.7671% vs 1.0pp E-warning threshold (~23.3bp gap) -- E methodology note: this term-premium proxy does not capture rate-PATH-driven gold weakness (see GAP note below).
+- DBMF M19 status FAILED (mean-reversion condition) on now-verified-correct trend data (post ENG-27 fix) -- but DBMF's second failure condition (DBMF_3M_return < -3% while B+C>=55%) still has no evaluator (ENG-30); treat FAILED status as a real signal worth discussing, not yet a clean execution trigger given the second condition is unevaluated.
+- Q2 audit June 30 (9 days): full EV recomputation under today's vector, XAR sizing review (thesis now ACTIVE not FAILED -- different framing than last session assumed), GAP-16 calibration review of the THREEFYTP10 real-yield proxy, COPX 90d avg recompute, URANIUM_SPOT still dead (UX=F illiquid).
+
+open_decisions:
+1. XLP EXIT appears already executed (XLP no longer appears in Acc4 sheet at all). INFL target set to 7% in Acc4 sheet but 0% actual (not yet purchased) -- AIPO remains overweight (15.3% actual vs 8% target) as the implied funding source. INFL still has no Section 11 classification -- classify before next EV comparison; cannot get a fresh blended return for it via the framework until then.
+2. AIPO IRA/Roth reduction (7%->3% + DBMF +4pp): still under client deliberation, unchanged this session. Acc4 AIPO blended return refreshed under today's vector: 2.50% (HOLD, dual-role conflict noted -- real_asset_contracted_revenue 55% dominant overrides its own commodity-linked 11% sub-component which wants ADD).
+3. URA ADD IRA 3% / Roth 3%: guard cleared per v1.29, but sheet shows IRA at 1% -- discrepancy unresolved, clarify before executing.
+4. MAGS sheet shows 5%/6% targets vs Calibration_State's 3%/4% -- needs reconciliation, likely tied to the pending URA trade.
+5. Relative Roth (...466) objective_type discrepancy: live Objectives tab now shows TARGET_THEN_RETURN / floor_nominal_loss=FALSE; Project_Instructions_MCP.md's session-opening template assumes FLOOR_THEN_RETURN for this account. Ran the numbers both ways this session (target-multiplier shortfall 0.18pp vs floor breach -0.13% -- both small, same 'hold' conclusion either way) but the classification itself needs Evgeny's confirmation before the next session's floor_account_weights_json scope is decided.
+6. Relative IRA/Roth floor breach (scenario F, -0.45%/-0.13%) reviewed in full this session with per-ticker EV math: DBMF and SGOL are the entire drag, and both are currently UNDER the framework's own scenario-weighted ideal weight (i.e. the systematic math wants MORE of both, not less). Closing the gap via reallocation would cost ~6x more in blended EV than the breach itself costs probability-weighted. HOLD recommended and accepted by client this session -- no action needed unless F's probability rises materially further.
+7. GAP-16 range-position advisories for SGOL/SIVR now correctly read 'inconclusive -- both real yield (THREEFYTP10) and DXY flat' (ENG-27/32 fixes verified live). Methodology flag for the Q2 audit: THREEFYTP10 is a TERM PREMIUM proxy, not a real-yield-LEVEL or rate-path proxy -- this session's gold/silver 30d weakness (SGOL -8.5%/SIVR -12.8%) lines up much better with the Fed's hawkish repricing (progressive March->June dot-plot shift) than with the Iran de-escalation narrative I initially (incorrectly) attributed it to, since most of the price decline predates the June 17 MOU by weeks. Worth adding a direct real-yield series (10Y nominal minus breakeven) to M18 rather than relying on THREEFYTP10 for this sub-condition.
+8. Acc4 COPX/DBMF blended returns refreshed under today's vector: COPX 2.43% (ADD, dominant role commodity-linked 75% overrides international-equity 25% sub-component which wants REDUCE), DBMF 7.61% (ADD, no conflict).
+
+next_session_flags:
+- FIRST: re-verify Hormuz Strait status and the Burgenstock, Switzerland talks outcome (were ongoing as of this session) -- the situation was actively disputed and evolving; confirm whether reopening progressed or the conflict re-escalated further before re-scoring C_check_chokepoint / M19_XAR_CONFLICT_GATE.
+- FIRST: confirm Relative Roth (...466)'s true objective_type (TARGET_THEN_RETURN per live Objectives tab vs FLOOR_THEN_RETURN per Project_Instructions_MCP.md template) -- affects floor_account_weights_json scope and which feasibility methodology applies.
+- ENG-33 (advisor_evaluate_allocation MCP hang, ~4min, transport-layer not application-layer per this session's investigation) unresolved -- if it recurs, try to capture MCP server stderr/logs to pin the root cause.
+- ENG-35 (advisor_run_computation measured at 244.8s in-process post-ENG-27) -- measure on a cold session with no recent prior calls to isolate yfinance-lock cost from same-session Yahoo rate-limiting (HTTP 401 Invalid Crumb was observed repeatedly).
+- INFL: classify in Section 11 before the next EV comparison for the Acc4 AIPO/COPX/INFL/XLP decision -- currently held at 0% with a 7% sheet target and no framework-computed blended return.
+- DBMF M19 status is FAILED on verified-correct data for the first time -- worth a deliberate decision on whether to treat it as actionable now that ENG-27/30's data-quality caveats are resolved (ENG-30's second condition is still unevaluated, so treat as a partial signal).
 
