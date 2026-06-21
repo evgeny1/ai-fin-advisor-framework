@@ -1764,3 +1764,62 @@ fallback.
 `parse_calibration_state()` directly): `dominant_directive()` now resolves
 cleanly for MAGS, MLPX, and COPX across all six scenarios with zero
 errors, where it previously crashed on at least scenario B for all three.
+
+
+---
+
+### ENG-38 — advisor_write_back's `git push` could hang on an interactive credential prompt
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  HIGH
+  Category:  infrastructure
+  Opened:    2026-06-20
+  Closed:    2026-06-20
+  Area:      python/advisor/data/file_protocol.py (_git_commit)
+  Related:   ENG-33 (split off from -- same ~4min symptom, separate cause)
+-->
+
+**Found:** `advisor_write_back` hung at the MCP client's ~4-minute call
+ceiling. Unlike `advisor_evaluate_allocation` (ENG-33, a pure in-memory
+computation), `write_back` does real file I/O and a git commit -- a much
+more plausible place for a genuine block. Critically, when the operation
+was eventually re-run in-process, it completed in well under a second,
+*and* `git log` showed the ORIGINAL (timed-out) call had actually
+completed and committed server-side all along -- the timeout was purely
+client-side; the operation was simply slow to return, not stuck or
+crashed.
+
+**Root cause:** `_git_commit()`'s `git push origin master` call had no
+timeout and no guard against git's interactive credential-prompt
+behavior. If the MCP server's process doesn't have the same cached git
+credentials an interactive shell session has (plausible -- Claude Desktop
+spawns the MCP server as a child process, which may not inherit the same
+credential-helper state as a fresh interactive terminal), `git push` can
+block waiting for a credential prompt that has no TTY to display on and
+will never be answered, until some far-future OS/network-level timeout
+eventually fires.
+
+**Fix:** `_git_commit()` now sets `GIT_TERMINAL_PROMPT=0` in the
+subprocess environment for every git call (makes git fail fast instead of
+prompting when no credential is cached, rather than hanging), adds an
+explicit `timeout=` to each `subprocess.run()` call (60s for add/commit/
+rev-parse, 30s specifically for push), and treats a failed or timed-out
+push as **non-fatal**: the local commit has already succeeded by that
+point (the part that matters for `Session_Log.md`/`Portfolio_State.md`
+integrity), so the function logs a clear warning and still returns the
+commit sha rather than losing that information by raising. Also added a
+defensive `_with_timeout()` wrapper in `mcp_server.py` (see ENG-33) as a
+second, independent line of defense around both `advisor_write_back` and
+`advisor_evaluate_allocation`.
+
+**Verification:** full suite (`not integration`): 645 passed, 0
+regressions. `tools/validate_manifests.py`: 19/19. Isolated test against a
+disposable temp git repo with no remote configured at all: `_git_commit()`
+returned the local commit sha in 0.28s (logging the expected push-failure
+warning) instead of hanging -- confirms the non-fatal-failure path works.
+Did not (and safely could not) reproduce the original credential-prompt
+hang itself in a test, since that requires the specific environment
+mismatch between the MCP server's spawned process and an interactive
+shell; `GIT_TERMINAL_PROMPT=0` is a standard, well-documented git
+mechanism for exactly this class of problem, so the fix is sound by
+inspection even without reproducing the original failure mode directly.

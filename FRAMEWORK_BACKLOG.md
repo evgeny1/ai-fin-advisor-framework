@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-20/21 (ENG-27/28/29/32/36 closed — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, range_position.py flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; ENG-33 open, investigated not root-caused — evaluate_allocation MCP transport hang; all found/fixed live across one extended session)
+**Last updated:** 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-33 downgraded CRITICAL->MEDIUM and given a defensive _with_timeout() mitigation for both evaluate_allocation and write_back, root cause for evaluate_allocation specifically still unconfirmed; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -73,11 +73,12 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-30 | OPEN | MEDIUM | functional-gap | DBMF's "3M return < -3% while B+C>=55%" §13 failure condition has no FetchSpec/evaluator |
 | ENG-31 | OPEN | LOW | functional-gap | AIPO's hyperscaler capex guidance §13 sustaining condition has no data source |
 | ENG-32 | CLOSED | LOW | hygiene | range_position.py conflated "trend data flat" with "trend data unavailable" in GAP-16 advisory note text |
-| ENG-33 | OPEN | CRITICAL | infrastructure | advisor_evaluate_allocation AND advisor_write_back MCP tool calls hang ~4min in live use; underlying Python verified fast/correct (transport-layer issue) -- BUT the underlying operation completes server-side regardless, so a blind retry on a write-capable tool silently duplicates writes (demonstrated: duplicate Session_Log.md §8 entry this session, manually cleaned up) |
+| ENG-33 | OPEN | MEDIUM | infrastructure | advisor_evaluate_allocation's MCP transport-layer hang remains unconfirmed (root cause), but a defensive timeout wrapper (_with_timeout) now bounds the blast radius for it and advisor_write_back -- any future hang fails fast with a clear diagnostic instead of a silent 4min wait + risk of duplicate writes. Severity downgraded from CRITICAL now that ENG-38 fixed the confirmed write_back cause and the timeout wrapper structurally prevents the duplicate-write scenario from recurring either way. |
 | ENG-34 | OPEN | LOW | functional-gap | XAR's "Defense budget trajectory positive" §13 sustaining condition has no Call-2 question or data source |
 | ENG-35 | OPEN | MEDIUM | performance | advisor_run_computation took 244.8s in-process post-ENG-27 (vs sub-4min MCP ceiling) -- likely yfinance lock serialization cost, possibly compounded by session's repeated test-call rate limiting; needs isolated measurement |
 | ENG-36 | CLOSED | MEDIUM | bug | dominant_directive() crashed on MAGS/MLPX/COPX -- _directive_direction()/_most_conservative() called .upper() on DirectiveCode enum members, which only worked for the str fallback default |
 | ENG-37 | OPEN | MEDIUM | functional-gap | recalibration_sequence()'s "anchor = above-floor proxy" heuristic produces a degenerate no-op when every holding is above its own floor (the normal case) -- gap_closed_by_reallocation reports true without any actual reallocation |
+| ENG-38 | CLOSED | HIGH | infrastructure | advisor_write_back's `git push` had no timeout and no guard against an interactive credential prompt, causing it to hang at the MCP client's ~4min ceiling even though the operation completed and committed server-side regardless |
 
 ---
 
@@ -347,12 +348,13 @@ folder.
 ### ENG-33 — advisor_evaluate_allocation hangs ~4min in live MCP use
 <!-- ITEM
   Status:    OPEN
-  Severity:  HIGH
+  Severity:  MEDIUM
   Category:  infrastructure
   Opened:    2026-06-20
-  Area:      python/advisor/mcp_server.py (_tool_evaluate_allocation), MCP transport
-  Related:   ENG-16 (introduced this tool), ENG-28 (similar-looking symptom, different
-             root cause — that one WAS in the Python code and is fixed)
+  Area:      python/advisor/mcp_server.py (_with_timeout, _tool_evaluate_allocation), MCP transport
+  Related:   ENG-16 (introduced this tool), ENG-38 (split off -- write_back's
+             matching symptom WAS root-caused; this one, evaluate_allocation's,
+             was not)
 -->
 
 **Description:** `advisor_evaluate_allocation` timed out at the ~4-minute MCP
@@ -371,37 +373,30 @@ and a small ranked ticker list), `dominant_directive`, `dual_role_conflict`,
 network I/O, no locks. `tests/e2e/test_evaluate_allocation.py` exercises
 this exact function in-process with realistic fixtures and passes in
 under a second as part of the regular 645-test suite run (same session,
-same machine). That combination — correct and fast in-process, hangs at
-the MCP layer specifically for this tool — points at the MCP
-transport/serialization layer (FastMCP's handling of the `Dict[str, Any]`
-`account_profile` / `Dict[str, float]` `current_weights` params, or a
-stdio buffering issue specific to this tool's call shape) rather than
-application code. Not confirmed; no access to server-side stderr/logs from
-the calling side to pin it further.
+same machine). Initially suspected the same root cause as `advisor_write_back`
+(ENG-38 — found later in this same session: an unguarded `git push` that can
+hang on a credential prompt) — but `evaluate_allocation` does zero git/file/
+network I/O of any kind, ruling that out as a shared cause. The two tools'
+identical ~4-minute symptom turned out to be coincidental, not the same bug.
+
+**Mitigation applied (not a root-cause fix):** added `_with_timeout()` in
+`mcp_server.py` — runs the wrapped tool function in a worker thread with a
+hard wall-clock timeout (30s for `evaluate_allocation`, 90s for
+`write_back`), well above every observed real runtime (sub-second) for
+either. If the timeout ever fires, the caller gets an immediate, clear
+`TIMEOUT` status instead of a silent multi-minute hang — and critically,
+an explicit instruction to check `git log` before retrying anything with
+side effects, directly addressing the duplicate-write risk that prompted
+elevating this to CRITICAL earlier in the session. Severity downgraded
+back to MEDIUM now that the worst consequence (silent duplicate writes) is
+structurally prevented regardless of whether the underlying transport-layer
+cause is ever found.
 
 **Suggested next step:** capture the MCP server process's stderr during a
 live hang (Claude Desktop's MCP logs, or run the server manually in a
 visible terminal and trigger the same call shape via an MCP CLI client to
-get a stack trace at the point it stalls). Until root-caused, the existing
-fallback holds: don't retry more than once live; fall back to the manually
-documented EV figures in `Calibration_State.md` §11 for the session and
-flag that a live recompute wasn't available.
-
-**Addendum (same session, more serious than initially scoped):**
-`advisor_write_back` hit the identical ~4-minute hang later in this same
-session. Worse: the underlying operation had actually **completed and
-committed server-side** before the client-side wait gave up — the timeout
-is purely client-side; the server keeps running and finishing the call
-regardless. Not realizing this, a second (in-process, bypassing MCP) call
-was made to "complete" the write-back, producing a real duplicate §8 entry
-in `Session_Log.md` and an extra, premature compaction/archive pass —
-required manual cleanup (see `Calibration_State.md`/`Session_Log.md` git
-history, 2026-06-21). This means the hang isn't just an annoyance for
-read-only tools like `advisor_evaluate_allocation` — for any tool with
-side effects (writes, commits), blindly retrying after a timeout risks
-silent duplication. **Going forward: after any timeout on a write-capable
-tool, check `git log` for a new commit before assuming the call failed and
-retrying.**
+get a stack trace at the point it stalls) — this is now a lower-urgency
+diagnostic exercise rather than a live operational risk.
 
 
 ### ENG-34 — XAR's "Defense budget trajectory positive" §13 condition has no Call-2 question or data source
@@ -505,6 +500,10 @@ explicit message ("no low-conviction positions available to trim; consider
 this floor exposure an accepted cost of the optimal allocation, or supply
 high_conviction_tickers manually to force a smaller anchor set") instead of
 a misleadingly-affirmative true.
+
+
+### ENG-38 — advisor_write_back's `git push` could hang on an interactive credential prompt
+**CLOSED** 2026-06-20 (HIGH, infrastructure). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 
 ---

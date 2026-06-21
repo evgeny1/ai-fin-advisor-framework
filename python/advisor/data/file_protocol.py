@@ -263,18 +263,55 @@ def _safe_write(path: Path, content: str) -> None:
 
 
 def _git_commit(repo: Path, files: list[str], message: str) -> str:
-    def git(*args: str) -> str:
+    """
+    Found 2026-06-20 (ENG-33): the original version of this function
+    called `git push` with no timeout and no guard against an
+    interactive credential prompt. If the MCP server process does not
+    have the same cached git credentials an interactive shell session
+    has, `git push` can block indefinitely waiting for input that will
+    never arrive (no TTY) -- this manifested as advisor_write_back
+    hanging at the MCP client's ~4-minute timeout ceiling, even though
+    the operation eventually completed and committed successfully once
+    it cleared (proving it was a slow/stuck push, not a crash).
+
+    Fix: GIT_TERMINAL_PROMPT=0 makes git fail fast instead of prompting
+    when run non-interactively; an explicit timeout on the push step
+    bounds the worst case; and a failed/timed-out push is treated as
+    non-fatal -- the local commit (the part that matters for
+    Session_Log.md/Portfolio_State.md integrity) has already succeeded
+    by that point, so this still returns the commit sha rather than
+    losing that information by raising.
+    """
+    git_env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+
+    def git(*args: str, timeout: float = 60.0) -> str:
         result = subprocess.run(
             ["git", "-C", str(repo)] + list(args),
             capture_output=True, text=True, check=True,
+            env=git_env, timeout=timeout,
         )
         return result.stdout.strip()
 
     git("add", *files)
     git("commit", "-m", message)
-    git("push", "origin", "master")
     sha = git("rev-parse", "--short", "HEAD")
-    logger.info(f"Write-back committed: {sha} — {message}")
+
+    try:
+        git("push", "origin", "master", timeout=30.0)
+        logger.info(f"Write-back committed and pushed: {sha} — {message}")
+    except subprocess.TimeoutExpired:
+        logger.warning(
+            f"Write-back committed locally ({sha}) but `git push` did not "
+            f"complete within 30s -- likely no non-interactive git "
+            f"credentials available to this process. The commit is safe; "
+            f"push manually: git -C {repo} push origin master"
+        )
+    except subprocess.CalledProcessError as e:
+        logger.warning(
+            f"Write-back committed locally ({sha}) but `git push` failed: "
+            f"{e.stderr.strip()}"
+        )
+
     return sha
 
 

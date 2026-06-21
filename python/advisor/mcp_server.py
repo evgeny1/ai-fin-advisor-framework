@@ -49,6 +49,7 @@ Claude Desktop config (~/.config/Claude/claude_desktop_config.json):
 """
 from __future__ import annotations
 
+import concurrent.futures
 import dataclasses
 import datetime
 import json
@@ -56,6 +57,55 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+# ENG-33: advisor_evaluate_allocation and advisor_write_back both hung at
+# the MCP client's ~4-minute call ceiling this session with no diagnostic
+# output. Both proved sub-second when run in-process bypassing the MCP
+# transport, so the hang is not in this module's own logic -- but its
+# exact cause (transport/serialization layer, per investigation notes in
+# FRAMEWORK_BACKLOG.md ENG-33) could not be confirmed without server-side
+# stderr access. _with_timeout() is a defensive second line of fix: it
+# bounds how long any wrapped tool call can make the MCP client wait,
+# converting a silent multi-minute hang into a fast, clear, diagnostic
+# error. The timeouts below are well above every observed real runtime
+# for these tools (sub-second) -- if one ever actually fires, that is
+# itself useful information (something is genuinely stuck), not a false
+# positive on legitimately slow data.
+_TOOL_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
+    max_workers=4, thread_name_prefix="advisor_mcp_tool"
+)
+
+
+def _with_timeout(fn, timeout_s: float, *args, **kwargs) -> str:
+    """
+    Run fn(*args, **kwargs) in a worker thread with a hard wall-clock
+    timeout. Returns fn's normal result if it completes in time;
+    otherwise returns a clear TIMEOUT error string instead of letting
+    the caller (and the MCP client) hang indefinitely.
+
+    Caveat: a Python thread that is truly stuck (blocked on I/O or a
+    lock) cannot be force-killed from here. This bounds how long the
+    MCP response takes, not whether the background thread eventually
+    finishes. For write_back specifically, the real fix is the git-push
+    hardening in file_protocol.py's _git_commit() -- this is a second,
+    independent line of defense, not a substitute for it.
+    """
+    future = _TOOL_EXECUTOR.submit(fn, *args, **kwargs)
+    try:
+        return future.result(timeout=timeout_s)
+    except concurrent.futures.TimeoutError:
+        return _err(
+            f"{fn.__name__} exceeded its {timeout_s:.0f}s safety timeout "
+            f"without returning. This function is proven sub-second under "
+            f"normal data (FRAMEWORK_BACKLOG.md ENG-33) -- this timeout "
+            f"firing is itself the diagnostic signal that something is "
+            f"genuinely stuck, not just slow under heavy load. The call "
+            f"may still be running in the background; if it has side "
+            f"effects (write_back), check `git log` for a new commit "
+            f"before retrying rather than assuming it failed.",
+            status="TIMEOUT",
+        )
+
 
 logger = logging.getLogger(__name__)
 
@@ -1132,7 +1182,8 @@ def build_server():
         dual_role_conflict (null if none), quality_flags. Plus feasibility
         (if proposed_allocations given).
         """
-        return _tool_evaluate_allocation(
+        return _with_timeout(
+            _tool_evaluate_allocation, 30.0,
             account_profile=account_profile,
             current_weights=current_weights,
             tickers=tickers,
@@ -1207,7 +1258,8 @@ def build_server():
 
         Returns commit hash on success.
         """
-        return _tool_write_back(
+        return _with_timeout(
+            _tool_write_back, 90.0,
             primary_driver=primary_driver,
             open_triggers=open_triggers,
             open_decisions=open_decisions,
