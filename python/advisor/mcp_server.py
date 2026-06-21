@@ -100,6 +100,51 @@ def _err(msg: str, status: str = "ERROR") -> str:
     return _dumps({"status": status, "error": msg})
 
 
+def _parse_floor_accounts(value: Any) -> List[Dict[str, Any]]:
+    """
+    Coerce floor_account_weights_json into a list of
+    {"account_id": str, "weights": {ticker: float}} dicts.
+
+    Defensive against the calling layer sending either a native list
+    (the param is typed Optional[Any] below precisely so a list is
+    accepted without a pydantic string-type rejection) or a JSON
+    string -- including a DOUBLE-encoded JSON string. Some MCP bridges
+    re-stringify a string-typed param that already looks like JSON, so
+    the value this function receives can itself be the JSON encoding
+    of a JSON string. One json.loads() then yields a str, not a list,
+    and the caller silently cached that str as floor_accounts -- which
+    is what produced "string indices must be integers, not 'str'" when
+    check_all_floor_accounts() iterated it character by character.
+
+    Loops json.loads() while the result is still a str, capped at 3
+    attempts so a malformed value fails fast with a clear error rather
+    than looping forever or silently miscaching.
+
+    Found: 2026-06-20 session, Step 3b / Step 6b both failing.
+    """
+    if value is None or value == "":
+        return []
+
+    parsed: Any = value
+    attempts = 0
+    while isinstance(parsed, str) and attempts < 3:
+        parsed = json.loads(parsed)
+        attempts += 1
+
+    if not isinstance(parsed, list):
+        raise ValueError(
+            "floor_account_weights_json must decode to a list of "
+            f"{{account_id, weights}} dicts; got {type(parsed).__name__}"
+        )
+    for i, entry in enumerate(parsed):
+        if not isinstance(entry, dict) or "account_id" not in entry or "weights" not in entry:
+            raise ValueError(
+                f"floor_account_weights_json[{i}] must be a dict with "
+                f"'account_id' and 'weights' keys; got {entry!r}"
+            )
+    return parsed
+
+
 def _parse_account_profile(data: Dict[str, Any]) -> Any:
     """
     Build an AccountProfile from the dict Claude constructs after reading
@@ -137,7 +182,7 @@ def _parse_account_profile(data: Dict[str, Any]) -> Any:
 
 # ── Tool 1: advisor_run_computation() ─────────────────────────────────────────
 
-def _tool_run_computation(floor_account_weights_json: Optional[str] = None) -> str:
+def _tool_run_computation(floor_account_weights_json: Optional[Any] = None) -> str:
     """
     M05 Steps 1+2+4+3b: load config, fetch market data, compute signals,
     build M03 scoring questions, run CurrentHoldingsFloorCheck (Step 3b).
@@ -394,7 +439,7 @@ def _tool_run_computation(floor_account_weights_json: Optional[str] = None) -> s
     floor_accounts: List[Dict] = []
     if floor_account_weights_json:
         try:
-            floor_accounts = json.loads(floor_account_weights_json)
+            floor_accounts = _parse_floor_accounts(floor_account_weights_json)
             _cache["floor_accounts"] = floor_accounts
         except Exception as e:
             result["flags"].append(f"⚠ floor_account_weights_json parse error: {e}")
@@ -979,7 +1024,7 @@ def build_server():
 
     @srv.tool()
     def advisor_run_computation(
-        floor_account_weights_json: Optional[str] = None,
+        floor_account_weights_json: Optional[Any] = None,
     ) -> str:
         """
         M05 Steps 1–4 + 3b: load Calibration_State.md + Session_Log.md,

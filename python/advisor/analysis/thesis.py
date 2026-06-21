@@ -321,7 +321,13 @@ def _eval_call2(
         # count as a false proxy for "a reversal occurred this session."
         return None
 
-    if "de-escalation event" in cond:
+    if "de-escalation event" in cond or "Hormuz traffic confirmed reopened" in cond:
+        # The second phrasing ("Iran MOU signed AND Hormuz traffic confirmed
+        # reopened (T1 verified)") is a separate failure_signals entry in
+        # XAR's §13 block using different wording for the same underlying
+        # judgment as the de-escalation gate -- found 2026-06-20 falling
+        # through to "no evaluator recognizes condition" because only the
+        # first phrasing was matched. Routes to the same Call-2 answer.
         ans = call2_answers.get(_CALL2_XAR_GATE)
         if ans is None:
             flags.append(f"{_CALL2_XAR_GATE}: no Call-2 answer present")

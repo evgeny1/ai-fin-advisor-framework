@@ -1507,3 +1507,206 @@ changes — the trailing-window limitation was never documented in
 `M19_ThesisSustainingConditions.md` itself, only in `thesis.py`'s
 docstring and this backlog). Full suite (`not integration`): 645 passed,
 18 deselected, 0 regressions.
+
+---
+
+### ENG-27 — yfinance concurrent fetches return cross-contaminated *_TREND data
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  CRITICAL
+  Category:  data-integrity
+  Opened:    2026-06-20
+  Closed:    2026-06-20
+  Area:      python/advisor/data/fetchers/yfinance_fetcher.py
+  Related:   ENG-13, GAP-16 (both consumers of the corrupted data)
+-->
+
+**Found:** during the first live session exercising ENG-13's trend infrastructure
+and GAP-16's range-position advisory in anger, `DXY_TREND` and `BRENT_TREND`
+came back from `advisor_run_computation()` with the EXACT same 8-value closes
+array, and `COPPER_TREND`/`GOLD_TREND`/`URANIUM_TREND`/`SP500_TREND`/
+`COPX_PRICE_TREND` all shared a SECOND identical array — values in the
+$98–101 range, i.e. roughly that session's DXY spot price, not gold ($4,172),
+copper ($6.34), uranium futures, the S&P (7,500), or COPX ($85.48). Only
+`THREEFYTP10_TREND` (FRED-sourced, different client) was correct. Downstream
+effect: GAP-16's `range_position_advisories` for SGOL/SIVR both came back
+`"signal": "inconclusive"` / `"note": "no trend data available this session"`,
+and the M19 DBMF mean-reversion failure condition fired (or didn't) on garbage
+data — ENG-13/GAP-16 were both functionally dead on arrival for this reason
+alone, despite both modules' own logic being correct (verified by re-reading
+`trend.py`, `thesis.py`, `range_position.py` line by line — each correctly
+reads the `*_TREND` `DataReading`s it's given; the bug is purely in what gets
+written into those readings before they're handed over).
+
+**Root cause:** `FetchRegistry.fetch_all()` (`data/fetch_registry.py`) runs
+every registered `FetchSpec` concurrently via `ThreadPoolExecutor(max_workers=8)`.
+Seven distinct specs all dispatch to `yfinance_fetcher.py` functions that call
+`yf.download()`/`yf.Ticker()` with different symbols, all in the same batch.
+yfinance's underlying session/cache machinery is not safe under concurrent
+calls from multiple threads — a known class of issue with the library, not a
+bug in this codebase's symbol mapping (`_SYMBOL_MAP`/`_TREND_SPECS` were
+independently verified correct: each call site passes the right symbol).
+Under load, results from one thread's `yf.download()` call were observed
+leaking into another thread's return value.
+
+**Fix:** added a module-level `_YF_LOCK = threading.Lock()` in
+`yfinance_fetcher.py` and wrapped every yfinance network call site (
+`fetch_holdings_prices`, `fetch_vix_history`, `fetch_broad_equity_trailing`,
+`fetch_nasdaq_trailing`, `fetch_weekly_trend`, `fetch_yield_curve_partial`,
+`fetch_instrument_history`, `_fetch_single`) in `with _YF_LOCK:`. This
+serializes all yfinance calls relative to each other while leaving
+`fred_fetcher.py`'s FRED-sourced fetches (different client, unaffected)
+running concurrently in the same `ThreadPoolExecutor` batch — i.e. the fix is
+scoped to the actually-unsafe library, not a wholesale removal of
+`FetchRegistry`'s concurrency. Did not touch `fetch_registry.py` itself.
+
+**Verification:** full suite (`not integration`): 645 passed, 0 regressions
+(existing yfinance unit tests mock `yf.download` directly, so the lock wrapping
+is transparent to them — no test changes needed). `tools/validate_manifests.py`:
+19/19 (no module `.md` changes — pure Python fix, no spec-level behavior
+change). Live re-verification of the actual cross-contamination fix (i.e.
+confirming `DXY_TREND`/`BRENT_TREND`/etc. return genuinely distinct, correct
+data under concurrent load) deferred to the next live session that calls
+`advisor_run_computation()` — not practical to reproduce the race
+deterministically in a unit test without mocking away the exact concurrency
+this fix targets.
+
+### ENG-28 — floor_account_weights_json double-JSON-encoding crashes floor checks
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  HIGH
+  Category:  data-integrity
+  Opened:    2026-06-20
+  Closed:    2026-06-20
+  Area:      python/advisor/mcp_server.py
+  Related:   —
+-->
+
+**Found:** `CurrentHoldingsFloorCheck [3b]` and `PassiveMandateAbsentWarning`
+both failed with `string indices must be integers, not 'str'` inside
+`advisor_run_computation()`; the auto-triggered Step 6b re-check inside
+`advisor_apply_scoring()` failed identically with no new arguments passed,
+confirming the bug was server-side, not a one-off caused by how the calling
+session formatted that one call.
+
+**Root cause:** `_tool_run_computation()`'s `floor_account_weights_json`
+parameter was typed `Optional[str]`, and the line
+`floor_accounts = json.loads(floor_account_weights_json)` assumed exactly one
+layer of JSON-string encoding. Some MCP calling layers re-stringify a
+string-typed parameter that already looks like JSON — i.e. the value this
+function received was itself the JSON encoding of a JSON string, not the
+array. One `json.loads()` call only undoes the outer layer, yielding a
+plain Python `str` (the inner, still-encoded array text) rather than a list.
+`floor_accounts` then silently held a string with no exception raised (`
+json.loads` succeeded — it just didn't produce a list). `check_all_floor_accounts()`
+/ `passive_mandate_absent_warnings()` then did `for acct in floor_accounts:
+acct["account_id"]`, which iterates a string character-by-character and
+indexes each character with a string key — exactly the observed
+`TypeError`.
+
+**Fix:** added `_parse_floor_accounts()` in `mcp_server.py`: loops
+`json.loads()` while the result is still a `str` (capped at 3 attempts, then
+raises a clear `ValueError` rather than looping forever), validates the final
+result is a list of `{account_id, weights}` dicts, and raises a clear error
+on any other shape — so a genuinely malformed value now surfaces as a
+flagged parse error (existing `except` handling in the call site), not a
+silent wrong-type cache write. Also widened the parameter type from
+`Optional[str]` to `Optional[Any]` (both in `_tool_run_computation()` and the
+`@srv.tool()` wrapper) so a calling layer that DOES deliver a native list
+isn't rejected by pydantic's string-only schema either — the function now
+accepts whichever shape arrives and normalizes it, rather than assuming one
+specific encoding convention.
+
+**Verification:** full suite (`not integration`): 645 passed, 0 regressions
+(no existing test called `_tool_run_computation` with a JSON-string
+`floor_account_weights_json` directly, so nothing else depended on the old
+single-`json.loads()` behavior). `tools/validate_manifests.py`: 19/19. Live
+re-verification (passing a real floor-account payload and confirming Step
+3b/6b run cleanly end-to-end) deferred to the next live session with
+FLOOR_THEN_RETURN accounts populated.
+
+### ENG-29 — thesis.py XAR Call-2 routing misses an alternate §13 phrasing
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  LOW
+  Category:  hygiene
+  Opened:    2026-06-20
+  Closed:    2026-06-20
+  Area:      python/advisor/analysis/thesis.py
+  Related:   —
+-->
+
+**Found:** XAR's M19 evaluation correctly resolved to `FAILED` (the
+`"de-escalation event"` phrasing matched and routed to
+`M19_XAR_CONFLICT_GATE`, which fired as answered), but a SECOND §13 condition
+— text: "Iran MOU signed AND Hormuz traffic confirmed reopened (T1
+verified)" — fell through to the generic "no evaluator recognizes condition"
+flag on the same evaluation. Same underlying judgment, different wording,
+only one phrasing was recognized.
+
+**Fix:** broadened the `_eval_call2()` match from
+`if "de-escalation event" in cond:` to
+`if "de-escalation event" in cond or "Hormuz traffic confirmed reopened" in cond:`
+— both phrasings now route to the same `M19_XAR_CONFLICT_GATE` Call-2 answer.
+No calibration text changes; per `thesis.py`'s own docstring, the module's
+job is to own the mapping from recognized phrasings to live data, so the fix
+belongs in code, not in rewriting §13's human-authored condition text to match
+the code.
+
+**Verification:** full suite (`not integration`): 645 passed, 0 regressions.
+`tools/validate_manifests.py`: 19/19. **Audit note for a future session:** this
+was found by inspection of one ticker's live output, not a systematic check
+— §13's full condition-string set has not been cross-checked against every
+recognized pattern in `thesis.py`. Worth a dedicated audit pass (read every
+ticker's §13 entry, confirm each condition string matches some `_eval_*`
+branch) rather than relying on phrasing mismatches surfacing one live session
+at a time.
+
+---
+
+### ENG-32 — range_position.py conflated "flat" with "unavailable" trend data
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  LOW
+  Category:  hygiene
+  Opened:    2026-06-20
+  Closed:    2026-06-20
+  Area:      python/advisor/analysis/range_position.py
+  Related:   ENG-27 (surfaced while live-verifying that fix), GAP-16
+-->
+
+**Found:** while live-verifying ENG-27's trend-data fix (after the MCP server
+restart confirmed `DXY_TREND`/`BRENT_TREND`/etc. now return correct,
+distinct data), GAP-16's SGOL/SIVR `range_position_advisories` STILL showed
+`"signal": "inconclusive"` / `"note": "...no trend data available this
+session."` — but `quality_flags` was empty, which only happens when the
+underlying `*_TREND` reads succeeded. The data was present (DXY +2.6%/8wk,
+THREEFYTP10 +0.6%/8wk that session) — it simply didn't clear the 5%
+materiality threshold in `directional_trend()` in either direction.
+
+**Root cause:** `_ihp_sub_conditions()` only appended to `drivers`/`signals`
+on `d == "up"` or `d == "down"`; when `directional_trend()` correctly
+returned `None` for a flat/non-directional move (data present, no edge
+case, working as designed), neither branch fired and nothing was recorded.
+The caller's fallback, `driver_text = "..." if drivers else "no trend data
+available this session"`, then fired on an EMPTY `drivers` list regardless
+of *why* it was empty — genuinely missing data and present-but-flat data
+produced the identical, misleading message.
+
+**Fix:** added an `else` branch under each of the two `if tp10/dxy is not
+None:` blocks that appends an explicit "flat over the window... no lean"
+driver note when data is available but non-directional. `drivers` is now
+non-empty whenever data was fetched at all, so the "no trend data
+available" fallback text is reserved for the case it actually describes.
+`signal` classification logic (`overall = "inconclusive"` when `signals` is
+empty) is unchanged — this was a message-text bug, not a misclassification
+of the underlying advisory signal itself.
+
+**Verification:** full suite (`not integration`): 645 passed, 0 regressions
+both before and after this change (no existing test asserted on the exact
+note text for the flat-data case, so nothing needed updating — a gap worth
+closing: no dedicated `test_range_position.py` exists yet covering the
+flat-vs-unavailable distinction). `tools/validate_manifests.py`: 19/19. Live
+re-verification deferred to next MCP server restart (this fix landed after
+the same-session restart that confirmed ENG-27/28/29, so the running
+process does not yet have it).

@@ -9,6 +9,7 @@ import datetime
 import json
 import logging
 import os
+import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -32,6 +33,27 @@ _FALLBACK_INSTRUMENTS = [
     "DBMF", "MLPX", "SGOL", "SIVR", "COPX",
     "XAR", "SGOV", "XLP", "VTIP", "AIPO",
 ]
+
+# yfinance's underlying session/cache is not safe under concurrent calls
+# from multiple threads. FetchRegistry.fetch_all() (data/fetch_registry.py)
+# runs every registered spec in a ThreadPoolExecutor(max_workers=8), and
+# several *_TREND specs (DXY_TREND, BRENT_TREND, GOLD_TREND, SP500_TREND,
+# COPPER_TREND, URANIUM_TREND, COPX_PRICE_TREND) plus the point-quote
+# fetchers below all call yf.download()/yf.Ticker() concurrently.
+#
+# Found 2026-06-20: under concurrent load, yf.download() calls for
+# different symbols returned identical (wrong-symbol) closes arrays
+# across multiple *_TREND readings -- e.g. DXY_TREND and BRENT_TREND came
+# back with the exact same array, and COPPER_TREND/GOLD_TREND/
+# URANIUM_TREND/SP500_TREND/COPX_PRICE_TREND another shared array. This is
+# a known yfinance thread-safety issue (shared session/cache state), not a
+# FetchRegistry or _SYMBOL_MAP/_TREND_SPECS bug -- each call site here
+# already passes the correct symbol.
+#
+# Serializing all yfinance network calls behind one lock fixes it.
+# fred_fetcher.py's FRED-sourced fetches are unaffected (different client)
+# and keep running concurrently in the same ThreadPoolExecutor batch.
+_YF_LOCK = threading.Lock()
 
 # ── Symbol map: spec.id → yfinance ticker ─────────────────────────────────────
 _SYMBOL_MAP: Dict[str, str] = {
@@ -148,29 +170,30 @@ def fetch_holdings_prices(spec: FetchSpec) -> List[DataReading]:
     """Current price + day-change for all portfolio instruments."""
     symbols = load_instruments()
     now = datetime.datetime.utcnow()
-    tickers = yf.Tickers(" ".join(symbols))
     readings = []
-    for sym in symbols:
-        try:
-            info = tickers.tickers[sym].fast_info
-            readings.append(DataReading(
-                spec_id=f"{spec.id}:{sym}",
-                value={
-                    "symbol":         sym,
-                    "price":          round(float(info.last_price), 4),
-                    "prev_close":     round(float(info.previous_close), 4),
-                    "day_change_pct": round(
-                        (info.last_price - info.previous_close) / info.previous_close * 100, 2
-                    ),
-                },
-                source=DataSource.YFINANCE, fetched_at=now,
-            ))
-        except Exception as e:
-            readings.append(DataReading(
-                spec_id=f"{spec.id}:{sym}", value=None,
-                source=DataSource.YFINANCE, fetched_at=now,
-                quality_flags=[f"FETCH_FAILED: {e}"],
-            ))
+    with _YF_LOCK:
+        tickers = yf.Tickers(" ".join(symbols))
+        for sym in symbols:
+            try:
+                info = tickers.tickers[sym].fast_info
+                readings.append(DataReading(
+                    spec_id=f"{spec.id}:{sym}",
+                    value={
+                        "symbol":         sym,
+                        "price":          round(float(info.last_price), 4),
+                        "prev_close":     round(float(info.previous_close), 4),
+                        "day_change_pct": round(
+                            (info.last_price - info.previous_close) / info.previous_close * 100, 2
+                        ),
+                    },
+                    source=DataSource.YFINANCE, fetched_at=now,
+                ))
+            except Exception as e:
+                readings.append(DataReading(
+                    spec_id=f"{spec.id}:{sym}", value=None,
+                    source=DataSource.YFINANCE, fetched_at=now,
+                    quality_flags=[f"FETCH_FAILED: {e}"],
+                ))
     return readings
 
 
@@ -180,7 +203,8 @@ def fetch_vix_history(spec: FetchSpec) -> List[DataReading]:
     """VIX_30D_AVG or VIX_90D_AVG: download history, compute rolling average."""
     today = datetime.date.today()
     start = today - datetime.timedelta(days=110)
-    df = yf.download("^VIX", start=start.isoformat(), progress=False, auto_adjust=True)
+    with _YF_LOCK:
+        df = yf.download("^VIX", start=start.isoformat(), progress=False, auto_adjust=True)
     if df.empty or "Close" not in df.columns:
         raise RuntimeError("^VIX history returned empty")
     closes_raw = df["Close"].dropna()
@@ -205,7 +229,8 @@ def fetch_broad_equity_trailing(spec: FetchSpec) -> List[DataReading]:
     """BROAD_EQUITY_TRAILING: S&P 500 30d and 90d pct-change from ^GSPC history."""
     today = datetime.date.today()
     start = today - datetime.timedelta(days=110)
-    df = yf.download("^GSPC", start=start.isoformat(), progress=False, auto_adjust=True)
+    with _YF_LOCK:
+        df = yf.download("^GSPC", start=start.isoformat(), progress=False, auto_adjust=True)
     if df.empty or "Close" not in df.columns:
         raise RuntimeError("^GSPC history returned empty")
     raw = df["Close"].dropna()
@@ -236,7 +261,8 @@ def fetch_nasdaq_trailing(spec: FetchSpec) -> List[DataReading]:
     "no evaluator recognizes condition" every session)."""
     today = datetime.date.today()
     start = today - datetime.timedelta(days=60)
-    df = yf.download("^IXIC", start=start.isoformat(), progress=False, auto_adjust=True)
+    with _YF_LOCK:
+        df = yf.download("^IXIC", start=start.isoformat(), progress=False, auto_adjust=True)
     if df.empty or "Close" not in df.columns:
         raise RuntimeError("^IXIC history returned empty")
     raw = df["Close"].dropna()
@@ -264,8 +290,9 @@ def fetch_weekly_trend(spec: FetchSpec, symbol: str, weeks: int) -> List[DataRea
     today = datetime.date.today()
     start = today - datetime.timedelta(weeks=weeks + 3)
     try:
-        df = yf.download(symbol, start=start.isoformat(), interval="1wk",
-                         progress=False, auto_adjust=True)
+        with _YF_LOCK:
+            df = yf.download(symbol, start=start.isoformat(), interval="1wk",
+                             progress=False, auto_adjust=True)
     except Exception as e:
         return [DataReading(spec_id=spec.id, value=None, source=DataSource.YFINANCE,
                             fetched_at=datetime.datetime.utcnow(),
@@ -304,12 +331,13 @@ def fetch_yield_curve_partial(spec: FetchSpec) -> List[DataReading]:
     """
     tenor_map = {"^TNX": "year10", "^TYX": "year30", "^IRX": "month3"}
     values: Dict[str, Any] = {}
-    for sym, key in tenor_map.items():
-        try:
-            values[key] = round(float(yf.Ticker(sym).fast_info.last_price), 4)
-        except Exception as e:
-            values[key] = None
-            logger.warning(f"Yield curve {sym} ({key}) failed: {e}")
+    with _YF_LOCK:
+        for sym, key in tenor_map.items():
+            try:
+                values[key] = round(float(yf.Ticker(sym).fast_info.last_price), 4)
+            except Exception as e:
+                values[key] = None
+                logger.warning(f"Yield curve {sym} ({key}) failed: {e}")
 
     y10 = values.get("year10")
     y3m = values.get("month3")
@@ -336,7 +364,8 @@ def fetch_instrument_history(spec: FetchSpec, symbol: str,
                              start: str, end: Optional[str] = None) -> List[DataReading]:
     """HISTORICAL_INSTRUMENT_PRICES: ON_DEMAND. Call via registry.fetch_one()."""
     end = end or datetime.date.today().isoformat()
-    df  = yf.download(symbol, start=start, end=end, progress=False, auto_adjust=True)
+    with _YF_LOCK:
+        df = yf.download(symbol, start=start, end=end, progress=False, auto_adjust=True)
     if df.empty:
         return [DataReading(spec_id=f"{spec.id}:{symbol}", value=None,
                             source=DataSource.YFINANCE,
@@ -363,15 +392,18 @@ def _fetch_single(spec: FetchSpec) -> List[DataReading]:
             f"No yfinance symbol for spec.id='{spec.id}'. "
             f"Add it to _SYMBOL_MAP in yfinance_fetcher.py."
         )
-    info = yf.Ticker(symbol).fast_info
+    with _YF_LOCK:
+        info = yf.Ticker(symbol).fast_info
+        price = round(float(info.last_price), 4)
+        day_change_pct = round(
+            (info.last_price - info.previous_close) / info.previous_close * 100, 2
+        )
     return [DataReading(
         spec_id=spec.id,
         value={
             "symbol":         symbol,
-            "price":          round(float(info.last_price), 4),
-            "day_change_pct": round(
-                (info.last_price - info.previous_close) / info.previous_close * 100, 2
-            ),
+            "price":          price,
+            "day_change_pct": day_change_pct,
         },
         source=DataSource.YFINANCE, fetched_at=datetime.datetime.utcnow(),
     )]

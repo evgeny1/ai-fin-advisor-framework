@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-20 (ENG-13 closed, ENG-26 opened, GAP-16 closed — trailing-window trend infra + IHP range-position advisory)
+**Last updated:** 2026-06-20 (ENG-27/28/29/32 closed — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, range_position.py flat-vs-unavailable note bug; ENG-30/31 opened — DBMF 3M-return condition, AIPO capex dependency; all found/fixed live the same session)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -67,6 +67,12 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-24 | CLOSED | MEDIUM | architecture | M13.RecalibrationSequence() has no Python implementation — still 100% manual |
 | ENG-25 | CLOSED | LOW | architecture | instruments.json write not wired — Project_Instructions_MCP.md claimed MCP server writes it; it doesn't |
 | ENG-26 | OPEN | LOW | functional-gap | MAGS's "consecutive sessions" §13 condition needs cross-session SIGNAL history — different problem from ENG-13's price-series trends |
+| ENG-27 | CLOSED | CRITICAL | data-integrity | yfinance concurrent fetches under ThreadPoolExecutor returned cross-contaminated *_TREND data |
+| ENG-28 | CLOSED | HIGH | data-integrity | floor_account_weights_json double-JSON-encoding crashed CurrentHoldingsFloorCheck/PassiveMandateAbsentWarning |
+| ENG-29 | CLOSED | LOW | hygiene | thesis.py XAR Call-2 routing missed an alternate §13 phrasing for the same de-escalation judgment |
+| ENG-30 | OPEN | MEDIUM | functional-gap | DBMF's "3M return < -3% while B+C>=55%" §13 failure condition has no FetchSpec/evaluator |
+| ENG-31 | OPEN | LOW | functional-gap | AIPO's hyperscaler capex guidance §13 sustaining condition has no data source |
+| ENG-32 | CLOSED | LOW | hygiene | range_position.py conflated "trend data flat" with "trend data unavailable" in GAP-16 advisory note text |
 
 ---
 
@@ -285,6 +291,52 @@ folder.
 
 ### ENG-25 — instruments.json write not wired — Project_Instructions_MCP.md claimed MCP server writes it
 **CLOSED** 2026-06-20 (LOW, architecture). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+
+### ENG-27 — yfinance concurrent fetches return cross-contaminated *_TREND data
+**CLOSED** 2026-06-20 (CRITICAL, data-integrity). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+
+### ENG-28 — floor_account_weights_json double-JSON-encoding crashes floor checks
+**CLOSED** 2026-06-20 (HIGH, data-integrity). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+
+### ENG-29 — thesis.py XAR Call-2 routing misses an alternate §13 phrasing
+**CLOSED** 2026-06-20 (LOW, hygiene). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+
+### ENG-32 — range_position.py conflated "flat" with "unavailable" trend data
+**CLOSED** 2026-06-20 (LOW, hygiene). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+
+### ENG-30 — DBMF's own-performance §13 failure condition has no FetchSpec/evaluator
+<!-- ITEM
+  Status:    OPEN
+  Severity:  MEDIUM
+  Category:  functional-gap
+  Opened:    2026-06-20
+  Area:      python/advisor/analysis/thesis.py, data/fetchers/, data/m18_registry.py
+  Related:   ENG-13 (closed — solved the *_TREND price-series half; this is a different, ticker-own-performance condition)
+-->
+
+**Description:** DBMF's §13 failure_signals includes "DBMF_3M_return < -3% while B+C >= 55% (instrument underperforming own scenario)". This isn't a generic market-index trend (which ENG-13 already solved for BRENT/GOLD/DXY/SP500/COPPER/URANIUM/COPX) — it needs DBMF's *own* 3-month return, which has no FetchSpec anywhere (holdings_30d_returns in mcp_server.py only covers a ~35-trading-day window, not 3 months) and no regex pattern in `_eval_simple_numeric`. Surfaced 2026-06-20 as a "no evaluator recognizes condition" quality_flag, separate from that session's ENG-27 data-corruption bug (which affected DBMF's mean-reversion sustaining/failure check, not this one).
+
+**Suggested next step:** add a `DBMF_3M_RETURN` FetchSpec (same pattern as `fetch_nasdaq_trailing`/`fetch_broad_equity_trailing` — one `yf.download` call, ~64 trading days, `(last/first - 1) * 100`), then a regex in `_eval_simple_numeric` matching `DBMF_3M_return\s*(>=|<=|>|<)\s*(-?\d+(?:\.\d+)?)%` combined with the existing `B+C` combined-probability check (`_BC_PROB_RE`) via an AND. Confirm with Evgeny whether -3%/55% are the intended live thresholds or illustrative placeholders before wiring.
+
+
+### ENG-31 — AIPO's hyperscaler capex §13 sustaining condition has no data source
+<!-- ITEM
+  Status:    OPEN
+  Severity:  LOW
+  Category:  functional-gap
+  Opened:    2026-06-20
+  Area:      python/advisor/analysis/thesis.py, orchestrator/scoring_questions.py
+  Related:   —
+-->
+
+**Description:** AIPO's §13 sustaining condition "AI infrastructure capital expenditure cycle intact (hyperscaler capex guidance positive)" and failure condition "Hyperscaler capex guidance revised down >=2 consecutive quarters" have no Call-2 judgment question wired (unlike SGOL/SIVR/URA/XAR/COPX, which each route through a `M19_{TICKER}_*` scoring question) and no quantitative data source either. Surfaced 2026-06-20 as `missing_dependencies` on an otherwise-ACTIVE evaluation — not a crash, just permanently unevaluable as-is.
+
+**Suggested next step:** decide whether this should be a new Call-2 judgment question (qualitative, Claude answers from hyperscaler earnings-call research each session — cheapest fix, same pattern as `M19_URA_NUCLEAR_POLICY`) or a quantitative consecutive-quarters tracker (harder — needs cross-session persistence like ENG-26, since "2 consecutive quarters" of guidance can't be derived from one session's data alone). Given AIPO's UNCLASSIFIED-weight EV flag is already a standing item, low priority relative to that.
 
 
 ---

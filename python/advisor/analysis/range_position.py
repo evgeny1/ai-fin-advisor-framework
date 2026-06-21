@@ -88,6 +88,19 @@ def _ihp_sub_conditions(
         elif d == "down":
             signals.append("favorable")
             drivers.append("real yield (THREEFYTP10) trending down — tailwind for precious metals")
+        else:
+            # Data WAS available — it just didn't clear the materiality
+            # threshold in either direction. Distinct from the unavailable
+            # case below; previously both fell through to the same silent
+            # no-op, which made the caller's "no trend data available"
+            # fallback note fire even when data existed and was simply flat
+            # (found 2026-06-20: DXY +2.6%/8wk, THREEFYTP10 +0.6%/8wk, both
+            # under the 5% threshold, quality_flags empty, note still said
+            # "no trend data available this session").
+            drivers.append(
+                f"real yield (THREEFYTP10) flat over the window (move below "
+                f"{_TREND_THRESHOLD_PCT:.0f}% materiality threshold) — no lean"
+            )
     else:
         flags.append("THREEFYTP10_TREND unavailable — real yield sub-condition not evaluated")
 
@@ -100,6 +113,11 @@ def _ihp_sub_conditions(
         elif d == "down":
             signals.append("favorable")
             drivers.append("DXY weakening — tailwind for precious metals")
+        else:
+            drivers.append(
+                f"DXY flat over the window (move below {_TREND_THRESHOLD_PCT:.0f}% "
+                "materiality threshold) — no lean"
+            )
     else:
         flags.append("DXY_TREND unavailable — dollar sub-condition not evaluated")
 
