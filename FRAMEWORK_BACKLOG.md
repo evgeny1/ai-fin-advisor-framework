@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-33 downgraded CRITICAL->MEDIUM and given a defensive _with_timeout() mitigation for both evaluate_allocation and write_back, root cause for evaluate_allocation specifically still unconfirmed; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
+**Last updated:** 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-33 downgraded CRITICAL->MEDIUM and given a defensive _with_timeout() mitigation for both evaluate_allocation and write_back, root cause for evaluate_allocation specifically still unconfirmed; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -79,6 +79,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-36 | CLOSED | MEDIUM | bug | dominant_directive() crashed on MAGS/MLPX/COPX -- _directive_direction()/_most_conservative() called .upper() on DirectiveCode enum members, which only worked for the str fallback default |
 | ENG-37 | OPEN | MEDIUM | functional-gap | recalibration_sequence()'s "anchor = above-floor proxy" heuristic produces a degenerate no-op when every holding is above its own floor (the normal case) -- gap_closed_by_reallocation reports true without any actual reallocation |
 | ENG-38 | CLOSED | HIGH | infrastructure | advisor_write_back's `git push` had no timeout and no guard against an interactive credential prompt, causing it to hang at the MCP client's ~4min ceiling even though the operation completed and committed server-side regardless |
+| ENG-39 | CLOSED | MEDIUM | bug | GAP-16's IHP range-position advisory used THREEFYTP10 (10Y term premium) mislabeled as "real yield" -- replaced with a computed REAL_YIELD_10Y_TREND (DGS10-T10YIE) series |
 
 ---
 
@@ -554,6 +555,10 @@ a misleadingly-affirmative true.
 **CLOSED** 2026-06-20 (HIGH, infrastructure). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 
+### ENG-39 — GAP-16's IHP range-position advisory mislabeled THREEFYTP10 (term premium) as "real yield"
+**CLOSED** 2026-06-21 (MEDIUM, bug). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+
 ---
 
 ## Part 2 — Calibration & Methodology Gaps (GAP-N index)
@@ -571,7 +576,7 @@ first; update this index to match, not the other way around.
 | GAP-8 | CLOSED v1.32 | §2.1 C-trigger clock T1-confirmed (max 3 consecutive closes ≥$110) | Calibration_State.md §3 |
 | GAP-11 | OPEN | M07 EV floor — see ENG-14, no description recovered yet | Session_Log.md |
 | GAP-15 | CLOSED v1.32 | B_WATCH_LEVEL_3 graduated protocol added to §2.3 | Calibration_State.md §3 |
-| GAP-16 | CLOSED v1.42 | Within-scenario sub-condition advisory (range-position) for wide-range roles — IHP (real yield/DXY) implemented; STF/RAC/IHC sub-conditions not yet identified, separate follow-on | Calibration_State.md §6 |
+| GAP-16 | CLOSED v1.42; real-yield driver corrected v1.44 (ENG-39) | Within-scenario sub-condition advisory (range-position) for wide-range roles — IHP (real yield/DXY) implemented; STF/RAC/IHC sub-conditions not yet identified, separate follow-on | Calibration_State.md §3 |
 
 ---
 

@@ -185,6 +185,83 @@ class TestFredTrendSeries:
         assert readings[0].value["closes"] == [0.70, 0.75]
 
 
+# ── GAP-16 follow-up (2026-06-21): REAL_YIELD_10Y_TREND ────────────────────────
+
+def _real_yield_spec() -> FetchSpec:
+    return FetchSpec(
+        id="REAL_YIELD_10Y_TREND", source=DataSource.FRED_SPREADSHEET_TAB,
+        description="test", update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=2,
+    )
+
+
+class TestRealYieldTrend:
+    """real_yield = DGS10 - T10YIE, resampled to weekly closes."""
+
+    def _mock_series(self, observations: dict) -> "function":
+        """observations: {series_id: [(date, value), ...]}. Returns a fake_get
+        that dispatches on params['series_id'], same pattern as the yield-curve
+        tests above."""
+        def fake_get(url, params=None, timeout=None):
+            sid = (params or {}).get("series_id", "")
+            mock = MagicMock()
+            mock.raise_for_status = MagicMock()
+            mock.json.return_value = {
+                "observations": [{"date": d, "value": v} for d, v in observations.get(sid, [])]
+            }
+            return mock
+        return fake_get
+
+    def test_computes_real_yield_oldest_first(self, monkeypatch):
+        monkeypatch.setenv("FRED_API_KEY", "test_key")
+        from advisor.data.fetchers import fred_fetcher as m
+        # 5 weekly Mondays -- one observation per ISO week, so resampling
+        # is a pure pass-through and the expected diff is exact.
+        dates = ["2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25", "2026-06-01"]
+        nominal   = [4.50, 4.55, 4.60, 4.65, 4.70]
+        breakeven = [2.30, 2.32, 2.28, 2.35, 2.30]
+        observations = {
+            "DGS10":  list(zip(dates, [str(v) for v in nominal])),
+            "T10YIE": list(zip(dates, [str(v) for v in breakeven])),
+        }
+        with patch("advisor.data.fetchers.fred_fetcher.requests.get",
+                   side_effect=self._mock_series(observations)):
+            readings = m.fetch_yield_curve_fred(_real_yield_spec())
+        expected = [round(n - b, 4) for n, b in zip(nominal, breakeven)]
+        assert readings[0].is_valid
+        assert readings[0].value["closes"] == expected
+
+    def test_one_series_missing_is_unavailable(self, monkeypatch):
+        monkeypatch.setenv("FRED_API_KEY", "test_key")
+        from advisor.data.fetchers import fred_fetcher as m
+        observations = {"DGS10": [("2026-06-01", "4.70")], "T10YIE": []}
+        with patch("advisor.data.fetchers.fred_fetcher.requests.get",
+                   side_effect=self._mock_series(observations)):
+            readings = m.fetch_yield_curve_fred(_real_yield_spec())
+        assert not readings[0].is_valid
+        assert any("T10YIE" in f for f in readings[0].quality_flags)
+
+    def test_non_overlapping_dates_is_unavailable(self, monkeypatch):
+        monkeypatch.setenv("FRED_API_KEY", "test_key")
+        from advisor.data.fetchers import fred_fetcher as m
+        observations = {
+            "DGS10":  [("2026-06-01", "4.70")],
+            "T10YIE": [("2026-06-02", "2.30")],  # disjoint date -- no overlap
+        }
+        with patch("advisor.data.fetchers.fred_fetcher.requests.get",
+                   side_effect=self._mock_series(observations)):
+            readings = m.fetch_yield_curve_fred(_real_yield_spec())
+        assert not readings[0].is_valid
+        assert any("overlap" in f for f in readings[0].quality_flags)
+
+    def test_no_api_key_unavailable(self, monkeypatch):
+        monkeypatch.delenv("FRED_API_KEY", raising=False)
+        from advisor.data.fetchers import fred_fetcher as m
+        readings = m.fetch_yield_curve_fred(_real_yield_spec())
+        assert not readings[0].is_valid
+        assert any("FRED_API_KEY" in f for f in readings[0].quality_flags)
+
+
 class TestFredFetcherIntegration:
     """Live FRED API calls — require FRED_API_KEY in environment."""
 
@@ -203,3 +280,19 @@ class TestFredFetcherIntegration:
         assert val["spread_10y_2y"] is not None, "10Y-2Y spread requires year2"
         assert -5 < val["spread_10y_2y"] < 5, f"Spread {val['spread_10y_2y']} implausible"
         assert 0 < val["year10"] < 15, f"10Y yield {val['year10']} implausible"
+
+    @pytest.mark.integration
+    @pytest.mark.skipif(not os.environ.get("FRED_API_KEY"), reason="FRED_API_KEY not set")
+    def test_live_real_yield_trend_is_plausible(self):
+        """GAP-16 follow-up (2026-06-21): DGS10-T10YIE should land near the
+        commonly-cited ~1.5-2.5% real yield range, not near THREEFYTP10's
+        ~0.5-1.0% term-premium range -- confirms this is actually a
+        different number, not THREEFYTP10 relabeled."""
+        from advisor.data.fetchers.fred_fetcher import fetch_yield_curve_fred
+        readings = fetch_yield_curve_fred(_real_yield_spec())
+        assert len(readings) == 1
+        r = readings[0]
+        assert r.is_valid, f"REAL_YIELD_10Y_TREND invalid: {r.quality_flags}"
+        closes = r.value["closes"]
+        assert len(closes) > 0
+        assert -2 < closes[-1] < 5, f"Real yield {closes[-1]} implausible"

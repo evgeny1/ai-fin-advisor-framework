@@ -48,8 +48,8 @@ class TestRangePositionAdvisory:
     def test_unfavorable_signal_when_both_drivers_headwind(self, cal):
         self._widen_b_range(cal)
         readings = {
-            "THREEFYTP10_TREND": _trend_reading([1.0, 1.2, 1.4, 1.6, 1.8]),  # rising
-            "DXY_TREND":         _trend_reading([95, 97, 99, 101, 103, 105, 107, 109]),  # appreciating
+            "REAL_YIELD_10Y_TREND": _trend_reading([1.0, 1.2, 1.4, 1.6, 1.8]),  # rising
+            "DXY_TREND":            _trend_reading([95, 97, 99, 101, 103, 105, 107, 109]),  # appreciating
         }
         results = evaluate_range_position_advisories(["SGOL"], _probs(), cal, readings)
         assert len(results) == 1
@@ -62,8 +62,8 @@ class TestRangePositionAdvisory:
     def test_favorable_signal_when_both_drivers_tailwind(self, cal):
         self._widen_b_range(cal)
         readings = {
-            "THREEFYTP10_TREND": _trend_reading([1.8, 1.6, 1.4, 1.2, 1.0]),  # falling
-            "DXY_TREND":         _trend_reading([109, 107, 105, 103, 101, 99, 97, 95]),  # weakening
+            "REAL_YIELD_10Y_TREND": _trend_reading([1.8, 1.6, 1.4, 1.2, 1.0]),  # falling
+            "DXY_TREND":            _trend_reading([109, 107, 105, 103, 101, 99, 97, 95]),  # weakening
         }
         results = evaluate_range_position_advisories(["SGOL"], _probs(), cal, readings)
         assert results[0].signal == "favorable"
@@ -71,8 +71,8 @@ class TestRangePositionAdvisory:
     def test_mixed_signal_when_drivers_disagree(self, cal):
         self._widen_b_range(cal)
         readings = {
-            "THREEFYTP10_TREND": _trend_reading([1.0, 1.2, 1.4, 1.6, 1.8]),  # rising -> unfavorable
-            "DXY_TREND":         _trend_reading([109, 107, 105, 103, 101, 99, 97, 95]),  # weakening -> favorable
+            "REAL_YIELD_10Y_TREND": _trend_reading([1.0, 1.2, 1.4, 1.6, 1.8]),  # rising -> unfavorable
+            "DXY_TREND":            _trend_reading([109, 107, 105, 103, 101, 99, 97, 95]),  # weakening -> favorable
         }
         results = evaluate_range_position_advisories(["SGOL"], _probs(), cal, readings)
         assert results[0].signal == "mixed"
@@ -93,7 +93,7 @@ class TestRangePositionAdvisory:
         """Advisory output carries no field that any EV/allocation function
         reads from — confirms this stays a pure annotation, not a gate."""
         self._widen_b_range(cal)
-        readings = {"THREEFYTP10_TREND": _trend_reading([1.0, 1.8])}
+        readings = {"REAL_YIELD_10Y_TREND": _trend_reading([1.0, 1.8])}
         results = evaluate_range_position_advisories(["SGOL"], _probs(), cal, readings)
         adv = results[0]
         # range bounds reported match §4.1 exactly -- nothing recomputed

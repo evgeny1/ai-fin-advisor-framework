@@ -455,11 +455,33 @@ _ALL_SPECS: list[FetchSpec] = [
         id="THREEFYTP10_TREND",
         source=DataSource.FRED_SPREADSHEET_TAB,
         description="THREEFYTP10, 10 weekly observations. Feeds SGOL/SIVR's "
-                    "'real yield sustained > 2.0% for >= 4 weeks' failure signal "
-                    "and GAP-16 IHP range-position advisory.",
+                    "'real yield sustained > 2.0% for >= 4 weeks' M19 §13 failure "
+                    "signal text (that condition still names THREEFYTP10 explicitly; "
+                    "relabeling it is a separate Calibration_State.md §13 text change, "
+                    "not done this session). No longer used by the GAP-16 IHP "
+                    "range-position advisory as of 2026-06-21 — see REAL_YIELD_10Y_TREND.",
         update_frequency=UpdateFrequency.WEEKLY,
         acceptable_lag_days=10,
-        consumer=["M19", "M15"],
+        consumer=["M19"],
+    ),
+
+    FetchSpec(
+        id="REAL_YIELD_10Y_TREND",
+        source=DataSource.FRED_SPREADSHEET_TAB,
+        description="10Y real yield = DGS10 (nominal Treasury yield) minus T10YIE "
+                    "(10Y breakeven inflation), both daily FRED series, resampled to "
+                    "8 weekly closes (Fisher-equation real yield). GAP-16 follow-up "
+                    "(identified 2026-06-21): THREEFYTP10 -- the 10Y *term premium* -- "
+                    "was being used as the real-yield sub-condition driver in IHP's "
+                    "range-position advisory, but term premium is bond-supply/demand "
+                    "duration compensation, not the Fed-path-driven real rate that "
+                    "actually sets precious metals' opportunity cost; the two series "
+                    "can and do diverge. This spec replaces THREEFYTP10 as that driver "
+                    "in analysis/range_position.py.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=2,
+        consumer=["M15"],
+        calibration_use="GAP-16 follow-up: IHP range-position real-yield sub-condition",
     ),
 
     FetchSpec(

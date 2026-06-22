@@ -11,10 +11,17 @@ briefing for roles whose §4.1 range is wide (>=6pp) and whose sub-condition
 drivers are documented.
 
 Scope (per the originating design note, June 18, 2026 companion session):
-  inflation_hedge_precious_metals — sub-conditions: real yield (THREEFYTP10)
-  direction and DXY direction. Both are already tracked for M19 §13
-  SGOL/SIVR sustaining conditions (analysis/thesis.py) — the *_TREND
-  DataReadings are reused here, not re-fetched.
+  inflation_hedge_precious_metals — sub-conditions: real yield (DGS10 minus
+  T10YIE breakeven inflation -- REAL_YIELD_10Y_TREND) direction and DXY
+  direction. The DXY half is already tracked for M19 §13 SGOL/SIVR
+  sustaining conditions (analysis/thesis.py) — the DXY_TREND DataReading is
+  reused here, not re-fetched. The real-yield half originally reused
+  THREEFYTP10_TREND (10Y term premium) as a proxy; corrected 2026-06-21
+  (GAP-16 follow-up) to use REAL_YIELD_10Y_TREND instead — term premium is
+  bond-supply/demand duration compensation, not the Fed-path-driven real
+  rate that actually sets precious metals' opportunity cost, and the two
+  series can and do diverge. See data/fetchers/fred_fetcher.py
+  (_fetch_real_yield_trend) for the computation.
 
   Other wide-range roles named in the original note (systematic_trend_following,
   real_asset_contracted_revenue, inflation_hedge_commodity_linked) are
@@ -33,7 +40,7 @@ from ..types import CalibrationState, DataReading, ScenarioProbabilities
 from .trend import directional_trend
 
 _WIDE_RANGE_THRESHOLD_PP = 6.0
-# Materiality threshold for "trending" on THREEFYTP10/DXY — same tier as
+# Materiality threshold for "trending" on real yield/DXY — same tier as
 # other provisional M14/M19 thresholds (e.g. §9.5 role-repricing pp
 # thresholds); review at the next formal audit alongside those.
 _TREND_THRESHOLD_PCT = 5.0
@@ -72,22 +79,23 @@ def _ihp_sub_conditions(
 ) -> "tuple[str, List[str]]":
     """
     IHP's two documented sub-condition drivers (§11 SGOL/SIVR notes, GAP-16):
-      - real yield (THREEFYTP10) direction: rising = headwind, falling = tailwind
+      - real yield (REAL_YIELD_10Y_TREND = DGS10 - T10YIE) direction:
+        rising = headwind, falling = tailwind
       - DXY direction: appreciating = headwind, weakening = tailwind
     Returns (overall_signal, driver_notes).
     """
     signals: List[str] = []
     drivers: List[str] = []
 
-    tp10 = _trend_closes(readings, "THREEFYTP10_TREND")
-    if tp10 is not None:
-        d = directional_trend(tp10, _TREND_THRESHOLD_PCT)
+    real_yield = _trend_closes(readings, "REAL_YIELD_10Y_TREND")
+    if real_yield is not None:
+        d = directional_trend(real_yield, _TREND_THRESHOLD_PCT)
         if d == "up":
             signals.append("unfavorable")
-            drivers.append("real yield (THREEFYTP10) trending up — headwind for precious metals")
+            drivers.append("real yield (10Y, DGS10−T10YIE) trending up — headwind for precious metals")
         elif d == "down":
             signals.append("favorable")
-            drivers.append("real yield (THREEFYTP10) trending down — tailwind for precious metals")
+            drivers.append("real yield (10Y, DGS10−T10YIE) trending down — tailwind for precious metals")
         else:
             # Data WAS available — it just didn't clear the materiality
             # threshold in either direction. Distinct from the unavailable
@@ -98,11 +106,11 @@ def _ihp_sub_conditions(
             # under the 5% threshold, quality_flags empty, note still said
             # "no trend data available this session").
             drivers.append(
-                f"real yield (THREEFYTP10) flat over the window (move below "
+                f"real yield (10Y, DGS10−T10YIE) flat over the window (move below "
                 f"{_TREND_THRESHOLD_PCT:.0f}% materiality threshold) — no lean"
             )
     else:
-        flags.append("THREEFYTP10_TREND unavailable — real yield sub-condition not evaluated")
+        flags.append("REAL_YIELD_10Y_TREND unavailable — real yield sub-condition not evaluated")
 
     dxy = _trend_closes(readings, "DXY_TREND")
     if dxy is not None:

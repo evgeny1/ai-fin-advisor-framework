@@ -2,9 +2,9 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.43  Last updated: June 20, 2026 (§3 retroactively cleaned --
-scope rule added: calibration/methodology rationale only, no engineering
-narrative and no Session_Log §8 duplication; see §3 header)
+# Version: 1.44  Last updated: June 21, 2026 (GAP-16 follow-up: IHP
+real-yield sub-condition driver corrected from THREEFYTP10 to
+REAL_YIELD_10Y_TREND; see §3)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -140,6 +140,18 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-06-21 - GAP-16 follow-up (v1.44): IHP range-position real-yield
+sub-condition corrected. THREEFYTP10 (10Y term premium) was being used as
+the real-yield driver — it isn't real yield; it's bond-supply/demand
+duration compensation, and the two series can diverge from the Fed-path-
+driven real rate that actually sets precious metals' opportunity cost.
+Replaced with REAL_YIELD_10Y_TREND (DGS10 nominal minus T10YIE breakeven
+inflation, 8 weekly closes). §11 SGOL/SIVR entries updated to match.
+THREEFYTP10_TREND remains registered — M19's SGOL/SIVR "real yield
+sustained > 2.0%" §13 condition text still names THREEFYTP10 explicitly;
+relabeling that condition is a separate §13 text change, not done this
+session. Engineering detail: FRAMEWORK_BACKLOG.md ENG-39.
 
 2026-06-20 - GAP-16: within-scenario sub-condition advisory for wide-range
 roles (design gap identified June 18, 2026 companion session). Framework's
@@ -725,13 +737,17 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   - Relative Roth: 16% (CONFIRMED EXECUTED v1.18 — reduced from 22%)
   - Note: SIVR added as complement; SGOL + SIVR combined restores precious metals exposure
 - ⚠ IHP A and D proposals from prior sessions: ADOPTED v1.27 (A [-2,+2] ★; D [-3,+3] ★). §11 EV updated v1.29.
-- **GAP-16 sub-condition drivers (within-scenario range position, v1.42):** the 2 variables
-  that determine where SGOL lands within a wide [conservative, upside] §4.1 band — real yield
-  (THREEFYTP10) direction and DXY direction. Rising real yield + appreciating DXY = headwind
-  (tracks toward the conservative end); falling real yield + weakening DXY = tailwind (tracks
-  toward upside). Evaluated each session by analysis/range_position.py, advisory only — does
-  NOT change blendedScenarioReturn()/EV. Same two variables already tracked as M19 §13
-  sustaining/failure conditions below — reused, not duplicated.
+- **GAP-16 sub-condition drivers (within-scenario range position, v1.42; real-yield driver
+  corrected v1.44):** the 2 variables that determine where SGOL lands within a wide
+  [conservative, upside] §4.1 band — real yield (REAL_YIELD_10Y_TREND = DGS10 nominal minus
+  T10YIE breakeven inflation) direction and DXY direction. Rising real yield + appreciating
+  DXY = headwind (tracks toward the conservative end); falling real yield + weakening DXY =
+  tailwind (tracks toward upside). Evaluated each session by analysis/range_position.py,
+  advisory only — does NOT change blendedScenarioReturn()/EV. DXY is the same variable
+  tracked as an M19 §13 sustaining/failure condition below (reused, not duplicated); the
+  real-yield driver is distinct from THREEFYTP10, which M19 §13 below still uses for its own
+  "real yield sustained > 2.0%" condition text (term premium, not the same series — see
+  §3 v1.44 log entry for why these were split apart).
 
 #### SGOV
 - Components: rate_sensitive_income_short_duration (1.00)
@@ -808,9 +824,10 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
 - TAX PLACEMENT: Retirement accounts preferred. Physical silver ETF is classified as a collectible; capital gains taxed at 28% max rate in taxable accounts.
 - ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026). 90d trailing average ~$78-82; guard threshold ~$94-98; current ~$71.82 — well below threshold.
-- **GAP-16 sub-condition drivers (within-scenario range position, v1.42):** same two
-  drivers as SGOL — real yield (THREEFYTP10) and DXY direction — since SIVR's 0.55 IHP
-  weight inherits the same monetary-debasement mechanism. Evaluated each session by
+- **GAP-16 sub-condition drivers (within-scenario range position, v1.42; real-yield driver
+  corrected v1.44):** same two drivers as SGOL — real yield (REAL_YIELD_10Y_TREND =
+  DGS10−T10YIE) and DXY direction — since SIVR's 0.55 IHP weight inherits the same
+  monetary-debasement mechanism. Evaluated each session by
   analysis/range_position.py; advisory only.
 - Target allocation (v1.18 CONFIRMED):
   - Primary IRA: 4%

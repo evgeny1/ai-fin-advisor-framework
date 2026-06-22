@@ -1823,3 +1823,79 @@ mismatch between the MCP server's spawned process and an interactive
 shell; `GIT_TERMINAL_PROMPT=0` is a standard, well-documented git
 mechanism for exactly this class of problem, so the fix is sound by
 inspection even without reproducing the original failure mode directly.
+
+
+---
+
+### ENG-39
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  MEDIUM
+  Category:  bug
+  Opened:    2026-06-21
+  Closed:    2026-06-21
+  Area:      python/advisor/analysis/range_position.py,
+             python/advisor/data/fetchers/fred_fetcher.py,
+             python/advisor/data/m18_registry.py
+  Related:   GAP-16 (the IHP range-position advisory ENG-39 corrects),
+             ENG-13 (introduced THREEFYTP10_TREND), ENG-32 (prior GAP-16
+             text bug in the same module, different bug)
+-->
+
+**Found:** GAP-16's IHP (inflation_hedge_precious_metals) range-position
+advisory (`analysis/range_position.py`) names one of its two sub-condition
+drivers "real yield (THREEFYTP10)" and uses `THREEFYTP10_TREND`'s closes to
+evaluate it. THREEFYTP10 is the Adrian-Crump-Moench 10Y *term premium* --
+the compensation bond investors demand for duration risk -- not a real
+yield. Identified 2026-06-21: term premium and real yield are not the same
+variable and can move in different directions (e.g. term premium can rise
+on pure auction-supply/duration-demand dynamics with no change in the
+Fed's actual policy path), so the advisory's "rising real yield = headwind
+for gold/silver" logic was being driven by the wrong number whenever the
+two series diverge -- the textbook real-yield mechanism (real rates raise
+the opportunity cost of holding a zero-yield asset like gold) was never
+actually being measured.
+
+**Fix:** Added a new FetchSpec, `REAL_YIELD_10Y_TREND` (`m18_registry.py`),
+computed as DGS10 (10Y nominal Treasury yield) minus T10YIE (10Y breakeven
+inflation) -- the standard Fisher-equation real yield -- both daily FRED
+series. `fred_fetcher.py` gained `_fetch_history_with_dates()` (date-aware
+fetch, needed to align two series before subtracting -- the existing
+`_fetch_history()` returns bare values with no date to align on),
+`_resample_weekly()` (collapses the daily diff series to one value per ISO
+calendar week, matching the implicit weekly resampling the YFINANCE
+`*_TREND` specs get from `yf.download(..., interval="1wk")`, so
+`directional_trend()`'s materiality threshold means the same thing
+regardless of data source), and `_fetch_real_yield_trend()` (the dispatcher
+target, 8-week window to match `DXY_TREND`'s window since
+`range_position.py` pairs the two as IHP's sub-condition drivers).
+`range_position.py`'s `_ihp_sub_conditions()` now reads
+`REAL_YIELD_10Y_TREND` instead of `THREEFYTP10_TREND`, with driver-text
+labels corrected to "real yield (10Y, DGS10−T10YIE)". `THREEFYTP10_TREND`
+remains registered unchanged -- M19's existing SGOL/SIVR "real yield
+sustained > 2.0% for >= 4 weeks" §13 failure-signal text
+(`analysis/thesis.py`) still names THREEFYTP10 explicitly and still
+consumes it; that condition has the *same* underlying mislabeling bug, but
+relabeling it is a `Calibration_State.md` §13 text change (calibration
+content, not pure code) and was left out of scope for this engineering
+session -- noted in both the FetchSpec docstrings and the
+`Calibration_State.md` v1.44 log entry as a flagged follow-on.
+
+`Calibration_State.md` updated to v1.44: §3 log entry added; §11 SGOL and
+SIVR entries' GAP-16 driver descriptions corrected from "real yield
+(THREEFYTP10)" to "real yield (REAL_YIELD_10Y_TREND = DGS10−T10YIE)".
+
+**Verification:** full suite (`not integration`): 649 passed (was 645;
++4 new: 3 `TestRealYieldTrend` mocked-fetch unit tests in
+`test_fred_fetcher.py` covering the computed-diff happy path, one-series-
+missing, and non-overlapping-dates cases, +1 live-integration test gated
+on `FRED_API_KEY` asserting the real yield lands near the commonly-cited
+~1.5-2.5% range rather than THREEFYTP10's ~0.5-1.0% term-premium range --
+confirms this is actually a different number, not THREEFYTP10 relabeled),
+0 regressions. `test_fetchers.py::test_expected_spec_count` updated 43->44
+for the new spec. `tests/test_stage3/test_range_position.py` updated
+(mock reading key `THREEFYTP10_TREND` -> `REAL_YIELD_10Y_TREND` across all
+4 affected tests) -- all 7 range_position tests still pass unchanged in
+behavior (the tests assert on signal/driver-count outcomes, not the
+specific spec_id, so this was a pure rename). `tools/validate_manifests.py`:
+19/19.
