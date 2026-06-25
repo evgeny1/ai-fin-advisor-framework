@@ -1165,6 +1165,11 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   if B's true value sits closer to the "sustained grind" historical read
   than the "acute shock" read, RSP's case changes materially.
 - NOT ADOPTABLE this session — negative EV under current and pending values.
+- ENTRY EXTENSION GUARD (2026-06-25, yfinance T1, 62 trading days in the
+  trailing-90-calendar-day window): current $210.38 (Jun 24) vs 90d trailing
+  avg $203.22 = +3.52% above avg. Threshold (broad_market_equity_domestic,
+  dominant role at 92% weight): 15%. CLEARS comfortably — price level is not
+  the blocker here; the negative EV is.
 - ADOPTION TRIGGER: B scenario bifurcation (above) resolved toward the
   less-punishing historical read, or a specific risk-management thesis
   (lower concentration vs. MAGS/AIPO) independent of EV ranking.
@@ -1199,6 +1204,10 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   REPLACEMENT for MAGS (broader diversification, lower single-name
   concentration, marginally worse EV) — a risk-management tradeoff, not an
   EV-improvement case.
+- ENTRY EXTENSION GUARD (2026-06-25, yfinance T1, 62 trading days in the
+  trailing-90-calendar-day window): current $292.63 (Jun 24) vs 90d trailing
+  avg $279.22 = +4.80% above avg. Threshold (secular_technology_growth,
+  dominant role at 75% weight): 20%. CLEARS comfortably.
 - CURRENT PORTFOLIO ALLOCATION: NONE.
 
 #### URA
