@@ -845,16 +845,30 @@ def _tool_evaluate_allocation(
     current_weights: Dict[str, float],
     tickers: Optional[List[str]] = None,
     proposed_allocations: Optional[Dict[str, float]] = None,
+    cal: Optional[Any] = None,
+    probs: Optional[Any] = None,
 ) -> str:
     """
     M13/M15/M08 portfolio math for one account.
 
-    Requires advisor_run_computation() and advisor_apply_scoring() to have
-    been called earlier this session (uses cached cal + scenario_probs —
+    Normal path: requires advisor_run_computation() and advisor_apply_scoring()
+    to have been called earlier this session (uses cached cal + scenario_probs —
     §8 AUTHORITATIVE probabilities, never recomputed here).
+
+    cal/probs: optional explicit overrides, bypassing the session _cache
+    entirely when given. This is the ENG-33 CLI fallback path's hook —
+    `python -m advisor evaluate-allocation` (see __main__.py) is a fresh
+    process with nothing cached, so it reads Calibration_State.md itself
+    and takes scenario_probs as an explicit argument (still §8-sourced —
+    whatever advisor_apply_scoring returned earlier in the same MCP
+    session, never independently recomputed) and passes both straight
+    through here. The @srv.tool()-registered advisor_evaluate_allocation
+    below never passes these; cache lookup remains the normal live-session
+    path. Kept as plain optional params rather than a separate function so
+    both paths share one tested implementation instead of two.
     """
-    cal = _cache.get("cal")
-    probs = _cache.get("scenario_probs")
+    cal = cal if cal is not None else _cache.get("cal")
+    probs = probs if probs is not None else _cache.get("scenario_probs")
     if cal is None:
         return _err("No calibration state cached. Call advisor_run_computation first.")
     if probs is None:

@@ -198,6 +198,55 @@ def test_invalid_objective_type_is_a_clean_error(cached_session):
     assert "objective_type" in result
 
 
+# ── ENG-33 fallback: explicit cal/probs override ────────────────────────────
+# `python -m advisor evaluate-allocation` (the CLI fallback for when the
+# MCP tool hangs — see __main__.py) is a fresh process with nothing
+# cached, so it must be able to call this with zero _cache dependency.
+
+def test_explicit_cal_and_probs_work_with_empty_cache():
+    """The CLI path's whole reason for existing: this must work with
+    _cache completely empty, proving no hidden cache dependency remains."""
+    saved = dict(mcp_server._cache)
+    mcp_server._cache.clear()
+    try:
+        result = json.loads(mcp_server._tool_evaluate_allocation(
+            account_profile=_IRA_PROFILE, current_weights=_CURRENT_WEIGHTS,
+            tickers=["SGOV"],
+            cal=_build_cal(),
+            probs=ScenarioProbabilities(A=5, B=15, C=50, D=10, E=10, F=10),
+        ))
+        assert result["status"] == "OK"
+        assert "scenario_weighted_weight" in result["instruments"]["SGOV"]
+    finally:
+        mcp_server._cache.clear()
+        mcp_server._cache.update(saved)
+
+
+def test_explicit_probs_override_stale_cached_probs(cached_session):
+    """cached_session sets cache probs to C=50-dominant. Passing a
+    different, explicit A-dominant probs must actually take effect —
+    not just fill in when the cache is empty, a true override."""
+    explicit_probs = ScenarioProbabilities(A=70, B=10, C=5, D=5, E=5, F=5)
+    result = json.loads(mcp_server._tool_evaluate_allocation(
+        account_profile=_IRA_PROFILE, current_weights=_CURRENT_WEIGHTS,
+        probs=explicit_probs,
+    ))
+    assert result["dominant_scenario"] == "A"  # not "C" — cache's value
+
+
+def test_explicit_cal_overrides_stale_cached_cal(cached_session):
+    """Same override proof for cal: an instrument only present in the
+    explicit cal, absent from cached_session's fixture, must resolve."""
+    alt_cal = _build_cal()
+    alt_cal.instruments["ONLY_IN_OVERRIDE"] = alt_cal.instruments["SGOV"]
+    result = json.loads(mcp_server._tool_evaluate_allocation(
+        account_profile=_IRA_PROFILE,
+        current_weights={"ONLY_IN_OVERRIDE": 1.0},
+        cal=alt_cal,
+    ))
+    assert "error" not in result["instruments"]["ONLY_IN_OVERRIDE"]
+
+
 # ── Core computation shape ──────────────────────────────────────────────────
 
 def test_returns_full_per_scenario_breakdown(cached_session):

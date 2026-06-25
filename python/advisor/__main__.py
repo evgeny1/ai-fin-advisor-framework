@@ -14,6 +14,38 @@ Commands (Stage 5):
   session              Run full SessionPipeline → briefing to stdout
   session --dry-run    Run pipeline without write-back
   validate             Run ValidateClassifications only (fast session-start check)
+
+Commands (ENG-33 fallback):
+  evaluate-allocation --json-file <path>
+                        Run the same M13/M15/M08 math as the
+                        advisor_evaluate_allocation MCP tool, entirely
+                        in-process — no MCP transport involved. Use this
+                        when that tool hangs (ENG-33, confirmed to be a
+                        Claude Desktop client-side issue, not in this
+                        codebase — see FRAMEWORK_BACKLOG.md). Reads
+                        Calibration_State.md fresh each call; takes
+                        scenario_probs as an explicit input since there's
+                        no live MCP session to cache it — pass exactly
+                        what advisor_apply_scoring returned this session,
+                        never recompute independently (§8 stays
+                        authoritative). Input is a JSON file (or stdin if
+                        --json-file is omitted) shaped like:
+                          {
+                            "account_profile": {"account_id": "...",
+                              "owner": "primary", "planning_horizon_years": 10,
+                              "objective_type": "TARGET_THEN_RETURN",
+                              "floor_nominal_loss": false,
+                              "concentration_cap": 0.40,
+                              "drawdown_tolerance": 0.35},
+                            "current_weights": {"MLPX": 0.18, ...},
+                            "scenario_probs": {"A": 17.12, "B": 34.24,
+                              "C": 22.82, "D": 3.0, "E": 5.71, "F": 17.12},
+                            "tickers": ["MLPX"],
+                            "proposed_allocations": {...}
+                          }
+                        ("tickers" and "proposed_allocations" are optional —
+                        same semantics as the MCP tool.) Prints the same
+                        JSON shape that tool returns.
 """
 from __future__ import annotations
 
@@ -216,6 +248,71 @@ def cmd_validate() -> None:
         sys.exit(1)
 
 
+def cmd_evaluate_allocation() -> None:
+    """
+    ENG-33 fallback. See module docstring for the full input shape.
+    Reads JSON from --json-file <path> if given, else stdin.
+    """
+    if "--json-file" in sys.argv:
+        idx = sys.argv.index("--json-file")
+        try:
+            raw = Path(sys.argv[idx + 1]).read_text()
+        except IndexError:
+            print("ERROR: --json-file requires a path argument", file=sys.stderr)
+            sys.exit(1)
+    else:
+        raw = sys.stdin.read()
+
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as e:
+        print(f"ERROR: invalid JSON input: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    if "account_profile" not in payload or "current_weights" not in payload:
+        print("ERROR: payload must include account_profile and current_weights", file=sys.stderr)
+        sys.exit(1)
+
+    sp = payload.get("scenario_probs")
+    if not sp:
+        print(
+            "ERROR: scenario_probs is required — this CLI has no live MCP "
+            "session to read it from. Pass exactly what advisor_apply_scoring "
+            "returned earlier this session (§8 stays authoritative; do not "
+            "recompute independently).",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    from .config import parse_calibration_state
+    from .data.file_protocol import read_calibration_state
+    from .mcp_server import _tool_evaluate_allocation
+    from .types import ScenarioProbabilities
+
+    try:
+        cal = parse_calibration_state(read_calibration_state())
+    except Exception as e:
+        print(f"ERROR: could not load Calibration_State.md: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        probs = ScenarioProbabilities(
+            A=sp["A"], B=sp["B"], C=sp["C"], D=sp["D"], E=sp["E"], F=sp["F"],
+        )
+    except (KeyError, ValueError, TypeError) as e:
+        print(f"ERROR: scenario_probs invalid: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    print(_tool_evaluate_allocation(
+        account_profile=payload["account_profile"],
+        current_weights=payload["current_weights"],
+        tickers=payload.get("tickers"),
+        proposed_allocations=payload.get("proposed_allocations"),
+        cal=cal,
+        probs=probs,
+    ))
+
+
 def main() -> None:
     args = sys.argv[1:]
     if not args:
@@ -237,6 +334,7 @@ def main() -> None:
         "setup google":       cmd_setup_google,
         "session":            cmd_session,
         "validate":           cmd_validate,
+        "evaluate-allocation": cmd_evaluate_allocation,
     }
 
     fn = dispatch.get(cmd) or dispatch.get(args[0])
