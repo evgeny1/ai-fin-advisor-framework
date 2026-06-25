@@ -1133,6 +1133,74 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - TAX PLACEMENT: ALL ACCOUNTS.
 - CURRENT PORTFOLIO ALLOCATION: NONE.
 
+#### RSP
+- Components: broad_market_equity_domestic (0.92) + secular_technology_growth (0.08)
+- Basis: Invesco S&P 500 Equal Weight ETF. Equal-weights all ~500 S&P 500
+  constituents quarterly. AUM: $89.1B. Expense ratio: 0.20%. Inception:
+  Apr 24, 2003 (~23yr track record).
+- M07 STATUS: PASS. No foreign concentration (US large-cap only). No K-1 —
+  standard RIC, 99.78% direct equity per SEC NPORT-P (Jan 31, 2026); ~0.2%
+  E-mini S&P 500 Equal Weight futures overlay for cash equitization only.
+- Classification basis (2026-06-25, sector-bucket level, NOT a full 500-name
+  binding-driver audit — MEDIUM confidence): SEC NPORT-P holdings confirm
+  equal-weighting dilutes AI/mega-cap concentration far more than a generic
+  "Technology + Communication Services = STG" assumption would suggest.
+  RSP's Communication Services sub-weight (3.91%) sits alongside AT&T,
+  Charter, Comcast, Electronic Arts, Fox at equal weight with Alphabet — the
+  dedicated RSPC sub-fund's top 10 holdings (Warner Bros. Discovery,
+  Paramount Skydance, EA, Interpublic, Omnicom, Trade Desk, Take-Two,
+  Charter, TKO, Verizon) confirm this sector is media/telecom/ad-driven, not
+  AI-driven, at equal weight. ~8% STG attribution reflects the residual
+  AI-adjacent slice within Technology/Communication Services even diluted
+  this way; the other ~92% is genuinely undifferentiated domestic growth —
+  exactly the clean BMED proxy the framework needs.
+- EV (today's session vector, current OPERATIVE §4.1 values): **≈ -0.87%**.
+  Worse than VTI (-0.66%). Under the two PENDING (NOT adopted) proposals
+  from today's BMED/STG-F review: ≈ -0.22% — improves, stays negative.
+  Counterintuitive given RSP is the structurally "cleanest" diversification
+  play of the three candidates — it loses precisely because BMED's current
+  B value (-8%) is punishing and RSP carries almost no STG slice to offset
+  it (STG B = -2, already HIGH-confidence adopted), unlike VTI/QQQM/MAGS.
+  This is itself a reason the open B question (§3 log 2026-06-25) matters:
+  if B's true value sits closer to the "sustained grind" historical read
+  than the "acute shock" read, RSP's case changes materially.
+- NOT ADOPTABLE this session — negative EV under current and pending values.
+- ADOPTION TRIGGER: B scenario bifurcation (above) resolved toward the
+  less-punishing historical read, or a specific risk-management thesis
+  (lower concentration vs. MAGS/AIPO) independent of EV ranking.
+- CURRENT PORTFOLIO ALLOCATION: NONE.
+
+#### QQQM
+- Components: secular_technology_growth (0.75) + broad_market_equity_domestic (0.25)
+- Basis: Invesco NASDAQ-100 ETF. Modified market-cap-weighted, 100 largest
+  non-financial Nasdaq companies. AUM: $82.9B. Expense ratio: 0.15%.
+  Inception: Oct 13, 2020 (~5.7yr track record).
+- M07 STATUS: PASS. No foreign concentration concern. No K-1 (standard RIC).
+- Classification basis (2026-06-25, sector-bucket level, MEDIUM confidence):
+  top 10 holdings = 47.4% of fund (NVDA 8.14%, AAPL 7.27%, MSFT 5.31%,
+  MU 4.79%, AMZN 4.61%, AMD 3.69%, GOOGL 3.51%, TSLA 3.45%, AVGO 3.36%,
+  GOOG 3.25%) — almost entirely AI-capex/mega-cap names. Sector weights:
+  Technology 58.65% (~95% STG), Communication Services 14.28% (~90% STG,
+  GOOGL/GOOG-driven), Consumer Cyclical 11.43% (~60% STG — AMZN/AWS +
+  TSLA's AI/robotics narrative), remainder (Consumer Defensive, Healthcare,
+  Industrials, Utilities, Basic Materials ≈ 15%) BMED.
+  CORRECTION to this session's earlier (unverified, asserted-not-computed)
+  claim that QQQM is "more concentrated in STG than MAGS": wrong once
+  actually classified. QQQM (0.75 STG) is LESS concentrated than MAGS
+  (0.85 STG) — MAGS's "Magnificent 7" holds zero non-tech-adjacent
+  diversification, while QQQM's 100 holdings include genuine (if
+  minority-weighted) healthcare/industrials/utilities exposure.
+- EV (today's session vector, current OPERATIVE §4.1 values): **≈ +0.29%**.
+  Between MAGS (+0.47%) and VTI (-0.66%). Under the PENDING STG-F proposal
+  alone: ≈ +1.32% — similar proportional uplift to MAGS, both being
+  STG-heavy.
+- NOT ADOPTABLE as a complement to MAGS — same binding driver, redundant
+  exposure, slightly worse current EV. Would only make sense as a
+  REPLACEMENT for MAGS (broader diversification, lower single-name
+  concentration, marginally worse EV) — a risk-management tradeoff, not an
+  EV-improvement case.
+- CURRENT PORTFOLIO ALLOCATION: NONE.
+
 #### URA
 - Components: real_asset_contracted_revenue (0.50) + inflation_hedge_commodity_linked (0.30) + secular_technology_growth (0.20)
 - passive_mandate_eligible: false
