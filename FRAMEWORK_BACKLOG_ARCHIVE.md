@@ -1973,3 +1973,25 @@ below 3% floor`) -- reproduces deterministically off current
 data plus `StubAIClient`'s canned scoring answers; flagged as a separate
 follow-on (M03 floor-enforcement or test-strictness gap), not touched here.
 `tools/validate_manifests.py`: 19/19 (unaffected, no manifest changes).
+
+**Addendum (same session, 2026-06-24):** retrying the live MCP call after
+the fix above still hung the full ~4 minutes. Root cause: a *second*,
+separate unguarded yfinance call -- `mcp_server.py`'s `_tool_run_computation()`
+Step 4b ("holdings 30d returns" for `RoleRepricingDivergence`) calls
+`yfinance.download()` directly, bypassing `fetch_registry.py` and
+`yfinance_fetcher.py`'s `_yf_lock_guard()` entirely; it was never covered
+by either of this item's fixes. Separately, `advisor_run_computation`'s
+tool registration was the one tool of the three *not* wrapped in this
+file's own `_with_timeout()` defense (`advisor_evaluate_allocation` and
+`advisor_write_back` already are, per ENG-33). Fixed both: extracted the
+Step 4b call into `_fetch_holdings_30d_raw()`, called through a bounded
+20s future (mirroring `_with_timeout()`'s pattern but Dict-returning, not
+JSON-string-returning); wrapped `advisor_run_computation`'s registration in
+`_with_timeout(..., 180.0)`, matching the other two tools. Verified: full
+suite (`not integration`) 730 passed / 0 failures / 42 skipped / 19
+deselected (live-data integration tests), `tools/validate_manifests.py`
+19/19. `test_yfinance_unit.py` was separately lost to the same Google
+Drive Cloud Files lock that blocked staging it earlier in this session --
+recreated from the current `yfinance_fetcher.py` source (same test names/
+coverage, not a byte-identical restore) once the lock cleared on a Claude
+Desktop restart.

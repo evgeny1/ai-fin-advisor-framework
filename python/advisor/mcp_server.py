@@ -140,6 +140,47 @@ def _with_timeout(fn, timeout_s: float, *args, **kwargs) -> str:
 
 logger = logging.getLogger(__name__)
 
+
+def _fetch_holdings_30d_raw(alloc_tickers: List[str]) -> Dict[str, Optional[float]]:
+    """
+    Direct yfinance batch download for RoleRepricingDivergence's 30d
+    returns. This bypasses FetchRegistry/yfinance_fetcher.py's
+    _yf_lock_guard on purpose -- it runs once, synchronously, after
+    fetch_all() has already finished, so there's no concurrent lock
+    contention here to guard against. The risk is the same underlying one
+    ENG-40 fixed elsewhere though: yfinance/Yahoo Finance can retry without
+    an overall bound. Found 2026-06-24: this call site was the second,
+    separate place that bug lived -- fetch_registry.py and
+    yfinance_fetcher.py's per-fetch timeouts don't cover it because it
+    never goes through either of them. Caller wraps this in a hard
+    wall-clock bound (see Step 4b below); this function itself stays
+    unbounded so the bound lives in one place (_TOOL_EXECUTOR), not two.
+    """
+    import datetime as _dt
+    import yfinance as _yf_local
+
+    holdings_30d: Dict[str, Optional[float]] = {}
+    end_dt   = _dt.date.today()
+    start_dt = end_dt - _dt.timedelta(days=50)  # 50 cal days ≈ 35 trading days
+    hist = _yf_local.download(
+        alloc_tickers, start=start_dt.isoformat(),
+        end=end_dt.isoformat(), progress=False, auto_adjust=True,
+    )
+    if not hist.empty:
+        closes = hist["Close"] if "Close" in hist.columns else hist
+        for ticker in alloc_tickers:
+            col = closes.get(ticker) if hasattr(closes, "get") else (
+                closes[ticker] if ticker in closes.columns else None
+            )
+            if col is not None:
+                series = col.dropna()
+                if len(series) >= 2:
+                    holdings_30d[ticker] = float(
+                        series.iloc[-1] / series.iloc[0] - 1
+                    )
+    return holdings_30d
+
+
 # ── .env load (FMP_API_KEY, etc.) ─────────────────────────────────────────────
 
 def _load_dotenv() -> None:
@@ -281,8 +322,6 @@ def _tool_run_computation(floor_account_weights_json: Optional[Any] = None) -> s
     here — Claude does it after this call using web_search.  The
     qualitative_targets list tells Claude which topics to research.
     """
-    import yfinance as _yf
-
     from .config import parse_calibration_state, parse_session_log
     from .data.fetch_registry import FetchRegistry
     from .data.file_protocol import read_calibration_state, read_session_log
@@ -453,29 +492,20 @@ def _tool_run_computation(floor_account_weights_json: Optional[Any] = None) -> s
     holdings_30d: Dict[str, Optional[float]] = {}
     alloc_tickers = [t for t, e in cal.instruments.items() if not e.is_candidate]
     try:
-        import datetime as _dt
-        end_dt   = _dt.date.today()
-        start_dt = end_dt - _dt.timedelta(days=50)  # 50 cal days ≈ 35 trading days
-        hist = _yf.download(
-            alloc_tickers, start=start_dt.isoformat(),
-            end=end_dt.isoformat(), progress=False, auto_adjust=True,
-        )
-        if not hist.empty:
-            closes = hist["Close"] if "Close" in hist.columns else hist
-            for ticker in alloc_tickers:
-                col = closes.get(ticker) if hasattr(closes, "get") else (
-                    closes[ticker] if ticker in closes.columns else None
-                )
-                if col is not None:
-                    series = col.dropna()
-                    if len(series) >= 2:
-                        holdings_30d[ticker] = float(
-                            series.iloc[-1] / series.iloc[0] - 1
-                        )
+        future = _TOOL_EXECUTOR.submit(_fetch_holdings_30d_raw, alloc_tickers)
+        holdings_30d = future.result(timeout=20.0)
         _cache["holdings_30d"] = holdings_30d
         result["holdings_30d_returns"] = {
             t: round(v * 100, 2) for t, v in holdings_30d.items() if v is not None
         }
+    except concurrent.futures.TimeoutError:
+        result["flags"].append(
+            "⚠ Holdings30dReturns fetch exceeded 20s safety timeout — "
+            "abandoning (ENG-40 follow-up: this batch yfinance call bypassed "
+            "both of ENG-40's other guards). RoleRepricingDivergence skipped "
+            "this session; the worker thread may still be running in the "
+            "background but advisor_run_computation does not wait on it."
+        )
     except Exception as e:
         result["flags"].append(f"⚠ Holdings30dReturns fetch failed: {e}")
 
@@ -1139,8 +1169,18 @@ def build_server():
           2. Answer scoring_questions where auto_score is null
           3. Call advisor_apply_scoring with your answers dict
              (will auto-run FloorCheck Step 6b if probs shift >= 5pp)
+
+        Bounded to 180s (ENG-40 follow-up, 2026-06-24): wrapped in
+        _with_timeout() like the other two tools below, after this tool
+        specifically hung 25+ minutes on an unguarded yfinance call. If
+        this fires, the underlying fetch may still be running in the
+        background -- it has no side effects worth checking for (unlike
+        write_back), so just retry.
         """
-        return _tool_run_computation(floor_account_weights_json)
+        return _with_timeout(
+            _tool_run_computation, 180.0,
+            floor_account_weights_json=floor_account_weights_json,
+        )
 
     @srv.tool()
     def advisor_apply_scoring(answers: Dict[str, int]) -> str:
