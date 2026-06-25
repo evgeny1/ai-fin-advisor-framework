@@ -4,11 +4,13 @@ error propagation, and fetch_one() for ON_DEMAND specs.
 """
 from __future__ import annotations
 
+import time
 from datetime import datetime
 from typing import List
 
 import pytest
 
+import advisor.data.fetch_registry as fetch_registry_module
 from advisor.data.fetch_registry import FetchRegistry
 from advisor.types import DataReading, DataSource, FetchSpec, UpdateFrequency
 
@@ -139,3 +141,49 @@ class TestSummary:
         for i in range(5):
             registry.register(_spec(f"SPEC_{i}"))
         assert "5 spec" in registry.summary()
+
+
+# ── Per-spec timeout bound (ENG-40) ───────────────────────────────────────────
+# A hung network call (e.g. yfinance/Yahoo retrying without bound — observed
+# 2026-06-24, advisor_run_computation hung 25+ minutes) must not block the
+# rest of fetch_all()'s batch indefinitely. See _FETCH_TIMEOUT_SECONDS.
+
+def _hanging_fetcher(spec: FetchSpec) -> List[DataReading]:
+    time.sleep(5.0)  # far longer than the patched-down test timeout below
+    return [_reading(spec.id)]
+
+
+class TestFetchAllTimeout:
+
+    def test_hung_spec_produces_timeout_reading_within_bound(self, monkeypatch):
+        monkeypatch.setattr(fetch_registry_module, "_FETCH_TIMEOUT_SECONDS", 0.2)
+        registry = FetchRegistry()
+        registry.register(_spec("STUCK"))
+        registry.register_fetcher(DataSource.YFINANCE, _hanging_fetcher)
+
+        start = time.monotonic()
+        readings = registry.fetch_all()
+        elapsed = time.monotonic() - start
+
+        assert elapsed < 2.0, "fetch_all() must not block on a hung fetcher"
+        assert len(readings) == 1
+        assert not readings[0].is_valid
+        assert any("FETCH_TIMEOUT" in f for f in readings[0].quality_flags)
+
+    def test_hung_spec_does_not_block_other_specs(self, monkeypatch):
+        monkeypatch.setattr(fetch_registry_module, "_FETCH_TIMEOUT_SECONDS", 0.2)
+        registry = FetchRegistry()
+        registry.register(_spec("STUCK", source=DataSource.YFINANCE))
+        registry.register(_spec("FINE",  source=DataSource.FMP_INDEXES))
+        registry.register_fetcher(DataSource.YFINANCE,   _hanging_fetcher)
+        registry.register_fetcher(DataSource.FMP_INDEXES, _ok_fetcher)
+
+        start = time.monotonic()
+        readings = registry.fetch_all()
+        elapsed = time.monotonic() - start
+
+        assert elapsed < 2.0
+        valid   = [r for r in readings if r.is_valid]
+        invalid = [r for r in readings if not r.is_valid]
+        assert len(valid)   == 1 and valid[0].spec_id   == "FINE"
+        assert len(invalid) == 1 and invalid[0].spec_id == "STUCK"

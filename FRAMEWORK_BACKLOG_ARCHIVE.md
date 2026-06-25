@@ -1899,3 +1899,77 @@ for the new spec. `tests/test_stage3/test_range_position.py` updated
 behavior (the tests assert on signal/driver-count outcomes, not the
 specific spec_id, so this was a pure rename). `tools/validate_manifests.py`:
 19/19.
+
+
+
+### ENG-40
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  HIGH
+  Category:  bug
+  Opened:    2026-06-24
+  Closed:    2026-06-24
+  Area:      python/advisor/data/fetch_registry.py,
+             python/advisor/data/fetchers/yfinance_fetcher.py
+  Related:   ENG-27 (introduced _YF_LOCK for the 2026-06-20 yfinance
+             thread-safety bug; this item adds a bound to that same lock)
+-->
+
+**Found:** `advisor_run_computation()` hung for 25+ minutes mid-session
+(2026-06-24), unresponsive to the point Claude Desktop's MCP client gave
+up waiting and reported the tool as dead. Diagnosis (Desktop Commander
+process/network inspection on the live hung process, not a guess):
+`fetch_registry.py`'s `fetch_all()` runs every M18 spec in a
+`ThreadPoolExecutor` and waits on `as_completed(futures)` with no timeout
+at all -- a single fetcher that never returns blocks the entire batch
+forever. The hung worker thread was holding ~30 simultaneous TCP sockets in
+CLOSE_WAIT against Yahoo Finance IPs (reverse-DNS confirmed one as
+`*.ycpi.vip.deb.yahoo.com`), consistent with `yfinance` retrying an
+illiquid/rate-limited symbol (`UX=F`, already flagged `⚠ unconfirmed/
+illiquid` in `_SYMBOL_MAP`/`_TREND_SPECS`) without an overall bound. A
+second, structural compounding factor: `yfinance_fetcher.py` serializes
+*every* yfinance call behind one process-wide `_YF_LOCK` (ENG-27's
+thread-safety fix), acquired via plain `with _YF_LOCK:` -- unbounded
+`acquire()`. Even after `fetch_all()` itself returns, a thread stuck inside
+one yfinance call holds that lock forever, so *every other* yfinance-sourced
+spec would also block forever on lock acquisition for the remaining life of
+the MCP server process -- a single bad symbol effectively bricks all market
+data until the process is restarted.
+
+**Fix:** `fetch_registry.py`'s `fetch_all()` now bounds each future to
+`_FETCH_TIMEOUT_SECONDS` (25s) via `future.result(timeout=...)`, catching
+`concurrent.futures.TimeoutError` and emitting a `FETCH_TIMEOUT`-flagged
+reading for that spec instead of blocking -- consistent with the existing
+"failures become flagged readings, never exceptions" contract, extended to
+"and never block forever either." The `ThreadPoolExecutor` is shut down
+with `wait=False` so a genuinely stuck worker thread doesn't also block
+`fetch_all()`'s own return on the way out (`with ThreadPoolExecutor(...)`'s
+implicit `shutdown(wait=True)` would have defeated the per-future timeout
+entirely). `yfinance_fetcher.py` gained `_yf_lock_guard()`, a context
+manager wrapping bounded `_YF_LOCK.acquire(timeout=20.0)`; a spec that can't
+get the lock in time raises `TimeoutError` immediately rather than queuing
+behind a stuck call indefinitely. All eight `with _YF_LOCK:` call sites
+(`fetch_holdings_prices`, `fetch_vix_history`, `fetch_broad_equity_trailing`,
+`fetch_nasdaq_trailing`, `fetch_weekly_trend`, `fetch_yield_curve_partial`,
+`fetch_instrument_history`, `_fetch_single`) now use `_yf_lock_guard()`;
+behavior is unchanged on the success path (same mutual exclusion), bounded
+only on the failure path. `fred_fetcher.py` was checked and already passes
+an explicit `timeout=10` on every `requests.get()` call -- no change needed
+there; this was a yfinance-specific gap.
+
+**Verification:** full suite (`not integration`): 744 passed, 0 regressions
+(+5 new: `TestFetchAllTimeout` in `test_fetch_registry.py` -- a hung fetcher
+produces a `FETCH_TIMEOUT` reading within the patched-down test bound and
+does not block a concurrently-registered healthy spec; `TestYfLockGuard` in
+`test_yfinance_unit.py` -- acquires immediately when free, raises
+`TimeoutError` when held elsewhere beyond the timeout, releases the lock
+even when the guarded body raises). One pre-existing, unrelated failure
+confirmed independent of this fix via `git stash` A/B comparison against
+the pre-ENG-40 working tree: `test_stage5/test_session.py::
+test_pipeline_probabilities_all_at_or_above_floor` (a live-data integration
+test) fails identically with or without this change (`Scenario C=2.8103%
+below 3% floor`) -- reproduces deterministically off current
+`Calibration_State.md`/`Session_Log.md` state plus today's live market
+data plus `StubAIClient`'s canned scoring answers; flagged as a separate
+follow-on (M03 floor-enforcement or test-strictness gap), not touched here.
+`tools/validate_manifests.py`: 19/19 (unaffected, no manifest changes).

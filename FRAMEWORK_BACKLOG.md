@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-33 downgraded CRITICAL->MEDIUM and given a defensive _with_timeout() mitigation for both evaluate_allocation and write_back, root cause for evaluate_allocation specifically still unconfirmed; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
+**Last updated:** 2026-06-24 (ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-33 downgraded CRITICAL->MEDIUM and given a defensive _with_timeout() mitigation for both evaluate_allocation and write_back, root cause for evaluate_allocation specifically still unconfirmed; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -80,6 +80,8 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-37 | OPEN | MEDIUM | functional-gap | recalibration_sequence()'s "anchor = above-floor proxy" heuristic produces a degenerate no-op when every holding is above its own floor (the normal case) -- gap_closed_by_reallocation reports true without any actual reallocation |
 | ENG-38 | CLOSED | HIGH | infrastructure | advisor_write_back's `git push` had no timeout and no guard against an interactive credential prompt, causing it to hang at the MCP client's ~4min ceiling even though the operation completed and committed server-side regardless |
 | ENG-39 | CLOSED | MEDIUM | bug | GAP-16's IHP range-position advisory used THREEFYTP10 (10Y term premium) mislabeled as "real yield" -- replaced with a computed REAL_YIELD_10Y_TREND (DGS10-T10YIE) series |
+| ENG-40 | CLOSED | HIGH | bug | fetch_all() and the shared yfinance lock had no timeout -- one stuck/illiquid symbol could hang advisor_run_computation() and every later yfinance fetch indefinitely |
+| ENG-41 | OPEN | LOW | functional-gap | test_pipeline_probabilities_all_at_or_above_floor fails against live data + StubAIClient (one scenario lands at 2.81%, below the test's asserted 3% floor, after the 25pp session cap compresses the others) -- confirmed pre-existing/independent of ENG-40 via git-stash A/B |
 
 ---
 
@@ -557,6 +559,43 @@ a misleadingly-affirmative true.
 
 ### ENG-39 — GAP-16's IHP range-position advisory mislabeled THREEFYTP10 (term premium) as "real yield"
 **CLOSED** 2026-06-21 (MEDIUM, bug). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+
+### ENG-40 — fetch_all() and the shared yfinance lock had no timeout bound
+**CLOSED** 2026-06-24 (HIGH, bug). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+
+### ENG-41 — test_pipeline_probabilities_all_at_or_above_floor fails against live data
+<!-- ITEM
+  Status:    OPEN
+  Severity:  LOW
+  Category:  functional-gap
+  Opened:    2026-06-24
+  Area:      tests/test_stage5/test_session.py, advisor/portfolio/probability.py (M03 derivation/cap)
+  Related:   ENG-40 (discovered while verifying ENG-40 didn't regress this test)
+-->
+
+**Found:** while verifying ENG-40 against the full suite, this
+`@pytest.mark.integration` test failed: `AssertionError: Scenario
+C=2.8103% below 3% floor`. Confirmed independent of ENG-40 via `git stash` —
+the exact same failure, with the exact same probability vector
+(A=31/B=22/C=3/D=3/E=3/F=39 pre-cap, derived 44/3/—/—/—/44-ish post-cap),
+reproduces on the pre-ENG-40 working tree against today's live market data
+and `Calibration_State.md`/`Session_Log.md` state, using `StubAIClient`'s
+fixed canned scoring answers. Mechanism: the 25pp session cap compresses A
+and F's derived shift, and the residual math for C lands at 2.8103% —
+just under the test's hardcoded `val >= 3.0` floor assertion for every
+scenario.
+
+**Open question, not yet investigated:** is this a genuine M03 gap (should
+`DeriveScenarioProbabilities()` enforce a hard floor post-cap so no
+scenario can mathematically fall below some minimum, the way `compute_floor()`
+already does for portfolio weights?), or is the test itself too strict
+(should a non-dominant scenario be allowed to print under 3% in a regime
+where the cap is actively suppressing a large derived shift elsewhere)?
+Needs a deliberate decision, not a quick patch — flagged here rather than
+fixed inline since it touches probability-derivation semantics, which is
+calibration-adjacent territory (M03), not pure plumbing.
 
 
 ---

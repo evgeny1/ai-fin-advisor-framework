@@ -5,6 +5,7 @@ registration in FetchRegistry covers every YFINANCE spec.
 """
 from __future__ import annotations
 
+import contextlib
 import datetime
 import json
 import logging
@@ -54,6 +55,31 @@ _FALLBACK_INSTRUMENTS = [
 # fred_fetcher.py's FRED-sourced fetches are unaffected (different client)
 # and keep running concurrently in the same ThreadPoolExecutor batch.
 _YF_LOCK = threading.Lock()
+
+# Found 2026-06-24: an illiquid/rate-limited symbol can make the underlying
+# Yahoo Finance HTTP call retry for many minutes without raising — and
+# because _YF_LOCK is a single process-wide lock, that one stuck call blocks
+# every other yfinance-sourced spec too, for the rest of the MCP server
+# process's life (acquire() with no timeout blocks forever). fetch_registry's
+# per-spec timeout bounds fetch_all() for THIS session, but a future yfinance
+# call would still hang forever re-acquiring a lock the stuck thread never
+# releases. _yf_lock_guard() makes acquisition itself bounded: a spec that
+# can't get the lock in time fails fast with a clear error instead of
+# joining the pile-up.
+_YF_LOCK_TIMEOUT_SECONDS = 20.0
+
+
+@contextlib.contextmanager
+def _yf_lock_guard(timeout: float = _YF_LOCK_TIMEOUT_SECONDS):
+    acquired = _YF_LOCK.acquire(timeout=timeout)
+    if not acquired:
+        raise TimeoutError(
+            f"yfinance lock busy for >{timeout}s — another fetch is likely hung"
+        )
+    try:
+        yield
+    finally:
+        _YF_LOCK.release()
 
 # ── Symbol map: spec.id → yfinance ticker ─────────────────────────────────────
 _SYMBOL_MAP: Dict[str, str] = {
@@ -171,7 +197,7 @@ def fetch_holdings_prices(spec: FetchSpec) -> List[DataReading]:
     symbols = load_instruments()
     now = datetime.datetime.utcnow()
     readings = []
-    with _YF_LOCK:
+    with _yf_lock_guard():
         tickers = yf.Tickers(" ".join(symbols))
         for sym in symbols:
             try:
@@ -203,7 +229,7 @@ def fetch_vix_history(spec: FetchSpec) -> List[DataReading]:
     """VIX_30D_AVG or VIX_90D_AVG: download history, compute rolling average."""
     today = datetime.date.today()
     start = today - datetime.timedelta(days=110)
-    with _YF_LOCK:
+    with _yf_lock_guard():
         df = yf.download("^VIX", start=start.isoformat(), progress=False, auto_adjust=True)
     if df.empty or "Close" not in df.columns:
         raise RuntimeError("^VIX history returned empty")
@@ -229,7 +255,7 @@ def fetch_broad_equity_trailing(spec: FetchSpec) -> List[DataReading]:
     """BROAD_EQUITY_TRAILING: S&P 500 30d and 90d pct-change from ^GSPC history."""
     today = datetime.date.today()
     start = today - datetime.timedelta(days=110)
-    with _YF_LOCK:
+    with _yf_lock_guard():
         df = yf.download("^GSPC", start=start.isoformat(), progress=False, auto_adjust=True)
     if df.empty or "Close" not in df.columns:
         raise RuntimeError("^GSPC history returned empty")
@@ -261,7 +287,7 @@ def fetch_nasdaq_trailing(spec: FetchSpec) -> List[DataReading]:
     "no evaluator recognizes condition" every session)."""
     today = datetime.date.today()
     start = today - datetime.timedelta(days=60)
-    with _YF_LOCK:
+    with _yf_lock_guard():
         df = yf.download("^IXIC", start=start.isoformat(), progress=False, auto_adjust=True)
     if df.empty or "Close" not in df.columns:
         raise RuntimeError("^IXIC history returned empty")
@@ -290,7 +316,7 @@ def fetch_weekly_trend(spec: FetchSpec, symbol: str, weeks: int) -> List[DataRea
     today = datetime.date.today()
     start = today - datetime.timedelta(weeks=weeks + 3)
     try:
-        with _YF_LOCK:
+        with _yf_lock_guard():
             df = yf.download(symbol, start=start.isoformat(), interval="1wk",
                              progress=False, auto_adjust=True)
     except Exception as e:
@@ -331,7 +357,7 @@ def fetch_yield_curve_partial(spec: FetchSpec) -> List[DataReading]:
     """
     tenor_map = {"^TNX": "year10", "^TYX": "year30", "^IRX": "month3"}
     values: Dict[str, Any] = {}
-    with _YF_LOCK:
+    with _yf_lock_guard():
         for sym, key in tenor_map.items():
             try:
                 values[key] = round(float(yf.Ticker(sym).fast_info.last_price), 4)
@@ -364,7 +390,7 @@ def fetch_instrument_history(spec: FetchSpec, symbol: str,
                              start: str, end: Optional[str] = None) -> List[DataReading]:
     """HISTORICAL_INSTRUMENT_PRICES: ON_DEMAND. Call via registry.fetch_one()."""
     end = end or datetime.date.today().isoformat()
-    with _YF_LOCK:
+    with _yf_lock_guard():
         df = yf.download(symbol, start=start, end=end, progress=False, auto_adjust=True)
     if df.empty:
         return [DataReading(spec_id=f"{spec.id}:{symbol}", value=None,
@@ -392,7 +418,7 @@ def _fetch_single(spec: FetchSpec) -> List[DataReading]:
             f"No yfinance symbol for spec.id='{spec.id}'. "
             f"Add it to _SYMBOL_MAP in yfinance_fetcher.py."
         )
-    with _YF_LOCK:
+    with _yf_lock_guard():
         info = yf.Ticker(symbol).fast_info
         price = round(float(info.last_price), 4)
         day_change_pct = round(
