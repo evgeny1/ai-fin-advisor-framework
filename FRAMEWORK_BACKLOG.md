@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-24 (ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-33 downgraded CRITICAL->MEDIUM and given a defensive _with_timeout() mitigation for both evaluate_allocation and write_back, root cause for evaluate_allocation specifically still unconfirmed; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
+**Last updated:** 2026-06-24 (ENG-33: found Claude Desktop's own MCP transport log (mcp-server-financial-advisor.log) — proves advisor_evaluate_allocation's request never reaches the server at all during the hang. New hypothesis: the nested AccountProfileInput pydantic model is the one schema-irregular parameter among this session's tools (FastMCP renders it as $ref/$defs); flattened account_profile into top-level scalar params to test. Fix applied, pending live re-verification — see full ENG-33 entry below). Prior, same day: ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md. Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -73,7 +73,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-30 | OPEN | MEDIUM | functional-gap | DBMF's "3M return < -3% while B+C>=55%" §13 failure condition has no FetchSpec/evaluator |
 | ENG-31 | OPEN | LOW | functional-gap | AIPO's hyperscaler capex guidance §13 sustaining condition has no data source |
 | ENG-32 | CLOSED | LOW | hygiene | range_position.py conflated "trend data flat" with "trend data unavailable" in GAP-16 advisory note text |
-| ENG-33 | OPEN | MEDIUM | infrastructure | advisor_evaluate_allocation's MCP transport-layer hang remains unconfirmed (root cause) after two falsified hypotheses (execution-layer timeout never fires; Dict[str, Any]->pydantic model made no difference). Defensive timeout wrapper (_with_timeout) still bounds the blast radius. Decision: stop experimenting, use the in-process bypass as the standing workaround until server-side stderr access is available. |
+| ENG-33 | OPEN | MEDIUM | infrastructure | advisor_evaluate_allocation's MCP transport-layer hang -- new evidence 2026-06-24 (mcp-server-financial-advisor.log shows the request never arrives server-side at all) points to the nested AccountProfileInput pydantic model's $ref/$defs schema shape; flattened account_profile into top-level scalar params to test. Fix applied, pending live re-verification. |
 | ENG-34 | OPEN | LOW | functional-gap | XAR's "Defense budget trajectory positive" §13 sustaining condition has no Call-2 question or data source |
 | ENG-35 | OPEN | MEDIUM | performance | advisor_run_computation took 244.8s in-process post-ENG-27 (vs sub-4min MCP ceiling) -- likely yfinance lock serialization cost, possibly compounded by session's repeated test-call rate limiting; needs isolated measurement |
 | ENG-36 | CLOSED | MEDIUM | bug | dominant_directive() crashed on MAGS/MLPX/COPX -- _directive_direction()/_most_conservative() called .upper() on DirectiveCode enum members, which only worked for the str fallback default |
@@ -448,6 +448,53 @@ importing `advisor.mcp_server` directly and calling `_tool_evaluate_allocation`
 with cached `cal`/`scenario_probs` populated by hand, or via `parse_calibration_state()`
 directly) -- proven fast, correct, and reliable every single time it was
 tried, as opposed to four-for-four live MCP failures.
+
+**Breakthrough (2026-06-24): the access this was waiting on existed all
+along.** `C:\Users\evgen\AppData\Roaming\Claude\logs\mcp-server-financial-advisor.log`
+is Claude Desktop's own MCP transport log -- exactly the "server-side
+stderr" the prior decision said wasn't available. Checked it during a
+fifth live hang on `advisor_evaluate_allocation` this session. Finding:
+**the request never arrives.** The log shows a normal `tools/call` entry
+for `advisor_run_computation` at 02:22:39, its response at 02:23:17, a
+normal `tools/call` + instant response for `advisor_apply_scoring` at
+02:38:10 -- then nothing. No `tools/call` entry for `evaluate_allocation`
+at all, ever, for the call that hung the full 4 minutes immediately after.
+This is a stronger result than the 2026-06-21 `_with_timeout()` test: it
+doesn't just imply the function body was never reached, it shows the
+*server process itself never received the request over stdio*. The hang
+is in Claude Desktop's MCP client, upstream of this server entirely.
+
+**Revised hypothesis:** of this tool's four parameters, `account_profile`
+was the only one typed as a nested object (`AccountProfileInput`, a
+pydantic `BaseModel`) rather than a flat scalar or a flat `Dict[str, V]`.
+FastMCP renders a `BaseModel` parameter as a `$ref` into a `$defs` block in
+the tool's advertised JSON schema -- structurally different from every
+other parameter on every other tool here, including `current_weights`'s
+`Dict[str, float]` (a flat `additionalProperties` object, no `$ref`). If
+Claude Desktop validates or otherwise processes call arguments against the
+advertised schema client-side before transmitting, and that handling
+doesn't fully resolve `$ref`/`$defs`, a hang client-side before send would
+produce exactly this symptom -- and would equally explain why the original
+`Dict[str, Any]` shape (also schema-irregular: an unconstrained-value
+object) hung too, and why converting it to `AccountProfileInput` made no
+observable difference: both versions kept account_profile as the one
+non-flat parameter.
+
+**Fix applied (untested live as of this writing):** removed
+`AccountProfileInput` entirely. `advisor_evaluate_allocation` now takes
+`account_id`, `planning_horizon_years`, `objective_type`, `owner`,
+`floor_nominal_loss`, `concentration_cap`, `drawdown_tolerance` as flat
+top-level parameters (matching `advisor_write_back` and
+`advisor_check_instrument_candidate`'s existing all-scalar shape) and
+builds the dict `_parse_account_profile()` expects internally. Full
+suite: 730 passed / 0 regressions (`not integration`). Genuinely not
+confirmed yet -- the diagnostic evidence is solid (request-never-arrives)
+but the $ref hypothesis for *why* is reasoned, not proven, and the fix
+needs a live call to actually verify. If it still hangs, the next thing
+to check is whether `current_weights`/`proposed_allocations` (still
+`Dict[str, float]`) are also implicated despite the `apply_scoring`
+precedent -- try flattening tickers to a fixed small set as a further test
+before concluding the cause is elsewhere entirely.
 
 
 ### ENG-34 — XAR's "Defense budget trajectory positive" §13 condition has no Call-2 question or data source

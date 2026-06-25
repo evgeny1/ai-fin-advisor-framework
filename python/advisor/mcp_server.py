@@ -58,35 +58,19 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel
 
-
-class AccountProfileInput(BaseModel):
-    """
-    Precise, fully-typed replacement for account_profile's original
-    Dict[str, Any] parameter type on advisor_evaluate_allocation.
-
-    ENG-33: advisor_evaluate_allocation hung completely at the MCP
-    transport layer -- proven by the fact that the defensive
-    _with_timeout() wrapper around the underlying function never fired
-    during the hang, meaning the function body was never even reached.
-    advisor_write_back, which has no Dict-typed parameters at all, works
-    instantly through the same transport; apply_scoring's Dict[str, int]
-    (a concrete value type) also works fine. account_profile's loose
-    Dict[str, Any] -- an unconstrained-value dict -- is the most
-    plausible remaining differentiator. This model removes the Any
-    entirely in favor of concrete fields matching exactly what
-    _parse_account_profile() already expects. Not a confirmed fix --
-    the next reasonable experiment given everything else has been ruled
-    out.
-    """
-    account_id: str
-    planning_horizon_years: int
-    objective_type: str
-    owner: str = "primary"
-    floor_nominal_loss: bool = False
-    concentration_cap: float = 0.40
-    drawdown_tolerance: float = 0.30
+# ENG-33 history: advisor_evaluate_allocation's account_profile parameter
+# was originally Dict[str, Any], then briefly an AccountProfileInput
+# Pydantic model (2026-06-22 attempt, removed 2026-06-24) to see if a
+# precisely-typed nested object would clear a transport-layer hang where
+# the request never reached this server's stdio log at all. It didn't --
+# the model still generates a $ref/$defs nested JSON schema, same shape
+# family as the dict it replaced. advisor_evaluate_allocation now takes
+# account_id/planning_horizon_years/objective_type/etc. as flat top-level
+# parameters instead (see its @srv.tool() definition below) -- the same
+# flat-scalar shape advisor_write_back and advisor_check_instrument_candidate
+# already use without issue. See that tool's docstring for the full
+# diagnostic trail.
 
 
 # ENG-33: advisor_evaluate_allocation and advisor_write_back both hung at
@@ -1205,8 +1189,14 @@ def build_server():
 
     @srv.tool()
     def advisor_evaluate_allocation(
-        account_profile: AccountProfileInput,
+        account_id: str,
+        planning_horizon_years: int,
+        objective_type: str,
         current_weights: Dict[str, float],
+        owner: str = "primary",
+        floor_nominal_loss: bool = False,
+        concentration_cap: float = 0.40,
+        drawdown_tolerance: float = 0.30,
         tickers: Optional[List[str]] = None,
         proposed_allocations: Optional[Dict[str, float]] = None,
     ) -> str:
@@ -1221,17 +1211,28 @@ def build_server():
         uses their cached calibration state and scenario probabilities
         (§8 AUTHORITATIVE — never recompute probabilities yourself).
 
-        account_profile: dict built from the allocation sheet's "Objectives"
-          tab (no Python parser for that tab exists — you read and construct
-          this). Required keys: account_id, planning_horizon_years,
-          objective_type (one of "TARGET_THEN_RETURN", "RETURN_THEN_TARGET",
-          "FLOOR_THEN_RETURN", "PRESERVATION"). Optional: owner (default
-          "primary"), floor_nominal_loss (default False), concentration_cap
-          (default 0.40), drawdown_tolerance (default 0.30).
-          e.g. {"account_id": "Primary_IRA_6469", "owner": "primary",
-                "planning_horizon_years": 10,
-                "objective_type": "TARGET_THEN_RETURN",
-                "concentration_cap": 0.40, "drawdown_tolerance": 0.35}
+        account_id, planning_horizon_years, objective_type, owner,
+        floor_nominal_loss, concentration_cap, drawdown_tolerance: the
+          allocation sheet's "Objectives" tab fields for this account (no
+          Python parser for that tab exists — you read and supply these).
+          objective_type is one of "TARGET_THEN_RETURN", "RETURN_THEN_TARGET",
+          "FLOOR_THEN_RETURN", "PRESERVATION". owner defaults to "primary".
+
+          ENG-33 (2026-06-24): this used to take a single account_profile
+          dict/object parameter. That shape hung completely at the MCP
+          client layer — the request never even reached this server's
+          stdio transport (confirmed via mcp-server-financial-advisor.log
+          showing no incoming tools/call entry at all for the hung call,
+          while advisor_run_computation and advisor_apply_scoring's calls
+          in the same session both logged normally). The one structural
+          difference versus those two: a nested object/model parameter,
+          which FastMCP exposes as a $ref/$defs JSON schema rather than a
+          flat property list. Flattening account_profile into top-level
+          scalar parameters removes that shape entirely. Not a confirmed
+          fix in the sense of a reproduced-then-resolved root cause (the
+          hang is in Claude Desktop's client, outside this codebase, so it
+          can't be unit-tested here) — but it removes the one schema
+          feature this tool had that the other two working tools don't.
 
         current_weights: ticker → current allocation fraction in this account,
           for ALL holdings in the account (used for ranking within bounds).
@@ -1255,7 +1256,15 @@ def build_server():
         """
         return _with_timeout(
             _tool_evaluate_allocation, 30.0,
-            account_profile=account_profile.model_dump(),
+            account_profile={
+                "account_id": account_id,
+                "owner": owner,
+                "planning_horizon_years": planning_horizon_years,
+                "objective_type": objective_type,
+                "floor_nominal_loss": floor_nominal_loss,
+                "concentration_cap": concentration_cap,
+                "drawdown_tolerance": drawdown_tolerance,
+            },
             current_weights=current_weights,
             tickers=tickers,
             proposed_allocations=proposed_allocations,
