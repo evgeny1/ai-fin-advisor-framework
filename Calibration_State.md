@@ -141,6 +141,80 @@ narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
 
+2026-06-25 - M16.CalibrationMethodology() 4-layer run: secular_technology_growth
+Scenario F (client-requested recalibration review). Also: audit gap identified
+(broad_market_equity_domestic never run through M16) and VTI/QQQM/RSP candidate
+review (client request, same session).
+
+STG F proposal: [4,11] -> [8,20]. Confidence: MEDIUM. NOT adopted this session.
+L1: unconditional anchor ~1% real (VCMM 0-2%, RA ~1%) — same anchor used for
+    the STG B HIGH-confidence adoption (v1.27).
+L2: two structurally relevant multi-year F analogs, using the framework's own
+    2-3yr sustained-regime convention (per STG D/E rederivation precedent):
+    (a) 2017-2019 (3yr): QQQ nominal +32.7%/-0.1%/+39.0% (FinanceCharts,
+        TradeThatSwing; cross-checked against SEC N-30B-2 NAV total-return
+        filings) -> 3yr annualized ~+22.6% nominal / ~+19.6% real (CPI ~2.3%/yr).
+    (b) 2023-2024 (2yr, most structurally relevant — same AI-capex driver as
+        the current cycle): QQQ nominal +56.4%/+25.7% -> 2yr annualized ~+40%
+        nominal / ~+37% real (CPI ~3%/yr).
+    1995-2000 (the framework's third Layer-2 F analog per §4.1 SCENARIO_TO_PERIOD_MAP)
+    excluded from the proposed range's derivation: directionally consistent but
+    a weaker structural match (1990s internet-buildout economics differ from
+    hyperscaler AI-capex economics) and it ended in a -78% NDX collapse the
+    framework should not want naively read as a "conservative" floor.
+L3: structural adjustment, LARGE and DOWNWARD — the load-bearing judgment call
+    here. §6 item 37 (logged May 22, 2026) already documents: hyperscaler capex
+    growing 60-80%/yr vs. revenue growth 15-16%/yr; FCF projected to decline
+    ~90% across the Big Four; "prisoner's dilemma" competitive dynamics with
+    no coordination mechanism among 5+ hyperscalers; an explicit fiber-optic-
+    1999 analogy ("technology correct, equity returns poor due to timing, cost
+    of capital, and competitive dynamics"). Historical realized returns (L2)
+    do not price this in by construction — they describe the buildout, not
+    what happens if/when its economics catch up with it. Conservative end
+    (+8%) is set well below both L2 analogs (+19.6%/+37%) specifically because
+    of this; upside (+20%) stays well below the 2023-24 realized figure for
+    the same reason. Elevated starting valuations (vs. 1995, 2017, and even
+    2023 entry points) further cap forward real returns via standard
+    mean-reversion logic.
+L4: NEUTRAL_DISTRIBUTION (A=35/B=15/C=15/D=10/E=5/F=20). Row neutral-weighted
+    average with F=+8 (other cells at current operative values, STG B=-2
+    adopted): 0.35(6)+0.15(-2)+0.15(2)+0.10(-6)+0.05(-12)+0.20(8) = +2.50%
+    vs L1 anchor ~1%. Gap +1.5pp. PASS (within ±3pp).
+Confidence note: 2 clean, structurally-relevant analogs in directional
+agreement, but the L3 adjustment is large enough it could plausibly be argued
+to exceed the "bounded (<3pp)" MEDIUM threshold and edge toward LOW — flagging
+explicitly rather than rounding up to HIGH. The capex-sustainability risk is a
+live, unresolved debate, not a settled structural fact the way e.g. MLPX's
+deleveraging-vs-2014 or AIPO's contract backstops are. LOGGED PENDING per
+RevisionAdoption rule (§6 item 23[15]) — formal adoption decision: June 30.
+
+Separate finding from the same review: broad_market_equity_domestic (used by
+MAGS at 15% weight, XAR at 10%, and central to any VTI/RSP/QQQM evaluation)
+has NEVER been run through M16.CalibrationMethodology() — no marker anywhere
+in §4.1 for this role; current values are unaudited v1.0 baseline. Added as
+new §6 audit item 41. This blocks a clean EV for RSP as a candidate until
+that role gets its first 4-layer pass.
+
+VTI/QQQM/RSP candidate review (client request, this session):
+- VTI: already eliminated from all target allocations April 30, 2026 (v1.9,
+  see §11.3) as part of the broader move from a generic core holding to the
+  granular role-targeted instrument set (AIPO/MAGS/XAR/MLPX added the same
+  window). Not a performance-based rejection on record — a strategic
+  transition. §11 entry retained only for blendedScenarioReturn() during
+  the transition.
+- QQQM: not in §11. No M07/M15 classification audit exists. Directionally,
+  Nasdaq-100 is MORE concentrated in secular_technology_growth than MAGS's
+  85/15 split (no broad_market_equity_domestic diversification component at
+  all) — whatever EV problem MAGS has, QQQM likely shares or worsens, not
+  solves. Would need a full ThematicETF_ClassificationAudit (same treatment
+  as AIPO/INFL/URA) before a real number can be assigned.
+- RSP (S&P 500 Equal Weight): not in §11. Structurally the most promising of
+  the three — equal-weighting away from mega-cap concentration means RSP
+  leans much more on broad_market_equity_domestic and much less on
+  secular_technology_growth than VTI/QQQM/MAGS. EV can't be honestly computed
+  until broad_market_equity_domestic gets its first M16 pass (above) —
+  flagged as a candidate, not classified.
+
 2026-06-21 - GAP-16 follow-up (v1.44): IHP range-position real-yield
 sub-condition corrected. THREEFYTP10 (10Y term premium) was being used as
 the real-yield driver — it isn't real yield; it's bond-supply/demand
@@ -475,6 +549,12 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
 
   (IHP A and D moved to ADOPTED above — L4 resolved via post-1980 anchor recalibration.)
 
+  PENDING June 30 (MEDIUM confidence — added 2026-06-25):
+  - [15] secular_technology_growth F: [4,11]->[8,20]. Two clean multi-year
+      analogs (2017-19, 2023-24 QQQ) offset by a large, documented capex-
+      sustainability structural risk (§6 item 37). Full 4-layer detail:
+      §3 log entry 2026-06-25.
+
   UNRECOVERABLE (4 proposals — lost in v1.12 file split; reconstruct at June 30 audit):
   - [11]-[14]: Reference exists in prior v1.12 §6 item 23 but content not carried forward.
     Likely candidates: IHC Scenario A, RAC Scenario A, RSILD revision, geopolitical_premium C.
@@ -500,6 +580,11 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
 38. M17 §12 thresholds (v1.19, corrected v1.20): First formal application May 25, 2026. sectorStressScore()=0 (formal, v1.20 corrected). CascadeLevel=MONITORING. CHAIN_3_WATCH=TRUE ($1.304T margin debt record loaded; FIRES on ≥−5% MoM or 3+ gate events). CHAIN_4 CALIBRATED v1.24 (June 1, 2026): canonical series = S&P Global large-company; T1-equivalent = ABI/Epiq AACER press releases; WATCH ≥220/quarter, FIRES ≥300/quarter (HIGH confidence, M16 4-layer complete); current Q1 2026 = 188/quarter — BELOW WATCH. Prior 800/quarter threshold eliminated. D=5% maintained by prior client approval (qualitative). Formal Q2 audit: calibrate remaining §12 thresholds; formal integration of yield curve D_timing_signal; M18 allocation spreadsheet series gap resolution.
 39. M18 FMP data fetch (v1.21, May 26, 2026): FMP:chart historical-price-eod-light confirmed working for ^VIX and SPY. VIX_30D_AVG=17.99 and VIX_90D_AVG=21.24 computed from 62 trading days of FMP EOD data. SPY 30-trading-day return=+8.68% (Apr 13→May 22). FMP:indexes endpoint ACCESS DENIED for ^SPX (requires higher plan tier) — SPY via FMP:chart is the confirmed working substitute for BROAD_EQUITY_TRAILING. M18 updated accordingly (v1.1).
 40. GAP-16 (v1.42, June 20, 2026): within-scenario sub-condition advisory for wide-range roles — RESOLVED for IHP, see §3 v1.42 entry for full description. analysis/range_position.py flags real-yield/DXY direction for held IHP instruments (SGOL, SIVR) whose dominant-scenario §4.1 range is >=6pp wide; advisory only. STF/RAC/IHC sub-condition identification (named in the originating note as in-scope) remains open — assign at a future session once those roles' 1-2 governing variables are identified; no code change needed, range_position.py already generalizes.
+41. broad_market_equity_domestic (v1.0 baseline, NEVER run through M16): no
+    ★/⚑/⚠ marker anywhere in §4.1 for this role. Used by MAGS (15% weight),
+    XAR (10% weight), and blocks a clean EV for any VTI/RSP/QQQM evaluation.
+    Full M16.CalibrationMethodology() 4-layer run required, all 6 scenarios.
+    Flagged 2026-06-25 (client request to evaluate RSP as a candidate).
 
 ---
 
@@ -686,7 +771,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 | C | +2% | +8% | ⚑ provisional | Q1 2026 empirical: Azure +40%, AWS +28%, META +33%. AI enterprise contracts multi-year. Single data point; audit June 30. |
 | D | -6% | 0% | ⚑ PENDING June 30 | 2008-09 2yr annualized NDX -5.1% real. 1 analogue. Rederived from [-20,-8] (was 1yr acute — wrong convention). |
 | E | -12% | -3% | ⚑ PENDING June 30 | 2008 Q4 acute annualized. 1 analogue. Rederived from [-18,-6]. |
-| F | 4% | 11% | ⚑ provisional | Strong nominal demand; rising rates partially compress multiples |
+| F | 4% | 11% | ⚑ PENDING June 30 | Strong nominal demand; rising rates partially compress multiples. Proposed revision [8,20] logged 2026-06-25 (MEDIUM confidence) — two clean multi-year QQQ analogs (2017-19, 2023-24) support a materially higher range; capex-sustainability structural risk (§6 item 37) argues against adopting the raw historical average. Current operative value [4,11] unchanged pending formal adoption. Full 4-layer detail: §3 log 2026-06-25; §6 item 23[15]. |
 
 ### 11.3 Instrument Classification Table
 
