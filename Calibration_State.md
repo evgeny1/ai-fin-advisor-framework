@@ -215,6 +215,124 @@ VTI/QQQM/RSP candidate review (client request, this session):
   until broad_market_equity_domestic gets its first M16 pass (above) —
   flagged as a candidate, not classified.
 
+2026-06-25 (cont'd) - M16.CalibrationMethodology() 4-layer run:
+broad_market_equity_domestic, all 6 scenarios (client-requested; first-ever
+M16 review for this role — no confidence marker had ever been applied).
+Also: documentation hygiene fix (MAGS D/E "operative" note was stale) and
+VTI reassessment using both this review and the pending STG F proposal above.
+
+L1 anchor (all scenarios): ~2-3% real unconditional (JPM LTCMA-style US
+large-cap 10yr estimate; existing §4.1 footnote already cites broad_market
+~1-4% real).
+
+A (1991 Gulf War normalization / 2003 Iraq drawdown / 2016 commodity rebound):
+  L2: 1991 S&P +30.5% nominal (~+26% real; general knowledge, NOT
+      independently re-verified via T1 search this session — flag for
+      confirmation); 2003 S&P +28.7% nominal (~+26% real, same caveat); 2016
+      RSP +14.50% nominal (fresh search this session) -> ~+12.4% real
+      (CPI ~2.1%). All three analogs land well above the current [5,12]
+      range — even 2016, the weakest and freshest, sits at the upside bound.
+  L3: 2016 is structurally the closest match to a present-day A (post-conflict
+      commodity normalization without a full war-drawdown reset); using it as
+      the anchor rather than 1991/2003 is itself a conservative choice.
+  L4 (proposed A=[10,20]): 0.35(10)+0.15(-8)+0.15(-4)+0.10(-12)+0.05(-8)+0.20(7)
+      = 3.5-1.2-0.6-1.2-0.4+1.4 = +1.5% vs ~2-3% anchor. Gap ~-1pp. PASS.
+  PROPOSED: [5,12] -> [10,20]. Confidence: MEDIUM (1991/2003 figures not
+  independently re-verified this session — re-confirm via T1 search before
+  formal adoption). LOGGED PENDING, not adopted (§6 item 23[16]).
+
+B (1973-1982 stagflation / 2022): INVESTIGATED, NOT RESOLVED — genuine
+  bifurcation found. 1973-74 (acute phase): S&P approx -14.7%/-26% nominal,
+  CPI ~8-11%/yr -> real roughly -23% to -37%/yr (general knowledge, NOT
+  verified this session). 1979-1982 (sustained, less-acute phase): S&P
+  approx +18.4%/+32.4%/-4.9%/+21.5% nominal (general knowledge, unverified)
+  -> 4yr annualized nominal ~+16%, CPI averaged ~10.5%/yr -> real ~+5.5%/yr
+  POSITIVE. 2022: S&P -19.44% nominal (T1-adjacent), CPI ~8% -> real ~-27%.
+  Acute-shock years (1973-74, 2022) and "grinding through it" years
+  (1979-82 ex-acute) point in opposite directions by a wide margin. Current
+  [-8,-2] sits in between, consistent with neither read cleanly. NO PROPOSAL
+  — flagging as a genuine open structural question rather than forcing a
+  number through. All figures here need T1 re-verification before any
+  further work; treat as directional only. Confidence: LOW.
+
+C (1974 oil shock / 1979-80 second oil crisis / 2022 H1): same bifurcation as
+  B, more extreme. 1974: real ~-37%/yr (single acute year, unverified general
+  knowledge). 1979-1980 (general knowledge, unverified): both POSITIVE
+  nominal (+18.4%/+32.4%), real ~+7%/+19% — the oil shock did NOT mean a down
+  market those two specific years. 2022 H1 (annualized from ~-20% 6mo): real
+  ~-45%/yr. Current [-4,-1] again sits between two historically opposite
+  outcomes. NO PROPOSAL — same open-question treatment as B. Confidence: LOW.
+
+D (2008-09 GFC / 2020 COVID): REVIEWED, CONFIRMED — no revision proposed.
+  L2: RSP 2008 -40.07%, 2009 +44.64% (fresh search this session) -> 2yr
+      annualized nominal ~-6.9%, real ~-8.6% (CPI ~1.7%/yr avg). Sits
+      comfortably inside the current [-12,-4] range.
+  2020 (V-shaped, RSP +12.71% full year) is a poor D analogue on its own —
+      fast policy-driven recovery, inconsistent with the 2-3yr sustained-
+      regime convention; excluded from the headline figure, noted for context.
+  Confidence: MEDIUM (one clean multi-year analogue, fresh data). No change.
+
+E (2008 Q4 acute / 1998 LTCM / 1987 crash): REVIEWED, CONFIRMED — no revision
+  proposed. Raw quarter-annualized figures here are extreme (2008 Q4 ~-64%/yr
+  nominal annualized; 1998 LTCM 3mo drawdown ~-57%/yr annualized; 1987 3mo
+  drawdown ~-80%/yr annualized — all general knowledge, not independently
+  re-verified this session) — consistent with the framework's own existing
+  convention elsewhere (e.g. STG E settled at -12% rather than a literal
+  Q4-2008 annualized figure) that E's raw acute-quarter annualization is not
+  meant to be read as a literal full-year expectation; current [-8,-3] sits
+  in reasonable proportion to STG's already-adopted -12% (broad market
+  historically less volatile than concentrated tech in acute crashes).
+  Confidence: LOW-MEDIUM (proportionality argument, not a clean direct
+  analogue computation). No change proposed.
+
+F (1995-2000 / 2017-2019 / 2023-2024): REVIEWED, CONFIRMED — no revision
+  proposed. RSP 2017-19 3yr annualized ~+12.1% nominal / ~+9.6% real; RSP
+  2023-24 2yr annualized ~+13.3% nominal / ~+10.0% real (both fresh search
+  this session). Both sit comfortably inside the current [7,14] range —
+  notably much lower than QQQ's equivalent figures for the same windows
+  (~19.6%/~37% real — see STG F entry above), which is exactly the
+  diversification effect the BMED/STG split is supposed to capture, and is
+  itself a useful empirical confirmation that the split is doing its job.
+  Confidence: MEDIUM (two clean, fresh, structurally relevant analogues,
+  good agreement). No change proposed.
+
+SUMMARY: of 6 scenarios, only A has a clear case for revision (MEDIUM
+confidence, logged pending, §6 item 23[16]). D/E/F reviewed and confirmed
+consistent with available data — status updated from unmarked to "reviewed."
+B/C are a genuinely open structural question (acute-shock vs. sustained-grind
+bifurcation) this session could not responsibly resolve — flagged for
+dedicated Q-end work, not a quick fix.
+
+DOCUMENTATION HYGIENE FINDING (corrected from an earlier draft of this same
+entry): initially flagged the MAGS §11.3 entry's D/E computation notes
+("operative STG D=-14... rederived -6 not yet adopted") as stale live-file
+content. On verification via direct Desktop Commander read of this file
+(not the project_knowledge_search tool), that detailed per-scenario
+breakdown does NOT exist in the live file — MAGS's entry was already
+simplified to "EV: computed fresh each session... not stored here" in a
+prior session. The stale "-14/-10" text exists only in Project Knowledge's
+embedded snapshot, which is evidently behind the live file. Re-confirms the
+project's own standing rule: read framework files via Desktop Commander, not
+project_knowledge_search, for anything execution-relevant — this session's
+mistake is a concrete example of why. No live-file correction was needed;
+none made.
+
+VTI REASSESSMENT (client request): recomputed VTI's EV (broad_market_equity_
+domestic 0.78 + secular_technology_growth 0.22) at today's session
+probabilities (A=11.41/B=34.24/C=11.41/D=3/E=5.71/F=34.24):
+  - At current OPERATIVE §4.1 values: EV ≈ -0.66%.
+  - At the two PENDING proposals above (STG F=8, BMED A=10) — illustrative
+    only, neither adopted: EV ≈ +0.09%. Roughly breakeven, not attractive.
+  For comparison, MAGS (STG 0.85/BMED 0.15) moves from +0.47% to ≈+1.63%
+  under the same pending STG F=8 proposal alone — MAGS benefits far more
+  proportionally from the STG F revision than VTI does, because VTI's much
+  larger BMED weight (78%) sits in a role (F) that was already fairly
+  valued, not under-calibrated. If the STG F proposal holds at the June 30
+  audit, MAGS becomes relatively MORE attractive vs. VTI, not less.
+  CONCLUSION: this recalibration review does not change the case for VTI.
+  The April 2026 transition away from VTI toward the granular instrument
+  set looks, if anything, better justified by this analysis, not weaker.
+
 2026-06-21 - GAP-16 follow-up (v1.44): IHP range-position real-yield
 sub-condition corrected. THREEFYTP10 (10Y term premium) was being used as
 the real-yield driver — it isn't real yield; it's bond-supply/demand
@@ -356,6 +474,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 ★ = ADOPTED v1.13 (HIGH confidence — M16.CalibrationMethodology() 4-layer complete).
 ⚑ = PENDING June 30 (MEDIUM confidence — M16 calibration required before formal adoption).
 ⚠ = PENDING June 30 (LOW confidence — irreconcilable historical anchors; requires deeper analysis).
+✓ = REVIEWED 2026-06-25 (M16 4-layer run completed; current value confirmed consistent with available data — no revision proposed, not a formal HIGH-confidence adoption).
 
 | Role | Scenario A | Scenario B | Scenario C | Scenario D | Scenario E | Scenario F |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -366,7 +485,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | policy_driven_thematic_equity | [4, 8] | [-3, 1] | [-1, 3] | [-5, -1] | [-6, -2] | [4, 8] |
 | rate_sensitive_income_short_duration | [1, 3]★ | [1, 3] | [1, 3] | [1, 4]★ | [-2, 2] | [1, 3] |
 | rate_sensitive_income_long_duration | [3, 7] | [-4, -1] | [-5, -2] | [5, 10] | [-10, -3] | [-4, -1] |
-| broad_market_equity_domestic | [5, 12] | [-8, -2] | [-4, -1] | [-12, -4] | [-8, -3] | [7, 14] |
+| broad_market_equity_domestic | [5, 12]⚑ | [-8, -2]⚠ | [-4, -1]⚠ | [-12, -4]✓ | [-8, -3]✓ | [7, 14]✓ |
 | broad_market_equity_international | [4, 9] | [-5, -1] | [-6, -2] | [-8, -3] | [-10, -4] | [3, 8] |
 | secular_technology_growth | [6, 16] | [-2, +4]★ | [+2, +8] | [-6, 0]⚑ | [-12, -3]⚑ | [4, 11] |
 | inflation_linked_sovereign | [-2, 1]★ | [1, 4]⚑ | [1, 4]⚑ | [0, 3]★ | [-1, 2]⚑ | [-1, 1]★ |
@@ -554,6 +673,11 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
       analogs (2017-19, 2023-24 QQQ) offset by a large, documented capex-
       sustainability structural risk (§6 item 37). Full 4-layer detail:
       §3 log entry 2026-06-25.
+  - [16] broad_market_equity_domestic A: [5,12]->[10,20]. Three analogs
+      (1991, 2003, 2016) all land above the current upside bound; 2016
+      (RSP, fresh data) used as the conservative anchor. 1991/2003 figures
+      not independently re-verified this session — confirm via T1 before
+      formal adoption. Full 4-layer detail: §3 log entry 2026-06-25.
 
   UNRECOVERABLE (4 proposals — lost in v1.12 file split; reconstruct at June 30 audit):
   - [11]-[14]: Reference exists in prior v1.12 §6 item 23 but content not carried forward.
@@ -580,11 +704,14 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
 38. M17 §12 thresholds (v1.19, corrected v1.20): First formal application May 25, 2026. sectorStressScore()=0 (formal, v1.20 corrected). CascadeLevel=MONITORING. CHAIN_3_WATCH=TRUE ($1.304T margin debt record loaded; FIRES on ≥−5% MoM or 3+ gate events). CHAIN_4 CALIBRATED v1.24 (June 1, 2026): canonical series = S&P Global large-company; T1-equivalent = ABI/Epiq AACER press releases; WATCH ≥220/quarter, FIRES ≥300/quarter (HIGH confidence, M16 4-layer complete); current Q1 2026 = 188/quarter — BELOW WATCH. Prior 800/quarter threshold eliminated. D=5% maintained by prior client approval (qualitative). Formal Q2 audit: calibrate remaining §12 thresholds; formal integration of yield curve D_timing_signal; M18 allocation spreadsheet series gap resolution.
 39. M18 FMP data fetch (v1.21, May 26, 2026): FMP:chart historical-price-eod-light confirmed working for ^VIX and SPY. VIX_30D_AVG=17.99 and VIX_90D_AVG=21.24 computed from 62 trading days of FMP EOD data. SPY 30-trading-day return=+8.68% (Apr 13→May 22). FMP:indexes endpoint ACCESS DENIED for ^SPX (requires higher plan tier) — SPY via FMP:chart is the confirmed working substitute for BROAD_EQUITY_TRAILING. M18 updated accordingly (v1.1).
 40. GAP-16 (v1.42, June 20, 2026): within-scenario sub-condition advisory for wide-range roles — RESOLVED for IHP, see §3 v1.42 entry for full description. analysis/range_position.py flags real-yield/DXY direction for held IHP instruments (SGOL, SIVR) whose dominant-scenario §4.1 range is >=6pp wide; advisory only. STF/RAC/IHC sub-condition identification (named in the originating note as in-scope) remains open — assign at a future session once those roles' 1-2 governing variables are identified; no code change needed, range_position.py already generalizes.
-41. broad_market_equity_domestic (v1.0 baseline, NEVER run through M16): no
-    ★/⚑/⚠ marker anywhere in §4.1 for this role. Used by MAGS (15% weight),
-    XAR (10% weight), and blocks a clean EV for any VTI/RSP/QQQM evaluation.
-    Full M16.CalibrationMethodology() 4-layer run required, all 6 scenarios.
-    Flagged 2026-06-25 (client request to evaluate RSP as a candidate).
+41. broad_market_equity_domestic: FULL M16 4-layer review COMPLETE 2026-06-25
+    (first-ever review for this role; was v1.0 baseline with no confidence
+    marker). Outcome: A proposed [5,12]->[10,20] (MEDIUM, logged §6 item
+    23[16]); D/E/F reviewed and confirmed consistent with available data, no
+    change; B/C investigated but unresolved — genuine acute-shock-vs-
+    sustained-grind bifurcation in the historical record, flagged for
+    dedicated work at this audit rather than forced through. Full detail
+    and VTI reassessment: §3 log entry 2026-06-25.
 
 ---
 
@@ -747,7 +874,7 @@ VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v
 | policy_driven_thematic_equity | legislated_government_spending, regulatory_mandates, domestic_policy_cycle | v1.0 | Active |
 | rate_sensitive_income_short_duration | short_term_interest_rates, duration <= 1y | v1.0 | Active |
 | rate_sensitive_income_long_duration | long_term_interest_rates, duration > 1y | v1.0 | Active |
-| broad_market_equity_domestic | domestic_aggregate_economic_growth | v1.0 | Active |
+| broad_market_equity_domestic | domestic_aggregate_economic_growth | v1.0 | Active - first M16 4-layer review complete 2026-06-25. A proposed [5,12]→[10,20] (MEDIUM, pending June 30). D/E/F reviewed and confirmed. B/C unresolved — acute-shock vs. sustained-grind bifurcation, flagged for dedicated audit work. |
 | broad_market_equity_international | ex_US_aggregate_economic_growth, developed_markets | v1.0 | Active |
 | secular_technology_growth | AI_capex_cycle, mega-cap_tech_multiple_expansion, software_adoption, semiconductor_demand | v1.7 Apr 28 | Active - provisional, empirical audit June 30 |
 | inflation_linked_sovereign | CPI_accrual, real_yield_compression, sovereign_credit_quality | v1.12 May 6 | Active - PENDING §4.1 calibration June 30. Instrument candidate: VTIP. Tax: retirement preferred (inflation accrual OI in taxable). |
