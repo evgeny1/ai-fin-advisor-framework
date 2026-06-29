@@ -225,7 +225,7 @@ advisor/
 |---|---|---|
 | Who orchestrates | Claude, via 3 MCP tool calls during a chat session | Python (`SessionPipeline.run()`) |
 | Where AI calls happen | Implicit — the orchestrating Claude *is* the AI, no extra API call | 3 explicit calls to `https://api.anthropic.com/v1/messages` via `AIClient`, gated by `ANTHROPIC_API_KEY` |
-| Entry point | `python -m advisor mcp-server` (stdio transport, registered in Claude Desktop config) | `python -m advisor session [--dry-run]` |
+| Entry point | `python/run_mcp_server.py` (stdio transport; Claude Desktop's config points here rather than invoking `python -m advisor mcp-server` directly — see §6 Tooling gotchas for why) | `python -m advisor session [--dry-run]` |
 | Cost | Zero extra — uses the conversation Claude is already in | Costs a real API call per AI boundary |
 | File: write-back | `mcp_server.py._tool_write_back()` | `orchestrator/session.py._step8_write_back()` |
 | §8 entry + Portfolio_State rendering | `rendering.py` (shared, ENG-3) | `rendering.py` (shared, ENG-3) |
@@ -352,6 +352,18 @@ default thing to do wrong if you're not watching for it.
   once the lock clears (rename succeeded well before direct writes to the
   exact original name did). Waiting it out (a few minutes) also works;
   there's no need to restart Drive or anything more invasive.
+- **Spawning the financial-advisor MCP server via a `cmd.exe /c cd /d ... &&
+  ...` shell wrapper breaks on this repo's space-containing path.** Claude
+  Desktop's MCP config schema has no `cwd` field, so the natural fix for
+  `python -m advisor mcp-server` needing `python/` on `sys.path` is a shell
+  wrapper — but Node spawns `cmd.exe` with the whole wrapped command as one
+  args-array element, and when that element itself contains spaces, Node
+  re-quotes the entire string, mangling the nested `cd /d "..."` quoting
+  into `The filename, directory name, or volume label syntax is incorrect.`
+  Fix that actually works: `python/run_mcp_server.py`, a launcher script
+  that's a sibling of `advisor/` so Python auto-adds `python/` to
+  `sys.path[0]` on launch with zero shell tricks. Point Claude Desktop's
+  config directly at that file — no `cmd.exe`, no `cwd`, nothing to quote.
 
 
 ---
@@ -664,6 +676,54 @@ Version field in the manifest, put detail in the git commit message.
 | Pattern A / Pattern B | See §4. A = Python orchestrates (Stage 5, dormant). B = Claude orchestrates via MCP (active). |
 | §N (section N) | Refers to a numbered section inside `Calibration_State.md` or `Session_Log.md` — these numbers are load-bearing identifiers referenced throughout the codebase and module files, not just document structure. |
 | ENG-N / GAP-N | Backlog item prefixes — see `FRAMEWORK_BACKLOG.md`. ENG = engineering, GAP = calibration/methodology. Different namespaces, don't reuse across them. |
+
+---
+
+## 14. Code knowledge graph (`codebase-memory-mcp`) — don't re-derive architecture from scratch
+
+This repo's `python/` package is indexed in a local `codebase-memory-mcp`
+server — a coding-session tool, separate from the `financial-advisor` MCP
+server used during advisory sessions. If you're starting a coding session
+fresh on this project, check for a persisted Architecture Decision Record
+before reading files cold:
+
+```
+manage_adr(project="G-My-Drive-dev-AI-Financial-Advisor-Framework-python", mode="get")
+```
+
+This returns purpose/stack/architecture/patterns/tradeoffs/philosophy
+covering §1-§5 above plus graph-derived detail (fan-in hotspots, cyclomatic/
+cognitive complexity, the actual call structure) that's tedious to re-derive
+by hand. Project name is the repo path with non-alphanumerics replaced by
+`-`; `list_projects` shows what's actually indexed if that's drifted.
+
+If it returns `no_adr` (nothing indexed yet, or the index needs refreshing
+after a substantial restructure), re-index and re-derive:
+
+```
+index_repository(repo_path="G:\My Drive\dev\AI Financial Advisor Framework\python", mode="full", persistence=true)
+get_architecture(project="G-My-Drive-dev-AI-Financial-Advisor-Framework-python", aspects=["all"])
+# draft an ADR from the output, then:
+manage_adr(project="G-My-Drive-dev-AI-Financial-Advisor-Framework-python", mode="update", content="## PURPOSE\n...")
+```
+
+`persistence=true` writes a compressed graph artifact to
+`python/.codebase-memory/graph.db.zst` so the index survives without a
+full re-scan next time.
+
+Other tools worth knowing once indexed: `search_graph`/`get_code_snippet`
+instead of grep for finding a function by name or behavior; `trace_path`
+for call-graph impact analysis (who calls this, what this calls, data
+flow); `query_graph` (raw Cypher) for complexity/hotspot queries — e.g.
+every function with `transitive_loop_depth >= 3` or
+`linear_scan_in_loop >= 1`, before assuming a slow test is a fluke;
+`detect_changes` for git-diff impact analysis before a commit.
+
+**Known reliability issue:** this server has hung completely on every tool
+call — including read-only ones like `index_status` — at least once in
+practice, requiring a Claude Desktop restart to clear. Unlike ENG-33 (which
+has a documented CLI fallback), there's no fallback for this one. If every
+call is hanging, restart the app rather than retrying.
 
 ---
 
