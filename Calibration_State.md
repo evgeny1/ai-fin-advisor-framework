@@ -2,9 +2,8 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.44  Last updated: June 21, 2026 (GAP-16 follow-up: IHP
-real-yield sub-condition driver corrected from THREEFYTP10 to
-REAL_YIELD_10Y_TREND; see §3)
+# Version: 1.45  Last updated: June 29, 2026 (SCHD added to §11.4 as new
+candidate instrument — classification only, not yet adopted; see §3)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -140,6 +139,34 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-06-29 - SCHD (Schwab U.S. Dividend Equity ETF) added to §11.4 as new
+candidate instrument (client-requested index-fund simplification review,
+same line of inquiry as the 2026-06-25 RSP/VTI/QQQM candidate review).
+ThematicETF_ClassificationAudit: sector-bucket level, fresh search this
+session (Schwab official holdings, ETF Database sector table, TopDividendETFs
+post-Q2-2026-rebalance snapshot dated 06/24/2026) — NOT a full 103-name
+binding-driver audit (MEDIUM confidence), same caveat as RSP/QQQM. Sector mix:
+Energy ~17-19% -> inflation_hedge_commodity_linked; Consumer Staples ~17-20%
+-> consumer_defensive_equity; Health Care ~15-17% -> healthcare_defensive_equity;
+remainder ~49% (Industrials, Financials, Consumer Discretionary, Information
+Technology — TXN/QCOM excluded from STG on binding-driver grounds, mature
+dividend semis not AI-capex/mega-cap growth names — Communication Services,
+Materials, Utilities) -> broad_market_equity_domestic. Components adopted:
+BMED(0.49) + consumer_defensive_equity(0.18) + healthcare_defensive_equity(0.16)
++ IHC(0.17). M07 PASS (AUM $96.0B, ER 0.06%, inception Oct 2011 ~14.7yr track
+record, no foreign concentration, no K-1). EntryExtensionGuard CLEARED (90d
+trailing avg $31.43 vs current $32.09 = +2.11%, threshold 15% on BMED dominant
+role). Distinguishing factor vs RSP/VTI/QQQM: genuine defensive/inflation-hedge
+characteristics (staples + healthcare pricing power, energy commodity-linkage)
+rather than pure broad-market beta — structurally different EV profile expected.
+CAVEAT: SCHD's EV is downstream of THREE separate open calibration questions
+simultaneously, more than any other instrument in §11 — BMED B/C unresolved
+(pending June 30); healthcare_defensive_equity ALL six scenarios PENDING June 30
+(MEDIUM, never run through M16 4-layer); consumer_defensive_equity D/E/F PENDING
+June 30. Live EV computed via advisor_evaluate_allocation same session — see
+Session_Log.md for the resulting figure; not duplicated here per the
+session-narrative exclusion rule above.
 
 2026-06-25 - M16.CalibrationMethodology() 4-layer run: secular_technology_growth
 Scenario F (client-requested recalibration review). Also: audit gap identified
@@ -1208,6 +1235,54 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   trailing-90-calendar-day window): current $292.63 (Jun 24) vs 90d trailing
   avg $279.22 = +4.80% above avg. Threshold (secular_technology_growth,
   dominant role at 75% weight): 20%. CLEARS comfortably.
+- CURRENT PORTFOLIO ALLOCATION: NONE.
+
+#### SCHD
+- Components: broad_market_equity_domestic (0.49) + consumer_defensive_equity (0.18) + healthcare_defensive_equity (0.16) + inflation_hedge_commodity_linked (0.17)
+- Basis: Schwab U.S. Dividend Equity ETF. Tracks Dow Jones U.S. Dividend 100
+  Index — ~100-103 US stocks screened for cash flow, ROE, dividend yield, and
+  5yr dividend growth; 10yr consecutive dividend-payment requirement; 25%
+  sector cap; excludes REITs. AUM: $96.0B. Expense ratio: 0.06%. Inception:
+  Oct 20, 2011 (~14.7yr track record).
+- M07 STATUS: PASS. No foreign concentration (US-domiciled only). No K-1 —
+  standard RIC. Fund-level revenue is not commodity-dependent (energy
+  *holdings* sit inside the IHC bucket below; the fund itself is equity).
+- passive_mandate_eligible: true (sector-screened index fund; no active
+  management or single-theme concentration beyond the dividend-quality screen)
+- Classification basis (2026-06-29, sector-bucket level, fresh search this
+  session, post-Q2-2026-rebalance snapshot as of 06/24/2026 — NOT a full
+  103-name binding-driver audit, MEDIUM confidence): top holdings post-rebalance
+  are Home Depot (4.42%), Merck, Procter & Gamble, Abbott, Amgen, ConocoPhillips,
+  Chevron, Verizon — a materially different mix from RSP/VTI/QQQM. Sector
+  composition: Energy ~17-19% (CVX, COP — commodity-price-linked revenue) ->
+  IHC; Consumer Staples ~17-20% (KO, PEP, PG, CL — brand moat, demand
+  inelasticity, the textbook consumer_defensive_equity driver) -> 0.18 used;
+  Health Care ~15-17% (MRK, AMGN, ABT, UNH, BMY — pharmaceutical pricing
+  power / demand inelasticity) -> 0.16 used; residual ~49% (Industrials ~12%,
+  Financials ~6-9% — cut roughly in half since a March 2026 reconstitution,
+  Consumer Discretionary ~10%, Information Technology ~7-11% — TXN/QCOM,
+  mature dividend-paying semis, NOT AI-capex/mega-cap growth names, excluded
+  from STG on the same binding-driver grounds AIPO's non-RAC Industrials were,
+  Communication Services ~4%, Materials ~3%, Utilities ~0%) -> BMED as
+  undifferentiated domestic growth. Sources: Schwab official holdings page,
+  ETF Database sector table, TopDividendETFs Q2-2026-rebalance breakdown
+  (06/24/2026).
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) —
+  not stored here; see live computation each session.
+- CAVEAT — provisional on three independent counts, not one: BMED B/C
+  unresolved (acute-shock vs sustained-grind, pending June 30);
+  healthcare_defensive_equity ALL six scenarios PENDING June 30 (MEDIUM
+  confidence, never run through M16 4-layer); consumer_defensive_equity D/E/F
+  PENDING June 30. SCHD's EV is downstream of three separate open calibration
+  questions simultaneously — more exposed to the June 30 audit outcome than
+  RSP/VTI/QQQM (one open dependency: BMED) or MLPX/DBMF/AIPO (none open).
+- ENTRY EXTENSION GUARD (2026-06-29, market_data_mcp T1, 63 trading days in
+  the trailing-90-calendar-day window): current $32.09 (Jun 26) vs 90d
+  trailing avg $31.43 = +2.11% above avg. Threshold (broad_market_equity_domestic,
+  dominant role at 49% weight): 15%. CLEARS comfortably.
+- ADOPTION TRIGGER: none set — candidate under evaluation per client request
+  (index-fund simplification review, June 29, 2026 session). Not adoptable
+  until the three PENDING dependencies above are resolved at the June 30 audit.
 - CURRENT PORTFOLIO ALLOCATION: NONE.
 
 #### URA
