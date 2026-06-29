@@ -679,51 +679,108 @@ Version field in the manifest, put detail in the git commit message.
 
 ---
 
-## 14. Code knowledge graph (`codebase-memory-mcp`) — don't re-derive architecture from scratch
+## 14. Code knowledge graph (`codebase-memory-mcp`) — mandatory freshness check, every session
 
-This repo's `python/` package is indexed in a local `codebase-memory-mcp`
-server — a coding-session tool, separate from the `financial-advisor` MCP
-server used during advisory sessions. If you're starting a coding session
-fresh on this project, check for a persisted Architecture Decision Record
-before reading files cold:
+This repo is indexed in a local `codebase-memory-mcp` server — a
+coding-session tool, separate from the `financial-advisor` MCP server used
+during advisory sessions. **Canonical project name:
+`G-My-Drive-dev-AI-Financial-Advisor-Framework`** — indexed at the repo
+root (this directory), NOT `python/`. That's deliberate: indexing the
+`python/` subdirectory was tried first and reverted after testing showed it
+breaks `detect_changes`'s symbol-level impact mapping (git reports diff
+paths root-relative; a subdirectory-scoped graph stores paths relative to
+its own `repo_path`, so they never match). If you ever see a project named
+with a `-python` suffix, it's stale from that abandoned approach — delete
+it, don't index it.
+
+**Everything in this section was verified by actually calling these tools
+against this repo, not inferred from their descriptions.** Where the
+behavior didn't match the tool's own documentation, that's called out
+explicitly below — don't assume the docs are right if this section says
+otherwise.
+
+### The mandatory step, first thing, every coding session
+
+Do not trust a cached ADR or graph query result without checking freshness
+first. This index has no reliable self-reported staleness signal —
+confirmed by testing, not assumed:
+- `artifact.json`'s `commit` field is empty regardless of where you index
+  from. Don't use it.
+- The tool's own background auto-watcher (documented upstream as
+  re-indexing on file changes automatically) did not pick up a real new
+  file (`python/run_mcp_server.py`) added after the initial index in
+  practice, and does not survive a Claude Desktop restart — the watch list
+  is in-memory and isn't rebuilt automatically after a crash/restart.
+  Treat the graph as a snapshot you refresh deliberately, not as something
+  that stays current on its own.
+
+So, at session start:
 
 ```
-manage_adr(project="G-My-Drive-dev-AI-Financial-Advisor-Framework-python", mode="get")
+manage_adr(project="G-My-Drive-dev-AI-Financial-Advisor-Framework", mode="get")
 ```
 
-This returns purpose/stack/architecture/patterns/tradeoffs/philosophy
-covering §1-§5 above plus graph-derived detail (fan-in hotspots, cyclomatic/
-cognitive complexity, the actual call structure) that's tedious to re-derive
-by hand. Project name is the repo path with non-alphanumerics replaced by
-`-`; `list_projects` shows what's actually indexed if that's drifted.
-
-If it returns `no_adr` (nothing indexed yet, or the index needs refreshing
-after a substantial restructure), re-index and re-derive:
+The returned ADR's `## INDEX FRESHNESS` section states the exact commit it
+was built from. Compare that against the repo's actual current commit
+(`git rev-parse HEAD` via Desktop Commander or equivalent). **If they
+differ, or the ADR is missing (`no_adr`), the graph and ADR are stale —
+do not proceed on cached information.** Refresh:
 
 ```
-index_repository(repo_path="G:\My Drive\dev\AI Financial Advisor Framework\python", mode="full", persistence=true)
-get_architecture(project="G-My-Drive-dev-AI-Financial-Advisor-Framework-python", aspects=["all"])
-# draft an ADR from the output, then:
-manage_adr(project="G-My-Drive-dev-AI-Financial-Advisor-Framework-python", mode="update", content="## PURPOSE\n...")
+delete_project(project="G-My-Drive-dev-AI-Financial-Advisor-Framework")
+index_repository(repo_path="G:\My Drive\dev\AI Financial Advisor Framework", mode="full", persistence=true)
+get_architecture(project="G-My-Drive-dev-AI-Financial-Advisor-Framework", aspects=["all"])
+# redraft the ADR with the new HEAD commit on the freshness marker line, then:
+manage_adr(project="G-My-Drive-dev-AI-Financial-Advisor-Framework", mode="update", content="## PURPOSE\n...")
 ```
 
-`persistence=true` writes a compressed graph artifact to
-`python/.codebase-memory/graph.db.zst` so the index survives without a
-full re-scan next time.
+**Always `delete_project` before re-indexing an existing project** — tested
+twice in the same session: calling `index_repository` again on a project
+that already exists silently no-ops the persistence write
+(`artifact_present: false`, reproducibly, even with `persistence=true`).
+Deleting first and indexing fresh fixed it both times.
 
-Other tools worth knowing once indexed: `search_graph`/`get_code_snippet`
-instead of grep for finding a function by name or behavior; `trace_path`
-for call-graph impact analysis (who calls this, what this calls, data
-flow); `query_graph` (raw Cypher) for complexity/hotspot queries — e.g.
-every function with `transitive_loop_depth >= 3` or
-`linear_scan_in_loop >= 1`, before assuming a slow test is a fluke;
-`detect_changes` for git-diff impact analysis before a commit.
+### Other tools — what's actually confirmed to work, and what isn't
 
-**Known reliability issue:** this server has hung completely on every tool
-call — including read-only ones like `index_status` — at least once in
-practice, requiring a Claude Desktop restart to clear. Unlike ENG-33 (which
-has a documented CLI fallback), there's no fallback for this one. If every
-call is hanging, restart the app rather than retrying.
+- **`search_graph`** — BM25 natural-language search (`query=`) and exact
+  regex (`name_pattern=`) both confirmed working well: a query like "floor
+  breach feasibility check" correctly surfaced `feasibility_check`,
+  `current_holdings_floor_check`, and their tests, ranked sensibly.
+- **`search_code`** — confirmed: graph-augmented grep, returns fan-in/out
+  and line ranges alongside the match, not just text.
+- **`trace_path`** — confirmed useful for call-graph impact analysis (used
+  during the ENG-33 investigation), but treat any `recursive: true` result
+  with suspicion — it flagged `_tool_evaluate_allocation` as recursive at
+  the trace level while `get_code_snippet` on the same function showed
+  `self_recursive: false`. Likely a graph-resolution artifact (multiple
+  paths resolving to the same qualified name), not real recursion. Cross-
+  check anything trace_path calls "recursive" against `get_code_snippet`
+  before believing it.
+- **`detect_changes`** — confirmed to correctly map *modifications to
+  already-tracked files* (staged or unstaged) to impacted graph symbols,
+  but **confirmed to completely miss brand-new files** — a new untracked
+  file, even after `git add`, never appeared in `changed_files` in
+  testing. Useful as a secondary pre-commit "what does my current edit
+  touch" check; not sufficient as the primary staleness gate (see the
+  mandatory step above for why) precisely because it has this blind spot.
+- **`query_graph`** (raw Cypher) — not yet exercised against this repo
+  beyond the complexity/hotspot pattern in `manage_adr`'s ADR content;
+  the parameter shape (`transitive_loop_depth`, `linear_scan_in_loop`,
+  etc.) worked as documented when used.
+- **`ingest_traces`** — confirmed unimplemented in this build. Calling it
+  with an empty payload returns `"Runtime edge creation from traces not
+  yet implemented"`. Don't bother with it until that changes.
+
+### When to use this at all (vs. grep/reading files)
+
+At ~1700 nodes / ~100 files, this codebase is small enough to navigate with
+grep and careful reading — the win here isn't "otherwise intractable," it's
+not re-paying the cost of re-deriving architecture every session, plus a
+few specific things grep can't do at all: complexity/hotspot queries via
+`query_graph`, and call-graph impact analysis before touching a
+high-fan-in function via `trace_path`. For "find this string" or "read
+this one file," the existing tools are still simpler and faster — don't
+reach for the graph by default for everything.
 
 ---
 
