@@ -740,6 +740,36 @@ that already exists silently no-ops the persistence write
 (`artifact_present: false`, reproducibly, even with `persistence=true`).
 Deleting first and indexing fresh fixed it both times.
 
+### The second mandatory check: untracked files the commit-hash comparison can't see
+
+The commit-hash check above only catches drift *between commits* — it's
+blind to a dirty working tree sitting on top of a HEAD that still matches
+the ADR's marker. Specifically: **a brand-new untracked file is invisible
+to both the commit-hash check (HEAD hasn't moved) and `detect_changes`
+(confirmed blind spot above)** — nothing currently catches it except
+checking for it directly. So, alongside the `git rev-parse HEAD` step, also
+run:
+
+```
+git status --short | Select-String -NotMatch '\.codebase-memory'
+```
+
+(`.codebase-memory/` itself is expected to show as untracked — that's the
+artifact directory, filter it out or you'll false-positive on it every
+single session.) Confirmed by testing: this correctly surfaces a genuine
+new file (`?? python/some_new_file.py`) while staying silent when the only
+untracked thing present is the artifact directory.
+
+**Anything left after that filter means the graph doesn't know about those
+files, regardless of what the commit-hash check said.** Use judgment, don't
+default to a full reindex for every stray file: if what's listed is
+structurally irrelevant to the current task (a scratch note, a `.env`,
+something you're about to `git clean`), proceed and just keep in mind those
+files are graph-invisible. If it's something you're about to ask graph
+questions about, or something that changes the architecture (a new module,
+a new MCP tool file), treat it the same as a commit-hash mismatch — refresh
+before trusting any query that might touch it.
+
 ### Other tools — what's actually confirmed to work, and what isn't
 
 - **`search_graph`** — BM25 natural-language search (`query=`) and exact
