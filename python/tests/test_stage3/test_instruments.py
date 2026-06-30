@@ -23,7 +23,6 @@ from advisor.types import (
     InstrumentEntry,
     ReturnRange,
 )
-
 # ── Fixtures from conftest: cal ─────────────────────────────────────────────
 
 
@@ -176,6 +175,94 @@ class TestBlendedScenarioReturn:
     def test_missing_ticker_raises_hard_stop(self, cal: CalibrationState):
         with pytest.raises(HardStopException, match="HARD_STOP"):
             blended_scenario_return("PHANTOM", "A", "conservative", cal)
+
+
+# ── GAP-16 promotion (v1.46): blended_scenario_return range adjustment ────────
+
+class TestBlendedScenarioReturnRangePositionAdjustment:
+    """
+    conftest's _return_table() builds every role with upside = conservative+4,
+    i.e. every range is exactly 4pp wide by construction — below the 6pp
+    GAP-16 gate. These tests widen IHP's B row to [6,12] (6pp, matching the
+    real framework's actual B row) the same way test_range_position.py's
+    `_widen_b_range` helper does, so the gate-clearing tests below actually
+    exercise the adjustment instead of silently no-op'ing on a too-narrow
+    range. test_narrow_range_scenario_is_not_adjusted_even_with_signal
+    deliberately uses the UNwidened default to confirm the gate itself works.
+    """
+
+    def _widen_b_range(self, cal: CalibrationState) -> None:
+        cal.return_table["inflation_hedge_precious_metals"]["B"] = ReturnRange(
+            conservative=6.0, upside=12.0, confidence="HIGH"
+        )
+
+    def test_empty_signals_dict_is_fully_backward_compatible(self, cal: CalibrationState):
+        """cal.range_position_signals defaults to {} -- every pre-v1.46 call
+        site and every other test in this file must be byte-for-byte
+        unaffected. This is the single most important test in this class."""
+        self._widen_b_range(cal)
+        assert cal.range_position_signals == {}
+        result = blended_scenario_return("SGOL", "B", "conservative", cal)
+        assert abs(result - 6.0) < 0.001  # unadjusted table value
+
+    def test_unfavorable_signal_lowers_blended_return(self, cal: CalibrationState):
+        self._widen_b_range(cal)  # [6,12], 6pp wide -- clears the gate
+        cal.range_position_signals = {"inflation_hedge_precious_metals": "unfavorable"}
+        result = blended_scenario_return("SGOL", "B", "conservative", cal)
+        assert abs(result - 4.5) < 0.001  # 6.0 - min(0.25*6, 3.0) = 6.0 - 1.5
+
+    def test_favorable_signal_raises_blended_return(self, cal: CalibrationState):
+        self._widen_b_range(cal)
+        cal.range_position_signals = {"inflation_hedge_precious_metals": "favorable"}
+        result = blended_scenario_return("SGOL", "B", "conservative", cal)
+        assert abs(result - 7.5) < 0.001  # 6.0 + 1.5
+
+    def test_upside_return_type_is_never_adjusted(self, cal: CalibrationState):
+        """Adjustment is conservative-only by design -- upside is never used
+        in any EV/allocation computation, so adjusting it would be silent
+        dead code. Confirm the guard actually holds."""
+        self._widen_b_range(cal)
+        cal.range_position_signals = {"inflation_hedge_precious_metals": "unfavorable"}
+        result = blended_scenario_return("SGOL", "B", "upside", cal)
+        assert abs(result - 12.0) < 0.001  # untouched table upside
+
+    def test_signal_for_a_different_role_does_not_leak(self, cal: CalibrationState):
+        """SIVR-style cross-contamination guard: a signal keyed to one role
+        must never affect blended_scenario_return() for an instrument whose
+        components don't include that role."""
+        self._widen_b_range(cal)
+        cal.range_position_signals = {"inflation_hedge_precious_metals": "unfavorable"}
+        result = blended_scenario_return("VTI", "B", "conservative", cal)
+        assert abs(result - (-8.0)) < 0.001  # VTI's own unadjusted B value
+
+    def test_composite_instrument_only_adjusts_the_matching_component(
+        self, cal: CalibrationState
+    ):
+        """AIPO has no inflation_hedge_precious_metals component -- a signal
+        for that role must leave AIPO's blend completely unchanged, even
+        though AIPO does carry inflation_hedge_commodity_linked (a different
+        role this test deliberately does NOT add a signal for)."""
+        self._widen_b_range(cal)
+        cal.range_position_signals = {"inflation_hedge_precious_metals": "unfavorable"}
+        unadjusted = 0.69*6 + 0.16*(-2) + 0.11*6 + 0.04*(-3)
+        result = blended_scenario_return("AIPO", "B", "conservative", cal)
+        assert abs(result - unadjusted) < 0.001
+
+    def test_mixed_signal_does_not_adjust(self, cal: CalibrationState):
+        self._widen_b_range(cal)
+        cal.range_position_signals = {"inflation_hedge_precious_metals": "mixed"}
+        result = blended_scenario_return("SGOL", "B", "conservative", cal)
+        assert abs(result - 6.0) < 0.001
+
+    def test_narrow_range_scenario_is_not_adjusted_even_with_signal(
+        self, cal: CalibrationState
+    ):
+        """Scenario A's IHP row in conftest is [-2,2] -- only 4pp wide,
+        below the 6pp GAP-16 gate (B is intentionally NOT widened here).
+        A signal keyed to the same role must not move scenario A's value."""
+        cal.range_position_signals = {"inflation_hedge_precious_metals": "unfavorable"}
+        result = blended_scenario_return("SGOL", "A", "conservative", cal)
+        assert abs(result - (-2.0)) < 0.001
 
 
 # ── classify_instrument ───────────────────────────────────────────────────────

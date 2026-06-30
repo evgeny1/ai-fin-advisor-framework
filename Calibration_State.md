@@ -2,9 +2,9 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.45  Last updated: June 29, 2026 (BMED Scenario B ADOPTED HIGH
-confidence — [-8,-2]→[-2,+5], acute-shock vs sustained-grind bifurcation
-resolved; SCHD added to §11.4 as candidate; see §3)
+# Version: 1.46  Last updated: June 29, 2026 (GAP-16 promoted from
+advisory-only to a live, bounded EV adjustment for SGOL/SIVR; [P0]/[P1]/[P2]
+priority convention added to §6; see §3)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -140,6 +140,65 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-06-29 (v1.46) - GAP-16 promoted from advisory-only to a live, bounded EV
+adjustment. Client correctly identified that the framework had built a
+working diagnostic (analysis/range_position.py, v1.42, June 20) confirming
+SGOL/SIVR were facing a real-yield-rising + DXY-appreciating headwind, then
+left it disconnected from blendedScenarioReturn() for 9 days while SGOL's
+EV continued to compute as if no headwind existed. This was a genuine
+priority-flagging failure, not a calibration-timing question — §6's
+checklist had no urgency marker distinguishing "confirmed live cost" from
+"routine bookkeeping," and the diagnostic's own output (signal=unfavorable,
+drivers logged each session) was never escalated past advisory text. See §6
+priority-convention note (same date) for the structural fix to the checklist
+itself.
+
+MECHANISM (code, not calibration): CalibrationState gained an optional
+range_position_signals: Dict[str, str] field (role_id -> "favorable"/
+"unfavorable", default {} -- zero effect on any pre-v1.46 caller or test).
+mcp_server.py now populates it each session from the same
+evaluate_range_position_advisories() output already computed for the
+briefing, via the new clean_signal_role_map() (drops "mixed"/"inconclusive"
+-- absence of agreement is treated as absence of evidence, not a neutral
+signal). blended_scenario_return() (analysis/instruments.py) now calls the
+new apply_range_position_adjustment() (analysis/range_position.py) for the
+conservative return_type only (upside is never used in any computation, so
+adjusting it would be dead code): when a component's role has a clean
+signal AND that role's §4.1 range for the scenario is >=6pp wide (same GAP-16
+gate as the original advisory), the value is shifted by
+min(25% of range width, 3pp) -- toward the table's conservative end on
+"unfavorable" (can go BELOW the documented conservative floor -- that is the
+point: a confirmed headwind means the table's own floor is now optimistic),
+toward upside on "favorable" (clamped, can never exceed the table's own
+upside). Absent a signal, every call site is byte-for-byte unchanged --
+confirmed via full test suite (773 passed, 46 skipped, 0 failed, including
+17 new tests covering backward compatibility, bound/clamp behavior, cross-
+role non-leakage, and the narrow-range no-op gate).
+
+VERIFIED LIVE IMPACT (standalone script against the real parsed
+Calibration_State.md, today's actual probability vector A=12.125/B=30.3125/
+C=30.3125/D=3.0/E=6.0625/F=18.1875, today's stated macro conditions -- DXY at
+a 13-month high (appreciating), real yields rising, both already confirmed
+unfavorable in this session's own briefing before this fix existed): SGOL's
+full blended-scenario EV moves from +0.94% (unadjusted) to -0.32% (adjusted)
+-- enough to plausibly flip the live directive away from ADD. Actual
+directive change will be confirmed the next time advisor_run_computation
+runs in a live MCP session (this session's already-running server process
+has the pre-fix code in memory; the fix takes effect on next server start).
+
+PROVISIONAL: the 25%/3pp adjustment magnitude is a conservative starting
+point, not yet empirically validated via M16.CalibrationMethodology() --
+owed at a future audit, tracked in §6 item 40. The MECHANISM (bounded,
+agreement-gated, table-range-clamped, conservative-only) is the actual
+v1.46 fix and is not provisional; only the specific numbers are.
+
+STF/RAC/IHC sub-condition extension (named in scope at v1.42, still not
+assigned): apply_range_position_adjustment() and clean_signal_role_map()
+already generalize to any role with a documented signal -- extending GAP-16
+beyond IHP is now purely a §11 documentation task (identify 1-2 governing
+variables per role, add a sub-condition note) with zero further code change,
+once those drivers are identified at a future session.
 
 2026-06-29 - M16.CalibrationMethodology() 4-layer run: broad_market_equity_domestic
 Scenario B (client-requested, prompted by observed 3M price divergence: RSP/VTI
@@ -695,6 +754,27 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
 
 ## Section 6 - First-Audit Checklist (June 30, 2026)
 
+**Priority convention (added v1.46, June 29, 2026):** this list had no urgency
+marker of any kind for its first 39 items — a confirmed live cost (GAP-16
+sitting advisory-only for 9 days after the diagnostic it built had already
+confirmed an active headwind on a held position) sat at the same visual
+weight as routine bookkeeping (e.g. item 36, confirming a spreadsheet ticker
+still resolves). That is a real process gap, being fixed here, not just
+noted: every NEW item from this point forward must carry a [P0]/[P1]/[P2] tag
+at creation — [P0] = confirmed, live, money-relevant, diagnose or fix the
+same session it's identified, never queue it; [P1] = calibration/
+classification work with a defined audit date, the normal case; [P2] =
+documentation/engineering hygiene with no return-math consequence.
+Item 40 (GAP-16) is retroactively tagged [P0] below since it's the concrete
+case that exposed this gap. The other 39 historical items are NOT being
+retroactively tagged in this pass: unlike GAP-16, mislabeling an already-
+resolved or genuinely routine historical item costs nothing, so doing that
+relabeling carefully at the June 30 audit (rather than rushed here) is a
+legitimate use of audit time, not a repeat of the same deferral pattern —
+the distinguishing question for any "defer to audit" decision going forward
+is whether the delay itself has a cost, not whether the work is convenient
+to do later.
+
 1. Compute trailing 180d median for FRED BAMLH0A0HYM2, BAMLC0A0CM, BAMLH0A3HYC.
 2. Compute 10th/25th/75th/90th percentiles for each series.
 3. Verify HY_STRESS_DELTA (+150) in 75th-90th percentile band. Adjust if needed.
@@ -795,7 +875,7 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
 37. AI capex / secular_technology_growth context note (v1.18, May 22, 2026): Session intelligence — hyperscaler AI capex $660-830B committed for 2026 (nearly doubling 2025). Capex intensity 45-57% of revenue (vs 10-15% in 2020). Revenue growth 15-16% vs capex growth 60-80%; FCF projected to decline 90% across Big Four. Private credit ($800B+ in AI infrastructure financing) opacity flagged as tail risk not visible in HY/IG spread series. AI utility pricing emerging (62% usage-based by 2027). Prisoner's dilemma / war-of-attrition structure confirmed: no coordination mechanism among 5+ hyperscalers; 18-36 month infrastructure commitment periods prevent exit. Fiber optic 1999 analogy: technology correct, equity returns poor due to timing, cost of capital, and competitive dynamics. Portfolio implication: AIPO (infrastructure layer, contracted revenue) positive EV in B/C; MAGS (hyperscaler equity) negative EV in B/C — distinction maintained. No §4.1 changes warranted from session analysis.
 38. M17 §12 thresholds (v1.19, corrected v1.20): First formal application May 25, 2026. sectorStressScore()=0 (formal, v1.20 corrected). CascadeLevel=MONITORING. CHAIN_3_WATCH=TRUE ($1.304T margin debt record loaded; FIRES on ≥−5% MoM or 3+ gate events). CHAIN_4 CALIBRATED v1.24 (June 1, 2026): canonical series = S&P Global large-company; T1-equivalent = ABI/Epiq AACER press releases; WATCH ≥220/quarter, FIRES ≥300/quarter (HIGH confidence, M16 4-layer complete); current Q1 2026 = 188/quarter — BELOW WATCH. Prior 800/quarter threshold eliminated. D=5% maintained by prior client approval (qualitative). Formal Q2 audit: calibrate remaining §12 thresholds; formal integration of yield curve D_timing_signal; M18 allocation spreadsheet series gap resolution.
 39. M18 FMP data fetch (v1.21, May 26, 2026): FMP:chart historical-price-eod-light confirmed working for ^VIX and SPY. VIX_30D_AVG=17.99 and VIX_90D_AVG=21.24 computed from 62 trading days of FMP EOD data. SPY 30-trading-day return=+8.68% (Apr 13→May 22). FMP:indexes endpoint ACCESS DENIED for ^SPX (requires higher plan tier) — SPY via FMP:chart is the confirmed working substitute for BROAD_EQUITY_TRAILING. M18 updated accordingly (v1.1).
-40. GAP-16 (v1.42, June 20, 2026): within-scenario sub-condition advisory for wide-range roles — RESOLVED for IHP, see §3 v1.42 entry for full description. analysis/range_position.py flags real-yield/DXY direction for held IHP instruments (SGOL, SIVR) whose dominant-scenario §4.1 range is >=6pp wide; advisory only. STF/RAC/IHC sub-condition identification (named in the originating note as in-scope) remains open — assign at a future session once those roles' 1-2 governing variables are identified; no code change needed, range_position.py already generalizes.
+40. [P0] GAP-16 (v1.42, June 20, 2026; PROMOTED v1.46, June 29, 2026): within-scenario sub-condition advisory for wide-range roles — RESOLVED for IHP at v1.42 (advisory only), then PROMOTED v1.46 to a bounded, table-clamped EV adjustment in blended_scenario_return() — see §3 v1.46 entry for the full mechanism and the priority-flagging failure that delayed this nine days past when the diagnostic first confirmed a live headwind. analysis/range_position.py flags real-yield/DXY direction for held IHP instruments (SGOL, SIVR) whose dominant-scenario §4.1 range is >=6pp wide; the resulting signal, when both sub-conditions agree, now also shifts the conservative value used in EV by min(25% of range width, 3pp) — PROVISIONAL magnitude, formal M16 4-layer calibration of the 25%/3pp parameters still owed at a future audit. STF/RAC/IHC sub-condition identification (named in the originating note as in-scope) remains open — assign at a future session once those roles' 1-2 governing variables are identified; the v1.46 mechanism (apply_range_position_adjustment(), clean_signal_role_map()) already generalizes to any role, no further code change needed once those drivers are documented.
 41. broad_market_equity_domestic: FULL M16 4-layer review COMPLETE 2026-06-25
     (first-ever review for this role; was v1.0 baseline with no confidence
     marker). Outcome: A proposed [5,12]->[10,20] (MEDIUM, logged §6 item
@@ -1042,15 +1122,23 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   - Note: SIVR added as complement; SGOL + SIVR combined restores precious metals exposure
 - ⚠ IHP A and D proposals from prior sessions: ADOPTED v1.27 (A [-2,+2] ★; D [-3,+3] ★). §11 EV updated v1.29.
 - **GAP-16 sub-condition drivers (within-scenario range position, v1.42; real-yield driver
-  corrected v1.44):** the 2 variables that determine where SGOL lands within a wide
+  corrected v1.44; PROMOTED FROM ADVISORY-ONLY TO LIVE EV ADJUSTMENT v1.46, June 29, 2026 —
+  see §3 v1.46 log entry):** the 2 variables that determine where SGOL lands within a wide
   [conservative, upside] §4.1 band — real yield (REAL_YIELD_10Y_TREND = DGS10 nominal minus
   T10YIE breakeven inflation) direction and DXY direction. Rising real yield + appreciating
-  DXY = headwind (tracks toward the conservative end); falling real yield + weakening DXY =
-  tailwind (tracks toward upside). Evaluated each session by analysis/range_position.py,
-  advisory only — does NOT change blendedScenarioReturn()/EV. DXY is the same variable
-  tracked as an M19 §13 sustaining/failure condition below (reused, not duplicated); the
-  real-yield driver is distinct from THREEFYTP10, which M19 §13 below still uses for its own
-  "real yield sustained > 2.0%" condition text (term premium, not the same series — see
+  DXY = headwind (tracks toward the conservative end, now applied as a bounded downward
+  adjustment to the value blendedScenarioReturn() actually uses); falling real yield +
+  weakening DXY = tailwind (bounded upward adjustment, capped at the table's own upside).
+  Evaluated each session by analysis/range_position.py; the resulting signal now feeds
+  CalibrationState.range_position_signals, which analysis/instruments.py
+  blended_scenario_return() consumes via apply_range_position_adjustment() — bounded to
+  min(25% of range width, 3pp), only when both sub-conditions agree (never on "mixed" or
+  "inconclusive"), only on ranges ≥6pp wide, and the magnitude itself is PROVISIONAL pending
+  a formal M16 4-layer calibration of the 25%/3pp parameters at a future audit (the mechanism
+  is the v1.46 fix; the specific numbers are a conservative starting point). DXY is the same
+  variable tracked as an M19 §13 sustaining/failure condition below (reused, not duplicated);
+  the real-yield driver is distinct from THREEFYTP10, which M19 §13 below still uses for its
+  own "real yield sustained > 2.0%" condition text (term premium, not the same series — see
   §3 v1.44 log entry for why these were split apart).
 
 #### SGOV
@@ -1129,10 +1217,11 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - TAX PLACEMENT: Retirement accounts preferred. Physical silver ETF is classified as a collectible; capital gains taxed at 28% max rate in taxable accounts.
 - ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026). 90d trailing average ~$78-82; guard threshold ~$94-98; current ~$71.82 — well below threshold.
 - **GAP-16 sub-condition drivers (within-scenario range position, v1.42; real-yield driver
-  corrected v1.44):** same two drivers as SGOL — real yield (REAL_YIELD_10Y_TREND =
-  DGS10−T10YIE) and DXY direction — since SIVR's 0.55 IHP weight inherits the same
-  monetary-debasement mechanism. Evaluated each session by
-  analysis/range_position.py; advisory only.
+  corrected v1.44; PROMOTED FROM ADVISORY-ONLY TO LIVE EV ADJUSTMENT v1.46):** same two
+  drivers as SGOL — real yield (REAL_YIELD_10Y_TREND = DGS10−T10YIE) and DXY direction —
+  since SIVR's 0.55 IHP weight inherits the same monetary-debasement mechanism and the same
+  bounded EV adjustment mechanics. Evaluated each session by analysis/range_position.py; see
+  the SGOL §11.3 entry above for the full v1.46 mechanism description (not repeated here).
 - Target allocation (v1.18 CONFIRMED):
   - Primary IRA: 4%
   - Primary Roth: 5%

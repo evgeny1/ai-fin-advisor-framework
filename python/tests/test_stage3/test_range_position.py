@@ -6,12 +6,17 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from advisor.analysis.range_position import evaluate_range_position_advisories
+from advisor.analysis.range_position import (
+    apply_range_position_adjustment,
+    clean_signal_role_map,
+    evaluate_range_position_advisories,
+)
 from advisor.types import (
     ComponentWeight,
     DataReading,
     DataSource,
     InstrumentEntry,
+    ReturnRange,
     ScenarioProbabilities,
 )
 
@@ -98,3 +103,103 @@ class TestRangePositionAdvisory:
         adv = results[0]
         # range bounds reported match §4.1 exactly -- nothing recomputed
         assert (adv.range_conservative, adv.range_upside) == (6.0, 12.0)
+
+
+# ── GAP-16 promotion (v1.46): clean_signal_role_map ────────────────────────────
+
+class TestCleanSignalRoleMap:
+
+    def test_drops_mixed_and_inconclusive(self):
+        from advisor.analysis.range_position import RangePositionAdvisory as A
+        advisories = [
+            A(ticker="SGOL", role_id="inflation_hedge_precious_metals", scenario="B",
+              range_conservative=6, range_upside=12, range_width_pp=6, signal="mixed"),
+            A(ticker="XLP", role_id="consumer_defensive_equity", scenario="B",
+              range_conservative=2, range_upside=6, range_width_pp=4, signal="inconclusive"),
+        ]
+        assert clean_signal_role_map(advisories) == {}
+
+    def test_keeps_favorable_and_unfavorable(self):
+        from advisor.analysis.range_position import RangePositionAdvisory as A
+        advisories = [
+            A(ticker="SGOL", role_id="inflation_hedge_precious_metals", scenario="B",
+              range_conservative=6, range_upside=12, range_width_pp=6, signal="unfavorable"),
+        ]
+        assert clean_signal_role_map(advisories) == {
+            "inflation_hedge_precious_metals": "unfavorable"
+        }
+
+    def test_empty_advisories_list_yields_empty_map(self):
+        assert clean_signal_role_map([]) == {}
+
+
+# ── GAP-16 promotion (v1.46): apply_range_position_adjustment ─────────────────
+
+class TestApplyRangePositionAdjustment:
+
+    def _range(self, conservative=6.0, upside=12.0):
+        return ReturnRange(conservative=conservative, upside=upside, confidence="HIGH")
+
+    def test_role_absent_from_signals_is_unchanged(self):
+        result = apply_range_position_adjustment(
+            "inflation_hedge_precious_metals", "B", 6.0, self._range(), {}
+        )
+        assert result == 6.0
+
+    def test_mixed_or_inconclusive_signal_is_unchanged(self):
+        signals = {"inflation_hedge_precious_metals": "mixed"}
+        result = apply_range_position_adjustment(
+            "inflation_hedge_precious_metals", "B", 6.0, self._range(), signals
+        )
+        assert result == 6.0
+
+    def test_unfavorable_pulls_value_down_by_bounded_amount(self):
+        # width=6pp, fraction=0.25 -> delta=1.5pp (below the 3pp cap)
+        signals = {"inflation_hedge_precious_metals": "unfavorable"}
+        result = apply_range_position_adjustment(
+            "inflation_hedge_precious_metals", "B", 6.0, self._range(), signals
+        )
+        assert abs(result - (6.0 - 1.5)) < 0.001
+
+    def test_favorable_pushes_value_up_by_bounded_amount(self):
+        signals = {"inflation_hedge_precious_metals": "favorable"}
+        result = apply_range_position_adjustment(
+            "inflation_hedge_precious_metals", "B", 6.0, self._range(), signals
+        )
+        assert abs(result - (6.0 + 1.5)) < 0.001
+
+    def test_unfavorable_adjustment_is_capped_on_a_wide_range(self):
+        # width=20pp -> 0.25*20=5pp uncapped, but cap is 3pp
+        signals = {"inflation_hedge_precious_metals": "unfavorable"}
+        result = apply_range_position_adjustment(
+            "inflation_hedge_precious_metals", "B", 6.0,
+            self._range(conservative=6.0, upside=26.0), signals,
+        )
+        assert abs(result - (6.0 - 3.0)) < 0.001
+
+    def test_favorable_adjustment_never_exceeds_table_upside(self):
+        # base already close to upside -- nudge would overshoot without the clamp
+        signals = {"inflation_hedge_precious_metals": "favorable"}
+        result = apply_range_position_adjustment(
+            "inflation_hedge_precious_metals", "B", 11.0, self._range(), signals
+        )
+        assert result == 12.0  # clamped to upside, not 11.0 + 1.5 = 12.5
+
+    def test_narrow_range_below_threshold_is_never_adjusted(self):
+        # width=4pp < 6pp gate -- even a clean unfavorable signal is ignored
+        signals = {"inflation_hedge_precious_metals": "unfavorable"}
+        result = apply_range_position_adjustment(
+            "inflation_hedge_precious_metals", "B", 6.0,
+            self._range(conservative=6.0, upside=10.0), signals,
+        )
+        assert result == 6.0
+
+    def test_unfavorable_can_go_below_table_conservative(self):
+        """This is the entire point of the fix, stated as a test: a confirmed
+        headwind means the table's own conservative floor is now optimistic,
+        so the adjusted value going below it is intentional, not a bug."""
+        signals = {"inflation_hedge_precious_metals": "unfavorable"}
+        result = apply_range_position_adjustment(
+            "inflation_hedge_precious_metals", "B", 6.0, self._range(), signals
+        )
+        assert result < 6.0

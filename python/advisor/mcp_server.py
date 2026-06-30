@@ -746,14 +746,25 @@ def _tool_apply_scoring(answers: Dict[str, int]) -> str:
                 )
 
             # ── GAP-16: within-scenario range-position advisory ────────────
-            # Advisory only — never feeds blendedScenarioReturn()/EV/allocation.
+            # GAP-16 promotion (v1.46): this advisory now also feeds a bounded
+            # EV adjustment, not just the briefing — see analysis/range_position.py
+            # apply_range_position_adjustment() and analysis/instruments.py
+            # blended_scenario_return() for the mechanism. clean_signal_role_map()
+            # drops "mixed"/"inconclusive" so only a clean two-driver agreement
+            # ever reaches the EV math; populate BEFORE any blended_scenario_return()
+            # call this session (evaluate_allocation reuses this same cached cal
+            # object) or the adjustment silently no-ops for the whole session.
             try:
-                from .analysis import evaluate_range_position_advisories
+                from .analysis import (
+                    clean_signal_role_map,
+                    evaluate_range_position_advisories,
+                )
 
                 range_advisories = evaluate_range_position_advisories(
                     held_tickers=held_tickers, probs=probs,
                     cal=cal_for_tsc, readings=readings_by_id,
                 )
+                cal_for_tsc.range_position_signals = clean_signal_role_map(range_advisories)
                 if range_advisories:
                     result["range_position_advisories"] = [
                         {
@@ -766,6 +777,7 @@ def _tool_apply_scoring(answers: Dict[str, int]) -> str:
                             "drivers":            a.drivers,
                             "note":               a.note,
                             "quality_flags":      a.quality_flags,
+                            "ev_adjustment_applied": a.signal in ("favorable", "unfavorable"),
                         }
                         for a in range_advisories
                     ]

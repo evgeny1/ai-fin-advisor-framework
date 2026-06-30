@@ -217,6 +217,22 @@ def blended_scenario_return(
                 f"missing from §4.1 return table."
             )
         value = rr.conservative if return_type == "conservative" else rr.upside
+
+        # GAP-16 promotion (v1.46): bounded within-range adjustment when this
+        # session confirmed a clean (non-mixed) real-yield/DXY signal for this
+        # role. Conservative-only by design (upside is never used in any
+        # computation per the docstring above, so adjusting it would be dead
+        # code); no-ops completely when cal.range_position_signals is empty,
+        # which is every pre-v1.46 caller and every session that hasn't
+        # populated it. See analysis/range_position.py
+        # apply_range_position_adjustment() for the bounded-adjustment
+        # mechanics and the bound/clamp guarantees.
+        if return_type == "conservative" and cal.range_position_signals:
+            from .range_position import apply_range_position_adjustment
+            value = apply_range_position_adjustment(
+                comp.role_id, scenario, value, rr, cal.range_position_signals,
+            )
+
         result += comp.weight * value
 
     return result

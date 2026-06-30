@@ -254,6 +254,19 @@ class CalibrationState:
     instruments: Dict[str, InstrumentEntry]          # §11.3/§11.4: ticker → entry
     cascade: CascadeBlock                            # §12
     thesis_conditions: Dict[str, ThesisConditionEntry] = field(default_factory=dict)  # §13
+    range_position_signals: Dict[str, str] = field(default_factory=dict)
+    # GAP-16 promotion (v1.46): role_id → "favorable"|"unfavorable" for roles
+    # where evaluate_range_position_advisories() found BOTH sub-condition
+    # drivers agreeing (never "mixed"/"inconclusive" — those are intentionally
+    # absent from this dict, not present-with-a-neutral-value, so that
+    # blended_scenario_return()'s `.get(role_id)` lookup naturally no-ops).
+    # Populated once per session by mcp_server.py from the same advisories
+    # already computed for the briefing; empty by default so every existing
+    # call site and every existing test is unaffected unless a session
+    # explicitly populates it. See analysis/range_position.py
+    # apply_range_position_adjustment() for the bounded-adjustment mechanism
+    # this feeds, and analysis/instruments.py blended_scenario_return() for
+    # where it's consumed.
 
 
 # ── Session Log Types (Stage 2) ────────────────────────────────────────────────
