@@ -14,6 +14,12 @@ last one).
 `SESSION_OPENERS.md` §2 rather than diving in mid-conversation** — it's the
 forcing function that gets this file and the codebase-memory-mcp freshness
 check actually read before any code changes, instead of after the fact.
+**If coding work starts without it** (the change request just shows up
+mid-conversation, the common case), apply the template's substance anyway —
+read this file and run the freshness check before touching anything —
+rather than treating the missing template as license to skip both. That
+exact skip is what happened this session and is the reason this paragraph
+exists.
 
 This file is paired with `FRAMEWORK_BACKLOG.md` (open engineering items) and
 is itself **not** loaded as Project Knowledge during advisory sessions and

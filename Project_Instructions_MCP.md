@@ -247,6 +247,8 @@ If evidence is ambiguous, score conservatively and note the flag in the briefing
 **NEVER ask the client what to focus on before producing the briefing.**
 Produce the full M04 briefing first. Portfolio discussion follows. If the client has a priority topic they stated in the session opening message, address it in the portfolio discussion section — not before the briefing.
 
+**ALWAYS open a re-evaluation or audit session with its matching `SESSION_OPENERS.md` template — and if one of those session types is happening without it (e.g. a calibration question comes up mid-conversation inside a normal advisory session), apply the template's substance anyway rather than skipping it because no one pasted the literal block.** Concretely for re-evaluation: pull the full six-scenario §4.1 row for the role before touching any one cell, and state which scenarios are being deferred and why — not silently. This is not a formatting nicety; skipping it is what let Scenario C's stale value drive a hypothetical answer on 2026-06-29 before anyone caught it (Calibration_State.md §3, same date). Treat a missed template the same way you'd treat a missed GAP-16 wiring or an undocumented MCP return-shape change — a real process gap to flag, not something to quietly work around.
+
 **Session opening message format (use this every session):**
 
 The following message structure triggers correct execution. Paste it at session start, filling in the bracketed fields:
