@@ -4,7 +4,8 @@ Persistent framework configuration — load at every session start alongside Ses
 
 # Version: 1.46  Last updated: June 29, 2026 (GAP-16 promoted from
 advisory-only to a live, bounded EV adjustment for SGOL/SIVR; [P0]/[P1]/[P2]
-priority convention added to §6; see §3)
+priority convention added to §6; BMED Scenario C four-layer review run,
+PARTIAL finding logged PENDING — conservative bound not yet resolvable; see §3)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -140,6 +141,83 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-06-29 (v1.46 follow-up) - M16.CalibrationMethodology() 4-layer run:
+broad_market_equity_domestic Scenario C. Client-prompted follow-up to the
+same-day B revision (above) -- correctly pointed out that C carries the
+identical acute-shock-vs-sustained-grind bifurcation flagged unresolved
+2026-06-25, and that it had not been addressed when a VTI hypothetical was
+run using C's stale value as the single largest negative EV contributor.
+NOT ADOPTED -- logged PENDING. Confidence and reasoning below explain
+exactly why, since "not adopted" should never again mean "no reason given."
+
+L1: same ~2-3% real unconditional anchor as B (same role).
+
+L2 (4 T1-verified analogs, same rate-shock/rate-stable discriminator already
+    validated for B): Acute (shock co-occurring with an independent monetary
+    shock) -- 1973-74 Arab embargo + Bretton Woods collapse: real ~-19.6%/
+    -33.8%/yr (2yr annualized ~-27%/yr; BLS CPI 6.2%/11.0%, Slickcharts S&P
+    -14.66%/-26.47% nominal -- same T1 figures as the B entry, reused here
+    under C's discrete-event lens); 2022 H1 Russia-Ukraine, concurrent with
+    the fastest Fed hiking start in 40yr: RSP -16.80% nominal H1
+    (market_data_mcp T1, Jan 3-Jun 30 2022 close-to-close), CPI 7.5% (Jan,
+    BLS T1) -> 9.1% (June, widely-reported BLS peak) -> annualized-equivalent
+    real approx -36%/yr (stylized annualization of a half-year shock, same
+    convention E already uses for acute-quarter figures -- not a literal
+    full-year claim). Sustained/rate-stable -- 1979 Iranian Revolution oil
+    shock (Fed tightening but not from a near-zero panic base): S&P +18.44%
+    nominal, CPI 11.3% -> real +6.41% (Slickcharts+BLS T1, same figures as B
+    entry); 1990-91 Gulf War, Iraq invades Kuwait Aug 2 1990 (Fed explicitly
+    declined to hike in response to the oil spike -- Wikipedia/Econlib T1,
+    corroborated by Berkshire Edge/DataTrek -- and was in fact cutting rates
+    over this window, 8.25%->6.75%, for reasons unrelated to oil): S&P -3.10%
+    nominal/CPI 5.40% -> real -8.05% (1990); S&P +30.47%/CPI 4.21% -> real
+    +25.19% (1991); 2yr annualized real +7.29%/yr (Slickcharts+in2013dollars
+    T1, fresh this session).
+
+L3 (the actual blocker): the single worst rate-stable analog (1990, real
+    -8.05%) is NOT a clean discrete-oil-shock-only data point -- the NBER
+    recession officially began July 1990, BEFORE Iraq's Aug 2 invasion. 1990's
+    poor equity performance reflects an ALREADY-WEAKENING economy (S&L
+    crisis, brewing recession) that the oil shock landed on top of, the same
+    way 2022's worst-case for B was contaminated by an independent rate
+    shock. Today's environment is explicitly non-recessionary this session
+    (GDP +2.1% real, unemployment 4.3%, NFP +172k, credit spreads calm --
+    see this session's briefing). Using 1990 as the pure-C conservative floor
+    therefore likely OVERSTATES the downside by importing D-type
+    (recessionary) damage that the framework's separate D scenario already
+    exists to capture. No clean substitute analog was identified this
+    session -- 2003 Iraq War oil spike (post-2001-recession, genuinely
+    non-recessionary backdrop) is a plausible better-fitting candidate,
+    flagged for the audit, not run this session (out of time, not declined
+    on principle).
+
+L4: NOT RUN for a specific proposed value, because no specific conservative
+    value cleared L3. Running L4 against an unresolved L3 would produce a
+    consistency check against a number that isn't actually supported --
+    skipped deliberately rather than performed for appearance.
+
+CRITICAL FINDING (the actual answer to why this isn't "fixed" the way B was):
+M15.blendedScenarioReturn() and every EV/allocation computation downstream of
+it use the CONSERVATIVE bound ONLY -- upside is disclosure-only, never
+consumed by any computation (see analysis/instruments.py docstring, unchanged
+since before this session). The evidence above strongly supports raising C's
+UPSIDE bound (current -1% is clearly too low given the 1979 and 1991 results)
+but says almost nothing decisive about the CONSERVATIVE bound specifically
+because of the L3 confound -- and the conservative bound is the only one that
+would move any instrument's actual EV. A revision that improved only the
+upside (technically permissible to compute, since it doesn't touch EV) was
+deliberately NOT applied to the live table this session: adopting a partial
+revision while the framework's own NEVER rule (no MEDIUM/LOW-confidence
+revision adopted intra-session) is in force for the unresolved half would set
+a bad precedent of cherry-picking the "safe-looking" half of an
+under-evidenced proposal. PROPOSED for the June 30 audit: C upside [-1]->[+6,
++8] range (well-supported); C conservative -- resolve the 1990 recession-
+confound first (via the 2003 analog or another non-recessionary discrete
+oil-shock episode) before proposing a specific number. Confidence: upside
+dimension HIGH; conservative dimension genuinely unresolved, not LOW or
+MEDIUM-and-being-cautious -- the evidence itself splits along a line that
+doesn't map onto a single confidence tier.
 
 2026-06-29 (v1.46) - GAP-16 promoted from advisory-only to a live, bounded EV
 adjustment. Client correctly identified that the framework had built a
@@ -884,6 +962,19 @@ to do later.
     sustained-grind bifurcation in the historical record, flagged for
     dedicated work at this audit rather than forced through. Full detail
     and VTI reassessment: §3 log entry 2026-06-25.
+42. [P1] broad_market_equity_domestic Scenario C conservative bound (v1.46
+    follow-up, June 29, 2026): four-layer review run, NOT adopted — upside
+    dimension [-1]→[+6,+8] is HIGH confidence but disclosure-only (never
+    used in EV); the conservative bound, which IS EV-relevant, is blocked on
+    a single confound — the cleanest available rate-stable discrete-oil-
+    shock analog (1990 Gulf War) co-occurred with an independent recession
+    (NBER dated July 1990, before the Aug 2 invasion) that today's
+    non-recessionary environment doesn't share, so 1990 likely overstates
+    C's true downside by importing D-type damage. ACTION NEEDED: locate and
+    verify a clean non-recessionary discrete-oil-shock analog — 2003 Iraq
+    War (post-2001-recession backdrop) flagged as the leading candidate, not
+    yet run. Full L1-L3 detail and all T1 figures: §3 log entry 2026-06-29
+    (v1.46 follow-up).
 
 ---
 
@@ -1046,7 +1137,7 @@ VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v
 | policy_driven_thematic_equity | legislated_government_spending, regulatory_mandates, domestic_policy_cycle | v1.0 | Active |
 | rate_sensitive_income_short_duration | short_term_interest_rates, duration <= 1y | v1.0 | Active |
 | rate_sensitive_income_long_duration | long_term_interest_rates, duration > 1y | v1.0 | Active |
-| broad_market_equity_domestic | domestic_aggregate_economic_growth | v1.0 | Active - B ADOPTED HIGH confidence (v1.45, June 29, 2026): [-8,-2]→[-2,+5]. Acute-shock vs. sustained-grind bifurcation resolved — mechanism is rate-change not rate-level; current regime is rate-stable (Fed at terminal, holding) not rate-shock, so acute analogs (1973-74, 2022) don't apply. A proposed [5,12]→[10,20] (MEDIUM, pending June 30). C still unresolved — same bifurcation question, not yet reviewed. D/E/F reviewed and confirmed. |
+| broad_market_equity_domestic | domestic_aggregate_economic_growth | v1.0 | Active - B ADOPTED HIGH confidence (v1.45, June 29, 2026): [-8,-2]→[-2,+5]. Acute-shock vs. sustained-grind bifurcation resolved — mechanism is rate-change not rate-level; current regime is rate-stable (Fed at terminal, holding) not rate-shock, so acute analogs (1973-74, 2022) don't apply. A proposed [5,12]→[10,20] (MEDIUM, pending June 30). C reviewed same day (v1.46 follow-up) — split finding, NOT adopted: upside HIGH confidence ([-1]→[+6,+8], but disclosure-only, never used in EV) vs conservative bound genuinely unresolved (1990 Gulf War analog confounded by a concurrent, independent recession that doesn't match today's non-recessionary backdrop — needs a cleaner analog, e.g. 2003 Iraq War, at the audit). D/E/F reviewed and confirmed. |
 | broad_market_equity_international | ex_US_aggregate_economic_growth, developed_markets | v1.0 | Active |
 | secular_technology_growth | AI_capex_cycle, mega-cap_tech_multiple_expansion, software_adoption, semiconductor_demand | v1.7 Apr 28 | Active - provisional, empirical audit June 30 |
 | inflation_linked_sovereign | CPI_accrual, real_yield_compression, sovereign_credit_quality | v1.12 May 6 | Active - PENDING §4.1 calibration June 30. Instrument candidate: VTIP. Tax: retirement preferred (inflation accrual OI in taxable). |
