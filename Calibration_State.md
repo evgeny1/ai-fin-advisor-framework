@@ -2,10 +2,10 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.46  Last updated: June 29, 2026 (GAP-16 promoted from
-advisory-only to a live, bounded EV adjustment for SGOL/SIVR; [P0]/[P1]/[P2]
-priority convention added to §6; BMED Scenario C four-layer review run,
-PARTIAL finding logged PENDING — conservative bound not yet resolvable; see §3)
+# Version: 1.47  Last updated: June 30, 2026 (Q2 audit §6 closeout: GAP-16
+item 40 [P0] marked RESOLVED, residuals re-filed as items 43 [P1] / 44 [P2];
+completed checklist items 27/28/29/35 moved to Calibration_State_Archive.md;
+Load-Verification example date corrected. No calibration VALUES changed.)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -18,7 +18,7 @@ PARTIAL finding logged PENDING — conservative bound not yet resolvable; see §
 
 At session start, after both files are fetched, the advisor must state in the briefing:
 
-"Calibration State loaded, last update: June 7, 2026 | Session Log loaded"
+"Calibration State loaded, last update: June 30, 2026 | Session Log loaded"
 
 Absence of either confirmation line indicates the respective file was not loaded and the session is invalid for threshold-sensitive decisions.
 
@@ -936,24 +936,29 @@ to do later.
 24. Implement living update protocol: now formally governed by M16_ReturnTableCalibration §5. Confirm June 30 as first formal application of M16 §5 LivingUpdateTriggers.
 25. Session_Log.md compaction: retain last 10 §7 credit rows; collapse §8 to last 3 full entries + summary table. Move prior entries to Archive_2026Q2.md.
 26. COPX M07 regional concentration ruling: confirm "region = political/economic bloc" ruling from v1.13 as formal framework policy. Apply consistently to all future M07 screens.
-27. URA (Global X Uranium ETF): COMPLETE v1.22 (May 29, 2026). M07 PASS (foreign exposure flag; AUM $7.81B; ER 0.69%; Canada ~35-40% below 40% threshold). ThematicETF_ClassificationAudit COMPLETE. ComponentVector: RAC(0.50)+IHC(0.30)+STG(0.20). EV +4.17% (rank #3). Added to §11. Targets: Primary IRA 3%, Primary Roth 3%. Tax placement: retirement accounts only.
-28. SIVR entry guard computation — COMPLETE v1.14 (May 7, 2026). CLEARED. 90d avg ~$78-82; threshold ~$94-98; current $73.79 < threshold.
-29. COPX entry guard computation — COMPLETE v1.14 (May 7, 2026). CLEARED. 90d avg ~$85-90; threshold ~$102-106; current $78.21 < threshold.
+27. URA classification + M07 screen + targets — COMPLETE v1.22 (May 29, 2026); live in §11.4. ARCHIVED → Calibration_State_Archive.md.
+28. SIVR entry guard — COMPLETE/CLEARED v1.14 (May 7, 2026); SIVR since fully liquidated, guard moot. ARCHIVED → Calibration_State_Archive.md.
+29. COPX entry guard — COMPLETE/CLEARED v1.14 (May 7, 2026); one-time computation, COPX still held so the guard re-runs live. ARCHIVED → Calibration_State_Archive.md.
 30. DBMF D/E/F scenario formal adoption: complete M16.CalibrationMethodology() Layer 1-4 for remaining three scenarios. Primary analog: D = 2008 SG CTA Index +14.1% (short equity offset by commodity reversal); E = acute 2008 Q4 whipsaw; F = 2017-2019 "trend desert." Confidence: MEDIUM — adopt at Q2 audit.
 31. Healthcare_defensive_equity (XLV): confirm §11 classification. Run ThematicETF_ClassificationAudit() — sector composition has shifted toward biotech/tech-adjacent REITs; verify role weights. Full M16 calibration for all scenario values.
 32. Floating_rate_credit_income (FLOT): full M07 screen. Confirm no foreign concentration issue. Compute D scenario (-10% to -4%) empirical basis using 2008 IG spread data.
 33. Emerging_market_equity (VWO): full M07 screen. Confirm China (~30.8%) + Taiwan (~18-22%) combined regional concentration — determine if Taiwan Strait geopolitical risk warrants amber flag. Apply M07 regional ruling from item 26.
-34. Consumer_defensive_equity (XLP): complete M16 calibration for A/C/D/E/F scenarios (PENDING). Primary analog: A = 2003-2007 XLP vs market underperformance; C = 1973-74 input cost squeeze; D = 2008 XLP -15% nomina35. secular_technology_growth Scenario B — RESOLVED, see §3 v1.27 (June 1, 2026):
-  ADOPTED HIGH confidence, [-6,-1]→[-2,+4]. §4.1 table already reflects this value.
-  This item used to carry a ~15-line walkthrough of the now-superseded MEDIUM-
-  confidence debate (FRAMEWORK_BACKLOG.md ENG-6, removed 2026-06-19) — the full
-  adoption rationale (4-layer analysis, 3 clean analogues, L4 consistency check)
-  is preserved in Calibration_Log.md’s v1.27 entry, not duplicated here.
+34. Consumer_defensive_equity (XLP): complete M16 calibration for A/C/D/E/F scenarios (PENDING). Primary analog: A = 2003-2007 XLP vs market underperformance; C = 1973-74 input cost squeeze; D = 2008 XLP -15% nominal.
+35. secular_technology_growth Scenario B — RESOLVED v1.27 (June 1, 2026), ADOPTED HIGH confidence [-6,-1]→[-2,+4], live in §4.1. ARCHIVED → Calibration_State_Archive.md (full rationale in Calibration_Log.md v1.27).
 36. GOOGLEFINANCE ticker setup (v1.17): New allocation spreadsheet tab added for market data "Other Indexes". Confirmed working: VIX (INDEXCBOE:VIX), S&P 500 (INDEXSP:.INX), MOVE (INDEXNYSEGIS:MOVE). FRED series: use existing spreadsheet "FRED Series" tab. BZ=F is canonical Brent reference for C-trigger clock per v1.17.
 37. AI capex / secular_technology_growth context note (v1.18, May 22, 2026): Session intelligence — hyperscaler AI capex $660-830B committed for 2026 (nearly doubling 2025). Capex intensity 45-57% of revenue (vs 10-15% in 2020). Revenue growth 15-16% vs capex growth 60-80%; FCF projected to decline 90% across Big Four. Private credit ($800B+ in AI infrastructure financing) opacity flagged as tail risk not visible in HY/IG spread series. AI utility pricing emerging (62% usage-based by 2027). Prisoner's dilemma / war-of-attrition structure confirmed: no coordination mechanism among 5+ hyperscalers; 18-36 month infrastructure commitment periods prevent exit. Fiber optic 1999 analogy: technology correct, equity returns poor due to timing, cost of capital, and competitive dynamics. Portfolio implication: AIPO (infrastructure layer, contracted revenue) positive EV in B/C; MAGS (hyperscaler equity) negative EV in B/C — distinction maintained. No §4.1 changes warranted from session analysis.
 38. M17 §12 thresholds (v1.19, corrected v1.20): First formal application May 25, 2026. sectorStressScore()=0 (formal, v1.20 corrected). CascadeLevel=MONITORING. CHAIN_3_WATCH=TRUE ($1.304T margin debt record loaded; FIRES on ≥−5% MoM or 3+ gate events). CHAIN_4 CALIBRATED v1.24 (June 1, 2026): canonical series = S&P Global large-company; T1-equivalent = ABI/Epiq AACER press releases; WATCH ≥220/quarter, FIRES ≥300/quarter (HIGH confidence, M16 4-layer complete); current Q1 2026 = 188/quarter — BELOW WATCH. Prior 800/quarter threshold eliminated. D=5% maintained by prior client approval (qualitative). Formal Q2 audit: calibrate remaining §12 thresholds; formal integration of yield curve D_timing_signal; M18 allocation spreadsheet series gap resolution.
 39. M18 FMP data fetch (v1.21, May 26, 2026): FMP:chart historical-price-eod-light confirmed working for ^VIX and SPY. VIX_30D_AVG=17.99 and VIX_90D_AVG=21.24 computed from 62 trading days of FMP EOD data. SPY 30-trading-day return=+8.68% (Apr 13→May 22). FMP:indexes endpoint ACCESS DENIED for ^SPX (requires higher plan tier) — SPY via FMP:chart is the confirmed working substitute for BROAD_EQUITY_TRAILING. M18 updated accordingly (v1.1).
-40. [P0] GAP-16 (v1.42, June 20, 2026; PROMOTED v1.46, June 29, 2026): within-scenario sub-condition advisory for wide-range roles — RESOLVED for IHP at v1.42 (advisory only), then PROMOTED v1.46 to a bounded, table-clamped EV adjustment in blended_scenario_return() — see §3 v1.46 entry for the full mechanism and the priority-flagging failure that delayed this nine days past when the diagnostic first confirmed a live headwind. analysis/range_position.py flags real-yield/DXY direction for held IHP instruments (SGOL, SIVR) whose dominant-scenario §4.1 range is >=6pp wide; the resulting signal, when both sub-conditions agree, now also shifts the conservative value used in EV by min(25% of range width, 3pp) — PROVISIONAL magnitude, formal M16 4-layer calibration of the 25%/3pp parameters still owed at a future audit. STF/RAC/IHC sub-condition identification (named in the originating note as in-scope) remains open — assign at a future session once those roles' 1-2 governing variables are identified; the v1.46 mechanism (apply_range_position_adjustment(), clean_signal_role_map()) already generalizes to any role, no further code change needed once those drivers are documented.
+40. [P0 → RESOLVED v1.46; closed at Q2 audit 2026-06-30] GAP-16 within-scenario
+    sub-condition EV adjustment for wide-range roles. The [P0] driver — a
+    confirmed live SGOL/SIVR real-yield+DXY headwind that was computing into EV
+    as if absent — is FIXED: v1.46 wired the bounded, agreement-gated,
+    table-clamped, conservative-only adjustment into blended_scenario_return()
+    (773 tests pass; SGOL EV +0.94% → −0.32% verified live). Full mechanism and
+    the priority-flagging failure that delayed it 9 days: §3 v1.46 entry. Two
+    residuals re-filed below — neither is [P0], because the live money cost is
+    now gone: item 43 [P1] (calibrate the PROVISIONAL 25%/3pp magnitude) and
+    item 44 [P2] (extend sub-condition map to STF/RAC/IHC).
 41. broad_market_equity_domestic: FULL M16 4-layer review COMPLETE 2026-06-25
     (first-ever review for this role; was v1.0 baseline with no confidence
     marker). Outcome: A proposed [5,12]->[10,20] (MEDIUM, logged §6 item
@@ -975,6 +980,20 @@ to do later.
     War (post-2001-recession backdrop) flagged as the leading candidate, not
     yet run. Full L1-L3 detail and all T1 figures: §3 log entry 2026-06-29
     (v1.46 follow-up).
+43. [P1] GAP-16 magnitude calibration (re-filed from item 40, 2026-06-30): the
+    range-position EV adjustment shifts the conservative value by
+    min(25% of range width, 3pp) when both sub-conditions agree. That 25%/3pp
+    magnitude is a PROVISIONAL starting point, never run through
+    M16.CalibrationMethodology(). The MECHANISM (bounded / agreement-gated /
+    table-clamped / conservative-only) is NOT provisional — only these two
+    numbers are. NEXT STEP: full 4-layer derivation of the adjustment
+    magnitude at a future audit; until then the provisional values stand.
+44. [P2] GAP-16 sub-condition map extension (re-filed from item 40, 2026-06-30):
+    apply_range_position_adjustment() / clean_signal_role_map() already
+    generalize to any role; extending documented sub-condition drivers beyond
+    IHP to STF / RAC / IHC is now a pure §11 documentation task (identify 1-2
+    governing variables per role, add a sub-condition note) — zero further code
+    change. NEXT STEP: assign at a future session.
 
 ---
 
