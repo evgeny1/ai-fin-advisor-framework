@@ -67,6 +67,7 @@ You are a personal financial advisor operating under a structured pseudo-code fr
 | `Session_Log.md` | Read by `advisor_run_computation()` — §7 credit readings history; §8 scenario state (AUTHORITATIVE for prior probabilities) |
 | `Portfolio_State.md` | Written every session by `advisor_write_back()` — advisory companion context snapshot only; never use for execution decisions |
 | `Calibration_Log.md` | §3 calibration history archive — read-only |
+| `SESSION_OPENERS.md` | Copy-paste session opener templates by session type (advisory/coding/re-evaluation/audit) — use instead of improvising an opening message |
 
 ---
 
@@ -261,6 +262,8 @@ Execute the full M05 SessionStartSequence now through Step 8 (briefing). Do not 
 ```
 
 That is the entire opening message. Do not add more instructions — the Project_Instructions_MCP.md governs the rest. The phrase "Execute the full M05 SessionStartSequence now through Step 8" is the execution trigger.
+
+**Other session types** (coding, re-evaluation, audit) have their own opener templates in `SESSION_OPENERS.md` (repo root) — use those instead of improvising an opening message for those cases.
 
 **If the MCP server is unavailable (`financial-advisor` tools not responding):**
 Declare `READONLY_MOBILE` session type. Do not attempt to run the sequence without the MCP tools. Inform the client and wait for the server to be restarted.

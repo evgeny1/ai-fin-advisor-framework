@@ -10,6 +10,11 @@ need to guess how anything is wired together, where logic lives, what's safe
 to change, or what's already a known gap (see `FRAMEWORK_BACKLOG.md` for the
 last one).
 
+**If you're starting a coding session, use the literal opener template in
+`SESSION_OPENERS.md` §2 rather than diving in mid-conversation** — it's the
+forcing function that gets this file and the codebase-memory-mcp freshness
+check actually read before any code changes, instead of after the fact.
+
 This file is paired with `FRAMEWORK_BACKLOG.md` (open engineering items) and
 is itself **not** loaded as Project Knowledge during advisory sessions and
 **not** part of `00_INDEX.md`'s `FILE_MAP`.
