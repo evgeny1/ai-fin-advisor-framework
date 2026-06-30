@@ -2,10 +2,12 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.47  Last updated: June 30, 2026 (Q2 audit §6 closeout: GAP-16
-item 40 [P0] marked RESOLVED, residuals re-filed as items 43 [P1] / 44 [P2];
-completed checklist items 27/28/29/35 moved to Calibration_State_Archive.md;
-Load-Verification example date corrected. No calibration VALUES changed.)
+# Version: 1.48  Last updated: June 30, 2026 (Q2 audit, building on the v1.47
+§6 closeout. v1.48: broad_market_equity_domestic Scenario A ADOPTED
+[5,12]->[10,20] — HIGH confidence, 1991/2003 analogs T1-verified,
+client-confirmed; §6 item 23[16] -> ADOPTED. Scenario C: 2003 Iraq analog
+run, conservative bound HELD unresolved by client decision, no value change —
+see §6 item 42 and §3 2026-06-30.)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -141,6 +143,46 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-06-30 (v1.48, Q2 audit) - broad_market_equity_domestic Scenario A
+ADOPTED: [5,12] -> [10,20]. Confidence MEDIUM -> HIGH. The 2026-06-25 review
+logged this PENDING solely because its 1991/2003 analog figures were general
+knowledge, not T1-verified. Re-verified this session via Slickcharts (the
+source already used for S&P annual returns): 1991 total return +30.47%
+(~+26% real, BLS annual-avg CPI 4.2%); 2003 +28.68% (~+26% real, CPI 2.3%);
+2016 RSP +14.50% (~+12.4% real) was already fresh. All three analogs land
+at/above the adopted range; 2016 anchors the conservative end. L4 (neutral
+A=35/B=15/C=15/D=10/E=5/F=20, with B=[-2,+5] already adopted): +2.40% vs
+~2-3% anchor, PASS -- this exact A+B pairing was pre-computed in the
+2026-06-29 B-adoption entry. Full L1-L3 detail: 2026-06-25 log entry. Client
+confirmed adoption 2026-06-30. (§6 item 23[16] -> ADOPTED.)
+
+2026-06-30 (Q2 audit) - broad_market_equity_domestic Scenario C: 2003 Iraq
+War analog run (the candidate flagged 2026-06-29 as the route past the 1990
+recession confound). The analog clears the confound but does NOT resolve the
+EV-relevant conservative bound; the conservative revision is HELD
+(client-confirmed 2026-06-30) -- no change to C this session.
+  - Non-recessionary backdrop CONFIRMED (NBER T1: 2001 recession ended Nov
+    2001; the March 2003 invasion sits well into recovery). 1990 confound
+    re-confirmed (NBER: 1990-91 recession began July 1990, pre-invasion).
+  - Discrete oil shock CONFIRMED (St. Louis Fed T1-equiv: crude +45% Dec
+    2002 -> Feb 2003 to ~$40, $5-15 war premium, then a record one-day NYMEX
+    drop on swift resolution; milder/shorter than 1990-91).
+  - BUT 2003 equities ended +28.68% total (~+26% real) -- strongly positive,
+    dominated by the post-2000-2002-bear recovery rally. So 2003 is an
+    UPSIDE data point, not a downside floor. Every rate-stable discrete-oil-
+    shock analog available (1979 ~+7% real, 1991 ~+26%, 2003 ~+26%) is
+    positive; the only negative oil-shock years (1974, 1990) are
+    recession-contaminated = D-territory captured separately.
+  CONCLUSION: the conservative bound for pure (non-recessionary) C is not
+  derivable from a drawdown analog -- such clean analogs do not exist,
+  because non-recessionary oil shocks were not equity-drawdown events.
+  Current -4 is likely too pessimistic (inherits recession damage) but no
+  specific replacement is analog-supportable. Upside [-1]->[+6,+8] is now
+  HIGH-confidence but disclosure-only (never enters EV); NOT adopted, to
+  avoid cherry-picking the EV-irrelevant half while the EV-relevant half is
+  open. §6 item 42 next step re-scoped from "find a better analog" to a
+  methodology decision on setting a non-analog-derivable conservative bound.
 
 2026-06-29 (v1.46 follow-up) - M16.CalibrationMethodology() 4-layer run:
 broad_market_equity_domestic Scenario C. Client-prompted follow-up to the
@@ -714,7 +756,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | policy_driven_thematic_equity | [4, 8] | [-3, 1] | [-1, 3] | [-5, -1] | [-6, -2] | [4, 8] |
 | rate_sensitive_income_short_duration | [1, 3]★ | [1, 3] | [1, 3] | [1, 4]★ | [-2, 2] | [1, 3] |
 | rate_sensitive_income_long_duration | [3, 7] | [-4, -1] | [-5, -2] | [5, 10] | [-10, -3] | [-4, -1] |
-| broad_market_equity_domestic | [5, 12]⚑ | [-2, +5]★ | [-4, -1]⚠ | [-12, -4]✓ | [-8, -3]✓ | [7, 14]✓ |
+| broad_market_equity_domestic | [10, 20]★ | [-2, +5]★ | [-4, -1]⚠ | [-12, -4]✓ | [-8, -3]✓ | [7, 14]✓ |
 | broad_market_equity_international | [4, 9] | [-5, -1] | [-6, -2] | [-8, -3] | [-10, -4] | [3, 8] |
 | secular_technology_growth | [6, 16] | [-2, +4]★ | [+2, +8] | [-6, 0]⚑ | [-12, -3]⚑ | [4, 11] |
 | inflation_linked_sovereign | [-2, 1]★ | [1, 4]⚑ | [1, 4]⚑ | [0, 3]★ | [-1, 2]⚑ | [-1, 1]★ |
@@ -923,11 +965,11 @@ to do later.
       analogs (2017-19, 2023-24 QQQ) offset by a large, documented capex-
       sustainability structural risk (§6 item 37). Full 4-layer detail:
       §3 log entry 2026-06-25.
-  - [16] broad_market_equity_domestic A: [5,12]->[10,20]. Three analogs
-      (1991, 2003, 2016) all land above the current upside bound; 2016
-      (RSP, fresh data) used as the conservative anchor. 1991/2003 figures
-      not independently re-verified this session — confirm via T1 before
-      formal adoption. Full 4-layer detail: §3 log entry 2026-06-25.
+  - [16] broad_market_equity_domestic A: [5,12]->[10,20] ★ ADOPTED
+      2026-06-30 (HIGH). 1991 (+30.47% total) and 2003 (+28.68%) T1-verified
+      via Slickcharts this session, clearing the sole blocker; 2016 RSP
+      (+14.50%) anchors the conservative end. L4 +2.40% with B adopted, PASS.
+      Full detail: §3 entries 2026-06-30 and 2026-06-25.
 
   UNRECOVERABLE (4 proposals — lost in v1.12 file split; reconstruct at June 30 audit):
   - [11]-[14]: Reference exists in prior v1.12 §6 item 23 but content not carried forward.
@@ -967,19 +1009,22 @@ to do later.
     sustained-grind bifurcation in the historical record, flagged for
     dedicated work at this audit rather than forced through. Full detail
     and VTI reassessment: §3 log entry 2026-06-25.
-42. [P1] broad_market_equity_domestic Scenario C conservative bound (v1.46
-    follow-up, June 29, 2026): four-layer review run, NOT adopted — upside
-    dimension [-1]→[+6,+8] is HIGH confidence but disclosure-only (never
-    used in EV); the conservative bound, which IS EV-relevant, is blocked on
-    a single confound — the cleanest available rate-stable discrete-oil-
-    shock analog (1990 Gulf War) co-occurred with an independent recession
-    (NBER dated July 1990, before the Aug 2 invasion) that today's
-    non-recessionary environment doesn't share, so 1990 likely overstates
-    C's true downside by importing D-type damage. ACTION NEEDED: locate and
-    verify a clean non-recessionary discrete-oil-shock analog — 2003 Iraq
-    War (post-2001-recession backdrop) flagged as the leading candidate, not
-    yet run. Full L1-L3 detail and all T1 figures: §3 log entry 2026-06-29
-    (v1.46 follow-up).
+42. [P1] broad_market_equity_domestic Scenario C conservative bound: UPDATED
+    2026-06-30 (Q2 audit). The 2003 Iraq War analog was run (§3 entry
+    2026-06-30): it DOES clear the 1990 recession confound (NBER-confirmed
+    non-recessionary backdrop + confirmed discrete oil shock), but 2003
+    equities ended +28.68% total / ~+26% real — an upside outcome, not a
+    downside floor. FINDING: the conservative bound for pure non-recessionary
+    C is NOT derivable from a drawdown analog (none exist — non-recessionary
+    oil shocks were not equity-drawdown events); current -4 is likely too
+    pessimistic but no analog-supportable replacement exists. Conservative
+    revision HELD by client decision 2026-06-30 — no value change. Upside
+    [-1]→[+6,+8] is HIGH-confidence but disclosure-only, NOT adopted (avoids
+    cherry-picking the EV-irrelevant half while the EV-relevant half is open).
+    NEXT STEP (re-scoped): this is now a METHODOLOGY decision — how to set a
+    non-analog-derivable conservative bound (judgment-based modest floor vs.
+    retain -4 as a deliberate safety placeholder) — not further analog search.
+    Full detail: §3 entries 2026-06-30 and 2026-06-29 (v1.46 follow-up).
 43. [P1] GAP-16 magnitude calibration (re-filed from item 40, 2026-06-30): the
     range-position EV adjustment shifts the conservative value by
     min(25% of range width, 3pp) when both sub-conditions agree. That 25%/3pp
@@ -1156,7 +1201,7 @@ VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v
 | policy_driven_thematic_equity | legislated_government_spending, regulatory_mandates, domestic_policy_cycle | v1.0 | Active |
 | rate_sensitive_income_short_duration | short_term_interest_rates, duration <= 1y | v1.0 | Active |
 | rate_sensitive_income_long_duration | long_term_interest_rates, duration > 1y | v1.0 | Active |
-| broad_market_equity_domestic | domestic_aggregate_economic_growth | v1.0 | Active - B ADOPTED HIGH confidence (v1.45, June 29, 2026): [-8,-2]→[-2,+5]. Acute-shock vs. sustained-grind bifurcation resolved — mechanism is rate-change not rate-level; current regime is rate-stable (Fed at terminal, holding) not rate-shock, so acute analogs (1973-74, 2022) don't apply. A proposed [5,12]→[10,20] (MEDIUM, pending June 30). C reviewed same day (v1.46 follow-up) — split finding, NOT adopted: upside HIGH confidence ([-1]→[+6,+8], but disclosure-only, never used in EV) vs conservative bound genuinely unresolved (1990 Gulf War analog confounded by a concurrent, independent recession that doesn't match today's non-recessionary backdrop — needs a cleaner analog, e.g. 2003 Iraq War, at the audit). D/E/F reviewed and confirmed. |
+| broad_market_equity_domestic | domestic_aggregate_economic_growth | v1.0 | Active - B ADOPTED HIGH confidence (v1.45, June 29, 2026): [-8,-2]→[-2,+5]. Acute-shock vs. sustained-grind bifurcation resolved — mechanism is rate-change not rate-level; current regime is rate-stable (Fed at terminal, holding) not rate-shock, so acute analogs (1973-74, 2022) don't apply. A ADOPTED [10,20] (v1.48, June 30, 2026, HIGH — 1991/2003 analogs T1-verified). C: 2003 Iraq analog run at the audit (v1.48) — clears the 1990 recession confound but 2003 ended strongly positive, so it confirms only the upside; conservative bound HELD unresolved (not derivable from a drawdown analog — non-recessionary oil shocks were not drawdown events), upside [-1]→[+6,+8] HIGH but disclosure-only, NOT adopted. See §6 item 42 / §3 2026-06-30. D/E/F reviewed and confirmed. |
 | broad_market_equity_international | ex_US_aggregate_economic_growth, developed_markets | v1.0 | Active |
 | secular_technology_growth | AI_capex_cycle, mega-cap_tech_multiple_expansion, software_adoption, semiconductor_demand | v1.7 Apr 28 | Active - provisional, empirical audit June 30 |
 | inflation_linked_sovereign | CPI_accrual, real_yield_compression, sovereign_credit_quality | v1.12 May 6 | Active - PENDING §4.1 calibration June 30. Instrument candidate: VTIP. Tax: retirement preferred (inflation accrual OI in taxable). |
