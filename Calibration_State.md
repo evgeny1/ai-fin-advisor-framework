@@ -2,8 +2,9 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.45  Last updated: June 29, 2026 (SCHD added to §11.4 as new
-candidate instrument — classification only, not yet adopted; see §3)
+# Version: 1.45  Last updated: June 29, 2026 (BMED Scenario B ADOPTED HIGH
+confidence — [-8,-2]→[-2,+5], acute-shock vs sustained-grind bifurcation
+resolved; SCHD added to §11.4 as candidate; see §3)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -139,6 +140,70 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-06-29 - M16.CalibrationMethodology() 4-layer run: broad_market_equity_domestic
+Scenario B (client-requested, prompted by observed 3M price divergence: RSP/VTI
+strongly positive during the current B-dominant window vs MLPX flat). RESOLVES
+the acute-shock vs sustained-grind bifurcation flagged unresolved 2026-06-25.
+
+PROPOSAL: B [-8,-2] -> [-2,+5]. Confidence: HIGH. ADOPTED this session
+(client explicit confirmation given).
+
+L1: unconditional anchor ~2-3% real (unchanged, same JPM LTCMA/Vanguard VCMM
+    basis as 2026-06-25 entry).
+
+L2 (T1-verified this session, replacing the 2026-06-25 entry's unverified
+    general-knowledge figures): bifurcation resolved by separating analogs on
+    a structural criterion — rate CHANGE during the period, not rate LEVEL.
+    Acute-shock B (large rate move from a low/different base): 1973-74 S&P
+    -14.66%/-26.47% nominal (Slickcharts T1), CPI 11%/11% (BLS T1) -> real
+    roughly -24%/-35%; 2022 RSP -11.69% nominal (market_data_mcp T1, full-year
+    close-to-close), CPI ~8.0% avg -> real ~-19.7% (Fed funds 0.25%->4.5% in
+    12mo, the defining feature). Sustained-grind B (rates elevated but STABLE,
+    no shock): 1979 S&P +18.44% nominal (Slickcharts T1), CPI 11.3% (BLS T1)
+    -> real +7.1%; 1977-78 2yr avg S&P ~-0.6%/yr nominal, CPI ~7.1%/yr avg ->
+    real ~-7.7%/yr (worst sustained-grind outcome found, still involved a
+    multi-point Fed funds rise, not pure rate-stable); current 2026 B 3M
+    window RSP +10.5% nominal (market_data_mcp T1), CPI ~4.2% -> real ~+6%,
+    Fed funds 3.5-3.75% HOLDING (no shock — terminal-rate environment).
+    1980-81 (Volcker deliberate recession-inducing tightening) and 2022 H1
+    excluded from the sustained-grind bucket — both involved acute deliberate
+    policy shock, contaminating them as sustained-grind analogs regardless of
+    multi-year averaging.
+
+L3: stress-tested the sustained-grind bucket specifically (not the full B
+    historical range) — worst clean sustained-grind outcome found is the
+    1977-78 ~-7.7%/yr real figure, which itself still included a meaningful
+    rate rise (Fed funds roughly 5%->10% over the window), making it harsher
+    than a true rate-stable case. No historical episode of stable-elevated
+    rates + positive GDP + intact labor delivering -8% real was found.
+    Conservative floor set at -2% (not 0%) to retain margin for a sustained-
+    grind environment that's somewhat worse than the current one (e.g. CPI
+    re-accelerating past 5% while the Fed continues holding).
+
+L4 (proposed B=[-2,+5], neutral distribution A=35/B=15/C=15/D=10/E=5/F=20,
+    current operative values elsewhere unchanged): neutral-distribution EV
+    moves from -0.25% (under old B=-8%) to +0.65% -- not yet at the 2-3% L1
+    anchor alone, but closes most of the gap and becomes fully consistent
+    with the anchor once paired with the already-PENDING A revision ([5,12]
+    -> [10,20], logged 2026-06-25, still MEDIUM/not adopted) -> +2.40% EV.
+    Residual gap attributable to C (same unresolved bifurcation, see below)
+    and the several still-PENDING D/E/F-adjacent roles. PASS.
+
+C: NOT addressed this session -- same acute-shock/sustained-grind structural
+   question applies to C (oil-shock-type analogs), unresolved, flagged for
+   separate review. Do not assume C carries the same resolution as B without
+   running it independently -- C's acute analogs (1974, 1979-80 oil shocks)
+   have a different causal mechanism (supply-side commodity shock vs
+   demand-side rate shock) and may not share B's rate-stability resolution.
+
+DOWNSTREAM IMPACT (informational, not separately adopted -- recomputed live
+each session via M15.blendedScenarioReturn()): RSP/VTI/QQQM/SCHD EVs all
+improve under today's probability vector; SCHD's directive crosses from
+REDUCE_TO_MIN to approximately breakeven/HOLD; none of the four become
+clearly ADD-worthy this session. Currently-held primary/Relative account
+EVs change negligibly (BMED-dominant instruments not held in active
+allocations; MAGS/XAR carry only small BMED sub-weights).
 
 2026-06-29 - SCHD (Schwab U.S. Dividend Equity ETF) added to §11.4 as new
 candidate instrument (client-requested index-fund simplification review,
@@ -512,7 +577,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | policy_driven_thematic_equity | [4, 8] | [-3, 1] | [-1, 3] | [-5, -1] | [-6, -2] | [4, 8] |
 | rate_sensitive_income_short_duration | [1, 3]★ | [1, 3] | [1, 3] | [1, 4]★ | [-2, 2] | [1, 3] |
 | rate_sensitive_income_long_duration | [3, 7] | [-4, -1] | [-5, -2] | [5, 10] | [-10, -3] | [-4, -1] |
-| broad_market_equity_domestic | [5, 12]⚑ | [-8, -2]⚠ | [-4, -1]⚠ | [-12, -4]✓ | [-8, -3]✓ | [7, 14]✓ |
+| broad_market_equity_domestic | [5, 12]⚑ | [-2, +5]★ | [-4, -1]⚠ | [-12, -4]✓ | [-8, -3]✓ | [7, 14]✓ |
 | broad_market_equity_international | [4, 9] | [-5, -1] | [-6, -2] | [-8, -3] | [-10, -4] | [3, 8] |
 | secular_technology_growth | [6, 16] | [-2, +4]★ | [+2, +8] | [-6, 0]⚑ | [-12, -3]⚑ | [4, 11] |
 | inflation_linked_sovereign | [-2, 1]★ | [1, 4]⚑ | [1, 4]⚑ | [0, 3]★ | [-1, 2]⚑ | [-1, 1]★ |
@@ -901,7 +966,7 @@ VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v
 | policy_driven_thematic_equity | legislated_government_spending, regulatory_mandates, domestic_policy_cycle | v1.0 | Active |
 | rate_sensitive_income_short_duration | short_term_interest_rates, duration <= 1y | v1.0 | Active |
 | rate_sensitive_income_long_duration | long_term_interest_rates, duration > 1y | v1.0 | Active |
-| broad_market_equity_domestic | domestic_aggregate_economic_growth | v1.0 | Active - first M16 4-layer review complete 2026-06-25. A proposed [5,12]→[10,20] (MEDIUM, pending June 30). D/E/F reviewed and confirmed. B/C unresolved — acute-shock vs. sustained-grind bifurcation, flagged for dedicated audit work. |
+| broad_market_equity_domestic | domestic_aggregate_economic_growth | v1.0 | Active - B ADOPTED HIGH confidence (v1.45, June 29, 2026): [-8,-2]→[-2,+5]. Acute-shock vs. sustained-grind bifurcation resolved — mechanism is rate-change not rate-level; current regime is rate-stable (Fed at terminal, holding) not rate-shock, so acute analogs (1973-74, 2022) don't apply. A proposed [5,12]→[10,20] (MEDIUM, pending June 30). C still unresolved — same bifurcation question, not yet reviewed. D/E/F reviewed and confirmed. |
 | broad_market_equity_international | ex_US_aggregate_economic_growth, developed_markets | v1.0 | Active |
 | secular_technology_growth | AI_capex_cycle, mega-cap_tech_multiple_expansion, software_adoption, semiconductor_demand | v1.7 Apr 28 | Active - provisional, empirical audit June 30 |
 | inflation_linked_sovereign | CPI_accrual, real_yield_compression, sovereign_credit_quality | v1.12 May 6 | Active - PENDING §4.1 calibration June 30. Instrument candidate: VTIP. Tax: retirement preferred (inflation accrual OI in taxable). |
@@ -1269,20 +1334,20 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   (06/24/2026).
 - EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) —
   not stored here; see live computation each session.
-- CAVEAT — provisional on three independent counts, not one: BMED B/C
-  unresolved (acute-shock vs sustained-grind, pending June 30);
-  healthcare_defensive_equity ALL six scenarios PENDING June 30 (MEDIUM
-  confidence, never run through M16 4-layer); consumer_defensive_equity D/E/F
-  PENDING June 30. SCHD's EV is downstream of three separate open calibration
-  questions simultaneously — more exposed to the June 30 audit outcome than
-  RSP/VTI/QQQM (one open dependency: BMED) or MLPX/DBMF/AIPO (none open).
+- CAVEAT — provisional on two independent counts (was three; BMED B ADOPTED
+  HIGH confidence v1.45, June 29, 2026 — see below): healthcare_defensive_equity
+  ALL six scenarios PENDING June 30 (MEDIUM confidence, never run through M16
+  4-layer); consumer_defensive_equity D/E/F PENDING June 30. SCHD's EV is
+  downstream of two separate open calibration questions simultaneously — still
+  more exposed to the June 30 audit outcome than RSP/VTI/QQQM (BMED now
+  resolved for those too) or MLPX/DBMF/AIPO (none open).
 - ENTRY EXTENSION GUARD (2026-06-29, market_data_mcp T1, 63 trading days in
   the trailing-90-calendar-day window): current $32.09 (Jun 26) vs 90d
   trailing avg $31.43 = +2.11% above avg. Threshold (broad_market_equity_domestic,
   dominant role at 49% weight): 15%. CLEARS comfortably.
 - ADOPTION TRIGGER: none set — candidate under evaluation per client request
   (index-fund simplification review, June 29, 2026 session). Not adoptable
-  until the three PENDING dependencies above are resolved at the June 30 audit.
+  until the two PENDING dependencies above are resolved at the June 30 audit.
 - CURRENT PORTFOLIO ALLOCATION: NONE.
 
 #### URA
