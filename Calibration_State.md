@@ -2,12 +2,17 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.48  Last updated: June 30, 2026 (Q2 audit, building on the v1.47
+# Version: 1.49  Last updated: June 30, 2026 (Q2 audit, building on the v1.47
 §6 closeout. v1.48: broad_market_equity_domestic Scenario A ADOPTED
 [5,12]->[10,20] — HIGH confidence, 1991/2003 analogs T1-verified,
 client-confirmed; §6 item 23[16] -> ADOPTED. Scenario C: 2003 Iraq analog
 run, conservative bound HELD unresolved by client decision, no value change —
-see §6 item 42 and §3 2026-06-30.)
+see §6 item 42 and §3 2026-06-30. v1.49: §1 credit Batch A audit executed —
+trailing-180d medians computed (HY 283 / IG 78 / CCC 935 bps) and recorded in
+§1; HY/IG stress/recession/transmission deltas RETAINED, not re-verifiable
+(FRED truncated OAS history to a rolling 3y window — ENG-43); §1.3 CCC
+ratio-mode false-positive found (CCC+29/HY+8 -> 3.62x fires on noise),
+gate pending ENG-45. Opened FRAMEWORK_BACKLOG ENG-42/43/44/45. See §6 Batch A.)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -46,34 +51,34 @@ Note: FRED /data/ endpoint may return HTML wrapper in some fetch contexts. If we
 
 | Parameter | Current Value | Type | Notes |
 | --- | --- | --- | --- |
-| HY_STRESS_DELTA | +150 bps | Calibration-dated | Provisional initial - full audit pending June 30, 2026 |
-| HY_RECESSION_DELTA | +300 bps | Calibration-dated | Provisional initial - full audit pending June 30, 2026 |
+| HY_STRESS_DELTA | +150 bps | Calibration-dated | Audited 2026-06-30: RETAINED. Not re-verifiable — FRED truncated OAS history to 3y (ENG-43); vs the available 3y the trigger (median+150 = 433 bps) sits at ~97.7th pct, above the intended 75-90th band. That is an artifact of a benign 3y window missing the 2008/2020 tails, not a miscalibration. See §6 Batch A. |
+| HY_RECESSION_DELTA | +300 bps | Calibration-dated | Audited 2026-06-30: RETAINED. Trigger (median+300 = 583 bps) exceeds the entire available 3y range — appropriate for a recession trigger in a non-recessionary window; not re-verifiable without full-cycle data (ENG-43). |
 | Velocity overlay | +100 bps over prior 60 days | Fixed structural | Not calibration-dated |
 | Sustain period | 10 trading days | Fixed structural | Not calibration-dated |
 | D-floor on recession-pricing trigger | 25% | Fixed structural | Not calibration-dated |
 
-Baseline snapshot at instantiation (April 19, 2026): ~285 bps. Trailing 180d median to be computed at Q2 2026 audit.
+Baseline snapshot at instantiation (April 19, 2026): ~285 bps. Trailing 180d median COMPUTED 2026-06-30 (Q2 audit, via framework fred_fetcher REST API): 283 bps (n=131 obs; current 280 bps). 3y percentiles p10/25/75/90 = 272/285/340/392 bps; 3y range 259-461. Detail: §6 Batch A.
 Latest reading (Session_Log.md §7): see most recent §7 row.
 
 ### 1.2 IG Composite - FRED: BAMLC0A0CM
 
 | Parameter | Current Value | Type | Notes |
 | --- | --- | --- | --- |
-| IG_TRANSMISSION_DELTA | +60 bps | Calibration-dated | Provisional initial - full audit pending June 30, 2026 |
+| IG_TRANSMISSION_DELTA | +60 bps | Calibration-dated | Audited 2026-06-30: RETAINED. Trigger (median+60 = 138 bps) exceeds the available 3y max (133 bps); not re-verifiable vs FRED's truncated 3y history (ENG-43). See §6 Batch A. |
 | Velocity overlay | +40 bps over prior 60 days | Fixed structural | Not calibration-dated |
 | Sustain period | 10 trading days | Fixed structural | Not calibration-dated |
 
-Baseline at instantiation: Not yet computed. Trailing 180d median to be computed at Q2 2026 audit.
+Baseline: Trailing 180d median COMPUTED 2026-06-30 (Q2 audit, via framework fred_fetcher REST API): 78 bps (n=131 obs; current 76 bps). 3y percentiles p10/25/75/90 = 77/80/100/122 bps; 3y range 73-133. Detail: §6 Batch A.
 Latest reading (Session_Log.md §7): see most recent §7 row.
 
 ### 1.3 CCC Tail - FRED: BAMLH0A3HYC
 
 | Parameter | Current Value | Type | Notes |
 | --- | --- | --- | --- |
-| Ratio divergence | CCC widens 3x composite over 30d | Fixed structural | Not calibration-dated |
-| Absolute divergence floor | CCC +200 bps while composite +<50 bps over 30d | Calibration-dated | Provisional - audit pending June 30, 2026 |
+| Ratio divergence | CCC widens 3x composite over 30d | Fixed structural | Audit 2026-06-30: must be gated behind a minimum absolute CCC move — else false-positives when HY is near-flat (CCC+29/HY+8 bps -> 3.62x fires on noise). Enforcement pending FRAMEWORK_BACKLOG ENG-45. |
+| Absolute divergence floor | CCC +200 bps while composite +<50 bps over 30d | Calibration-dated | Audited 2026-06-30: value retained (correctly did NOT fire at +29 bps). The audit's finding is on the ratio row above, not this one. See §6 Batch A. |
 
-Latest reading (Session_Log.md §7): see most recent §7 row. CCC divergence watch: active since May 2026 (quiet re-widening while HY tightening). No formal threshold fires.
+Latest reading (Session_Log.md §7): see most recent §7 row. CCC divergence watch: active since May 2026 (quiet re-widening while HY tightening). 2026-06-30 audit: CCC 967 bps (above its own trailing-180d median 935, near 180d p90 975), CCC +29 bps/30d vs HY composite +8 bps/30d. Ratio mode would fire (3.62x) but that is a compressed-regime false-positive; absolute floor correctly does not fire. No genuine threshold fires. Detail: §6 Batch A + ENG-45.
 
 ---
 
@@ -143,6 +148,25 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-06-30 (v1.49, Q2 audit) - §1 credit thresholds Batch A audited.
+Trailing-180d medians computed and recorded in §1 (HY 283 / IG 78 / CCC 935
+bps; via the framework's own fred_fetcher over the FRED REST API). HY_STRESS
+(+150), HY_RECESSION (+300) and IG_TRANSMISSION (+60) deltas RETAINED
+unchanged: they are sized to a full-cycle distribution and cannot be
+re-verified against FRED's now-3y-truncated OAS history. Measured against the
+available benign 3y window the triggers read high (97.7th-100th pct, above the
+intended 75-90th band), but that is a window artifact — the 2008/2020 tails
+are gone — not a miscalibration; forcing the deltas down into the 3y band
+would fire stress/recession triggers on routine noise. §1.3 CCC divergence:
+the ratio mode ("CCC widens 3x composite/30d") false-positives in compressed
+regimes (2026-06-30: CCC +29 / HY +8 bps -> 3.62x trips on a noise-level
+move); the absolute +200 bps floor correctly did NOT fire and is retained.
+Decision: gate the ratio mode behind a minimum absolute CCC move (values 3x /
++200 / <50 unchanged). Data + code follow-ups (FRED history not exposed via
+any MCP tool; the 3y truncation itself; calculator_mcp wiring; the CCC-gate
+credit.py change) filed as FRAMEWORK_BACKLOG ENG-42/43/44/45. Detail: §6
+Batch A.
 
 2026-06-30 (v1.48, Q2 audit) - broad_market_equity_domestic Scenario A
 ADOPTED: [5,12] -> [10,20]. Confidence MEDIUM -> HIGH. The 2026-06-25 review
@@ -895,13 +919,15 @@ the distinguishing question for any "defer to audit" decision going forward
 is whether the delay itself has a cost, not whether the work is convenient
 to do later.
 
-1. Compute trailing 180d median for FRED BAMLH0A0HYM2, BAMLC0A0CM, BAMLH0A3HYC.
-2. Compute 10th/25th/75th/90th percentiles for each series.
-3. Verify HY_STRESS_DELTA (+150) in 75th-90th percentile band. Adjust if needed.
-4. Verify HY_RECESSION_DELTA (+300) in 75th-90th percentile band. Adjust if needed.
-5. Verify IG_TRANSMISSION_DELTA (+60) in 75th-90th percentile band. Adjust if needed.
-6. Hit-rate audit section 2 thresholds against trailing 5-year data.
-7. Formally classify unflagged thresholds in sections 2.2, 2.3, 2.4.
+--- BATCH A (credit) executed 2026-06-30 via framework fred_fetcher REST API (api.stlouisfed.org, FRED_API_KEY) — NOT the fredgraph.csv path (blocked). ~785 daily obs/series, 2023-07-03 -> 2026-06-29. ---
+1. DONE 2026-06-30. Trailing-180d medians: HY 283 bps, IG 78 bps, CCC 935 bps. Recorded in §1.1/§1.2/§1.3.
+2. DONE 2026-06-30. 3y percentiles p10/25/75/90 (bps): HY 272/285/340/392; IG 77/80/100/122; CCC 740/849/938/974. (180d percentiles also recorded in §1.)
+3. RETAINED, NOT re-verifiable 2026-06-30. Trigger median+150 = 433 bps sits at ~97.7th pct of the available 3y (above the 75-90th band). Cause: FRED truncated ICE BofA OAS series to a rolling 3y window (~Apr 2026) — the "above band" reading is a benign-window artifact (missing 2008/2020 tails), not a miscalibration. No change. FRAMEWORK_BACKLOG ENG-43.
+4. RETAINED 2026-06-30. Trigger median+300 = 583 bps exceeds the entire available 3y range — appropriate for a recession trigger in a non-recessionary window. Not re-verifiable without full-cycle data (ENG-43).
+5. RETAINED 2026-06-30. Trigger median+60 = 138 bps exceeds the 3y max (133 bps). Not re-verifiable vs FRED's truncated 3y history (ENG-43).
+   [§1.3 CCC divergence also audited this pass — see §1.3: ratio mode false-positives in compressed regimes (CCC+29/HY+8 -> 3.62x); gate behind a min absolute CCC move, enforcement pending ENG-45. Absolute +200 floor retained.]
+6. BLOCKED 2026-06-30. 5-year hit-rate audit not runnable — FRED restricts these OAS series to a rolling ~3y window; only ~3y available. Needs FRED ALFRED vintages, a commercial feed, or a local rolling-history store (ENG-43).
+7. DEFERRED. §2.2/2.3/2.4 are energy/macro thresholds, outside the credit-spread (Batch A) scope; carry to a dedicated §2 pass.
 8. Empirical audit section 4.1 return table — all roles. Incorporate FOMC/GDP/CPI data post-April 30. Validate secular_tech B/C and precious_metals C revisions. Formally adopt or reject §6 item 23 pending proposals with documented M16.CalibrationMethodology() 4-layer procedure. Formally adopt all PENDING cells (⚑ MEDIUM confidence) for new v1.13 roles: consumer_defensive_equity C/A/D/E/F; healthcare_defensive_equity all cells; floating_rate_credit_income all cells; emerging_market_equity all cells; systematic_trend_following D/E/F cells. Resolve real_estate_equity_income (⚠ LOW confidence) — requires leverage-adjusted historical calibration before any cell can be formally adopted. Populate [TBD] / PENDING values for inflation_linked_sovereign. Confirm COPX mining leverage adjustment to blended B/C returns.
 9. Empirical audit 4.2/4.3 multipliers. Assess if commodity-linked added; if so restore B/C and floors (IRA 1.5x, Roth 2.0x). Reassess structural IRA gap with updated blendedScenarioReturn() outputs.
 10. Audit 4.4 floor/concentration parameters.
