@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-25 (ENG-33: live-tested the flattened-parameter fix after a clean Claude Desktop restart and a freshly-rebuilt cache — advisor_evaluate_allocation still hung the full ~4 minutes, and the transport log confirms zero occurrences of the tool name anywhere, not just no tools/call entry. This rules out the $ref/$defs hypothesis as cleanly as the prior two attempts ruled out their own. Three independent hypotheses now falsified across two sessions; root cause confirmed client-side, outside this codebase's reach. Flattened account_profile kept regardless as a genuine cleanup; in-process bypass remains the standing workaround — see full ENG-33 entry below). Prior, same day: ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md. Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
+**Last updated:** 2026-06-30 (Q2 audit — opened ENG-42/43/44/45: FRED series-history not exposed via any MCP tool; FRED 3y OAS truncation blocks §1 delta verification + §2 5y hit-rate audit; calculator_mcp not wired and still a stub; credit.py §1.3 CCC divergence ratio-mode OR false-positive found live (CCC+29/HY+8 bps → 3.62x). Full bodies in Part 1.) Prior: 2026-06-25 (ENG-33: live-tested the flattened-parameter fix after a clean Claude Desktop restart and a freshly-rebuilt cache — advisor_evaluate_allocation still hung the full ~4 minutes, and the transport log confirms zero occurrences of the tool name anywhere, not just no tools/call entry. This rules out the $ref/$defs hypothesis as cleanly as the prior two attempts ruled out their own. Three independent hypotheses now falsified across two sessions; root cause confirmed client-side, outside this codebase's reach. Flattened account_profile kept regardless as a genuine cleanup; in-process bypass remains the standing workaround — see full ENG-33 entry below). Prior, same day: ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md. Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -82,6 +82,10 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-39 | CLOSED | MEDIUM | bug | GAP-16's IHP range-position advisory used THREEFYTP10 (10Y term premium) mislabeled as "real yield" -- replaced with a computed REAL_YIELD_10Y_TREND (DGS10-T10YIE) series |
 | ENG-40 | CLOSED | HIGH | bug | fetch_all() and the shared yfinance lock had no timeout -- one stuck/illiquid symbol could hang advisor_run_computation() and every later yfinance fetch indefinitely |
 | ENG-41 | OPEN | LOW | functional-gap | test_pipeline_probabilities_all_at_or_above_floor fails against live data + StubAIClient (one scenario lands at 2.81%, below the test's asserted 3% floor, after the 25pp session cap compresses the others) -- confirmed pre-existing/independent of ENG-40 via git-stash A/B |
+| ENG-42 | OPEN | MEDIUM | infrastructure | No MCP tool (either server) exposes FRED/series-history fetch — calibration audits hand-roll scratch scripts against fred_fetcher's underscore-private helpers |
+| ENG-43 | BLOCKED | MEDIUM | data-integrity | FRED truncated ICE BofA OAS series to a rolling 3y window (~Apr 2026) — §1 delta verification and §2 5y hit-rate audit no longer sourceable from FRED |
+| ENG-44 | OPEN | MEDIUM | infrastructure | calculator_mcp (dev folder) not wired to the project and is a stub — no sanctioned/auditable calc path for ad-hoc audit math (median/percentile/EV) |
+| ENG-45 | OPEN | LOW | bug | credit.py §1.3 CCC divergence OR-combines ratio+absolute modes — ratio mode false-positives in compressed regimes (fired 3.62x on CCC+29/HY+8 bps, 2026-06-30) |
 
 ---
 
@@ -661,6 +665,173 @@ where the cap is actively suppressing a large derived shift elsewhere)?
 Needs a deliberate decision, not a quick patch — flagged here rather than
 fixed inline since it touches probability-derivation semantics, which is
 calibration-adjacent territory (M03), not pure plumbing.
+
+
+### ENG-42 — No MCP tool exposes FRED (or any) series-history fetch
+<!-- ITEM
+  Status:    OPEN
+  Severity:  MEDIUM
+  Priority:  P1
+  Category:  infrastructure
+  Opened:    2026-06-30
+  Area:      python/advisor/mcp_server.py, python/advisor/data/fetchers/fred_fetcher.py, market_data_mcp
+  Related:   ENG-43; M18; M11; Calibration_State.md §6 Batch A
+-->
+
+**Description:** The financial-advisor MCP tools fetch only the *current*
+session snapshot of DataReadings. Historical series — trailing medians,
+percentile distributions, N-day change/velocity, everything a calibration
+audit needs — are reachable only through underscore-private helpers in
+`fred_fetcher.py` (`_fetch_latest`, `_fetch_history`,
+`_fetch_history_with_dates`) that no MCP tool and no CLI command surface.
+The Q2 2026 credit audit (Calibration_State.md §6 Batch A) had to hand-roll
+a scratch script importing those privates directly to get HY/IG/CCC
+history. That is not repeatable, not tested, not discoverable, and violates
+the "don't hand-roll what the framework should own" posture. Two MCP
+servers are wired (financial-advisor and market_data_mcp); neither exposes
+series-history fetch. This is the generalized, permanent form of the
+one-off problem — the FRED REST client already works fine (it powered the
+audit), it just isn't reachable through a tool.
+
+**Suggested next step / scope:**
+- Decide ownership. `market_data_mcp` is the more natural home — it already
+  owns `market_get_history/quotes/macro/ytd` for symbols, and FRED macro
+  series are a data domain, not an advisory computation. Recommended: add
+  `fred_get_history(series_id, days | weeks, as_of?)` there, backed by
+  `fred_fetcher`'s existing REST client, returning dated observations.
+- Promote the internal helper(s) to a documented public function: drop the
+  underscore, pin a stable return contract, add a unit test.
+- Per README §9, update `Project_Instructions_MCP.md` and README §12
+  cookbook once the tool exists.
+
+**Acceptance:** a calibration session pulls N days of any FRED series via a
+tool call, no scratch script, covered by a round-trip test.
+
+
+### ENG-43 — Credit-spread history truncated to 3y by FRED
+<!-- ITEM
+  Status:    BLOCKED
+  Severity:  MEDIUM
+  Priority:  P2
+  Category:  data-integrity
+  Opened:    2026-06-30
+  Area:      Calibration_State.md §1 (HY/IG/CCC thresholds) + §2 hit-rate audit; python/advisor/data/fetchers/fred_fetcher.py
+  Related:   ENG-42; Calibration_State.md §6 Batch A
+  Blocked-on: full-cycle credit history source (see below)
+-->
+
+**Description:** As of ~April 2026 FRED restricts the ICE BofA OAS series
+(BAMLH0A0HYM2 HY, BAMLC0A0CM IG, BAMLH0A3HYC CCC) to a rolling 3-year
+window. Confirmed 2026-06-30: `_fetch_history_with_dates(..., days=1200)`
+returns only ~785 obs back to 2023-07-03. Consequences for §1/§2:
+
+1. §1 stress/recession deltas (HY +150/+300, IG +60) are sized for a
+   full-cycle, crisis-inclusive distribution. Verified against the
+   *available* 3y they land at the 97.7th–100th percentile — above the
+   intended 75–90th band — but that is an artifact of a benign, compressed
+   3y window missing the 2008/2020 tails, NOT evidence the deltas are
+   miscalibrated. They can no longer be verified or recalibrated from FRED.
+2. §2 items 6–7 (5-year hit-rate audit) need ≥5y history — impossible from
+   current FRED.
+
+**Interim posture (adopted this audit):** retain the current deltas
+unchanged. Forcing them down to the 3y-implied band would fire stress /
+recession triggers on routine noise. This is a safe hold, not a fix.
+
+**Suggested next step / scope:** source full-cycle credit history from one
+of — (a) FRED ALFRED archived vintages (may retain pre-truncation series);
+(b) an ICE/Bloomberg commercial feed; (c) a **local rolling-history store**
+that accumulates the daily OAS readings going forward so the window
+self-heals over ~2 years (cheapest; start now). Then re-run §1 delta
+verification and the §2 hit-rate audit. Fetch path is ENG-42.
+
+**Acceptance:** §1 deltas verifiable against a distribution containing ≥1
+full credit cycle; §2 hit-rate audit runnable.
+
+
+### ENG-44 — calculator_mcp not wired to the project + is a stub
+<!-- ITEM
+  Status:    OPEN
+  Severity:  MEDIUM
+  Priority:  P1
+  Category:  infrastructure
+  Opened:    2026-06-30
+  Area:      G:\My Drive\dev\calculator_mcp.py; Claude Desktop MCP config; Project_Instructions_MCP.md
+  Related:   README §5 design principle 6 ("all arithmetic is auditable"); framework NEVER-hand-compute-EV rule
+-->
+
+**Description:** A financial-calculator MCP (`G:\My Drive\dev\
+calculator_mcp.py`, FastMCP "Calculator") exists but is (a) not registered
+as a connector for this project — absent from the session's available tools
+— and (b) currently a stub: only `add`/`subtract`/`multiply`/`divide` and a
+single `calculate_compound_interest`. The framework's "all arithmetic is
+auditable" principle and the NEVER-hand-compute-EV rule call for a
+sanctioned, auditable calculation path; instead ad-hoc audit math (medians,
+percentiles, percentile-rank, N-day velocity — exactly the Q2 credit
+audit's needs) gets hand-rolled in scratch Python.
+
+**Suggested next step / scope:**
+- Wire `calculator_mcp` into Claude Desktop's MCP config (stdio, same
+  launcher pattern as `run_mcp_server.py`; heed the space-in-path gotcha,
+  README §6 — point directly at the `.py`, no `cmd.exe` wrapper).
+- Add the financial/statistical methods the framework reuses: `median`,
+  `percentile(values, p)`, `percentile_rank(values, x)`, `mean`/`stdev`,
+  basis-point delta helpers, and **scenario_weighted_ev(prob_vector,
+  per_scenario_returns)** — the single calculation the framework most wants
+  sanctioned. Single-purpose tools, exact-result contracts, matching the
+  existing docstring style.
+- Define the boundary vs the advisor pipeline: this MCP is for ad-hoc
+  session/audit math, NOT a second home for pipeline math that already
+  lives in `scenario_math.py`/`allocation.py` — two sources of truth would
+  violate design principles 1 & 6. Document the boundary in
+  `Project_Instructions_MCP.md`.
+
+**Acceptance:** the calculator is connectable in an advisory/audit session;
+the next credit audit computes median/percentile/rank via tool calls, not a
+scratch script.
+
+
+### ENG-45 — credit.py §1.3 CCC divergence OR-combines ratio + absolute modes (ratio false-positives)
+<!-- ITEM
+  Status:    OPEN
+  Severity:  LOW
+  Priority:  P2
+  Category:  bug
+  Opened:    2026-06-30
+  Area:      python/advisor/analysis/credit.py (ccc_widening logic, ~line 166); Calibration_State.md §1.3
+  Related:   Calibration_State.md §6 Batch A; M11
+-->
+
+**Description:** `credit.py` computes the CCC tail-first-widening
+monitoring flag as `ccc_widening = ratio_met or absolute_met`, where
+`ratio_met` = "CCC 30d change ≥ ccc_ratio_multiplier (3×) × HY 30d change"
+and `absolute_met` = "CCC 30d ≥ +200 bps AND HY 30d < +50 bps". In a
+compressed regime the ratio mode false-positives: measured 2026-06-30, CCC
++29 bps/30d vs HY +8 bps/30d → ratio 3.62× **trips** the ≥3× condition on a
+noise-level move, while the absolute floor correctly does **not** fire (+29
+≪ +200). Because the modes are OR-combined, the flag fires spuriously
+whenever HY is near-flat (denominator ≈ 0) — precisely the benign regimes
+with no tail stress. The flag is advisory (does not bind the D floor
+alone), hence LOW severity, but a chronically crying-wolf early-warning
+flag desensitizes the briefing.
+
+**Calibration decision (Q2 audit, 2026-06-30 — resolves §1.3's "provisional
+— audit pending June 30"):** the ratio mode must be gated behind a minimum
+absolute CCC move; it must not fire when the CCC 30d change is itself
+immaterial. Threshold *values* (3×, +200, <50) unchanged — only the
+combination logic changes. Recorded in Calibration_State.md §1.3 + §6.
+
+**Suggested next step / scope:** gate the ratio branch —
+`ratio_met = (ccc_vel_30d >= ccc_ratio_multiplier*hy_vel_30d) and
+(ccc_vel_30d >= ccc_ratio_min_bps)` — with `ccc_ratio_min_bps` a new
+calibration-dated §1.3 threshold (suggest ~75–100 bps: above noise, below
+the +200 absolute-stress floor). Add a `test_stage3/test_credit.py` case
+for the compressed-regime false-positive (CCC+29/HY+8 → no fire) plus a
+genuine divergence (CCC+150/HY+20 → fire via ratio; CCC+250/HY+30 → fire
+via absolute). Add the new parameter to Calibration_State.md §1.3.
+
+**Acceptance:** the 2026-06-30 reading (CCC+29/HY+8) does not raise
+`ccc_tail_first_widening`; genuine divergences still do.
 
 
 ---
