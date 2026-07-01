@@ -48,6 +48,7 @@ FIXTURE = """\
 | Parameter | Current Value | Type | Notes |
 | --- | --- | --- | --- |
 | Ratio divergence | CCC widens 3x composite over 30d | Fixed structural | |
+| Minimum absolute CCC move (ratio gate) | 75 bps | Calibration-dated | |
 | Absolute divergence floor | CCC +200 bps while composite +<50 bps over 30d | Calibration-dated | |
 
 ---
@@ -255,6 +256,9 @@ class TestParseThresholds:
 
     def test_ccc_ceiling(self):
         assert self.t.ccc_composite_ceiling_bps == 50
+
+    def test_ccc_ratio_min_bps(self):
+        assert self.t.ccc_ratio_min_bps == 75
 
 
 # ── _parse_return_table ───────────────────────────────────────────────────────

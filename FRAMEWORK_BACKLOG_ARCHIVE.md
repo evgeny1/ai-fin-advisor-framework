@@ -1995,3 +1995,57 @@ Drive Cloud Files lock that blocked staging it earlier in this session --
 recreated from the current `yfinance_fetcher.py` source (same test names/
 coverage, not a byte-identical restore) once the lock cleared on a Claude
 Desktop restart.
+
+
+
+### ENG-45 — credit.py §1.3 CCC divergence OR-combines ratio + absolute modes (ratio false-positives)
+**CLOSED** 2026-06-30 (LOW, bug). Full description and resolution below.
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  LOW
+  Category:  bug
+  Opened:    2026-06-30
+  Closed:    2026-06-30
+  Area:      python/advisor/analysis/credit.py (ccc_widening logic),
+             python/advisor/config/calibration.py, python/advisor/types.py,
+             Calibration_State.md §1.3
+  Related:   Calibration_State.md §6 Batch A; M11
+-->
+
+**Found:** `credit.py` computed the CCC tail-first-widening monitoring flag
+as `ccc_widening = ratio_met or absolute_met`. In a compressed regime the
+ratio mode false-positives: measured 2026-06-30, CCC +29 bps/30d vs HY +8
+bps/30d — ratio 3.62x trips the >=3x condition on a noise-level move, while
+the absolute floor correctly does not fire (+29 << +200). Because the modes
+were OR-combined, the flag fired spuriously whenever HY was near-flat
+(denominator ~0), desensitizing the advisory flag over time.
+
+**Fix:** added a new calibration-dated threshold, `ccc_ratio_min_bps` (value:
+75 bps — the low end of the ~75-100 bps range suggested at audit time, chosen
+so the existing genuine-divergence reading used in tests, +100 bps, still
+fires). `ThresholdBlock` (`types.py`) gained the field, defaulted so none of
+the five existing constructor call sites (test fixtures + the live parser)
+needed updating. `calibration.py`'s `_parse_thresholds()` parses it from a
+new Calibration_State.md §1.3 row ("Minimum absolute CCC move (ratio gate)"),
+falling back to 75 if the row is absent. `credit.py`'s `ratio_met` now
+additionally requires `ccc_vel_30d >= t.ccc_ratio_min_bps` — the ratio
+condition and the absolute-move floor must both be satisfied for ratio mode
+to fire; absolute mode (CCC >= +200 while composite +< 50) is untouched, as
+specified (values 3x/+200/<50 unchanged, only the combination logic changed).
+
+**Tests added** (`test_stage3/test_credit.py`): the exact 2026-06-30
+compressed-regime reading (CCC+29/HY+8 -> does not fire); two genuine
+divergences (CCC+150/HY+20 -> fires via ratio; CCC+250/HY+30 -> fires via
+absolute). One pre-existing test (`test_ccc_tail_first_widening_ratio_mode`,
+previously CCC+70/HY+20) was updated to the CCC+150/HY+20 fixture — 70 bps
+sits below the new 75 bps gate, so it would have flipped from firing to not
+firing under the fix; it was itself a smaller instance of the exact bug
+being fixed here, not a case worth preserving as-is. `test_calibration_parser.py`
+gained a parse test for the new field and its FIXTURE gained the matching row.
+
+**Verification:** full suite `python3 -m pytest -q`: 773 passed / 46 skipped
+(baseline, pre-fix) -> 776 passed / 46 skipped (post-fix, +3 new tests),
+0 regressions. `tools/validate_manifests.py`: not run — no M0X module file
+touched (Calibration_State.md is Layer 2, not a manifest-schema module).
+Calibration_State.md §1.3 updated: new row added, "Ratio divergence" row's
+note changed from "Enforcement pending" to "Enforcement done."

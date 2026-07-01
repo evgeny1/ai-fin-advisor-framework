@@ -115,6 +115,9 @@ def _parse_thresholds(text: str) -> ThresholdBlock:
     ccc_ratio_m = re.search(r"(\d+(?:\.\d+)?)x\s*composite", s13)
     ccc_ratio   = float(ccc_ratio_m.group(1)) if ccc_ratio_m else 3.0
 
+    ccc_ratio_min_m = re.search(r"[Mm]inimum absolute CCC move[^|]*\|\s*[^|]*?(\d+)\s*bps", s13)
+    ccc_ratio_min   = int(ccc_ratio_min_m.group(1)) if ccc_ratio_min_m else 75
+
     return ThresholdBlock(
         hy_stress_delta        = bps(r"HY_STRESS_DELTA\s*\|\s*\+?(\d+)", s11),
         hy_recession_delta     = bps(r"HY_RECESSION_DELTA\s*\|\s*\+?(\d+)", s11),
@@ -126,6 +129,7 @@ def _parse_thresholds(text: str) -> ThresholdBlock:
         ccc_ratio_multiplier   = ccc_ratio,
         ccc_absolute_floor_bps = bps(r"CCC \+(\d+) bps while", s13),
         ccc_composite_ceiling_bps = bps(r"composite \+<(\d+) bps", s13),
+        ccc_ratio_min_bps      = ccc_ratio_min,
     )
 
 

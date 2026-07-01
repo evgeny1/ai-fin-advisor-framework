@@ -2,7 +2,7 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.49  Last updated: June 30, 2026 (Q2 audit, building on the v1.47
+# Version: 1.50  Last updated: June 30, 2026 (Q2 audit, building on the v1.47
 §6 closeout. v1.48: broad_market_equity_domestic Scenario A ADOPTED
 [5,12]->[10,20] — HIGH confidence, 1991/2003 analogs T1-verified,
 client-confirmed; §6 item 23[16] -> ADOPTED. Scenario C: 2003 Iraq analog
@@ -12,7 +12,10 @@ trailing-180d medians computed (HY 283 / IG 78 / CCC 935 bps) and recorded in
 §1; HY/IG stress/recession/transmission deltas RETAINED, not re-verifiable
 (FRED truncated OAS history to a rolling 3y window — ENG-43); §1.3 CCC
 ratio-mode false-positive found (CCC+29/HY+8 -> 3.62x fires on noise),
-gate pending ENG-45. Opened FRAMEWORK_BACKLOG ENG-42/43/44/45. See §6 Batch A.)
+gate pending ENG-45. Opened FRAMEWORK_BACKLOG ENG-42/43/44/45. v1.50:
+same-day coding session — ENG-45 CLOSED, §1.3 gained a new calibration-dated
+parameter (Minimum absolute CCC move / ratio gate, 75 bps); ratio-row note
+updated to reflect enforcement is live in credit.py. See §6 Batch A.)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -75,7 +78,8 @@ Latest reading (Session_Log.md §7): see most recent §7 row.
 
 | Parameter | Current Value | Type | Notes |
 | --- | --- | --- | --- |
-| Ratio divergence | CCC widens 3x composite over 30d | Fixed structural | Audit 2026-06-30: must be gated behind a minimum absolute CCC move — else false-positives when HY is near-flat (CCC+29/HY+8 bps -> 3.62x fires on noise). Enforcement pending FRAMEWORK_BACKLOG ENG-45. |
+| Ratio divergence | CCC widens 3x composite over 30d | Fixed structural | Audit 2026-06-30: gated behind the minimum-absolute-CCC-move row below — else false-positives when HY is near-flat (CCC+29/HY+8 bps -> 3.62x fires on noise). Enforcement done, FRAMEWORK_BACKLOG ENG-45 (credit.py ratio_met). |
+| Minimum absolute CCC move (ratio gate) | 75 bps | Calibration-dated | Added 2026-06-30, ENG-45. Ratio mode only fires if CCC's own 30d move also clears this floor — below the +200 absolute-stress floor, above the 2026-06-30 noise reading (+29 bps). Chosen at the low end of the ~75-100 bps suggested range so existing genuine-divergence readings (e.g. +100 bps) still fire. |
 | Absolute divergence floor | CCC +200 bps while composite +<50 bps over 30d | Calibration-dated | Audited 2026-06-30: value retained (correctly did NOT fire at +29 bps). The audit's finding is on the ratio row above, not this one. See §6 Batch A. |
 
 Latest reading (Session_Log.md §7): see most recent §7 row. CCC divergence watch: active since May 2026 (quiet re-widening while HY tightening). 2026-06-30 audit: CCC 967 bps (above its own trailing-180d median 935, near 180d p90 975), CCC +29 bps/30d vs HY composite +8 bps/30d. Ratio mode would fire (3.62x) but that is a compressed-regime false-positive; absolute floor correctly does not fire. No genuine threshold fires. Detail: §6 Batch A + ENG-45.

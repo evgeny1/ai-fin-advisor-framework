@@ -180,6 +180,9 @@ class ThresholdBlock:
     ccc_ratio_multiplier: float    # CCC widens N× composite over 30d
     ccc_absolute_floor_bps: int    # absolute floor for CCC divergence signal
     ccc_composite_ceiling_bps: int # composite must stay below this for CCC to fire
+    ccc_ratio_min_bps: int = 75    # ratio mode also requires CCC's own 30d move
+                                    # to reach this floor — gates compressed-regime
+                                    # false positives (ENG-45)
 
 
 @dataclass

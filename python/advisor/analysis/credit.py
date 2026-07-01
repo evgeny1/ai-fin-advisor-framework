@@ -153,10 +153,14 @@ def compute_credit_signal(
     # CCC_TailFirstWidening (monitoring flag — does not affect D floor alone)
     ccc_widening = False
     if ccc_vel_30d is not None and hy_vel_30d is not None:
-        # Mode 1: CCC widens t.ccc_ratio_multiplier × HY composite over 30d
+        # Mode 1: CCC widens t.ccc_ratio_multiplier × HY composite over 30d,
+        # gated behind a minimum absolute CCC move (t.ccc_ratio_min_bps) so a
+        # near-zero HY denominator can't trip the ratio on noise-level moves
+        # (ENG-45 — e.g. CCC+29/HY+8bps -> 3.62x, not a genuine divergence)
         ratio_met = (
             hy_vel_30d > 0
             and ccc_vel_30d >= t.ccc_ratio_multiplier * hy_vel_30d
+            and ccc_vel_30d >= t.ccc_ratio_min_bps
         )
         # Mode 2: CCC +≥ t.ccc_absolute_floor_bps while composite +< t.ccc_composite_ceiling_bps
         absolute_met = (

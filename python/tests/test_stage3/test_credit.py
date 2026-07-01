@@ -159,17 +159,46 @@ class TestHistoryThresholds:
             assert sig.ig_transmission_reached
 
     def test_ccc_tail_first_widening_ratio_mode(self, cal):
-        """CCC widens 3x HY over 30d → ccc_tail_first_widening True."""
-        # HY widened 20bps over 30d, CCC widened 70bps → 70 >= 3*20 = 60 → True
-        hy_hist  = [280.0] * 30 + [300.0]  # 20bps widening
-        ccc_hist = [900.0] * 30 + [970.0]  # 70bps widening
+        """Genuine divergence: CCC+150/HY+20 over 30d → fires via ratio mode.
+        150 >= 3*20=60 (ratio) AND 150 >= 75 (ENG-45 absolute-move gate)."""
+        hy_hist  = [280.0] * 30 + [300.0]   # 20bps widening
+        ccc_hist = [900.0] * 30 + [1050.0]  # 150bps widening
 
         readings = {
             "HY_OAS":  make_history_reading("HY_OAS",  hy_hist,  300.0),
-            "CCC_OAS": make_history_reading("CCC_OAS", ccc_hist, 970.0),
+            "CCC_OAS": make_history_reading("CCC_OAS", ccc_hist, 1050.0),
         }
         sig = compute_credit_signal(readings, cal)
         assert sig.ccc_tail_first_widening
+
+    def test_ccc_tail_first_widening_absolute_mode_genuine(self, cal):
+        """Genuine divergence: CCC+250/HY+30 over 30d → fires via absolute mode
+        (250 >= 200 absolute floor; 30 < 50 composite ceiling)."""
+        hy_hist  = [280.0] * 30 + [310.0]   # 30bps widening
+        ccc_hist = [900.0] * 30 + [1150.0]  # 250bps widening
+
+        readings = {
+            "HY_OAS":  make_history_reading("HY_OAS",  hy_hist,  310.0),
+            "CCC_OAS": make_history_reading("CCC_OAS", ccc_hist, 1150.0),
+        }
+        sig = compute_credit_signal(readings, cal)
+        assert sig.ccc_tail_first_widening
+
+    def test_ccc_ratio_mode_gated_against_compressed_regime_noise(self, cal):
+        """ENG-45: CCC+29/HY+8 over 30d → ratio 3.62x >= 3x would fire on the
+        raw ratio, but CCC's own move (29bps) is below the ccc_ratio_min_bps
+        gate (75bps) — this is compressed-regime noise, not a genuine
+        divergence, and must NOT fire. Absolute mode also correctly doesn't
+        fire (29 << 200). Confirmed live 2026-06-30."""
+        hy_hist  = [280.0] * 30 + [288.0]   # 8bps widening
+        ccc_hist = [900.0] * 30 + [929.0]   # 29bps widening
+
+        readings = {
+            "HY_OAS":  make_history_reading("HY_OAS",  hy_hist,  288.0),
+            "CCC_OAS": make_history_reading("CCC_OAS", ccc_hist, 929.0),
+        }
+        sig = compute_credit_signal(readings, cal)
+        assert not sig.ccc_tail_first_widening
 
     def test_ccc_tail_first_widening_absolute_mode(self, cal):
         """CCC +200bps while HY <50bps → ccc_tail_first_widening True."""
