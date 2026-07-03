@@ -125,13 +125,21 @@ def _fetch_history(series_id: str, weeks: int) -> List[float]:
     return vals[-weeks:] if vals else []
 
 
-def _fetch_history_with_dates(series_id: str, days: int) -> List[tuple]:
+def fetch_history_with_dates(series_id: str, days: int) -> List[tuple]:
     """
-    Fetch up to `days` calendar days of non-missing (date_str, value)
-    observations, oldest-first. Added for REAL_YIELD_10Y_TREND (GAP-16
-    follow-up, 2026-06-21): unlike _fetch_history() above, computing
-    real_yield = DGS10 - T10YIE requires aligning two daily series by
-    date before subtracting — a bare value list isn't enough.
+    Public, stable-contract history fetch (promoted from a private helper,
+    ENG-42 — this was the one audit scripts kept reaching for directly).
+
+    Returns up to `days` calendar days of non-missing (date_str, value)
+    observations for `series_id`, oldest-first; date_str is FRED's native
+    ISO 8601 (YYYY-MM-DD) string. Returns [] if FRED_API_KEY is unset.
+    Raises requests.HTTPError/RequestException on a failed HTTP call —
+    callers (internal or ad-hoc) are expected to handle that themselves,
+    same as every other fetcher in this module. Added for
+    REAL_YIELD_10Y_TREND (GAP-16 follow-up, 2026-06-21): unlike
+    _fetch_history() above, computing real_yield = DGS10 - T10YIE requires
+    aligning two daily series by date before subtracting — a bare value
+    list isn't enough.
     """
     key = _api_key()
     if not key:
@@ -318,8 +326,8 @@ def _fetch_real_yield_trend(spec: FetchSpec, weeks: int) -> List[DataReading]:
     analysis/range_position.py's IHP advisory.
     """
     try:
-        nominal   = _fetch_history_with_dates("DGS10",  days=weeks * 7 + 21)
-        breakeven = _fetch_history_with_dates("T10YIE", days=weeks * 7 + 21)
+        nominal   = fetch_history_with_dates("DGS10",  days=weeks * 7 + 21)
+        breakeven = fetch_history_with_dates("T10YIE", days=weeks * 7 + 21)
     except Exception as e:
         logger.warning(f"FRED DGS10/T10YIE real-yield fetch failed: {e}")
         return [DataReading(spec_id=spec.id, value=None,

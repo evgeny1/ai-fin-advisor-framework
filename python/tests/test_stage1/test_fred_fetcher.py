@@ -195,6 +195,65 @@ def _real_yield_spec() -> FetchSpec:
     )
 
 
+class TestFetchHistoryWithDates:
+    """fetch_history_with_dates() — promoted public helper (ENG-42)."""
+
+    def _mock_history(self, observations: list) -> "function":
+        def fake_get(url, params=None, timeout=None):
+            mock = MagicMock()
+            mock.raise_for_status = MagicMock()
+            mock.json.return_value = {
+                "observations": [{"date": d, "value": v} for d, v in observations]
+            }
+            return mock
+        return fake_get
+
+    def test_returns_oldest_first_date_value_tuples(self, monkeypatch):
+        monkeypatch.setenv("FRED_API_KEY", "test_key")
+        from advisor.data.fetchers.fred_fetcher import fetch_history_with_dates
+        obs = [("2026-06-01", "935.0"), ("2026-06-02", "940.0"), ("2026-06-03", "967.0")]
+        with patch("advisor.data.fetchers.fred_fetcher.requests.get",
+                   side_effect=self._mock_history(obs)):
+            result = fetch_history_with_dates("BAMLH0A3HYC", days=30)
+        assert result == [("2026-06-01", 935.0), ("2026-06-02", 940.0), ("2026-06-03", 967.0)]
+
+    def test_skips_missing_value_marker(self, monkeypatch):
+        monkeypatch.setenv("FRED_API_KEY", "test_key")
+        from advisor.data.fetchers.fred_fetcher import fetch_history_with_dates
+        obs = [("2026-06-01", "935.0"), ("2026-06-02", "."), ("2026-06-03", "967.0")]
+        with patch("advisor.data.fetchers.fred_fetcher.requests.get",
+                   side_effect=self._mock_history(obs)):
+            result = fetch_history_with_dates("BAMLH0A3HYC", days=30)
+        assert result == [("2026-06-01", 935.0), ("2026-06-03", 967.0)]
+
+    def test_no_api_key_returns_empty_list(self, monkeypatch):
+        monkeypatch.delenv("FRED_API_KEY", raising=False)
+        from advisor.data.fetchers.fred_fetcher import fetch_history_with_dates
+        assert fetch_history_with_dates("BAMLH0A3HYC", days=30) == []
+
+    def test_no_observations_returns_empty_list(self, monkeypatch):
+        monkeypatch.setenv("FRED_API_KEY", "test_key")
+        from advisor.data.fetchers.fred_fetcher import fetch_history_with_dates
+        with patch("advisor.data.fetchers.fred_fetcher.requests.get",
+                   side_effect=self._mock_history([])):
+            assert fetch_history_with_dates("BAMLH0A3HYC", days=30) == []
+
+    def test_propagates_http_error(self, monkeypatch):
+        """Stable contract: raises on a failed HTTP call, same as every
+        other fetcher in this module — callers handle it, this doesn't
+        swallow it into an empty list."""
+        monkeypatch.setenv("FRED_API_KEY", "test_key")
+        from advisor.data.fetchers.fred_fetcher import fetch_history_with_dates
+        import requests as _requests
+
+        def raise_get(url, params=None, timeout=None):
+            raise _requests.exceptions.ConnectionError("boom")
+
+        with patch("advisor.data.fetchers.fred_fetcher.requests.get", side_effect=raise_get):
+            with pytest.raises(_requests.exceptions.ConnectionError):
+                fetch_history_with_dates("BAMLH0A3HYC", days=30)
+
+
 class TestRealYieldTrend:
     """real_yield = DGS10 - T10YIE, resampled to weekly closes."""
 
