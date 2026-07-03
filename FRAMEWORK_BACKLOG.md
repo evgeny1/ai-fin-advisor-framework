@@ -703,12 +703,26 @@ returns only ~785 obs back to 2023-07-03. Consequences for §1/§2:
 unchanged. Forcing them down to the 3y-implied band would fire stress /
 recession triggers on routine noise. This is a safe hold, not a fix.
 
-**Suggested next step / scope:** source full-cycle credit history from one
-of — (a) FRED ALFRED archived vintages (may retain pre-truncation series);
-(b) an ICE/Bloomberg commercial feed; (c) a **local rolling-history store**
-that accumulates the daily OAS readings going forward so the window
-self-heals over ~2 years (cheapest; start now). Then re-run §1 delta
-verification and the §2 hit-rate audit. Fetch path is ENG-42.
+**Path (a) ruled out, confirmed empirically 2026-07-02:** ALFRED does NOT
+carry these series at all — querying `BAMLH0A0HYM2` with `realtime_start`/
+`vintage_dates` params (the ALFRED vintage mechanism) returns FRED's own
+error: `"The series does not exist in ALFRED but may exist in FRED."` The
+series metadata itself confirms the intent: `"Starting in April 2026, this
+series will only include 3 years of observations. For more data, go to the
+source."` — i.e. FRED is pointing users at ICE directly, not at its own
+archival layer. This is a licensing/redistribution constraint on the
+current data, not a revision-history gap ALFRED's vintage system was ever
+built to solve — the two are different problems that happen to sound
+similar. Same conclusion applies to `BAMLC0A0CM` (IG) and `BAMLH0A3HYC`
+(CCC) — one ICE BofA family, one blanket policy change, not verified
+individually per-series but no reason to expect otherwise.
+
+**Client decision needed (narrowed to two real options):**
+(b) an ICE/Bloomberg commercial feed — the path FRED's own notes point to;
+(c) a **local rolling-history store** that accumulates the daily OAS
+readings going forward so the window self-heals over ~2 years (cheapest;
+buildable now via ENG-42's `fred_get_history`/`fetch_history_with_dates`).
+Then re-run §1 delta verification and the §2 hit-rate audit.
 
 **Acceptance:** §1 deltas verifiable against a distribution containing ≥1
 full credit cycle; §2 hit-rate audit runnable.
