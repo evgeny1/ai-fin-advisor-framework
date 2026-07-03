@@ -365,6 +365,22 @@ def _tool_run_computation(floor_account_weights_json: Optional[Any] = None) -> s
     except Exception as e:
         result["flags"].append(f"⚠ instruments.json write failed: {e}")
 
+    # ENG-43: opportunistically merge today's FRED credit-history window into
+    # CreditHistoryStore.json (self-healing local history, client-chosen path
+    # (c)). Gated to once/day inside the function itself; never fatal.
+    try:
+        from .data.credit_history_store import update_credit_history_store
+        hist_summary = update_credit_history_store()
+        if hist_summary.get("error"):
+            result["flags"].append(
+                f"⚠ CreditHistoryStore update failed (non-fatal): {hist_summary['error']}"
+            )
+        elif hist_summary.get("updated") and any(hist_summary.get("added", {}).values()):
+            added_str = ", ".join(f"{k}:+{v}" for k, v in hist_summary["added"].items() if v)
+            result["flags"].append(f"CreditHistoryStore updated ({added_str})")
+    except Exception as e:
+        result["flags"].append(f"⚠ CreditHistoryStore update failed (non-fatal): {e}")
+
     try:
         warns = validate_classifications(alloc_tickers, cal)
         if warns:
