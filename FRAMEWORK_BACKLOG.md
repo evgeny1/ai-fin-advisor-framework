@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-06-30, same-day follow-on coding session (ENG-45 CLOSED — credit.py ccc_widening ratio mode gated behind a new `ccc_ratio_min_bps` calibration threshold (75 bps); full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior, same day (Q2 audit — opened ENG-42/43/44/45: FRED series-history not exposed via any MCP tool; FRED 3y OAS truncation blocks §1 delta verification + §2 5y hit-rate audit; calculator_mcp not wired and still a stub; credit.py §1.3 CCC divergence ratio-mode OR false-positive found live (CCC+29/HY+8 bps → 3.62x). Full bodies in Part 1.) Prior: 2026-06-25 (ENG-33: live-tested the flattened-parameter fix after a clean Claude Desktop restart and a freshly-rebuilt cache — advisor_evaluate_allocation still hung the full ~4 minutes, and the transport log confirms zero occurrences of the tool name anywhere, not just no tools/call entry. This rules out the $ref/$defs hypothesis as cleanly as the prior two attempts ruled out their own. Three independent hypotheses now falsified across two sessions; root cause confirmed client-side, outside this codebase's reach. Flattened account_profile kept regardless as a genuine cleanup; in-process bypass remains the standing workaround — see full ENG-33 entry below). Prior, same day: ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md. Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
+**Last updated:** 2026-07-02, coding session (ENG-42 CLOSED — fred_get_history tool + promoted fetch_history_with_dates; ENG-43 CLOSED — ALFRED ruled out empirically, path (c) local self-healing CreditHistoryStore.json implemented, seeded, and wired into advisor_run_computation(); ENG-44 CLOSED — calculator_mcp wired into Claude Desktop's MCP config and documented; ENG-46/47 discovered and logged, not fixed. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-06-30, same-day follow-on coding session (ENG-45 CLOSED — credit.py ccc_widening ratio mode gated behind a new `ccc_ratio_min_bps` calibration threshold (75 bps); full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior, same day (Q2 audit — opened ENG-42/43/44/45: FRED series-history not exposed via any MCP tool; FRED 3y OAS truncation blocks §1 delta verification + §2 5y hit-rate audit; calculator_mcp not wired and still a stub; credit.py §1.3 CCC divergence ratio-mode OR false-positive found live (CCC+29/HY+8 bps → 3.62x). Full bodies in Part 1.) Prior: 2026-06-25 (ENG-33: live-tested the flattened-parameter fix after a clean Claude Desktop restart and a freshly-rebuilt cache — advisor_evaluate_allocation still hung the full ~4 minutes, and the transport log confirms zero occurrences of the tool name anywhere, not just no tools/call entry. This rules out the $ref/$defs hypothesis as cleanly as the prior two attempts ruled out their own. Three independent hypotheses now falsified across two sessions; root cause confirmed client-side, outside this codebase's reach. Flattened account_profile kept regardless as a genuine cleanup; in-process bypass remains the standing workaround — see full ENG-33 entry below). Prior, same day: ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md. Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -83,7 +83,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-40 | CLOSED | HIGH | bug | fetch_all() and the shared yfinance lock had no timeout -- one stuck/illiquid symbol could hang advisor_run_computation() and every later yfinance fetch indefinitely |
 | ENG-41 | OPEN | LOW | functional-gap | test_pipeline_probabilities_all_at_or_above_floor fails against live data + StubAIClient (one scenario lands at 2.81%, below the test's asserted 3% floor, after the 25pp session cap compresses the others) -- confirmed pre-existing/independent of ENG-40 via git-stash A/B |
 | ENG-42 | CLOSED | MEDIUM | infrastructure | No MCP tool (either server) exposes FRED/series-history fetch — calibration audits hand-roll scratch scripts against fred_fetcher's underscore-private helpers |
-| ENG-43 | BLOCKED | MEDIUM | data-integrity | FRED truncated ICE BofA OAS series to a rolling 3y window (~Apr 2026) — §1 delta verification and §2 5y hit-rate audit no longer sourceable from FRED |
+| ENG-43 | CLOSED | MEDIUM | data-integrity | FRED truncated ICE BofA OAS series to a rolling 3y window (~Apr 2026) — fixed via a self-healing local history store (path c); see ARCHIVE for the multi-year data-outcome caveat |
 | ENG-44 | CLOSED | MEDIUM | infrastructure | calculator_mcp (dev folder) not wired to the project and is a stub — no sanctioned/auditable calc path for ad-hoc audit math (median/percentile/EV) |
 | ENG-45 | CLOSED | LOW | bug | credit.py §1.3 CCC divergence OR-combines ratio+absolute modes — ratio mode false-positives in compressed regimes (fired 3.62x on CCC+29/HY+8 bps, 2026-06-30) |
 | ENG-46 | OPEN | LOW | testing | test_compaction.py hardcodes "Archive_2026Q2.md" without freezing datetime.date.today() — breaks every real quarter boundary; tripped mid-session 2026-07-01/02 |
@@ -674,58 +674,7 @@ calibration-adjacent territory (M03), not pure plumbing.
 
 
 ### ENG-43 — Credit-spread history truncated to 3y by FRED
-<!-- ITEM
-  Status:    BLOCKED
-  Severity:  MEDIUM
-  Priority:  P2
-  Category:  data-integrity
-  Opened:    2026-06-30
-  Area:      Calibration_State.md §1 (HY/IG/CCC thresholds) + §2 hit-rate audit; python/advisor/data/fetchers/fred_fetcher.py
-  Related:   ENG-42; Calibration_State.md §6 Batch A
-  Blocked-on: full-cycle credit history source (see below)
--->
-
-**Description:** As of ~April 2026 FRED restricts the ICE BofA OAS series
-(BAMLH0A0HYM2 HY, BAMLC0A0CM IG, BAMLH0A3HYC CCC) to a rolling 3-year
-window. Confirmed 2026-06-30: `_fetch_history_with_dates(..., days=1200)`
-returns only ~785 obs back to 2023-07-03. Consequences for §1/§2:
-
-1. §1 stress/recession deltas (HY +150/+300, IG +60) are sized for a
-   full-cycle, crisis-inclusive distribution. Verified against the
-   *available* 3y they land at the 97.7th–100th percentile — above the
-   intended 75–90th band — but that is an artifact of a benign, compressed
-   3y window missing the 2008/2020 tails, NOT evidence the deltas are
-   miscalibrated. They can no longer be verified or recalibrated from FRED.
-2. §2 items 6–7 (5-year hit-rate audit) need ≥5y history — impossible from
-   current FRED.
-
-**Interim posture (adopted this audit):** retain the current deltas
-unchanged. Forcing them down to the 3y-implied band would fire stress /
-recession triggers on routine noise. This is a safe hold, not a fix.
-
-**Path (a) ruled out, confirmed empirically 2026-07-02:** ALFRED does NOT
-carry these series at all — querying `BAMLH0A0HYM2` with `realtime_start`/
-`vintage_dates` params (the ALFRED vintage mechanism) returns FRED's own
-error: `"The series does not exist in ALFRED but may exist in FRED."` The
-series metadata itself confirms the intent: `"Starting in April 2026, this
-series will only include 3 years of observations. For more data, go to the
-source."` — i.e. FRED is pointing users at ICE directly, not at its own
-archival layer. This is a licensing/redistribution constraint on the
-current data, not a revision-history gap ALFRED's vintage system was ever
-built to solve — the two are different problems that happen to sound
-similar. Same conclusion applies to `BAMLC0A0CM` (IG) and `BAMLH0A3HYC`
-(CCC) — one ICE BofA family, one blanket policy change, not verified
-individually per-series but no reason to expect otherwise.
-
-**Client decision needed (narrowed to two real options):**
-(b) an ICE/Bloomberg commercial feed — the path FRED's own notes point to;
-(c) a **local rolling-history store** that accumulates the daily OAS
-readings going forward so the window self-heals over ~2 years (cheapest;
-buildable now via ENG-42's `fred_get_history`/`fetch_history_with_dates`).
-Then re-run §1 delta verification and the §2 hit-rate audit.
-
-**Acceptance:** §1 deltas verifiable against a distribution containing ≥1
-full credit cycle; §2 hit-rate audit runnable.
+**CLOSED** 2026-07-02 (MEDIUM, data-integrity). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 
 ### ENG-44 — calculator_mcp not wired to the project + is a stub

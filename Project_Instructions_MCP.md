@@ -229,6 +229,17 @@ Execute the sequence below, in strict order. (This section is itself the authori
                                   advisor_run_computation() (Step 3), from THIS session's
                                   §11.3 active tickers (@see M12_DriveProtocol.md STEP 4b)
                                   NEVER push instruments.json to git
+                                CreditHistoryStore.json (ENG-43) — a DIFFERENT case: this
+                                  ONE local file IS committed to git, automatically, by
+                                  advisor_run_computation() itself (Step 3) — a `git commit`
+                                  subprocess call inside credit_history_store.py, not via
+                                  Desktop Commander. At most once per calendar day (self-
+                                  gated); never pushed (push happens via whatever later
+                                  write-back naturally pushes); any failure (network, git)
+                                  is caught internally and surfaced as an advisory flag,
+                                  never a HARD_STOP. Client-chosen mitigation for FRED's
+                                  ICE BofA OAS 3y truncation (ALFRED confirmed unavailable
+                                  for these series, 2026-07-02) — self-heals over ~2 years.
 ```
 
 ---

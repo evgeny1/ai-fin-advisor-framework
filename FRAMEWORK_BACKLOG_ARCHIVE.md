@@ -2190,3 +2190,91 @@ stash`-style operations that touch the same file rapidly in succession.
 **Acceptance met:** a calibration session can pull N days of any FRED
 series via a tool call (`fred_get_history` in market_data_mcp), no scratch
 script, covered by round-trip tests in both repos.
+
+
+### ENG-43 — Credit-spread history truncated to 3y by FRED
+**CLOSED** 2026-07-02 (MEDIUM, data-integrity). Full description and resolution below.
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  MEDIUM
+  Category:  data-integrity
+  Opened:    2026-06-30
+  Closed:    2026-07-02
+  Area:      python/advisor/data/credit_history_store.py (new);
+             python/advisor/mcp_server.py (Step 3 wiring); CreditHistoryStore.json (new, repo root)
+  Related:   ENG-42 (fetch_history_with_dates, which this consumes); Calibration_State.md Sec1 Batch A
+-->
+
+**Found:** FRED restricts the ICE BofA OAS series (BAMLH0A0HYM2 HY,
+BAMLC0A0CM IG, BAMLH0A3HYC CCC) to a rolling 3-year window as of ~April
+2026. Sec1 stress/recession deltas (sized for a full-cycle distribution)
+and the Sec2 5-year hit-rate audit could no longer be verified or run
+against FRED alone.
+
+**Path (a) ruled out, confirmed empirically 2026-07-02:** FRED's ALFRED
+archival layer does not carry these series at all. Querying with
+ALFRED's own vintage mechanism (`realtime_start`/`vintage_dates` params)
+returns FRED's own error: "the series does not exist in ALFRED but may
+exist in FRED." The series' own metadata says "for more data, go to the
+source" (ICE directly), not at FRED's own archival layer -- confirming
+this is a licensing/redistribution constraint on current data, not a
+revision-history gap ALFRED was ever built to solve.
+
+**Path (c) chosen and implemented (client decision 2026-07-02):** a new
+module, `credit_history_store.py`, accumulates the daily OAS readings FRED
+does currently provide into `CreditHistoryStore.json` (repo root, git-
+tracked) every session, so the window self-heals over roughly the next ~2
+years even though FRED's own window never expands. Design:
+- One JSON file, keyed by spec_id (HY_OAS/IG_OAS/CCC_OAS) -> {date: bps},
+  plus a `last_updated` stamp. Values converted from FRED's native percent
+  to this repo's bps convention on write.
+- `update_credit_history_store()` re-fetches each series' full currently-
+  visible FRED window (~1200 days) and merges any new/changed observations
+  in -- not just "append today" -- so a run after a gap of missed sessions
+  still catches up, and a date already captured is never lost even after
+  it ages out of FRED's own live window.
+- Gated to run at most once per calendar day (checked against
+  `last_updated`) -- FRED is daily-resolution regardless, so more frequent
+  runs would add API load and git-commit noise for zero additional
+  coverage.
+- Self-commits to git (add + commit, no push -- push happens via whatever
+  later write-back naturally pushes) whenever new data actually merged in.
+  `GIT_TERMINAL_PROMPT=0` + a 30s subprocess timeout, deliberately simple
+  and low-risk for a background nice-to-have (contrast ENG-33/ENG-38, both
+  real git-push hangs elsewhere in this codebase -- this avoids that whole
+  class of failure by never pushing).
+- Wired into `advisor_run_computation()` (Step 3), immediately after
+  CreditSignal computation, fire-and-forget: any failure (network, parse,
+  git) is caught internally and surfaced as an advisory flag, never a
+  HARD_STOP -- same posture as `instruments.json`'s write at the same step.
+
+**Seeded 2026-07-02:** `CreditHistoryStore.json` backfilled from FRED's
+currently-visible window -- HY/IG/CCC, 2023-07-03 through 2026-07-01 (785
+daily observations per series, matching the window FRED itself confirms).
+This is the one-time historical baseline; `update_credit_history_store()`
+extends it forward every session from here.
+
+**Verified:** 13/13 new tests (`test_stage1/test_credit_history_store.py`)
+-- store load/malformed-JSON/missing-key handling, once-per-day gating,
+percent-to-bps merge conversion, aged-out-date preservation, zero-new-data
+no-commit path, git-failure-caught-not-raised, fetch-exception-caught-not-
+raised. Full suite: 777 passed (plus the 2 known ENG-46 date-boundary
+failures, pre-existing and unrelated), 0 new regressions.
+
+**What this does NOT close:** Sec1's full-cycle-distribution acceptance
+criterion is a multi-year timeline, not something this ticket resolves on
+its own -- even after ~2 years of accumulation the store will cover
+~5 years total (3y FRED baseline + ~2y accumulated), which is enough for
+the Sec2 hit-rate audit's stated need but does NOT itself guarantee
+inclusion of a genuine stress/recession event (2008, 2020) the way the
+original Sec1 deltas were sized against. The interim posture from the
+2026-06-30 audit (retain HY/IG/CCC deltas unchanged, do not force them
+down to what the truncated 3y window alone would imply) stands until a
+future audit has enough accumulated history to actually re-verify them --
+this ticket's job was building the mechanism that makes that future audit
+possible at all, not performing it early on insufficient data.
+
+**Acceptance met (the engineering deliverable, not the multi-year data
+outcome):** a self-healing local history mechanism exists, is seeded, is
+wired into every session, is tested, and requires no manual intervention
+to keep accumulating going forward.
