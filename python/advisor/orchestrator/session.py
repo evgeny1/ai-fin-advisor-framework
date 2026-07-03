@@ -59,6 +59,17 @@ from .scoring_questions import (
 logger = logging.getLogger(__name__)
 
 
+def _fmt_bps(value: "float | None") -> str:
+    """Format a bps value for a progress/summary line, degrading to "n/a"
+    when unavailable (ENG-47) rather than crashing the f-string that reads
+    it. A transient FRED read-timeout is enough to leave e.g.
+    YieldCurveSignal.spread_10y_2y as None -- not rare enough to treat as
+    it-basically-never-happens. This is a log/progress line, not a
+    computation result, so "n/a" is a safe degrade -- no downstream signal
+    math depends on this string."""
+    return "n/a" if value is None else f"{value:.0f}bps"
+
+
 class SessionPipeline:
     """
     Implements M05.SessionStartSequence Steps 1–10 as a single runnable pipeline.
@@ -356,7 +367,7 @@ class SessionPipeline:
         yc_summary = "n/a"
         if ctx.yield_curve_signal:
             yc = ctx.yield_curve_signal
-            yc_summary = f"10Y-2Y={yc.spread_10y_2y:.0f}bps {yc.e_pathway_type.value}"
+            yc_summary = f"10Y-2Y={_fmt_bps(yc.spread_10y_2y)} {yc.e_pathway_type.value}"
         cc_summary = f"Cascade={ctx.cascade_signal.level.value}" if ctx.cascade_signal else "n/a"
         self._prog(f"Step 4/8  Credit: {cs_summary} | {yc_summary} | {cc_summary}", done=True)
 
@@ -500,8 +511,8 @@ class SessionPipeline:
 
         if ctx.yield_curve_signal:
             yc = ctx.yield_curve_signal
-            lines.append(f"\nYIELD CURVE: 10Y-2Y={yc.spread_10y_2y:.0f}bps "
-                         f"10Y-3M={yc.spread_10y_3m:.0f}bps "
+            lines.append(f"\nYIELD CURVE: 10Y-2Y={_fmt_bps(yc.spread_10y_2y)} "
+                         f"10Y-3M={_fmt_bps(yc.spread_10y_3m)} "
                          f"D_timing={yc.d_timing_signal.value} "
                          f"E_watch={yc.e_watch_flag.value} "
                          f"e_pathway={yc.e_pathway_type.value}")

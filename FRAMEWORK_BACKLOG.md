@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-02, coding session (ENG-42 CLOSED — fred_get_history tool + promoted fetch_history_with_dates; ENG-43 CLOSED — ALFRED ruled out empirically, path (c) local self-healing CreditHistoryStore.json implemented, seeded, and wired into advisor_run_computation(); ENG-44 CLOSED — calculator_mcp wired into Claude Desktop's MCP config and documented; ENG-46/47 discovered and logged, not fixed. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-06-30, same-day follow-on coding session (ENG-45 CLOSED — credit.py ccc_widening ratio mode gated behind a new `ccc_ratio_min_bps` calibration threshold (75 bps); full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior, same day (Q2 audit — opened ENG-42/43/44/45: FRED series-history not exposed via any MCP tool; FRED 3y OAS truncation blocks §1 delta verification + §2 5y hit-rate audit; calculator_mcp not wired and still a stub; credit.py §1.3 CCC divergence ratio-mode OR false-positive found live (CCC+29/HY+8 bps → 3.62x). Full bodies in Part 1.) Prior: 2026-06-25 (ENG-33: live-tested the flattened-parameter fix after a clean Claude Desktop restart and a freshly-rebuilt cache — advisor_evaluate_allocation still hung the full ~4 minutes, and the transport log confirms zero occurrences of the tool name anywhere, not just no tools/call entry. This rules out the $ref/$defs hypothesis as cleanly as the prior two attempts ruled out their own. Three independent hypotheses now falsified across two sessions; root cause confirmed client-side, outside this codebase's reach. Flattened account_profile kept regardless as a genuine cleanup; in-process bypass remains the standing workaround — see full ENG-33 entry below). Prior, same day: ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md. Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
+**Last updated:** 2026-07-03, coding session (ENG-46 CLOSED — froze "today" in the two quarter-boundary-hardcoded compaction tests; ENG-47 CLOSED — added _fmt_bps() None-safe formatting, fixed at both call sites including a second occurrence found while fixing the first. Full suite: 801 passed / 46 skipped, 0 failures. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-07-02, coding session (ENG-42 CLOSED — fred_get_history tool + promoted fetch_history_with_dates; ENG-43 CLOSED — ALFRED ruled out empirically, path (c) local self-healing CreditHistoryStore.json implemented, seeded, and wired into advisor_run_computation(); ENG-44 CLOSED — calculator_mcp wired into Claude Desktop's MCP config and documented; ENG-46/47 discovered and logged, not fixed. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-06-30, same-day follow-on coding session (ENG-45 CLOSED — credit.py ccc_widening ratio mode gated behind a new `ccc_ratio_min_bps` calibration threshold (75 bps); full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior, same day (Q2 audit — opened ENG-42/43/44/45: FRED series-history not exposed via any MCP tool; FRED 3y OAS truncation blocks §1 delta verification + §2 5y hit-rate audit; calculator_mcp not wired and still a stub; credit.py §1.3 CCC divergence ratio-mode OR false-positive found live (CCC+29/HY+8 bps → 3.62x). Full bodies in Part 1.) Prior: 2026-06-25 (ENG-33: live-tested the flattened-parameter fix after a clean Claude Desktop restart and a freshly-rebuilt cache — advisor_evaluate_allocation still hung the full ~4 minutes, and the transport log confirms zero occurrences of the tool name anywhere, not just no tools/call entry. This rules out the $ref/$defs hypothesis as cleanly as the prior two attempts ruled out their own. Three independent hypotheses now falsified across two sessions; root cause confirmed client-side, outside this codebase's reach. Flattened account_profile kept regardless as a genuine cleanup; in-process bypass remains the standing workaround — see full ENG-33 entry below). Prior, same day: ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md. Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -86,8 +86,8 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-43 | CLOSED | MEDIUM | data-integrity | FRED truncated ICE BofA OAS series to a rolling 3y window (~Apr 2026) — fixed via a self-healing local history store (path c); see ARCHIVE for the multi-year data-outcome caveat |
 | ENG-44 | CLOSED | MEDIUM | infrastructure | calculator_mcp (dev folder) not wired to the project and is a stub — no sanctioned/auditable calc path for ad-hoc audit math (median/percentile/EV) |
 | ENG-45 | CLOSED | LOW | bug | credit.py §1.3 CCC divergence OR-combines ratio+absolute modes — ratio mode false-positives in compressed regimes (fired 3.62x on CCC+29/HY+8 bps, 2026-06-30) |
-| ENG-46 | OPEN | LOW | testing | test_compaction.py hardcodes "Archive_2026Q2.md" without freezing datetime.date.today() — breaks every real quarter boundary; tripped mid-session 2026-07-01/02 |
-| ENG-47 | OPEN | MEDIUM | bug | session.py Step4 signal-summary f-string crashes (TypeError on NoneType.__format__) when yield_curve_signal.spread_10y_2y is None — exposed by a live FRED timeout, not just a test flake |
+| ENG-46 | CLOSED | LOW | testing | test_compaction.py hardcodes "Archive_2026Q2.md" without freezing datetime.date.today() — breaks every real quarter boundary; tripped mid-session 2026-07-01/02 |
+| ENG-47 | CLOSED | MEDIUM | bug | session.py Step4 signal-summary f-string crashes (TypeError on NoneType.__format__) when yield_curve_signal.spread_10y_2y is None — exposed by a live FRED timeout, not just a test flake |
 
 ---
 
@@ -686,85 +686,11 @@ calibration-adjacent territory (M03), not pure plumbing.
 
 
 ### ENG-46 — test_compaction.py hardcodes a specific quarter, breaks every real quarter boundary
-<!-- ITEM
-  Status:    OPEN
-  Severity:  LOW
-  Category:  testing
-  Opened:    2026-07-01/02 (discovered mid-ENG-42 session; the exact boundary
-             crossing happened during the session, not before it)
-  Area:      python/tests/test_stage1/test_compaction.py;
-             python/advisor/data/file_protocol.py (_quarter_label, unaffected —
-             the bug is in the test, not this production function)
-  Related:   ENG-41 (a different flavor of the same root issue: live/real-world
-             state making a hardcoded test assumption go stale)
--->
-
-**Found:** `test_sec7_overflow_archives_oldest` and `test_sec8_overflow_archives_oldest`
-both hardcode `assert archive_fn == "Archive_2026Q2.md"`. `_compact_session_log()`
-computes the archive filename from `_quarter_label(datetime.date.today())` —
-the REAL current date, never mocked or frozen in the test. Both tests passed
-in this same session's earlier full-suite runs (773 passed, then 776 passed,
-both with 0 failures) and then failed on a later run with no code change to
-either file — `AssertionError: assert 'Archive_2026Q3.md' == 'Archive_2026Q2.md'`.
-Confirmed via code inspection (not a git-stash A/B, since the two runs were
-identical on-disk): the session's wall-clock time crossed the Q2→Q3 boundary
-(June 30 -> July 1) somewhere in the ~hours between those pytest invocations —
-this is a genuinely long-running session, not an instant one. The test isn't
-flaky in the usual sense; it's a **ticking time bomb** that will reliably fail
-every time the suite runs after a real quarter rolls over, until fixed.
-
-**Fix (not yet done — logged, not touched, this session was scoped to ENG-42/44):**
-either (a) freeze/mock `datetime.date.today()` in these two tests (e.g.
-`monkeypatch` or `freezegun`) to a fixed date, or (b) compute the expected
-filename dynamically via `_quarter_label(datetime.date.today())` in the test
-itself rather than a literal string — (b) is weaker (it would pass even if
-`_quarter_label()` itself were buggy) but needs no new test dependency; (a)
-is the more correct fix if `freezegun` (or equivalent) is already a project
-dependency, worth checking before choosing.
-
-**Acceptance:** these two tests pass regardless of which real quarter the
-suite happens to run in.
+**CLOSED** 2026-07-03 (LOW, testing). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 
 ### ENG-47 — session.py Step4 signal-summary line crashes when spread_10y_2y is None
-<!-- ITEM
-  Status:    OPEN
-  Severity:  MEDIUM
-  Category:  bug
-  Opened:    2026-07-02 (discovered mid-ENG-42 session, via a live-integration
-             test hitting a real, transient FRED outage)
-  Area:      python/advisor/orchestrator/session.py (_step4_compute_signals,
-             the yc_summary f-string, ~line 359)
-  Related:   ENG-40 (yfinance timeout hardening — same defensive-coding
-             category, different data source), ENG-41 (another live-data
-             test-flakiness case)
--->
-
-**Found:** `test_pipeline_qualitative_populated` (test_stage5/test_session.py,
-`@pytest.mark.integration`) crashed with `TypeError: unsupported format
-string passed to NoneType.__format__`, not a normal assertion failure. Root
-cause: `_step4_compute_signals()` builds a progress-summary line —
-`yc_summary = f"10Y-2Y={yc.spread_10y_2y:.0f}bps {yc.e_pathway_type.value}"`
-— with no guard for `yc.spread_10y_2y` being `None`. It was `None` this run
-because the live FRED calls for `DGS10` (needed for the 10Y-2Y spread) hit a
-genuine read-timeout during this test's execution (captured in stderr: FRED
-`DFF` 502 Bad Gateway, FRED `IG_OAS`/`CCC_OAS`/`DGS10` read-timeouts,
-`yfinance` `UX=F` delisted — all real, transient, live-network conditions,
-unrelated to ENG-42/44/45's changes this session). The *test's* failure is
-network flakiness (same category as ENG-41) and not itself actionable, but
-the *crash mechanism* it exposed is a real gap: this f-string has no
-defensive handling for a missing yield-curve spread, and FRED read-timeouts
-are not rare enough to treat this as it-basically-never-happens.
-
-**Fix (not yet done — logged, not touched, out of scope for ENG-42/44):**
-guard the summary line, e.g. `f"10Y-2Y={yc.spread_10y_2y:.0f}bps"
-if yc.spread_10y_2y is not None else "10Y-2Y=n/a"` — this is a progress/log
-line, not a computation result, so degrading to "n/a" is correct and safe;
-no downstream signal math depends on this string.
-
-**Acceptance:** `_step4_compute_signals()` never raises when
-`yield_curve_signal.spread_10y_2y` is `None` — the progress line degrades
-to an "n/a" placeholder instead of crashing the pipeline.
+**CLOSED** 2026-07-03 (MEDIUM, bug). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 
 ---

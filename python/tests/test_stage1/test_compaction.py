@@ -35,6 +35,23 @@ def _make_log(row_dates, entry_dates):
     return sec7 + sec8
 
 
+def _freeze_today(monkeypatch, year, month, day):
+    """Monkeypatch datetime.date.today() as seen by file_protocol.py (ENG-46).
+
+    file_protocol.py does `import datetime` (the whole module), not
+    `from datetime import date` -- so patching the datetime module's own
+    `date` attribute is the correct target, not something inside
+    file_protocol's namespace specifically. monkeypatch reverts this
+    automatically after the test. No freezegun dependency needed for a
+    two-test fix.
+    """
+    class _FrozenDate(datetime.date):
+        @classmethod
+        def today(cls):
+            return cls(year, month, day)
+    monkeypatch.setattr(datetime, "date", _FrozenDate)
+
+
 @pytest.mark.parametrize("month,expected", [
     (1, "Q1"), (2, "Q1"), (3, "Q1"),
     (4, "Q2"), (5, "Q2"), (6, "Q2"),
@@ -71,7 +88,12 @@ def test_exactly_at_limit_does_not_archive(tmp_path):
 
 # ── §7 overflow only ─────────────────────────────────────────────────────────────────
 
-def test_sec7_overflow_archives_oldest(tmp_path):
+def test_sec7_overflow_archives_oldest(tmp_path, monkeypatch):
+    """Archive filename is based on datetime.date.today() at compaction
+    time, not on the log entries' own dates (all January here) -- frozen
+    to a fixed Q2 2026 date (ENG-46) so this doesn't depend on which real
+    calendar quarter the suite happens to run in."""
+    _freeze_today(monkeypatch, 2026, 5, 15)
     rows = [f"2026-01-{d:02d}" for d in range(1, 14)]  # 13 rows
     log = _make_log(rows, [f"2026-01-{d:02d}" for d in [1, 5]])
     compacted, archive_fn, archive_content = _compact_session_log(log, tmp_path)
@@ -105,7 +127,10 @@ def test_sec7_only_overflow_leaves_sec8_untouched(tmp_path):
 
 # ── §8 overflow only ─────────────────────────────────────────────────────────────────
 
-def test_sec8_overflow_archives_oldest(tmp_path):
+def test_sec8_overflow_archives_oldest(tmp_path, monkeypatch):
+    """Same ENG-46 fix as test_sec7_overflow_archives_oldest above -- see
+    that docstring for why."""
+    _freeze_today(monkeypatch, 2026, 5, 15)
     entries = [f"2026-01-{d:02d}" for d in [1, 5, 10, 15]]
     log = _make_log([f"2026-01-{d:02d}" for d in [1, 5]], entries)
     compacted, archive_fn, archive_content = _compact_session_log(log, tmp_path)

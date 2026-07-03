@@ -2278,3 +2278,91 @@ possible at all, not performing it early on insufficient data.
 outcome):** a self-healing local history mechanism exists, is seeded, is
 wired into every session, is tested, and requires no manual intervention
 to keep accumulating going forward.
+
+
+### ENG-46 — test_compaction.py hardcodes a specific quarter, breaks every real quarter boundary
+**CLOSED** 2026-07-03 (LOW, testing). Full description and resolution below.
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  LOW
+  Category:  testing
+  Opened:    2026-07-01/02
+  Closed:    2026-07-03
+  Area:      python/tests/test_stage1/test_compaction.py
+  Related:   ENG-41
+-->
+
+**Found:** `test_sec7_overflow_archives_oldest` and `test_sec8_overflow_archives_oldest`
+both hardcoded `assert archive_fn == "Archive_2026Q2.md"` against the REAL
+`datetime.date.today()` -- passed for as long as the suite happened to run
+within Q2 2026, then failed the moment real wall-clock time crossed into Q3
+(confirmed: this happened mid-session, between two full-suite runs on the
+same day).
+
+**Fix:** froze "today" in both tests via a small `_freeze_today(monkeypatch,
+year, month, day)` helper -- a `datetime.date` subclass overriding
+`today()`, monkeypatched onto the `datetime` module's own `date` attribute
+(file_protocol.py does `import datetime`, not `from datetime import date`,
+so patching the module attribute globally is the correct target; monkeypatch
+reverts it automatically per-test). No `freezegun` dependency added --
+confirmed not already a project dependency, and a two-test fix didn't
+justify adding one. Chose option (a) from the original write-up (freeze
+"today") over option (b) (compute the expected filename dynamically via
+`_quarter_label()`) since (a) actually exercises the archive-naming logic
+against a known input rather than just re-deriving the same computation the
+code under test performs -- weaker "b" would pass even if `_quarter_label()`
+itself had a bug.
+
+**Verified:** `test_stage1/test_compaction.py` -- 24/24 passed (was 22/24).
+Full suite: 801 passed / 46 skipped, 0 failures (previously 792 passed / 46
+skipped / 2 known failures -- these two).
+
+**Acceptance met:** both tests now pass regardless of which real calendar
+quarter the suite happens to run in.
+
+
+### ENG-47 — session.py Step4 signal-summary line crashes when spread_10y_2y is None
+**CLOSED** 2026-07-03 (MEDIUM, bug). Full description and resolution below.
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  MEDIUM
+  Category:  bug
+  Opened:    2026-07-02
+  Closed:    2026-07-03
+  Area:      python/advisor/orchestrator/session.py
+             (_step4_compute_signals line ~359, _render_briefing_context line ~514)
+  Related:   ENG-40, ENG-41
+-->
+
+**Found:** a live FRED DGS10 read-timeout left `YieldCurveSignal.spread_10y_2y`
+as `None`, and `_step4_compute_signals()`'s progress-summary f-string --
+`f"10Y-2Y={yc.spread_10y_2y:.0f}bps ..."` -- crashed with `TypeError:
+unsupported format string passed to NoneType.__format__` instead of degrading
+gracefully. **A second, identical occurrence was found in the same file**
+while fixing the first: `_render_briefing_context()`'s "YIELD CURVE" line
+(the text that feeds AI Call 3) had the exact same unguarded pattern for
+BOTH `spread_10y_2y` AND `spread_10y_3m` (confirmed via `FW_Types.md`/
+`types.py`: both fields are `Optional[float]`, not just the one originally
+found) -- the original write-up only caught the first instance because that's
+the one the live-integration test happened to hit first.
+
+**Fix:** added a small module-level helper, `_fmt_bps(value) -> str`,
+returning `"n/a"` for `None` and `f"{value:.0f}bps"` otherwise. Applied at
+all three call sites (Step 4's `yc_summary`, and both spreads in
+`_render_briefing_context`'s YIELD CURVE line). This is a progress/log
+line and part of AI Call 3's input context, not a computation result --
+degrading to "n/a" is safe; no downstream signal math reads these strings.
+
+**Verified:** new `test_stage5/test_yield_curve_none_formatting.py` (7
+tests) -- `_fmt_bps()` unit tests (None/positive/negative/zero) plus
+`_render_briefing_context()` exercised with both spreads None, one None,
+and both present (regression guard: output must stay unchanged, "Nbps" not
+"n/a", when data IS available). Full suite: 801 passed / 46 skipped, 0
+failures -- and notably, zero live-network-related failures this run either
+(the original crash needed a transient FRED timeout to surface at all, so a
+clean run doesn't re-trigger it by itself; the new tests exercise the None
+path deterministically instead of waiting for one).
+
+**Acceptance met:** `_step4_compute_signals()` and
+`_render_briefing_context()` never raise when either yield-curve spread is
+`None` -- both degrade to an "n/a" placeholder.
