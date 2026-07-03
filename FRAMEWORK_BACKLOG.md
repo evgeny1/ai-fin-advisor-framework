@@ -82,9 +82,9 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-39 | CLOSED | MEDIUM | bug | GAP-16's IHP range-position advisory used THREEFYTP10 (10Y term premium) mislabeled as "real yield" -- replaced with a computed REAL_YIELD_10Y_TREND (DGS10-T10YIE) series |
 | ENG-40 | CLOSED | HIGH | bug | fetch_all() and the shared yfinance lock had no timeout -- one stuck/illiquid symbol could hang advisor_run_computation() and every later yfinance fetch indefinitely |
 | ENG-41 | OPEN | LOW | functional-gap | test_pipeline_probabilities_all_at_or_above_floor fails against live data + StubAIClient (one scenario lands at 2.81%, below the test's asserted 3% floor, after the 25pp session cap compresses the others) -- confirmed pre-existing/independent of ENG-40 via git-stash A/B |
-| ENG-42 | OPEN | MEDIUM | infrastructure | No MCP tool (either server) exposes FRED/series-history fetch — calibration audits hand-roll scratch scripts against fred_fetcher's underscore-private helpers |
+| ENG-42 | CLOSED | MEDIUM | infrastructure | No MCP tool (either server) exposes FRED/series-history fetch — calibration audits hand-roll scratch scripts against fred_fetcher's underscore-private helpers |
 | ENG-43 | BLOCKED | MEDIUM | data-integrity | FRED truncated ICE BofA OAS series to a rolling 3y window (~Apr 2026) — §1 delta verification and §2 5y hit-rate audit no longer sourceable from FRED |
-| ENG-44 | OPEN | MEDIUM | infrastructure | calculator_mcp (dev folder) not wired to the project and is a stub — no sanctioned/auditable calc path for ad-hoc audit math (median/percentile/EV) |
+| ENG-44 | CLOSED | MEDIUM | infrastructure | calculator_mcp (dev folder) not wired to the project and is a stub — no sanctioned/auditable calc path for ad-hoc audit math (median/percentile/EV) |
 | ENG-45 | CLOSED | LOW | bug | credit.py §1.3 CCC divergence OR-combines ratio+absolute modes — ratio mode false-positives in compressed regimes (fired 3.62x on CCC+29/HY+8 bps, 2026-06-30) |
 | ENG-46 | OPEN | LOW | testing | test_compaction.py hardcodes "Archive_2026Q2.md" without freezing datetime.date.today() — breaks every real quarter boundary; tripped mid-session 2026-07-01/02 |
 | ENG-47 | OPEN | MEDIUM | bug | session.py Step4 signal-summary f-string crashes (TypeError on NoneType.__format__) when yield_curve_signal.spread_10y_2y is None — exposed by a live FRED timeout, not just a test flake |
@@ -670,44 +670,7 @@ calibration-adjacent territory (M03), not pure plumbing.
 
 
 ### ENG-42 — No MCP tool exposes FRED (or any) series-history fetch
-<!-- ITEM
-  Status:    OPEN
-  Severity:  MEDIUM
-  Priority:  P1
-  Category:  infrastructure
-  Opened:    2026-06-30
-  Area:      python/advisor/mcp_server.py, python/advisor/data/fetchers/fred_fetcher.py, market_data_mcp
-  Related:   ENG-43; M18; M11; Calibration_State.md §6 Batch A
--->
-
-**Description:** The financial-advisor MCP tools fetch only the *current*
-session snapshot of DataReadings. Historical series — trailing medians,
-percentile distributions, N-day change/velocity, everything a calibration
-audit needs — are reachable only through underscore-private helpers in
-`fred_fetcher.py` (`_fetch_latest`, `_fetch_history`,
-`_fetch_history_with_dates`) that no MCP tool and no CLI command surface.
-The Q2 2026 credit audit (Calibration_State.md §6 Batch A) had to hand-roll
-a scratch script importing those privates directly to get HY/IG/CCC
-history. That is not repeatable, not tested, not discoverable, and violates
-the "don't hand-roll what the framework should own" posture. Two MCP
-servers are wired (financial-advisor and market_data_mcp); neither exposes
-series-history fetch. This is the generalized, permanent form of the
-one-off problem — the FRED REST client already works fine (it powered the
-audit), it just isn't reachable through a tool.
-
-**Suggested next step / scope:**
-- Decide ownership. `market_data_mcp` is the more natural home — it already
-  owns `market_get_history/quotes/macro/ytd` for symbols, and FRED macro
-  series are a data domain, not an advisory computation. Recommended: add
-  `fred_get_history(series_id, days | weeks, as_of?)` there, backed by
-  `fred_fetcher`'s existing REST client, returning dated observations.
-- Promote the internal helper(s) to a documented public function: drop the
-  underscore, pin a stable return contract, add a unit test.
-- Per README §9, update `Project_Instructions_MCP.md` and README §12
-  cookbook once the tool exists.
-
-**Acceptance:** a calibration session pulls N days of any FRED series via a
-tool call, no scratch script, covered by a round-trip test.
+**CLOSED** 2026-07-02 (MEDIUM, infrastructure). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 
 ### ENG-43 — Credit-spread history truncated to 3y by FRED
@@ -752,45 +715,7 @@ full credit cycle; §2 hit-rate audit runnable.
 
 
 ### ENG-44 — calculator_mcp not wired to the project + is a stub
-<!-- ITEM
-  Status:    OPEN
-  Severity:  MEDIUM
-  Priority:  P1
-  Category:  infrastructure
-  Opened:    2026-06-30
-  Area:      G:\My Drive\dev\calculator_mcp.py; Claude Desktop MCP config; Project_Instructions_MCP.md
-  Related:   README §5 design principle 6 ("all arithmetic is auditable"); framework NEVER-hand-compute-EV rule
--->
-
-**Description:** A financial-calculator MCP (`G:\My Drive\dev\
-calculator_mcp.py`, FastMCP "Calculator") exists but is (a) not registered
-as a connector for this project — absent from the session's available tools
-— and (b) currently a stub: only `add`/`subtract`/`multiply`/`divide` and a
-single `calculate_compound_interest`. The framework's "all arithmetic is
-auditable" principle and the NEVER-hand-compute-EV rule call for a
-sanctioned, auditable calculation path; instead ad-hoc audit math (medians,
-percentiles, percentile-rank, N-day velocity — exactly the Q2 credit
-audit's needs) gets hand-rolled in scratch Python.
-
-**Suggested next step / scope:**
-- Wire `calculator_mcp` into Claude Desktop's MCP config (stdio, same
-  launcher pattern as `run_mcp_server.py`; heed the space-in-path gotcha,
-  README §6 — point directly at the `.py`, no `cmd.exe` wrapper).
-- Add the financial/statistical methods the framework reuses: `median`,
-  `percentile(values, p)`, `percentile_rank(values, x)`, `mean`/`stdev`,
-  basis-point delta helpers, and **scenario_weighted_ev(prob_vector,
-  per_scenario_returns)** — the single calculation the framework most wants
-  sanctioned. Single-purpose tools, exact-result contracts, matching the
-  existing docstring style.
-- Define the boundary vs the advisor pipeline: this MCP is for ad-hoc
-  session/audit math, NOT a second home for pipeline math that already
-  lives in `scenario_math.py`/`allocation.py` — two sources of truth would
-  violate design principles 1 & 6. Document the boundary in
-  `Project_Instructions_MCP.md`.
-
-**Acceptance:** the calculator is connectable in an advisory/audit session;
-the next credit audit computes median/percentile/rank via tool calls, not a
-scratch script.
+**CLOSED** 2026-07-02 (MEDIUM, infrastructure). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 
 ### ENG-45 — credit.py §1.3 CCC divergence OR-combines ratio + absolute modes (ratio false-positives)

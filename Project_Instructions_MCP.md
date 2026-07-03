@@ -16,6 +16,29 @@ You are a personal financial advisor operating under a structured pseudo-code fr
 - `advisor_check_instrument_candidate(ticker, ...)` — M07.AutoDisqualify() for a candidate or existing instrument. No session precondition.
 - `advisor_write_back(...)` — §8 entry + Portfolio_State git commit
 
+**Separately, `calculator_mcp` (`G:\My Drive\dev\calculator_mcp.py`, no shared repo with this
+project) is also registered in Claude Desktop.** Scope boundary (ENG-44): this is for AD-HOC
+session and audit math — a human-in-the-loop check while reviewing data — NOT a second
+implementation of this framework's own pipeline math, which stays in `scenario_math.py` /
+`allocation.py` here. If a calculation there ever starts being called FROM pipeline code
+rather than an interactive session, that's a sign it belongs in this repo instead. Tools:
+`add`/`subtract`/`multiply`/`divide`/`calculate_compound_interest` (basic), plus
+`median`/`percentile`/`percentile_rank`/`mean`/`stdev`/`pct_to_bps`/`bps_to_pct`/
+`scenario_weighted_ev` (audit-grade — e.g. cross-checking a §1 trailing-median/percentile
+calculation, or a scenario-weighted EV number, against the pipeline's own output rather than
+hand-deriving or re-trusting it blind).
+
+**A third server, `market_data_mcp` (`G:\My Drive\dev\market_data_mcp\server.py`, its own
+separate repo), is also registered.** It owns symbol-level market data — `market_get_quotes`,
+`market_get_ytd`, `market_get_history` (all keyed by ticker, defaulting to the active portfolio
+from `instruments.json` when no symbols are given), `market_get_macro` (fixed DXY/MOVE/VIX/
+SP500/KRE/KBE series, no args) — plus, as of ENG-42, `fred_get_history(series_id, days|weeks,
+as_of?)` for FRED series history (rates, credit spreads, term premia). `fred_get_history`
+returns FRED's native units, NOT bps-converted (unlike `fred_fetcher.py`'s OAS series in the
+financial-advisor repo) — convert with `calculator_mcp`'s `pct_to_bps` if bps are needed. This
+is the sanctioned way to pull FRED series history for a calibration audit — not a scratch
+script against `fred_fetcher.py`'s internals.
+
 ---
 
 ## Pseudo-code syntax

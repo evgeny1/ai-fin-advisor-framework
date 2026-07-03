@@ -2049,3 +2049,144 @@ gained a parse test for the new field and its FIXTURE gained the matching row.
 touched (Calibration_State.md is Layer 2, not a manifest-schema module).
 Calibration_State.md §1.3 updated: new row added, "Ratio divergence" row's
 note changed from "Enforcement pending" to "Enforcement done."
+
+
+### ENG-44 — calculator_mcp not wired to the project + is a stub
+**CLOSED** 2026-07-02 (MEDIUM, infrastructure). Full description and resolution below.
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  MEDIUM
+  Category:  infrastructure
+  Opened:    2026-06-30
+  Closed:    2026-07-02
+  Area:      G:\My Drive\dev\calculator_mcp.py; Claude Desktop MCP config
+             (C:\Users\Evgeny\AppData\Roaming\Claude\claude_desktop_config.json);
+             Project_Instructions_MCP.md
+  Related:   README design principles 1 & 6 (single source of truth /
+             all arithmetic auditable); framework NEVER-hand-compute-EV rule
+-->
+
+**Found:** `calculator_mcp.py` existed but was unregistered in Claude
+Desktop and was a stub (`add`/`subtract`/`multiply`/`divide`/
+`calculate_compound_interest` only) — no sanctioned, auditable path for
+ad-hoc session/audit math (medians, percentiles, scenario-weighted EV).
+
+**Fix:** `calculator_mcp.py` gained `median`, `percentile(values, p)`
+(linear interpolation, numpy/Excel-PERCENTILE.INC convention),
+`percentile_rank(values, value)` (inverse of `percentile()`), `mean`,
+`stdev(values, sample=True)`, `pct_to_bps`/`bps_to_pct`, and
+`scenario_weighted_ev(prob_vector, per_scenario_returns)` — the last one
+matches Calibration_State.md's whole-number-percentage convention (not
+fractions), validates prob/return key sets match, and warns (doesn't
+raise) if probabilities don't sum to 100. A scope-boundary comment block
+in the file itself (and now in `Project_Instructions_MCP.md`) documents
+that this server is for ad-hoc/audit math only — not a second
+implementation of `scenario_math.py`/`allocation.py`'s pipeline math.
+
+Registered `calculator_mcp` in Claude Desktop's MCP config: `C:\Python\
+python.exe` running `G:\My Drive\dev\calculator_mcp.py` directly (no
+`cmd.exe` wrapper — same space-in-path handling as `financial-advisor`'s
+entry). Requires a Claude Desktop restart to take effect — not yet
+restarted/verified live as of this commit; verify the tool actually
+appears in a fresh session before relying on it.
+
+**Verified (direct-call smoke test, no MCP transport, mirrors
+`market_data_mcp/test_server.py`'s approach):** all 8 new functions
+against hand-calculated expected values, including `scenario_weighted_ev`'s
+key-mismatch `ValueError` and non-100-sum `WARNING` paths. 15/15 checks
+passed under both `C:\Python\python.exe` and confirmed the file has no
+external dependency beyond `mcp` (no yfinance/pandas/requests needed).
+`calculator_mcp.py` has no git repository of its own — noted, not fixed
+this session (separate decision: whether it gets its own repo, joins an
+existing one, or stays a loose file is a call for the client, not
+something to assume).
+
+**Acceptance met:** the calculator is wired and connectable; the tools an
+audit needs (median/percentile/percentile_rank/scenario_weighted_ev) exist
+with tested, documented contracts.
+
+
+### ENG-42 — No MCP tool exposes FRED (or any) series-history fetch
+**CLOSED** 2026-07-02 (MEDIUM, infrastructure). Full description and resolution below.
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  MEDIUM
+  Category:  infrastructure
+  Opened:    2026-06-30
+  Closed:    2026-07-02
+  Area:      python/advisor/data/fetchers/fred_fetcher.py; market_data_mcp/server.py
+             (separate repo); Project_Instructions_MCP.md
+  Related:   ENG-43; M18; M11; Calibration_State.md §6 Batch A
+-->
+
+**Found:** Historical FRED series data (trailing medians, percentiles,
+velocity — everything a calibration audit needs) was reachable only
+through underscore-private helpers in `fred_fetcher.py`. The Q2 2026 credit
+audit had to hand-roll a scratch script against `_fetch_history_with_dates`
+directly. Two MCP servers were wired (financial-advisor, market_data_mcp);
+neither exposed series-history fetch.
+
+**Fix — two parts, deliberately kept separate (2026-06-30 decision:
+standalone port, not a cross-repo import):**
+
+1. **fred_fetcher.py** (this repo): promoted `_fetch_history_with_dates` →
+   `fetch_history_with_dates` (public), same behavior, contract now
+   documented (oldest-first `(date, value)` tuples, `[]` if no key, raises
+   on HTTP failure). Internal caller (`_fetch_real_yield_trend`) updated to
+   match. New tests: `TestFetchHistoryWithDates` in `test_fred_fetcher.py`
+   (5 cases: ordering, missing-value-marker skip, no-key, no-observations,
+   HTTP-error propagation).
+
+2. **market_data_mcp** (separate repo, `G:\My Drive\dev\market_data_mcp\`):
+   added `fred_get_history(series_id, days|weeks, as_of?)` — a small,
+   standalone port of the FRED REST fetch pattern, NOT an import from this
+   repo (market_data_mcp had zero dependency on this repo before and stays
+   that way by design; the two implementations may drift, an accepted cost
+   of decoupling). Reads `FRED_API_KEY` from market_data_mcp's OWN `.env`
+   (not this repo's) via `python-dotenv`; degrades gracefully with a clear
+   error when absent. Returns FRED's native units, NOT bps-converted
+   (documented explicitly, since `fred_fetcher.py`'s OAS series ARE
+   bps-converted and this intentionally is not — a naming/unit trap worth
+   flagging for future callers). `.gitignore` for that repo was also
+   missing `.env` entirely — fixed before any secret could land there.
+   New tests: `test_fred_history()` in `test_server.py` (days/weeks
+   equivalence, `as_of` window, missing-days-and-weeks validation,
+   graceful no-key degradation); `fred_get_history` added to the
+   signature guard's tool list.
+
+Documented both in `Project_Instructions_MCP.md`: `calculator_mcp`'s
+scope boundary (shared with ENG-44) and, as a gap larger than this ticket
+but adjacent to it, a full first-time write-up of `market_data_mcp`'s tool
+surface (previously entirely undocumented there, including its 4
+pre-existing tools) — README §9/§12's "update
+Project_Instructions_MCP.md" rule is textually scoped to the
+financial-advisor server's `mcp_server.py`, so `fred_get_history` alone
+wouldn't have triggered it, but the ticket's own suggested-step text asked
+for it regardless and it was a low-risk, high-value documentation gap to
+close alongside this work.
+
+**Verified:** `test_fred_fetcher.py` (18 passed, not counting 2 live
+integration tests), `market_data_mcp/test_server.py` under BOTH
+`C:\Python\python.exe` and the actual production interpreter Claude
+Desktop uses (`D:\ai_financial_server\.venv\Scripts\python.exe`) — 91
+passed / 0 failed each time, including `fred_get_history`'s graceful
+degradation (no `.env` created yet in market_data_mcp — a live key would
+need to be added there to exercise the happy path for real).
+
+**Note — a Google Drive sync reliability issue surfaced during this work,
+unrelated to the fix itself but worth recording:** mid-session, an already
+-applied edit to `fred_fetcher.py` was found silently reverted to its
+pre-edit (HEAD) content on disk, and separately a scratch commit-message
+file vanished entirely, both self-resolving/re-appearing shortly after
+(consistent with the already-documented "Google Drive locks a filename for
+2-3 minutes after rapid successive edits" pattern, but a more severe
+manifestation — actual content reversion, not just a lock timeout). Both
+edits were re-verified and re-applied before committing; no data was lost,
+but this is a real risk for any Desktop-Commander-driven edit in this
+Drive-synced folder during a rapid-edit sequence — verify-after-write,
+don't just trust the write confirmation, especially right after `git
+stash`-style operations that touch the same file rapidly in succession.
+
+**Acceptance met:** a calibration session can pull N days of any FRED
+series via a tool call (`fred_get_history` in market_data_mcp), no scratch
+script, covered by round-trip tests in both repos.
