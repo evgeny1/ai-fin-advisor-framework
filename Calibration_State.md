@@ -2,7 +2,12 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.59  Last updated: July 3, 2026. v1.59: GAP-16 items 42/43/44
+# Version: 1.60  Last updated: July 3, 2026. v1.60: §6 items 9/16 checked —
+multiplier floor restoration NOT triggered ("post-war" condition unmet per
+this session's own Hormuz findings); Anthropic IPO NOT yet triggered
+(confidential S-1 only, no public terms). Both confirmed rather than
+guessed at.
+v1.59: GAP-16 items 42/43/44
 worked. Item 44's documentation half done — proposed sub-condition drivers
 for STF/RAC/IHC added to §11 (DXY+trend-breadth / Brent+HY-OAS / DXY+Brent-
 proxy respectively), all reusing already-fetched data, none live yet — the
@@ -204,6 +209,24 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-03 (v1.60) - Batch 4/5 quick items (§6, client-directed audit work).
+Item 9 (§4.2/4.3 multiplier floor restoration): checked whether "commodity-
+  linked added post-war" has been satisfied. Commodity-linked instruments
+  (SGOL, COPX) WERE added months ago (v1.7, April 28) — that half is done.
+  But "post-war" has NOT been satisfied: this session's own research (Iran
+  MOU signed but fragile, Hormuz throughput still not normalized per UAE's
+  2027 full-flow estimate) confirms the conflict isn't actually over.
+  Floors correctly REMAIN at 1.3x. No change — compound condition not met.
+Item 16 (MAGS vs AGIX / Anthropic IPO trigger): Anthropic confidentially
+  filed a draft S-1 with the SEC on June 1, 2026, with press reports
+  pointing to an October 2026 Nasdaq target — but no ticker, price, or
+  public S-1 yet, and the filing itself explicitly says timing depends on
+  market conditions. This is short of the item's "announced or completed"
+  trigger (a confidential filing isn't a public announcement of terms), but
+  materially closer than when the item was written. Worth checking again
+  before Q3 given the reported timeline, not urgent today. No re-evaluation
+  performed this pass (no public terms exist yet to evaluate against).
 
 2026-07-03 (v1.59) - GAP-16 items 42/43/44 worked (§6, client-directed Batch
 3 audit work). Checked the actual code (analysis/range_position.py) before
@@ -1338,14 +1361,14 @@ to do later.
 6. BLOCKED 2026-06-30. 5-year hit-rate audit not runnable — FRED restricts these OAS series to a rolling ~3y window; only ~3y available. Needs FRED ALFRED vintages, a commercial feed, or a local rolling-history store (ENG-43).
 7. DEFERRED. §2.2/2.3/2.4 are energy/macro thresholds, outside the credit-spread (Batch A) scope; carry to a dedicated §2 pass.
 8. Empirical audit section 4.1 return table — all roles. Incorporate FOMC/GDP/CPI data post-April 30. Validate secular_tech B/C and precious_metals C revisions. Formally adopt or reject §6 item 23 pending proposals with documented M16.CalibrationMethodology() 4-layer procedure. Formally adopt all PENDING cells (⚑ MEDIUM confidence) for new v1.13 roles: consumer_defensive_equity C/A/D/E/F; healthcare_defensive_equity all cells; floating_rate_credit_income all cells; emerging_market_equity all cells; systematic_trend_following D/E/F cells. Resolve real_estate_equity_income (⚠ LOW confidence) — requires leverage-adjusted historical calibration before any cell can be formally adopted. Populate [TBD] / PENDING values for inflation_linked_sovereign. Confirm COPX mining leverage adjustment to blended B/C returns.
-9. Empirical audit 4.2/4.3 multipliers. Assess if commodity-linked added; if so restore B/C and floors (IRA 1.5x, Roth 2.0x). Reassess structural IRA gap with updated blendedScenarioReturn() outputs.
+9. [CHECKED 2026-07-03, v1.60 — NO CHANGE] Empirical audit §4.2/§4.3 multipliers. Commodity-linked instruments were added months ago, but the compound "post-war" condition is not met (Iran MOU fragile, Hormuz throughput not normalized per UAE's 2027 estimate) — floors correctly remain 1.3x. Re-check when the conflict is genuinely resolved, not just ceasefire-stage. Reassess structural IRA gap with updated blendedScenarioReturn() outputs separately — not done this pass.
 10. Audit 4.4 floor/concentration parameters.
 11. First audit section 9 M14 thresholds (divergence, underweight, entry extension).
 12. First audit section 10 M08 ETF classification thresholds.
 13. XAR: re-verify at Q2 (standard staleness check; composition drift). XAR now at 12% target across all applicable accounts — confirm structural target remains appropriate.
 14. [CLOSED 2026-07-03, v1.58] First audit §11 classification weights — all instruments including AIPO, MAGS, and all v1.13 additions. AIPO's >5pp drift was already caught and corrected by v1.30 (June 2) before this session started; all other held instruments checked and either single-role/mandate-fixed (no drift risk) or recently reviewed. See §3 log entry 2026-07-03 (v1.58).
 15. [CLOSED 2026-07-03, v1.58] AIPO ThematicETF_ClassificationAudit() — superseded by the full 77-holding re-audit already completed at v1.30 (June 2, 2026), which is more current and more rigorous than this item's v1.14 baseline. Weight drift and materiality both addressed there.
-16. MAGS vs AGIX: reassess if Anthropic IPO announced or completed. AGIX holds ~2.98% Anthropic direct. Evaluate upgrade at Q3 or earlier on IPO announcement.
+16. [CHECKED 2026-07-03, v1.60 — NOT YET TRIGGERED] MAGS vs AGIX: Anthropic confidentially filed a draft S-1 with the SEC June 1, 2026, press reports pointing to an October 2026 Nasdaq target — but no ticker, price, or public S-1 yet, and the filing itself says timing depends on market conditions. Short of "announced or completed" (a confidential filing isn't public terms), but materially closer than when this item was written. Re-check before Q3 given the reported timeline; no re-evaluation possible yet since there are no public terms to evaluate.
 17. Review section 11 role registry for new structural drivers. Confirm all 12 existing + 5 v1.13 roles remain complete and non-redundant. NOTE: AI application layer gap identified — no M07-compliant pure-play instrument available as of May 7, 2026. Re-screen at Q2 as new instruments mature (track record threshold).
 18. MOVE index: assess formal integration into M11/M14 as supplementary credit/volatility signal. MOVE at 78.43 as of May 25 (elevated but below 80 threshold watch). Approved source URLs confirmed May 11 (§1). Allocation spreadsheet MOVE tab confirmed. If MOVE sustained above 100 before Q2, accelerate formal integration. Q2 audit: establish formal MOVE threshold and integrate into M14/M11 signal framework.
 19. Add Fed response function sub-variable to Scenario C scoring (design proposal Apr 29).
