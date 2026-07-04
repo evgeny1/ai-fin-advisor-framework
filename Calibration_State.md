@@ -2,7 +2,12 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.51  Last updated: July 3, 2026. v1.50: same-day coding session —
+# Version: 1.52  Last updated: July 3, 2026. v1.52: geopolitical_premium
+Scenario C reconstructed (§6 item 23 UNRECOVERABLE slot [14]) — LOW
+confidence, NOT ADOPTED, feeds the open M15 XAR role-split decision (see §3
+2026-07-03). §6 item 30 (DBMF D/E/F) found stale/already-closed since
+v1.22/v1.28 — corrected, archived.
+v1.50: same-day coding session —
 ENG-45 CLOSED, §1.3 gained a new calibration-dated parameter (Minimum
 absolute CCC move / ratio gate, 75 bps); ratio-row note updated to reflect
 enforcement is live in credit.py. v1.51: DBMF §13 Thesis Sustaining Condition
@@ -157,6 +162,60 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-03 (v1.52) - geopolitical_premium Scenario C: RECONSTRUCTED per §6
+item 23 UNRECOVERABLE slot (1 of 4; v1.12 file-split loss, client-directed
+Batch 1 audit work). NOT ADOPTED -- findings converge with and substantively
+strengthen the pending M15 XAR reclassification review rather than producing
+a new range.
+L1: no T1 institutional unconditional anchor exists for a defense/aerospace-
+  sector-specific role (LTCMA/VCMM/RA do not publish sector-level A&D
+  figures); the broader policy_driven_thematic_equity convention is not a
+  clean substitute. Anchor gap alone pushes toward LOW.
+L2 (scenario C analogs = 1974 oil shock / 1979-80 second oil crisis / 2022 H1
+  acute inflation): 1974 and 1979-80 have NO clean defense-sector-specific
+  historical data available (T1 or T2) -- sector-level indices from this era
+  are not accessible; PROXY required, auto-LOW per M16 L2 rule. 2022
+  H1/full-year (Russia-Ukraine) is 1 clean, well-documented analog: defense
+  proxies (ITA/XAR) rallied ~10% in the acute Feb-May phase; full-year 2022
+  SPADE Defense Index +8.6% vs S&P 500 -19.4% (28pp relative
+  outperformance); LMT +37%, NOC +38%, RTX +17% (CNBC/StockCram/DefenseNews,
+  T2, mutually corroborating) -- sole clean analog, MEDIUM ceiling at best
+  even before the 1970s gap. LIVE CONTRADICTING CASE (2026 Iran war, this
+  session's own T1 price data + independent T2 corroboration): defense
+  stocks (ITA/XAR) fell ~10-20% in the first 30 trading days of the current
+  conflict, explicitly documented by a named third-party analysis (Arbor
+  Data Science via MSN, 2026) as breaking the pattern seen in 2022 Ukraine,
+  2023 Hamas/Israel, 2014 Crimea, post-9/11, and 1990 Gulf War alike. This
+  independently corroborates the client's own XAR price-vs-timeline finding
+  from the prior session (XAR fell on escalation, rallied on de-escalation)
+  -- it is a sector-wide pattern this cycle, not a single-instrument
+  anomaly.
+L3 (structural adjustment, documented): candidate mechanism for why this
+  conflict breaks the pattern -- 2022 was an "arms-sales tailwind" conflict
+  (US/NATO arm a third party: pure revenue upside, no direct cost); 2026 is
+  a "war-consumption" conflict (US spends down its OWN stockpiles fighting
+  directly -- roughly half the Tomahawk inventory, ~$6B, in the first two
+  months per contemporaneous reporting -- a near-term cost/uncertainty
+  overhang before any backfill-contract tailwind arrives), compounded by a
+  genuine chokepoint/oil-shock hit to broad risk appetite that the 2022 case
+  didn't carry to the same degree. This is exactly the "acute-conflict vs.
+  defense-procurement" bifurcation already flagged for M15 review -- not a
+  new C-value, but a mechanism explaining why C's current positive sign
+  holds on average across analogs (5 of 6 modern conflicts show the "usual"
+  pattern per Arbor's own comparison set) while breaking for THIS SPECIFIC
+  war.
+L4: not run -- no L1 anchor exists to compare against; would not be
+  meaningful without one.
+CONCLUSION: LOW confidence (proxy-dependent 1970s gap + L1 anchor gap,
+  despite one clean modern analog). Per GUARD: NEVER adopt LOW confidence
+  intra-session; DEFER to Q-end audit; REQUIRE 2+ quarters of live
+  performance data since proposal date. No §4.1 change. Primary value
+  delivered: independent, named third-party evidence that this cycle is a
+  genuine historical outlier for the defense sector specifically, not just
+  an internal read of one ticker -- feeds directly into the open M15
+  XAR/geopolitical_premium split decision (Session_Log.md §8 open_decisions,
+  2026-07-03 full M05 session part 2).
 
 2026-07-03 (v1.51) - DBMF §13 Thesis Sustaining Condition: first formal
 evaluation since creation (2026-06-17). Client-prompted, triggered by a T1
@@ -1037,17 +1096,42 @@ to do later.
       (+14.50%) anchors the conservative end. L4 +2.40% with B adopted, PASS.
       Full detail: §3 entries 2026-06-30 and 2026-06-25.
 
-  UNRECOVERABLE (4 proposals — lost in v1.12 file split; reconstruct at June 30 audit):
-  - [11]-[14]: Reference exists in prior v1.12 §6 item 23 but content not carried forward.
-    Likely candidates: IHC Scenario A, RAC Scenario A, RSILD revision, geopolitical_premium C.
-    Treat as open slots for June 30 audit — new proposals may supersede.
+  UNRECOVERABLE (4 proposals — lost in v1.12 file split; reconstruction in progress,
+  started 2026-07-03 client-directed Batch 1 audit work):
+  - [14] geopolitical_premium C: RECONSTRUCTED 2026-07-03. LOW confidence (1970s
+    analogs unavailable — proxy required per M16 L2; no L1 anchor for a
+    sector-specific role). NOT ADOPTED, no §4.1 change. Full 4-layer detail:
+    §3 log entry 2026-07-03 (v1.52). Finding feeds directly into the open
+    M15 XAR/geopolitical_premium role-split decision rather than standing
+    alone — an independent third-party (Arbor Data Science) analysis
+    corroborates the client's own XAR observation that this specific
+    conflict is breaking the "usual" defense-stock war-trade pattern.
+  - [11]-[13]: IHC Scenario A, RAC Scenario A, RSILD revision (scenario
+    unspecified in the surviving reference — original content lost, only
+    the role/scenario slots survived). NOT YET reconstructed. Preliminary
+    Layer 2 scan (2026-07-03): commodity-index and MLP-sector data at
+    ETF-equivalent granularity for the 1991/2003 normalization analogs
+    likely doesn't exist (MLP sector barely existed as a public asset class
+    before ~2005-2010; broad commodity ETFs launched ~2006) — expect these
+    to land at LOW confidence for the same structural reason as GP-C above,
+    which would mean the same non-adoption outcome regardless of how much
+    further research effort goes in. Client to confirm whether to still
+    complete the paper trail now or deprioritize behind higher-value work.
+  - RSILD specifically: current §4.1 row has NO confidence markers on any of
+    its 6 cells (full v1.0 baseline, never reviewed) — worth flagging that
+    Scenario E=[-10,-3] looks directionally suspect on its face (long-
+    duration Treasuries/TLT-type exposure has historically RALLIED hard in
+    E-type systemic-stress flight-to-quality episodes, e.g. 2008 full-year
+    long Treasuries were one of the best-performing assets), which may be
+    exactly what the lost proposal was trying to fix. Flagged, not verified
+    — do not treat as fact until run through L1-L4 properly.
 24. Implement living update protocol: now formally governed by M16_ReturnTableCalibration §5. Confirm June 30 as first formal application of M16 §5 LivingUpdateTriggers.
 25. Session_Log.md compaction: retain last 10 §7 credit rows; collapse §8 to last 3 full entries + summary table. Move prior entries to Archive_2026Q2.md.
 26. COPX M07 regional concentration ruling: confirm "region = political/economic bloc" ruling from v1.13 as formal framework policy. Apply consistently to all future M07 screens.
 27. URA classification + M07 screen + targets — COMPLETE v1.22 (May 29, 2026); live in §11.4. ARCHIVED → Calibration_State_Archive.md.
 28. SIVR entry guard — COMPLETE/CLEARED v1.14 (May 7, 2026); SIVR since fully liquidated, guard moot. ARCHIVED → Calibration_State_Archive.md.
 29. COPX entry guard — COMPLETE/CLEARED v1.14 (May 7, 2026); one-time computation, COPX still held so the guard re-runs live. ARCHIVED → Calibration_State_Archive.md.
-30. DBMF D/E/F scenario formal adoption: complete M16.CalibrationMethodology() Layer 1-4 for remaining three scenarios. Primary analog: D = 2008 SG CTA Index +14.1% (short equity offset by commodity reversal); E = acute 2008 Q4 whipsaw; F = 2017-2019 "trend desert." Confidence: MEDIUM — adopt at Q2 audit.
+30. [STALE — CLOSED 2026-07-03, checklist not updated at the time] DBMF D/E/F scenario formal adoption. Superseded: D ADOPTED HIGH confidence v1.22 (May 29); E ADOPTED HIGH confidence v1.28 (June 1); F ADOPTED HIGH confidence v1.28 (June 1) — full A-F row is ★ in §4.1, all HIGH confidence. This item was never marked done when the work completed; found stale during 2026-07-03 Batch 1 audit pass (item was assumed open, checked against live §4.1 before starting redundant research). ARCHIVED → Calibration_State_Archive.md. Separately: DBMF's §13 Thesis Sustaining Condition (a live monitoring check, NOT a §4.1 methodology question) went DEGRADED same session — see 2026-07-03 v1.51 §3 log entry; unrelated to this item.
 31. Healthcare_defensive_equity (XLV): confirm §11 classification. Run ThematicETF_ClassificationAudit() — sector composition has shifted toward biotech/tech-adjacent REITs; verify role weights. Full M16 calibration for all scenario values.
 32. Floating_rate_credit_income (FLOT): full M07 screen. Confirm no foreign concentration issue. Compute D scenario (-10% to -4%) empirical basis using 2008 IG spread data.
 33. Emerging_market_equity (VWO): full M07 screen. Confirm China (~30.8%) + Taiwan (~18-22%) combined regional concentration — determine if Taiwan Strait geopolitical risk warrants amber flag. Apply M07 regional ruling from item 26.
