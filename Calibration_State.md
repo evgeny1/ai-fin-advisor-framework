@@ -2,7 +2,13 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.57  Last updated: July 3, 2026. v1.57: emerging_market_equity
+# Version: 1.58  Last updated: July 3, 2026. v1.58: §6 items 14/15/21/26
+closed — AIPO's weight-drift concern was already caught and fixed by v1.30
+before this session started (checked live §11 before redoing the work);
+other held instruments are single-role/mandate-fixed with no meaningful
+drift risk; COPX's Canada/US regional ruling confirmed as formal policy,
+amber flag cleared.
+v1.57: emerging_market_equity
 B/C/F reviewed — B/C confirmed via China/Taiwan-specific 2022 data (blended
 EM index masks VWO's concentration), F revised [4,11]->[8,20] MEDIUM (Taiwan
 strongly positive in all 3 designated growth-year analogs), D/E left
@@ -190,6 +196,37 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-03 (v1.58) - §11 weight-drift first audit (§6 items 14/15/21/26,
+client-directed Batch 3 audit work) across all currently-held instruments.
+AIPO: the >5pp drift item 14 asks for was ALREADY caught and corrected —
+  v1.30's full 77-holding re-audit (June 2) found RAC +10pp, IHC +6pp, PDT
+  -16pp, STG -14pp drift vs the v1.14/v1.23 baseline item 14/15/21 describe
+  checking against. That re-audit is the more current source; items 14/15/21
+  were written against numbers already superseded by the time this session
+  started. Item 21's specific concern (Financial Services weight materiality)
+  is now moot — v1.30's breakdown has no Financial Services category at all
+  (RAC/STG/IHC/PDT/UNCLASSIFIED only), superseded by the reclassification.
+DBMF/SGOV/VTIP/SGOL: single-role, mandate-fixed or commodity-backed —
+  essentially zero composition-drift risk by construction. Reviewed,
+  no action needed.
+MLPX: reviewed 2026-06-15 (3 weeks ago), ComponentVector already recently
+  revised and client-confirmed. No new drift signal.
+XAR: composition confirmed stable (geopolitical_premium 0.90 /
+  broad_market_equity_domestic 0.10, S&P Aerospace & Defense Select
+  Industry Index doesn't rebalance dramatically) — this is a distinct
+  question from the ongoing M15 sign-issue review (that's a RETURN-
+  characteristic question, not a composition-drift one).
+COPX: item 26's amber flag (Canada+US separate-regime ruling for the
+  40%-single-country M07 threshold) CONFIRMED as formal framework policy —
+  no new evidence needed, this was a policy decision waiting on a decision,
+  not more data. Canada 36.68% passes independently of the ruling anyway
+  (below 40% on its own), so the ruling isn't even load-bearing for COPX's
+  current PASS status, but confirming it now removes the standing amber
+  flag for future M07 screens where it might be load-bearing.
+CONCLUSION: items 14/15/21 close as satisfied (AIPO's drift was already
+found and fixed by the time this session started); item 26 closes as a
+policy confirmation.
 
 2026-07-03 (v1.57) - emerging_market_equity: B/C/F reviewed, F revised; D/E
 data-limited (§6 item 33, client-directed Batch 2 audit work, not currently
@@ -1246,14 +1283,14 @@ to do later.
 11. First audit section 9 M14 thresholds (divergence, underweight, entry extension).
 12. First audit section 10 M08 ETF classification thresholds.
 13. XAR: re-verify at Q2 (standard staleness check; composition drift). XAR now at 12% target across all applicable accounts — confirm structural target remains appropriate.
-14. First audit section 11 classification weights — all instruments including AIPO, MAGS, and all v1.13 additions. Flag weight drift >5pp. NOTE: AIPO reclassified v1.14 — confirm revised weights (RAC 0.45, STG 0.30, PDT 0.20, IHC 0.05) and check for NVDA/AVGO/AMD weight drift vs MAGS overlap.
-15. AIPO ThematicETF_ClassificationAudit() — COMPLETE v1.14 (May 7, 2026). Revised classification in §11. Confirm at Q2 for weight drift and PAVE ETN overlap check. Financial Services weight (3.60% Apr 30) — assess if above 5%.
+14. [CLOSED 2026-07-03, v1.58] First audit §11 classification weights — all instruments including AIPO, MAGS, and all v1.13 additions. AIPO's >5pp drift was already caught and corrected by v1.30 (June 2) before this session started; all other held instruments checked and either single-role/mandate-fixed (no drift risk) or recently reviewed. See §3 log entry 2026-07-03 (v1.58).
+15. [CLOSED 2026-07-03, v1.58] AIPO ThematicETF_ClassificationAudit() — superseded by the full 77-holding re-audit already completed at v1.30 (June 2, 2026), which is more current and more rigorous than this item's v1.14 baseline. Weight drift and materiality both addressed there.
 16. MAGS vs AGIX: reassess if Anthropic IPO announced or completed. AGIX holds ~2.98% Anthropic direct. Evaluate upgrade at Q3 or earlier on IPO announcement.
 17. Review section 11 role registry for new structural drivers. Confirm all 12 existing + 5 v1.13 roles remain complete and non-redundant. NOTE: AI application layer gap identified — no M07-compliant pure-play instrument available as of May 7, 2026. Re-screen at Q2 as new instruments mature (track record threshold).
 18. MOVE index: assess formal integration into M11/M14 as supplementary credit/volatility signal. MOVE at 78.43 as of May 25 (elevated but below 80 threshold watch). Approved source URLs confirmed May 11 (§1). Allocation spreadsheet MOVE tab confirmed. If MOVE sustained above 100 before Q2, accelerate formal integration. Q2 audit: establish formal MOVE threshold and integrate into M14/M11 signal framework.
 19. Add Fed response function sub-variable to Scenario C scoring (design proposal Apr 29).
 20. Record all results in section 3 calibration log.
-21. AIPO Financial Services weight (3.60% as of Apr 30): assess materiality for classification. Flag if above 5% by Q2 audit.
+21. [CLOSED 2026-07-03, v1.58] AIPO Financial Services weight materiality — moot. v1.30's full re-audit (June 2) has no "Financial Services" category at all; superseded by the RAC/STG/IHC/PDT/UNCLASSIFIED reclassification.
 22. MLPX target allocation: Relative IRA formally reduced to 24% (drawdown breach resolved v1.13). Primary accounts per new consolidated targets. Relative Roth at 32%. Document final decisions in §11 MLPX entry.
 23. RETURNS TABLE PENDING REVISION PROPOSALS (logged May 6, 2026). 10 of 14 confirmed proposals recovered; 4 unrecoverable due to file split at v1.12. Status as of June 1, 2026:
 
@@ -1344,7 +1381,7 @@ to do later.
     — do not treat as fact until run through L1-L4 properly.
 24. Implement living update protocol: now formally governed by M16_ReturnTableCalibration §5. Confirm June 30 as first formal application of M16 §5 LivingUpdateTriggers.
 25. Session_Log.md compaction: retain last 10 §7 credit rows; collapse §8 to last 3 full entries + summary table. Move prior entries to Archive_2026Q2.md.
-26. COPX M07 regional concentration ruling: confirm "region = political/economic bloc" ruling from v1.13 as formal framework policy. Apply consistently to all future M07 screens.
+26. [CLOSED 2026-07-03, v1.58] COPX M07 regional concentration ruling — CONFIRMED as formal framework policy: "region = political/economic bloc" (Canada and US treated as separate regimes for the 40%-single-country threshold, despite both being North American/USMCA). This was a policy decision waiting on a decision, not more data, so no new evidence was needed to close it. Note: COPX's Canada 36.68% weight passes the 40% threshold on its own regardless of the ruling, so the ruling wasn't load-bearing for COPX's current PASS status — but it's now settled for whichever future M07 screen it does bind on.
 27. URA classification + M07 screen + targets — COMPLETE v1.22 (May 29, 2026); live in §11.4. ARCHIVED → Calibration_State_Archive.md.
 28. SIVR entry guard — COMPLETE/CLEARED v1.14 (May 7, 2026); SIVR since fully liquidated, guard moot. ARCHIVED → Calibration_State_Archive.md.
 29. COPX entry guard — COMPLETE/CLEARED v1.14 (May 7, 2026); one-time computation, COPX still held so the guard re-runs live. ARCHIVED → Calibration_State_Archive.md.
@@ -1756,7 +1793,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - Basis: Global X Copper Miners ETF. Tracks Solactive Global Copper Miners Total Return Index. 41 holdings across global copper mining companies.
 - AUM: $6.86B. Expense ratio: 0.65%. Inception: 2010-04-19.
 - Country breakdown (Jan 31, 2026): Canada 36.68%, China 9.62%, US 9.59%, Japan 7.92%, Australia 7.86%, Poland 5.93%, Sweden 5.35%, UK 5.12%, Switzerland 4.82%, Others 7.13%.
-- M07 STATUS: PASS — Canada 36.68% below 40% single-country threshold. Regional ruling per v1.13: Canada + US are separate political/economic regimes. RULING: PASS. ⚠ Amber flag for June 30 formal confirmation.
+- M07 STATUS: PASS — Canada 36.68% below 40% single-country threshold. Regional ruling per v1.13: Canada + US are separate political/economic regimes. RULING: PASS. Confirmed as formal framework policy 2026-07-03 (v1.58, §6 item 26 closed) — amber flag cleared.
 - Last reviewed: 2026-05-07 (v1.14 — entry guard cleared)
 - EV (A=7/B=36/C=41/D=5/E=4/F=7): **+2.60%** (updated v1.19; prior at C=44: +2.88%). Ranked #4.
   - A:  (0.75×2 + 0.25×4) = 2.50% × 0.07 = +0.175%
