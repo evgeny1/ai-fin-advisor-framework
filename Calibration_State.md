@@ -2,7 +2,12 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.54  Last updated: July 3, 2026. v1.54: real_estate_equity_income
+# Version: 1.55  Last updated: July 3, 2026. v1.55: healthcare_defensive_equity
+full 6-cell review via verified XLV multi-year return history — A/D/F
+confirmed no change (✓), B/C proposed [1,4]/[-2,3]->[-9,-2] both (MEDIUM,
+2022 actual worse than current values, single data point can't separate the
+two mechanisms), E untouched.
+v1.54: real_estate_equity_income
 leverage-adjustment methodology established — A/F revised [3,8]/[2,5]->[5,9]
 via 1.5x leverage-sensitivity scaling of the 1970s NAREIT analog, MEDIUM
 confidence, LOGGED PENDING; B/D/E/C given a defined remaining task instead of
@@ -172,6 +177,46 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-03 (v1.55) - healthcare_defensive_equity: full 6-cell review (§6 item
+31, client-directed Batch 2 audit work, not currently held). Found a clean,
+verified multi-year XLV return history (Yahoo Finance performance table)
+covering 1999-2025 -- genuinely improves 4 of 6 cells' evidence base even
+though only B/C actually move.
+D (2008-09 GFC / 2020 COVID): XLV 2008 -23.31% nominal, 2009 +19.51%
+  (~-4.2% 2yr annualized, both years low-CPI so real ≈ nominal) -- lines up
+  almost exactly with current conservative end -4%. 2020 +13.34% (positive
+  D-analog, different mechanism -- vaccine/telehealth tailwind, not generic
+  recession behavior). 2 clean analogs, current [-4,1] well-anchored at the
+  conservative end by 2008-09. REVIEWED, NOT REVISED. Marked ✓.
+F (growth periods): 2017 +21.77% (~+19% real), 2018 +6.28% (~+3.7% real),
+  2023 +2.06% (~-0.5% real), 2024 +2.47% (~-0.2% real) -- wide spread (0 to
+  +19% real) fails the HIGH-confidence institutional-agreement bar (>5pp
+  divergence) despite 4 data points. Current [1,5] sits near the weaker end
+  of this range, defensible as conservative. REVIEWED, NOT REVISED. ✓.
+A (1991/2003/2016 normalization): 2003 +14.92% nominal (~+12.4% real),
+  2016 -2.76% nominal (~-4.7% real) -- 2 analogs, ~17pp apart. 2016's
+  weakness is largely idiosyncratic (drug-pricing political attacks that
+  specific cycle -- Clinton/Valeant/EpiPen headlines), a real and somewhat
+  recurring sector-specific tail risk, not generic post-conflict
+  normalization mechanics. No 1991-specific healthcare data found (XLV
+  itself launched 1998; no substitute series located this pass). Current
+  [1,5] sits reasonably between the two extremes. REVIEWED, NOT REVISED. ✓.
+B/C (stagflation / oil shock): XLV 2022 -2.09% nominal, ~-9.3% real at 8%
+  CPI -- notably worse than both current conservative ends (B: +1%, C: -2%).
+  Only 1 clean modern analog (2022) for either scenario, and no 1970s-
+  specific healthcare-sector data available (S&P health care as a distinct
+  investable concept doesn't have clean 1970s data the way broad equity
+  indices do) -- and a single blended annual figure can't cleanly separate
+  the B-specific (sticky-inflation/Fed-hawkish) mechanism from the C-specific
+  (acute oil-shock) mechanism within one data point. PROPOSED: both B and
+  C -> [-9,-2] (identical range, honestly reflecting that one data point
+  can't yet distinguish them further). MEDIUM confidence -- LOGGED PENDING,
+  NOT ADOPTED.
+CONCLUSION: 4 of 6 cells reviewed and confirmed (A, D, F -- no change,
+  properly evidenced instead of untouched placeholders); B and C flagged
+  for a real, if modest, downward revision, both MEDIUM, both pending next
+  audit.
 
 2026-07-03 (v1.54) - real_estate_equity_income: METHODOLOGY finding (§6 item
 31-adjacent, client-directed Batch 2 audit work). The "irreconcilable" framing
@@ -971,7 +1016,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | real_estate_equity_income | [5, 9]⚑ | [-6, -1]⚠ | [-10, -4]⚠ | [-3, 2]⚠ | [-10, -3]⚠ | [5, 9]⚑ |
 | systematic_trend_following | [-12, -3]★ | [+15, +30]★ | [+18, +35]★ | [-5, +15]★ | [-8, +8]★ | [-5, +3]★ |
 | consumer_defensive_equity | [0, +4]★ | [+2, +6]★ | [+2, +6]★ | [-5, 0]★ | [-8, -2]⚑ | [-3, +2]★ |
-| healthcare_defensive_equity | [1, 5]⚑ | [1, 4]⚑ | [-2, 3]⚑ | [-4, 1]⚑ | [-8, -2]⚑ | [1, 5]⚑ |
+| healthcare_defensive_equity | [1, 5]✓ | [-9, -2]⚑ | [-9, -2]⚑ | [-4, 1]✓ | [-8, -2]⚑ | [1, 5]✓ |
 | floating_rate_credit_income | [1, 3]⚑ | [1, 3]⚑ | [1, 3]⚑ | [-10, -4]⚑ | [-8, -2]⚑ | [1, 3]⚑ |
 | emerging_market_equity | [+10, +20]★ | [-12, -6]⚑ | [-15, -9]⚑ | [-25, -15]⚑ | [-22, -14]⚑ | [4, 11]⚑ |
 
@@ -1023,7 +1068,7 @@ inflation_linked_sovereign: added v1.12 May 6. A=[-2,1] ADOPTED HIGH confidence 
 real_estate_equity_income: added v1.12 May 6. Leverage-adjustment methodology established 2026-07-03 (v1.54) — see §3 log entry, full detail. A/F: [3,8]/[2,5] -> [5,9]/[5,9] MEDIUM confidence (1970s NAREIT analog x ~1.5x leverage-sensitivity multiplier), LOGGED PENDING. B/D/E: still ⚠ LOW — 2022 VNQ (-26% nominal) is a clean modern-leverage data point but needs the acute-B-shock-to-sustained-B conversion (same technique as secular_technology_growth's B revision) before use, not more analog search. C: still ⚠ LOW — current figure is likely an unconditional multi-year NAREIT average mislabeled as a scenario-C read; needs 1974-shock-specific data.
 systematic_trend_following: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13). D ADOPTED HIGH confidence (v1.22). E=[-8,+8] ADOPTED HIGH confidence (v1.28, June 1, 2026). L2: 2008 Q4 SG CTA ~-4% quarterly (acute whipsaw), 2020 March DBMF ~-5% (brief correlation spike), 1987 (mixed — some CTAs profitable on short equity). L3: E is binary — correlation spike + trend reversal (bearish) vs established trend acceleration (bullish); wide range IS the calibration. L4: documented structural exception (same as D — DBMF unconditional anchor inapplicable to E-specific scenario). F=[-5,+3] ADOPTED HIGH confidence (v1.28). L2: 2017 SG CTA ~-1% (smooth uptrend, trend desert), 2018 ~-5% (late-cycle reversals), 2019 ~+6% (late-cycle trend development). L3: growth overheat → equities trend smoothly, rates rising gradually, commodities mixed → fewer disruptive cross-asset trends → managed futures headwind. L4: documented structural exception. Layer 4 neutral check: +5.03% midpoints — consistent with AQR TSMOM +5-8% unconditional real.
 consumer_defensive_equity: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13/v1.22). D=[-5,0] ADOPTED HIGH confidence (v1.28, June 1, 2026). L2: 2008-09 2yr annualized XLP ~-1.5% real (XLP -15% in 2008, +14% in 2009; 2yr annualized ~-1.5%); 2020 XLP ~flat; 1990-91 ~flat. L3: Conservative -5% calibrated to extended 3yr D where recovery doesn't fully arrive; upside 0% reflects sustained deflationary drag prevents positive real return. F=[-3,+2] ADOPTED HIGH confidence (v1.28). L2: 2017 XLP F-type +3-5% real, 2003-07 pre-GFC growth +2-4% real, 2018 late-cycle ~-2% real (Fed hiking). L3: growth overheat → staples underperform market but maintain pricing power; modest positive to slight negative real. E=[-8,-2] remains ⚑: variation too wide across analogues (2008 Q4: ~-30% annualized vs 1998 LTCM: ~flat). MEDIUM. Layer 4 neutral check (D=-5, E=-8, F=-3): -0.90% vs anchor 1-3%. Gap -1.90 to -3.90pp. PASS ±3pp (toward limit — acceptable given role defines B/C alpha).
-healthcare_defensive_equity: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: +1.70% midpoints — below JPM LTCMA healthcare 2-4% real; gap reflects B/C distribution penalizing equity. Resolve at June 30.
+healthcare_defensive_equity: added v1.13 May 6. Full 6-cell review 2026-07-03 (v1.55) — see §3 log entry for full detail. A/D/F reviewed and confirmed via verified XLV multi-year return history, no revision, marked ✓. B/C proposed [1,4]/[-2,3] -> [-9,-2] both (MEDIUM, single 2022 data point can't separate the two mechanisms yet), LOGGED PENDING. E untouched this pass, remains ⚑.
 floating_rate_credit_income: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Key risk: D scenario credit seizure (-10% to -4%) vs SGOV safety. Layer 4 neutral check: +0.93%.
 emerging_market_equity: added v1.13 May 6. Scenario A ADOPTED HIGH confidence (v1.23 — REVISED [+4,+9]→[+10,+20]; L2: 1991 Gulf drawdown +15-20% real, 2003 Iraq drawdown +15-20% real, 2016 commodity rebound +10-15% real; 3 analogues. L3: VWO Taiwan/China 56.7% concentration depresses D/E conservative values; structural adj documented. L4: gap to institutional anchor +5.5% documented as (a)+(d); expected given VWO concentration vs blended EM unconditional). B-F PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: −2.55% midpoints. Resolve at June 30. ⚠ floating_rate_credit_income C=[+1,+3]: flag for Q3 — may conflate nominal vs real return basis (2022 FLOT: −0.6% nominal ≈ −7% real at 8% CPI). Reconcile at Q3 audit.
 ⚠ 14 additional revision proposals pending June 30 formal adoption — see §6 item 23.
