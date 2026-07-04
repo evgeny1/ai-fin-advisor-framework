@@ -42,6 +42,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ID | Status | Severity | Category | Title |
 |---|---|---|---|---|
 | ENG-48 | OPEN | HIGH | bug | advisor_write_back's 90s safety-timeout races its own actual completion time — reports TIMEOUT while succeeding server-side |
+| ENG-49 | OPEN | HIGH | bug | advisor_write_back TIMEOUT with a genuinely incomplete server-side operation — files+archive rendered and written, but git add/commit never ran, distinct from ENG-48's "actually succeeded" pattern |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -161,6 +162,52 @@ failures non-fatal — if push is the slow step, making it fire-and-forget
 (commit synchronously, push in a background thread, log push failures
 separately) would shorten the critical path without changing write
 guarantees for the two files that actually matter to session continuity.
+
+### ENG-49 — advisor_write_back TIMEOUT with genuinely incomplete server-side work
+<!-- ITEM
+Status:    OPEN
+Severity:  HIGH
+Category:  bug
+Opened:    2026-07-03
+Area:      python/advisor/mcp_server.py — _tool_write_back()
+Related:   ENG-48 (same symptom, different mechanism — see Description)
+-->
+
+**Description:** A third `advisor_write_back()` TIMEOUT this same day did
+NOT match the ENG-48 pattern. Per ENG-48's own advice, checked `git log`
+before retrying — no new commit, consistent with either genuine failure or
+an ENG-48-style race. `git status --short` showed the real state:
+`Session_Log.md` and `Portfolio_State.md` modified, plus a NEW untracked
+`Archive_2026Q3.md` (an automatic archive-rotation side effect of the
+render step, not previously seen in the ENG-48 writeup). `git diff --stat`
+and reading the modified files confirmed a single, complete, well-formed §8
+entry — not truncated, not duplicated.
+
+So: render + file-write + archive-rotation all completed. But unlike
+ENG-48 (where `git add`+`git commit` also completed, just reported late),
+here the commit step genuinely never ran — no new commit existed at any
+point, checked repeatedly over several minutes. This is a different failure
+boundary than ENG-48: that one is "the response raced the deadline after
+full completion including commit"; this one is "the operation was killed
+or errored out somewhere between file-write and git add, before commit."
+
+Recovered by hand: `git add` the three files + `git commit -F` a message
+file (inline `-m` with parentheses/colons in the message got mangled by
+PowerShell's argument parsing — not a `advisor_write_back` bug, a Desktop
+Commander/PowerShell quoting issue, but worth remembering as its own
+gotcha) + `git push`. No data was lost; the fix was purely completing the
+git steps the tool itself should have finished.
+
+**Suggested next step:** instrument `_tool_write_back()` to log (or at
+least make inspectable) which internal step it reached before returning —
+render / file-write / archive-rotation / git-add / git-commit / git-push —
+so a future TIMEOUT can be triaged from the log directly instead of
+requiring a manual `git status`+`git diff` forensic pass every time. Once
+that instrumentation exists, ENG-48's fix (b) (check-before-returning-
+TIMEOUT) should specifically verify the commit landed, not just infer
+success from the timeout racing a known-good completion window — this
+session is proof those are two genuinely different failure modes needing
+one shared diagnostic, not one shared assumption.
 
 ### ENG-12 — Tests assert against live, not snapshotted, framework files
 <!-- ITEM
