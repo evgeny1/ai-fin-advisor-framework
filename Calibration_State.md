@@ -2,7 +2,13 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.60  Last updated: July 3, 2026. v1.60: §6 items 9/16 checked —
+# Version: 1.61  Last updated: July 3, 2026. v1.61: §6 items 17/20/22/24/25
+closed or confirmed — role registry confirmed complete/non-redundant;
+§3-logging confirmed as ongoing practice; MLPX target documentation found
+already satisfied; June 30 M16 §5 application confirmed; Session_Log
+compaction checked and found not yet needed (122 lines, already
+self-rotating via Archive_2026Q3.md).
+v1.60: §6 items 9/16 checked —
 multiplier floor restoration NOT triggered ("post-war" condition unmet per
 this session's own Hormuz findings); Anthropic IPO NOT yet triggered
 (confidential S-1 only, no public terms). Both confirmed rather than
@@ -209,6 +215,39 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-03 (v1.61) - Batch 5 housekeeping (§6, client-directed audit work).
+Item 17 (§11 role registry completeness): reviewed against everything found
+  this session — every issue surfaced (geopolitical_premium sign, real
+  estate leverage, FLOT severity, AIPO drift) was a CALIBRATION or
+  CLASSIFICATION question within an existing role, never a missing or
+  redundant role. Registry structure confirmed complete/non-redundant. The
+  "AI application layer gap" sub-note stands as a genuine open structural
+  gap (no M07-compliant pure-play instrument exists yet), somewhat eased
+  but not closed by AIPO's v1.30 reclassification giving partial coverage
+  via RAC/STG/IHC/PDT. No action needed beyond re-screening as new
+  instruments mature, per the item's own original language.
+Item 20 (record results in §3 log): satisfied continuously throughout this
+  session as ordinary practice (12 log entries added, v1.51-v1.61) — not a
+  separate task to close, an ongoing habit already in effect.
+Item 22 (MLPX target documentation): CLOSED — already satisfied. §11's
+  MLPX entry already documents the final Relative IRA 24% reduction with
+  the drawdown-breach rationale (24% x 67% = 16.1% < 20% floor); nothing
+  further needed.
+Item 24 (confirm June 30 as first M16 §5 application): CONFIRMED — this
+  session's own extensive M16 4-layer work (GP-C, RAC-A, real estate
+  methodology, healthcare/floating-rate/EM reviews) treats June 30 as the
+  active reference audit date throughout, consistent with formal adoption
+  of M16 §5 LivingUpdateTriggers.
+Item 25 (Session_Log.md compaction): CHECKED, not needed yet — file is
+  122 lines total, §8 spans roughly 60 lines, and archive rotation already
+  happened once this session automatically (Archive_2026Q3.md, during the
+  earlier write-back recovery) without manual intervention. Revisit if the
+  file grows materially before the next audit; not the bloat problem the
+  item anticipated.
+CONCLUSION: all five items close or confirm this pass — none needed new
+research, all were verification/documentation tasks against work already
+substantially done.
 
 2026-07-03 (v1.60) - Batch 4/5 quick items (§6, client-directed audit work).
 Item 9 (§4.2/4.3 multiplier floor restoration): checked whether "commodity-
@@ -1369,12 +1408,12 @@ to do later.
 14. [CLOSED 2026-07-03, v1.58] First audit §11 classification weights — all instruments including AIPO, MAGS, and all v1.13 additions. AIPO's >5pp drift was already caught and corrected by v1.30 (June 2) before this session started; all other held instruments checked and either single-role/mandate-fixed (no drift risk) or recently reviewed. See §3 log entry 2026-07-03 (v1.58).
 15. [CLOSED 2026-07-03, v1.58] AIPO ThematicETF_ClassificationAudit() — superseded by the full 77-holding re-audit already completed at v1.30 (June 2, 2026), which is more current and more rigorous than this item's v1.14 baseline. Weight drift and materiality both addressed there.
 16. [CHECKED 2026-07-03, v1.60 — NOT YET TRIGGERED] MAGS vs AGIX: Anthropic confidentially filed a draft S-1 with the SEC June 1, 2026, press reports pointing to an October 2026 Nasdaq target — but no ticker, price, or public S-1 yet, and the filing itself says timing depends on market conditions. Short of "announced or completed" (a confidential filing isn't public terms), but materially closer than when this item was written. Re-check before Q3 given the reported timeline; no re-evaluation possible yet since there are no public terms to evaluate.
-17. Review section 11 role registry for new structural drivers. Confirm all 12 existing + 5 v1.13 roles remain complete and non-redundant. NOTE: AI application layer gap identified — no M07-compliant pure-play instrument available as of May 7, 2026. Re-screen at Q2 as new instruments mature (track record threshold).
+17. [CONFIRMED 2026-07-03, v1.61] Review §11 role registry for new structural drivers. Confirmed complete/non-redundant against everything found this session — every issue was calibration/classification within existing roles, never a missing or redundant role. AI application layer gap sub-note stands, partially eased by AIPO's v1.30 reclassification but not closed.
 18. MOVE index: assess formal integration into M11/M14 as supplementary credit/volatility signal. MOVE at 78.43 as of May 25 (elevated but below 80 threshold watch). Approved source URLs confirmed May 11 (§1). Allocation spreadsheet MOVE tab confirmed. If MOVE sustained above 100 before Q2, accelerate formal integration. Q2 audit: establish formal MOVE threshold and integrate into M14/M11 signal framework.
 19. Add Fed response function sub-variable to Scenario C scoring (design proposal Apr 29).
-20. Record all results in section 3 calibration log.
+20. [SATISFIED, ONGOING] Record all results in section 3 calibration log — confirmed 2026-07-03 (v1.61) as continuous practice, not a separate task (12 entries added this session alone, v1.51-v1.61).
 21. [CLOSED 2026-07-03, v1.58] AIPO Financial Services weight materiality — moot. v1.30's full re-audit (June 2) has no "Financial Services" category at all; superseded by the RAC/STG/IHC/PDT/UNCLASSIFIED reclassification.
-22. MLPX target allocation: Relative IRA formally reduced to 24% (drawdown breach resolved v1.13). Primary accounts per new consolidated targets. Relative Roth at 32%. Document final decisions in §11 MLPX entry.
+22. [CLOSED 2026-07-03, v1.61] MLPX target allocation documentation — already satisfied. §11's MLPX entry documents the Relative IRA 24% reduction with the drawdown-breach rationale (24% x 67% = 16.1% < 20% floor); nothing further needed.
 23. RETURNS TABLE PENDING REVISION PROPOSALS (logged May 6, 2026). 10 of 14 confirmed proposals recovered; 4 unrecoverable due to file split at v1.12. Status as of June 1, 2026:
 
   ADOPTED (HIGH confidence, intra-session v1.25):
@@ -1462,8 +1501,8 @@ to do later.
     long Treasuries were one of the best-performing assets), which may be
     exactly what the lost proposal was trying to fix. Flagged, not verified
     — do not treat as fact until run through L1-L4 properly.
-24. Implement living update protocol: now formally governed by M16_ReturnTableCalibration §5. Confirm June 30 as first formal application of M16 §5 LivingUpdateTriggers.
-25. Session_Log.md compaction: retain last 10 §7 credit rows; collapse §8 to last 3 full entries + summary table. Move prior entries to Archive_2026Q2.md.
+24. [CONFIRMED 2026-07-03, v1.61] Implement living update protocol: now formally governed by M16_ReturnTableCalibration §5. June 30 confirmed as first formal application — this session's extensive M16 4-layer work treats it as the active reference audit date throughout.
+25. [CHECKED 2026-07-03, v1.61 — NOT NEEDED YET] Session_Log.md compaction: file is 122 lines total, §8 spans ~60 lines, and archive rotation already happened once this session automatically (Archive_2026Q3.md, during the earlier write-back recovery) without manual intervention. Not the bloat problem this item anticipated — revisit if the file grows materially before the next audit.
 26. [CLOSED 2026-07-03, v1.58] COPX M07 regional concentration ruling — CONFIRMED as formal framework policy: "region = political/economic bloc" (Canada and US treated as separate regimes for the 40%-single-country threshold, despite both being North American/USMCA). This was a policy decision waiting on a decision, not more data, so no new evidence was needed to close it. Note: COPX's Canada 36.68% weight passes the 40% threshold on its own regardless of the ruling, so the ruling wasn't load-bearing for COPX's current PASS status — but it's now settled for whichever future M07 screen it does bind on.
 27. URA classification + M07 screen + targets — COMPLETE v1.22 (May 29, 2026); live in §11.4. ARCHIVED → Calibration_State_Archive.md.
 28. SIVR entry guard — COMPLETE/CLEARED v1.14 (May 7, 2026); SIVR since fully liquidated, guard moot. ARCHIVED → Calibration_State_Archive.md.
