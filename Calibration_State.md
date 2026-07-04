@@ -2,20 +2,25 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.50  Last updated: June 30, 2026 (Q2 audit, building on the v1.47
-§6 closeout. v1.48: broad_market_equity_domestic Scenario A ADOPTED
-[5,12]->[10,20] — HIGH confidence, 1991/2003 analogs T1-verified,
-client-confirmed; §6 item 23[16] -> ADOPTED. Scenario C: 2003 Iraq analog
-run, conservative bound HELD unresolved by client decision, no value change —
-see §6 item 42 and §3 2026-06-30. v1.49: §1 credit Batch A audit executed —
-trailing-180d medians computed (HY 283 / IG 78 / CCC 935 bps) and recorded in
-§1; HY/IG stress/recession/transmission deltas RETAINED, not re-verifiable
-(FRED truncated OAS history to a rolling 3y window — ENG-43); §1.3 CCC
-ratio-mode false-positive found (CCC+29/HY+8 -> 3.62x fires on noise),
-gate pending ENG-45. Opened FRAMEWORK_BACKLOG ENG-42/43/44/45. v1.50:
-same-day coding session — ENG-45 CLOSED, §1.3 gained a new calibration-dated
-parameter (Minimum absolute CCC move / ratio gate, 75 bps); ratio-row note
-updated to reflect enforcement is live in credit.py. See §6 Batch A.)
+# Version: 1.51  Last updated: July 3, 2026. v1.50: same-day coding session —
+ENG-45 CLOSED, §1.3 gained a new calibration-dated parameter (Minimum
+absolute CCC move / ratio gate, 75 bps); ratio-row note updated to reflect
+enforcement is live in credit.py. v1.51: DBMF §13 Thesis Sustaining Condition
+first formal evaluation — DEGRADED (Condition 1, B+C>=55%, NOT MET at actual
+48.5%; Condition 2 met at the margin). §4.1 B/C values NOT revised — see §3
+2026-07-03. RSP EV refreshed live (-0.87% -> +1.11%, BMED-A-adoption driven,
+NOT ADOPTABLE conclusion unchanged) — see §3 2026-07-03.
+
+(Prior: v1.48 broad_market_equity_domestic Scenario A ADOPTED [5,12]->[10,20]
+— HIGH confidence, 1991/2003 analogs T1-verified, client-confirmed; §6 item
+23[16] -> ADOPTED. Scenario C: 2003 Iraq analog run, conservative bound HELD
+unresolved by client decision, no value change — see §6 item 42 and §3
+2026-06-30. v1.49: §1 credit Batch A audit executed — trailing-180d medians
+computed (HY 283 / IG 78 / CCC 935 bps) and recorded in §1; HY/IG stress/
+recession/transmission deltas RETAINED, not re-verifiable (FRED truncated OAS
+history to a rolling 3y window — ENG-43); §1.3 CCC ratio-mode false-positive
+found (CCC+29/HY+8 -> 3.62x fires on noise), gate pending ENG-45. Opened
+FRAMEWORK_BACKLOG ENG-42/43/44/45. Full detail: Calibration_Log.md.)
 
 **File split as of v1.12:**
 - Session observations (§7) and session state (§8) now live in **Session_Log.md** (fetched concurrently at session start).
@@ -28,7 +33,7 @@ updated to reflect enforcement is live in credit.py. See §6 Batch A.)
 
 At session start, after both files are fetched, the advisor must state in the briefing:
 
-"Calibration State loaded, last update: June 30, 2026 | Session Log loaded"
+"Calibration State loaded, last update: July 3, 2026 | Session Log loaded"
 
 Absence of either confirmation line indicates the respective file was not loaded and the session is invalid for threshold-sensitive decisions.
 
@@ -152,6 +157,37 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-03 (v1.51) - DBMF §13 Thesis Sustaining Condition: first formal
+evaluation since creation (2026-06-17). Client-prompted, triggered by a T1
+price-vs-calibration cross-check during a broader instrument-simplification
+review (VT/VTI/SCHD/RSP/DBMF price-history audit). Condition 1 (B+C>=55%)
+NOT MET this session — actual 48.5%. Condition 2 (>=2 of {BZUSD, GCUSD, DXY,
+^GSPC} trending, 8wk window) MET at the margin (Brent -34% and Gold -9.7%
+trending; DXY +1.6% flat and equities whipsawing, both NOT trending). Neither
+failure_signal fired. NET STATUS: DEGRADED (same category as MLPX), not
+FAILED. Mechanism note: the 2022 B/C analog underpinning DBMF's ★ HIGH-
+confidence §4.1 values was carried by a clean 9-month DXY trend (+18.5%) and
+the fastest Fed hiking cycle in 40yr, DESPITE choppy equities that year (2022
+RSP intra-year swings were larger than today's) — equity behavior was never
+the correct test for this role; today's DXY specifically lacks 2022's trend
+breadth. §4.1 B=[+15,+30]/C=[+18,+35] VALUES are NOT revised by this entry —
+the M16 4-layer analog basis (1973-82, 2022) is unchanged and not disputed.
+This is a live sustaining-condition finding, distinct from a return-table
+revision, and does not require M16.CalibrationMethodology(). Detail: §13
+DBMF entry, evaluation_2026_07_03 field.
+
+2026-07-03 (v1.51) - RSP EV refresh (client question, same simplification
+review). RSP's §11.4 classification (broad_market_equity_domestic 0.92 +
+secular_technology_growth 0.08, 2026-06-25) is unchanged — re-verified live
+via advisor_evaluate_allocation at today's session probabilities. EV improved
+from -0.87% (at classification, 2026-06-25 probs) to +1.11% (today), driven
+by BMED Scenario A's HIGH-confidence adoption ([5,12]->[10,20]) in the
+interim — RSP's 92% BMED weight captures that upward revision almost fully.
+Directive remains REDUCE_TO_MIN (still well below MLPX/DBMF). NOT ADOPTABLE
+conclusion unchanged; number less negative, not reversed. No classification
+or §4.1 change — logged for continuity since the prior EV figure (-0.87%) is
+now stale by three weeks of calibration changes.
 
 2026-06-30 (v1.49, Q2 audit) - §1 credit thresholds Batch A audited.
 Trailing-180d medians computed and recorded in §1 (HY 283 / IG 78 / CCC 935
@@ -1892,9 +1928,24 @@ DBMF: {
     "All 4 tracked markets in mean-reversion mode simultaneously for >= 4 consecutive weeks"
   ]
   data_dependencies: ["DBMF", "BZUSD", "GCUSD", "DXY_INDEX", "^GSPC"]
-  last_reviewed: "2026-06-17"
+  last_reviewed: "2026-07-03"
   notes: "DBMF is a replication product — composition changes continuously.
           Trend quality evaluation requires market-level signals, not DBMF price alone."
+  evaluation_2026_07_03: "First formal evaluation since TSC creation (2026-06-17),
+          client-prompted (T1 price-vs-calibration cross-check). Condition 1 (B+C>=55%)
+          NOT MET — actual 48.5% (A=13.86/B=34.64/C=13.86/D=3/E=6.93/F=27.71). Condition 2
+          (>=2 of 4 trending, 8wk window, T1 market_data_mcp) MET at the margin: BZUSD -34%
+          smooth decline (trending), GCUSD -9.7% smooth decline (trending); DXY +1.6% flat
+          (NOT trending); ^GSPC/VTI proxy shows two V-shaped reversals within the window
+          (whipsaw, NOT a clean trend). Neither failure_signal fired (DBMF 3M return ~flat,
+          not <-3%; not all 4 markets in reversion). NET STATUS: DEGRADED — same category as
+          MLPX, not FAILED. Context: 2022's B/C analog carried DBMF's return via a clean
+          9-month DXY trend (+18.5%) plus the fastest Fed hiking cycle in 40yr, DESPITE choppy
+          equities that year (RSP had larger intra-year swings than today) — so equity
+          behavior was never the relevant test; today's DXY specifically lacks 2022's
+          breadth. §4.1 B=[+15,+30]/C=[+18,+35] VALUES themselves are not disputed by this —
+          the M16 4-layer analog basis is unchanged. This is a sustaining-condition finding,
+          not a return-table revision, and does not require M16.CalibrationMethodology()."
 }
 
 SGOL: {
