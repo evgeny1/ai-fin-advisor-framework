@@ -2,11 +2,13 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.52  Last updated: July 3, 2026. v1.52: geopolitical_premium
-Scenario C reconstructed (§6 item 23 UNRECOVERABLE slot [14]) — LOW
-confidence, NOT ADOPTED, feeds the open M15 XAR role-split decision (see §3
-2026-07-03). §6 item 30 (DBMF D/E/F) found stale/already-closed since
-v1.22/v1.28 — corrected, archived.
+# Version: 1.53  Last updated: July 3, 2026. v1.53: real_asset_contracted_revenue
+Scenario A reconstructed (§6 item 23 slot [13]) — MEDIUM confidence, [3,7]->
+[8,18] proposed, LOGGED PENDING not adopted; L4 passes cleanly, ready for
+next-audit adoption. v1.52: geopolitical_premium Scenario C reconstructed
+(slot [14]) — LOW confidence, NOT ADOPTED, feeds the open M15 XAR role-split
+decision (see §3 2026-07-03). §6 item 30 (DBMF D/E/F) found stale/already-
+closed since v1.22/v1.28 — corrected, archived.
 v1.50: same-day coding session —
 ENG-45 CLOSED, §1.3 gained a new calibration-dated parameter (Minimum
 absolute CCC move / ratio gate, 75 bps); ratio-row note updated to reflect
@@ -162,6 +164,42 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-03 (v1.53) - real_asset_contracted_revenue Scenario A: RECONSTRUCTED
+per §6 item 23 UNRECOVERABLE slot [13] (v1.12 file-split loss, Batch 1 audit
+work, item [14] GP-C logged above). PROPOSED [3,7] -> [8,18], MEDIUM
+confidence -- LOGGED PENDING, NOT ADOPTED (GUARD: never adopt MEDIUM
+intra-session).
+L1: infrastructure unconditional anchor ~4-5% real (existing table
+  convention, unchanged).
+L2 (scenario A analogs = 1991 Gulf War normalization / 2003 Iraq War
+  drawdown / 2016 commodity rebound): 1991 and 2003 have NO usable
+  MLP-sector-specific analog -- the Alerian MLP Index's own total-return
+  history begins June 2006 and the sector was not a meaningful investable
+  asset class in 1991 or informally thin in 2003; not just weak data, the
+  asset class essentially didn't exist yet in citable form. 2016 is 1
+  clean, well-documented analog: AMJ (JPMorgan Alerian MLP ETN) +17.24%
+  nominal, broader Alerian benchmark +27.30% nominal, both rebounding from
+  a -32.96%/-34% 2015 crash (Yahoo Finance trailing-returns table; SEC
+  N-CSR filings corroborate the 2015 crash magnitude). Real terms
+  (~2.1% 2016 CPI): roughly +15% to +25% real. 1 clean analog only ->
+  MEDIUM per ENUM (1-2 analogues).
+L3: modern MLPX (contracted fee-based midstream, deleveraged post-2020s) is
+  materially higher quality than the still-crash-recovering 2016-era
+  sector -- same adjustment logic already used for the D/E revision
+  ("MLPX contracted fee-based revenue quality above broad AMZ index").
+  Applied a substantial haircut to the raw 2016 rebound magnitude
+  (roughly half) to reflect that 2016 was rebounding FROM a proximate
+  sector-specific crash, a stronger tailwind than a generic war-
+  normalization scenario A would supply on its own: conservative +8%,
+  upside +18%.
+L4: neutral-distribution (A=35/B=15/C=15/D=10/E=5/F=20) weighted CONSERVATIVE
+  average with A=8: 0.35(8)+0.15(6)+0.15(8)+0.10(-6)+0.05(-10)+0.20(3) =
+  4.4%. Vs L1 anchor 4-5%: gap ~0 to +0.6pp. PASS cleanly.
+CONCLUSION: well-supported MEDIUM proposal (L4 passes cleanly, only the
+  analog count caps it below HIGH) -- ready for formal adoption at next
+  audit without further work, unlike GP-C above. No §4.1 change this
+  session. Full record: §6 item 23[13].
 
 2026-07-03 (v1.52) - geopolitical_premium Scenario C: RECONSTRUCTED per §6
 item 23 UNRECOVERABLE slot (1 of 4; v1.12 file-split loss, client-directed
@@ -1098,6 +1136,11 @@ to do later.
 
   UNRECOVERABLE (4 proposals — lost in v1.12 file split; reconstruction in progress,
   started 2026-07-03 client-directed Batch 1 audit work):
+  - [13] real_asset_contracted_revenue A: RECONSTRUCTED 2026-07-03. PROPOSED
+    [3,7]->[8,18], MEDIUM confidence (1 clean analog: 2016 MLP rebound,
+    L4 passes cleanly at 4.4% vs 4-5% anchor). LOGGED PENDING, NOT ADOPTED.
+    Ready for adoption at next audit without further work. Full detail:
+    §3 log entry 2026-07-03 (v1.53).
   - [14] geopolitical_premium C: RECONSTRUCTED 2026-07-03. LOW confidence (1970s
     analogs unavailable — proxy required per M16 L2; no L1 anchor for a
     sector-specific role). NOT ADOPTED, no §4.1 change. Full 4-layer detail:
@@ -1106,17 +1149,16 @@ to do later.
     alone — an independent third-party (Arbor Data Science) analysis
     corroborates the client's own XAR observation that this specific
     conflict is breaking the "usual" defense-stock war-trade pattern.
-  - [11]-[13]: IHC Scenario A, RAC Scenario A, RSILD revision (scenario
-    unspecified in the surviving reference — original content lost, only
-    the role/scenario slots survived). NOT YET reconstructed. Preliminary
-    Layer 2 scan (2026-07-03): commodity-index and MLP-sector data at
-    ETF-equivalent granularity for the 1991/2003 normalization analogs
-    likely doesn't exist (MLP sector barely existed as a public asset class
-    before ~2005-2010; broad commodity ETFs launched ~2006) — expect these
-    to land at LOW confidence for the same structural reason as GP-C above,
-    which would mean the same non-adoption outcome regardless of how much
-    further research effort goes in. Client to confirm whether to still
-    complete the paper trail now or deprioritize behind higher-value work.
+  - [11]-[12]: IHC Scenario A, RSILD revision (scenario unspecified in the
+    surviving reference — original content lost, only the role/scenario
+    slots survived). NOT YET reconstructed. IHC-A: attempted 2026-07-03 —
+    GSCI/CRB indices DO have backfilled data to 1969-70 unlike the MLP
+    sector, but a specific verified 1991 or 2003 annual return figure was
+    not found via this research pass (search-snippet-level sourcing wasn't
+    sufficient to cite responsibly — this is a "couldn't verify" gap, not
+    a "doesn't exist" one like GP-C/RAC-A's 1970s/pre-2006 gaps). Needs a
+    direct historical-data pull (FRED PPI commodity series, or a chart
+    source with exact annual figures) rather than another web_search pass.
   - RSILD specifically: current §4.1 row has NO confidence markers on any of
     its 6 cells (full v1.0 baseline, never reviewed) — worth flagging that
     Scenario E=[-10,-3] looks directionally suspect on its face (long-
