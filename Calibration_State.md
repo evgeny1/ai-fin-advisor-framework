@@ -2,7 +2,14 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.56  Last updated: July 3, 2026. v1.56: floating_rate_credit_income
+# Version: 1.57  Last updated: July 3, 2026. v1.57: emerging_market_equity
+B/C/F reviewed — B/C confirmed via China/Taiwan-specific 2022 data (blended
+EM index masks VWO's concentration), F revised [4,11]->[8,20] MEDIUM (Taiwan
+strongly positive in all 3 designated growth-year analogs), D/E left
+untouched since 2020's full-year recovery data isn't representative of
+acute-stress severity. Batch 2 (Q2 audit) complete — all 6 not-currently-
+held roles reviewed this session.
+v1.56: floating_rate_credit_income
 full review — likely role/instrument-severity mismatch found. D/E revised
 [-10,-4]/[-8,-2]->[-2,1]/[-4,0] using FLOT's OWN 14-year actual return
 history (never a negative full year; worst month ever -4.2%, March 2020),
@@ -183,6 +190,40 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-03 (v1.57) - emerging_market_equity: B/C/F reviewed, F revised; D/E
+data-limited (§6 item 33, client-directed Batch 2 audit work, not currently
+held). Found a genuinely clean 15-year country-level MSCI return quilt
+(Novel Investor, 2011-2025) that reports China and Taiwan individually --
+important because VWO's 56.7% combined China+Taiwan weight means the
+blended "EM" row is NOT representative of VWO specifically (same structural
+point already established for Scenario A's L3 adjustment).
+B/C (2022 analog): blended EM index -2.2% (masked by huge offsetting gains
+  in Turkey +91.2%, Chile +22.6%, Brazil +14.6% -- commodity-exporter EMs
+  that year). VWO's actual dominant constituents: China -21.8%, Taiwan
+  -29.1% -- both far worse than the blended figure, consistent with (and
+  validating) the existing structural logic. Current B=[-12,-6]/C=[-15,-9]
+  sit reasonably within a China/Taiwan-weighted read of that same year.
+  REVIEWED, NOT REVISED. Marked ✓.
+D/E (2008-09 GFC/2020 COVID; 2008 acute/1998 LTCM/1987): this data source
+  only covers 2011-2025 country returns, so no 2008-09 read is available.
+  2020's FULL-YEAR figures (China +29.7%, Taiwan +42.0%, blended EM +18.7%)
+  are contaminated by the V-shaped recovery and are NOT representative of
+  D/E-type acute-stress severity -- using them would understate risk, not
+  correct a miscalibration. Left UNTOUCHED rather than revised on
+  unrepresentative data. Needs acute-trough-specific (Feb-Mar 2020 or
+  2008-09-specific) data before either cell can move.
+F (growth periods -- 2017/2023/2024 all directly captured in this source):
+  Taiwan strongly positive in every single one (+28.5%, +31.3%, +35.1%);
+  China more volatile but net positive across the set (+54.3%, -11.0%,
+  +19.7%). A China/Taiwan-weighted read of all three years sits well above
+  the current [4,11] range. PROPOSED: [4,11] -> [8,20]. MEDIUM confidence
+  (3 years of country-level data, but wide China dispersion keeps this
+  below HIGH) -- LOGGED PENDING, NOT ADOPTED.
+CONCLUSION: same lesson as Scenario A's original L3 adjustment, now applied
+  consistently across the row -- always read VWO's dominant constituents
+  directly, never the blended "EM" figure, which dilutes exactly the
+  concentration risk the role is supposed to capture.
 
 2026-07-03 (v1.56) - floating_rate_credit_income: full review, likely
 role/instrument-severity mismatch found and corrected (§6 item 32, client-
@@ -1059,7 +1100,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | consumer_defensive_equity | [0, +4]★ | [+2, +6]★ | [+2, +6]★ | [-5, 0]★ | [-8, -2]⚑ | [-3, +2]★ |
 | healthcare_defensive_equity | [1, 5]✓ | [-9, -2]⚑ | [-9, -2]⚑ | [-4, 1]✓ | [-8, -2]⚑ | [1, 5]✓ |
 | floating_rate_credit_income | [1, 3]✓ | [1, 3]✓ | [1, 3]⚑ | [-2, 1]⚑ | [-4, 0]⚑ | [1, 3]✓ |
-| emerging_market_equity | [+10, +20]★ | [-12, -6]⚑ | [-15, -9]⚑ | [-25, -15]⚑ | [-22, -14]⚑ | [4, 11]⚑ |
+| emerging_market_equity | [+10, +20]★ | [-12, -6]✓ | [-15, -9]✓ | [-25, -15]⚑ | [-22, -14]⚑ | [8, 20]⚑ |
 
 secular_technology_growth: added v1.7 Apr 28. B and C values revised v1.8 Apr 30.
 B revised [-6,-1]→[-2,+4] ADOPTED HIGH confidence (v1.27, June 1, 2026). M16 4-layer:
@@ -1111,7 +1152,8 @@ systematic_trend_following: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1
 consumer_defensive_equity: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13/v1.22). D=[-5,0] ADOPTED HIGH confidence (v1.28, June 1, 2026). L2: 2008-09 2yr annualized XLP ~-1.5% real (XLP -15% in 2008, +14% in 2009; 2yr annualized ~-1.5%); 2020 XLP ~flat; 1990-91 ~flat. L3: Conservative -5% calibrated to extended 3yr D where recovery doesn't fully arrive; upside 0% reflects sustained deflationary drag prevents positive real return. F=[-3,+2] ADOPTED HIGH confidence (v1.28). L2: 2017 XLP F-type +3-5% real, 2003-07 pre-GFC growth +2-4% real, 2018 late-cycle ~-2% real (Fed hiking). L3: growth overheat → staples underperform market but maintain pricing power; modest positive to slight negative real. E=[-8,-2] remains ⚑: variation too wide across analogues (2008 Q4: ~-30% annualized vs 1998 LTCM: ~flat). MEDIUM. Layer 4 neutral check (D=-5, E=-8, F=-3): -0.90% vs anchor 1-3%. Gap -1.90 to -3.90pp. PASS ±3pp (toward limit — acceptable given role defines B/C alpha).
 healthcare_defensive_equity: added v1.13 May 6. Full 6-cell review 2026-07-03 (v1.55) — see §3 log entry for full detail. A/D/F reviewed and confirmed via verified XLV multi-year return history, no revision, marked ✓. B/C proposed [1,4]/[-2,3] -> [-9,-2] both (MEDIUM, single 2022 data point can't separate the two mechanisms yet), LOGGED PENDING. E untouched this pass, remains ⚑.
 floating_rate_credit_income: added v1.13 May 6. Full review 2026-07-03 (v1.56) — see §3 log entry, full detail. A/B/F confirmed via FLOT's own 14-year actual return history, no revision, marked ✓. D/E revised [-10,-4]/[-8,-2] -> [-2,1]/[-4,0] — current values read as leveraged-loan-calibrated, but FLOT is genuinely IG/short-duration and has never had a negative full year (worst month ever: -4.2%, March 2020). MEDIUM, LOGGED PENDING. C untouched — separate Q3 nominal-vs-real flag stands as originally noted below.
-emerging_market_equity: added v1.13 May 6. Scenario A ADOPTED HIGH confidence (v1.23 — REVISED [+4,+9]→[+10,+20]; L2: 1991 Gulf drawdown +15-20% real, 2003 Iraq drawdown +15-20% real, 2016 commodity rebound +10-15% real; 3 analogues. L3: VWO Taiwan/China 56.7% concentration depresses D/E conservative values; structural adj documented. L4: gap to institutional anchor +5.5% documented as (a)+(d); expected given VWO concentration vs blended EM unconditional). B-F PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: −2.55% midpoints. Resolve at June 30. ⚠ floating_rate_credit_income C=[+1,+3]: flag for Q3 — may conflate nominal vs real return basis (2022 FLOT: −0.6% nominal ≈ −7% real at 8% CPI). Reconcile at Q3 audit.
+emerging_market_equity: added v1.13 May 6. Scenario A ADOPTED HIGH confidence (v1.23 — REVISED [+4,+9]→[+10,+20]; L2: 1991 Gulf drawdown +15-20% real, 2003 Iraq drawdown +15-20% real, 2016 commodity rebound +10-15% real; 3 analogues. L3: VWO Taiwan/China 56.7% concentration depresses D/E conservative values; structural adj documented. L4: gap to institutional anchor +5.5% documented as (a)+(d); expected given VWO concentration vs blended EM unconditional). B/C/F reviewed 2026-07-03 (v1.57) — see §3 log entry, full detail. B/C confirmed via China/Taiwan-specific 2022 data (blended EM index masks the concentration this role is supposed to capture), marked ✓. F revised [4,11]->[8,20] MEDIUM, LOGGED PENDING — Taiwan strongly positive in all 3 designated growth-year analogs (2017/2023/2024). D/E untouched — 2020's full-year recovery data isn't representative of acute-stress severity; needs trough-specific data, not the annual figures found this pass.
+⚠ floating_rate_credit_income C=[+1,+3]: flag for Q3 — may conflate nominal vs real return basis (2022 FLOT: −0.6% nominal ≈ −7% real at 8% CPI). Reconcile at Q3 audit.
 ⚠ 14 additional revision proposals pending June 30 formal adoption — see §6 item 23.
 
 ### 4.2 IRA Target Multipliers (10-year horizon)
@@ -1307,10 +1349,10 @@ to do later.
 28. SIVR entry guard — COMPLETE/CLEARED v1.14 (May 7, 2026); SIVR since fully liquidated, guard moot. ARCHIVED → Calibration_State_Archive.md.
 29. COPX entry guard — COMPLETE/CLEARED v1.14 (May 7, 2026); one-time computation, COPX still held so the guard re-runs live. ARCHIVED → Calibration_State_Archive.md.
 30. [STALE — CLOSED 2026-07-03, checklist not updated at the time] DBMF D/E/F scenario formal adoption. Superseded: D ADOPTED HIGH confidence v1.22 (May 29); E ADOPTED HIGH confidence v1.28 (June 1); F ADOPTED HIGH confidence v1.28 (June 1) — full A-F row is ★ in §4.1, all HIGH confidence. This item was never marked done when the work completed; found stale during 2026-07-03 Batch 1 audit pass (item was assumed open, checked against live §4.1 before starting redundant research). ARCHIVED → Calibration_State_Archive.md. Separately: DBMF's §13 Thesis Sustaining Condition (a live monitoring check, NOT a §4.1 methodology question) went DEGRADED same session — see 2026-07-03 v1.51 §3 log entry; unrelated to this item.
-31. Healthcare_defensive_equity (XLV): confirm §11 classification. Run ThematicETF_ClassificationAudit() — sector composition has shifted toward biotech/tech-adjacent REITs; verify role weights. Full M16 calibration for all scenario values.
-32. Floating_rate_credit_income (FLOT): full M07 screen. Confirm no foreign concentration issue. Compute D scenario (-10% to -4%) empirical basis using 2008 IG spread data.
-33. Emerging_market_equity (VWO): full M07 screen. Confirm China (~30.8%) + Taiwan (~18-22%) combined regional concentration — determine if Taiwan Strait geopolitical risk warrants amber flag. Apply M07 regional ruling from item 26.
-34. Consumer_defensive_equity (XLP): complete M16 calibration for A/C/D/E/F scenarios (PENDING). Primary analog: A = 2003-2007 XLP vs market underperformance; C = 1973-74 input cost squeeze; D = 2008 XLP -15% nominal.
+31. Healthcare_defensive_equity (XLV): §4.1 return-table review COMPLETE 2026-07-03 (v1.55, see §3 log entry) — A/D/F confirmed, B/C revised (pending). §11 classification confirm + ThematicETF_ClassificationAudit() (sector composition drift check) NOT done this pass — remains open.
+32. Floating_rate_credit_income (FLOT): §4.1 return-table review COMPLETE 2026-07-03 (v1.56, see §3 log entry) — found and corrected a likely leveraged-loan-severity mismatch on D/E using FLOT's own actual history. Full M07 screen (foreign concentration check) NOT done this pass — remains open.
+33. Emerging_market_equity (VWO): §4.1 return-table review COMPLETE 2026-07-03 (v1.57, see §3 log entry) — B/C confirmed, F revised, D/E data-limited. Full M07 screen and the China (~30.8%)/Taiwan (~18-22%) amber-flag decision NOT done this pass — remains open. Apply M07 regional ruling from item 26 when it is.
+34. Consumer_defensive_equity (XLP): [PARTIALLY STALE] this item's own text claims A/C/D/E/F are all PENDING — checked against live §4.1 2026-07-03 and found A/B/C/D/F were already ADOPTED HIGH confidence (v1.13/v1.22/v1.28); only E was ever actually pending. E itself checked 2026-07-03 against a 1987 analog (mechanical/non-discriminatory crash, no usable 3rd data point) — stays MEDIUM as-is, confirmed rather than open. Item fully resolved; corrected text left here for the record rather than silently deleted.
 35. secular_technology_growth Scenario B — RESOLVED v1.27 (June 1, 2026), ADOPTED HIGH confidence [-6,-1]→[-2,+4], live in §4.1. ARCHIVED → Calibration_State_Archive.md (full rationale in Calibration_Log.md v1.27).
 36. GOOGLEFINANCE ticker setup (v1.17): New allocation spreadsheet tab added for market data "Other Indexes". Confirmed working: VIX (INDEXCBOE:VIX), S&P 500 (INDEXSP:.INX), MOVE (INDEXNYSEGIS:MOVE). FRED series: use existing spreadsheet "FRED Series" tab. BZ=F is canonical Brent reference for C-trigger clock per v1.17.
 37. AI capex / secular_technology_growth context note (v1.18, May 22, 2026): Session intelligence — hyperscaler AI capex $660-830B committed for 2026 (nearly doubling 2025). Capex intensity 45-57% of revenue (vs 10-15% in 2020). Revenue growth 15-16% vs capex growth 60-80%; FCF projected to decline 90% across Big Four. Private credit ($800B+ in AI infrastructure financing) opacity flagged as tail risk not visible in HY/IG spread series. AI utility pricing emerging (62% usage-based by 2027). Prisoner's dilemma / war-of-attrition structure confirmed: no coordination mechanism among 5+ hyperscalers; 18-36 month infrastructure commitment periods prevent exit. Fiber optic 1999 analogy: technology correct, equity returns poor due to timing, cost of capital, and competitive dynamics. Portfolio implication: AIPO (infrastructure layer, contracted revenue) positive EV in B/C; MAGS (hyperscaler equity) negative EV in B/C — distinction maintained. No §4.1 changes warranted from session analysis.
