@@ -72,33 +72,7 @@ b_watch_level_3: [active | inactive] (include when CPI print 3 is 3.5–3.9%)
 
 // COMPACTED: 2026-07-03 — 1 oldest entry(ies) archived to Archive_2026Q3.md, restoring the last-3 retention rule (FRAMEWORK_BACKLOG.md ENG-5)
 
----
-
-date: 2026-06-25 (full M05 session)
-scenario_probabilities: { A: 11.4118%, B: 34.2353%, C: 11.4118%, D: 3%, E: 5.7059%, F: 34.2353% }
-primary_driver: Persistent CPI acceleration (May 4.2% YoY, 3rd consecutive accelerating print) + confirmed strong nominal GDP (Q1 third estimate: real 2.1%, nominal ~5.6% annualized -- 2nd consecutive quarter of nominal growth >3%) + hawkish Fed hold (June 17, dropped easing bias, dot-plot median 3.8%) shifted the scenario mix to a B/F tie (34.24%/34.24% each, from prior B 48.5%/F 16.17%). Hormuz/Iran kept scored as conflict-premise-still-active pending fresh T1 confirmation despite mounting de-escalation evidence (Bürgenstock talks concluded with a deconfliction channel; Brent fell to at/below pre-war levels this week).
-session_type: full M05 session
-
-open_triggers:
-- Hormuz/Iran CONTESTED: IRGC re-declared closure June 20 but Brent has fallen to at/below pre-war levels (multi-month lows, contango) and Bürgenstock talks concluded with a deconfliction channel -- mounting de-escalation evidence. Re-score C_check_chokepoint/M19_XAR_CONFLICT_GATE at Q2 audit with fresh T1 confirmation; do not flip on price action alone.
-- Q1 2026 GDP third estimate confirmed 2.1% real (revised up from 1.6% second estimate, released today June 25). Nominal GDP growth ~5.6% annualized, second consecutive quarter >3% nominal -- F_check_gdp trigger now formally met.
-- DBMF M19 status FAILED (mean-reversion condition, verified-correct data per ENG-27) -- ENG-30's second condition (DBMF_3M_return < -3% while B+C >= 55%) still has no evaluator; treat as partial signal only.
-- Q2 calibration audit June 30 (5 days out): full EV recomputation, XAR sizing review, GAP-16 real-yield methodology, COPX 90d avg recompute, INFL Section 11 classification still pending.
-- URA IRA target discrepancy (sheet shows 1% actual vs 3% framework-cleared target) and MAGS sheet 5%/6% vs Calibration_State 3%/4% -- both unresolved, clarify before executing.
-- AIPO IRA/Roth reduction (7%->3%, +4pp to DBMF) still under client deliberation, unchanged this session.
-- Primary IRA and Primary Roth IRA both join Relative Roth as TARGET_THEN_RETURN accounts running INFEASIBLE this session (shortfalls 2.68pp / 2.79pp / 2.86pp respectively) -- same root cause (B/F-tied scenario mix compresses blended conservative returns account-wide). Add to Q2 audit scope: full required-return/multiplier methodology review, not just Relative Roth.
-
-open_decisions:
-1. Relative Roth (...466) objective_type CONFIRMED as TARGET_THEN_RETURN by client 2026-06-25 -- this is correct, not a stale sheet entry. Stop flagging it as a discrepancy needing correction to FLOOR_THEN_RETURN.
-2. Relative Roth (...466) reallocated this session per scenario-weighted blended math: AIPO 10.5%->11%, MLPX 33.7%->35%, VTIP 35.4%->30%, DBMF 20.2%->24%. FeasibilityCheck result: INFEASIBLE. Blended conservative return improves 2.12%->2.33% (shortfall narrows from 3.07pp to 2.86pp) but required return for TARGET_THEN_RETURN (15yr horizon, multiplier 2.14x) is 5.19% -- gap not closed. Tested adding a precious-metals candidate role (SGOL) -- made the shortfall worse (2.98pp) given today's B/F-dominant scenario mix (SGOL's per-scenario weight in F is only 0.02). No instrument currently in Section 11 reaches the required 5.19% blended conservative return for this account at today's probabilities. This is a structural gap, not a reallocation-execution problem -- flag for Q2 audit: revisit whether the required-return/multiplier methodology is appropriate for a sub-$10k account, or accept the shortfall as a known limitation.
-3. Relative Roth (...466) floor breach this session (Step 3b/6b, scenario F, worst -0.24%, IMMEDIATE priority) -- addressed via the reallocation above; VTIP and DBMF were the floor-proximity drag instruments and both moved in the directionally correct direction (VTIP trimmed toward its lower blended-ideal weight, DBMF added toward its higher one).
-4. Ran all four of Evgeny's own accounts through advisor_evaluate_allocation this session (initial pass had only covered Relative Roth). Primary IRA (3080-6469, TARGET_THEN_RETURN/10yr): blended return 2.22% vs required 4.90% (multiplier 1.61x) -- shortfall 2.68pp, INFEASIBLE; directives MAGS/AIPO/XAR/MLPX HOLD, SGOL/DBMF/VTIP/COPX ADD (AIPO and COPX both show dual-role conflicts, dominant role applied). Primary Roth IRA (3534-9838, TARGET_THEN_RETURN/15yr): blended return 2.41% vs required 5.19% (multiplier 2.14x) -- shortfall 2.79pp, INFEASIBLE; directives MAGS/AIPO/XAR/MLPX HOLD, DBMF/VTIP ADD (AIPO dual-role conflict, dominant role applied; account holds no COPX or SGOL). Taxable Acc4 (6668-9768, RETURN_THEN_TARGET/5yr): no required-return hurdle for this objective type; AIPO/XAR/MLPX/SGOV HOLD, DBMF/COPX ADD (COPX dual-role conflict, commodity-linked 75% dominant overrides international-equity 25% sub-component). Taxable Acc3 (3459-4443, PRESERVATION): 99.95% SGOV, HOLD, no findings.
-5. Systemic pattern this session: ALL THREE TARGET_THEN_RETURN accounts (Primary IRA, Primary Roth, Relative Roth) are infeasible by a similar margin (2.68pp / 2.79pp / 2.86pp shortfall respectively) under today's B/F-tied scenario mix. The highest blended conservative return available anywhere in the Section 11 registry this session is MLPX at 3.61% -- no single instrument or combination clears any of the three accounts' ~5% real-return hurdles. This is a calibration-level question for the Q2 audit (is the conservative-case return table too conservative under a B/F-tied regime, or is the required-return/multiplier formula miscalibrated for this regime), not an individual-account allocation problem. No REDUCE candidates surfaced in any of the four accounts this session -- AIPO/MAGS/MLPX/XAR are all at-or-near their blended-ideal weight (HOLD) in every account that holds them.
-6. AIPO data-quality flag applies across every account holding it (Primary IRA, Primary Roth, Acc4, Relative Roth): component weights sum to only 86% (14% unclassified, excluded from EV computation). Verify classified weights at the next Section 11 audit.
-
-next_session_flags:
-- FIRST: re-verify Hormuz/Bürgenstock outcome with fresh T1 sources before re-scoring C_check_chokepoint/M19_XAR_CONFLICT_GATE -- evidence is trending toward de-escalation (Brent at/below pre-war levels, deconfliction channel established).
-- Q2 audit due June 30: INFL classification, URA/MAGS sheet-vs-calibration discrepancies, GAP-16 real-yield methodology, and the structural TARGET_THEN_RETURN shortfall now confirmed across THREE accounts (Primary IRA, Primary Roth, Relative Roth) all need deliberate review -- this looks like a methodology question, not isolated account issues.
+// COMPACTED: 2026-07-03 — 1 oldest entry(ies) archived to Archive_2026Q3.md, restoring the last-3 retention rule (FRAMEWORK_BACKLOG.md ENG-5)
 
 ---
 
@@ -153,4 +127,30 @@ next_session_flags:
 - DBMF+MLPX(+SGOL/SGOV) tested as simplification alternative for Primary IRA: 40/40/20 cuts shortfall from 2.68pp (current 8-holding mix) to 1.41-1.51pp, both DBMF and SGOL get live ADD directives -- re-run this same structure test across Primary Roth, Acc4, and both Relative accounts next session.
 - Resolve Relative Roth floor breach by writing the computed reallocation to the actual allocation sheet Target column
 - Q2 audit (overdue) needs closing -- ~15 items
+
+---
+
+date: 2026-07-03 (full M05 session)
+scenario_probabilities: { A: 14.9231%, B: 37.3077%, C: 7.4615%, D: 3%, E: 7.4615%, F: 29.8462% }
+primary_driver: Fed hawkish hold under Warsh (3.50-3.75%, dot plot now implies hikes not cuts, Sept hike odds ~64%) + CPI re-accelerating to 4.2% YoY + GDP momentum decelerating sharply (GDPNow Q2: 3.0%->1.2% in two weeks) + labor market cooling (June payrolls +57k, well below consensus) -- while Iran MOU/ceasefire formally holds (blockade lifted, Hormuz route widened) but physical throughput remains far from normal (UAE estimates full flows not until 2027). Scenario mix: B+F now 67% combined; C collapsed to 7.5% as chokepoint scored resolved.
+session_type: full M05 session
+
+open_triggers:
+- XAR M19 FAILED again this session (Iran MOU + Hormuz reopening fired) -- still NOT executing, pending M15 geopolitical_premium reclassification review (role likely conflates acute-conflict vs defense-procurement drivers)
+- MLPX TSC now DEGRADED (NEW this session) -- B+C combined probability fell to 44.8%, below the 55% sustaining threshold; read as tailwind fading, not thesis failure
+- DBMF TSC remains DEGRADED from last session -- condition 1 (B+C>=55%) still not met, condition 2 met at the margin
+- AIPO hyperscaler-capex dependency unresolved -- watch Q2 earnings cycle (MSFT/AMZN/GOOGL capex commentary)
+- Q2 audit (due June 30) now several days overdue, ~15 open items untouched
+- Hormuz physical throughput still far from normal (UAE estimate: full flows not until 2027) despite formal ceasefire/MOU holding -- re-verify conflict-gate scoring next session against this gap
+
+open_decisions:
+1. DBMF/MLPX/SGOL(SGOV) 40/40/20 simplification structure re-tested across all remaining accounts this session: confirmed beneficial for TARGET_THEN_RETURN/RETURN_THEN_TARGET accounts (Primary IRA: 2.68pp->1.41pp shortfall improvement from last session; Primary Roth: 2.97pp->2.31pp shortfall improvement this session; Acc4: return improves 2.23%->2.68% and stays feasible) but CONFIRMED UNSAFE for FLOOR_THEN_RETURN accounts under current scenario mix -- Relative IRA floor breach at -0.80% (currently non-breaching at 1.86% return) and Relative Roth floor breach worsens to -1.60% (vs current -0.27%) if the same structure is applied, because DBMF's Scenario-F ideal weight is very low (5-9%) while the structure forces 40% into it. Simplification path is objective-type-dependent, not universal -- awaiting Evgeny's decision on whether to execute the 3-account simplification (Primary IRA/Roth/Acc4 only).
+2. Relative Roth (...466) floor fix RECALCULATED this session: the stale prior-session plan (trim VTIP, add DBMF) was tested and found to WORSEN the breach (-0.71% vs current -0.27%) because DBMF's Scenario-F profile is poor and F's probability rose this session (27.7%->29.8%) while C collapsed. Correct direction is the reverse: INCREASE VTIP, DECREASE DBMF. Tested and confirmed feasible: AIPO 10% / MLPX 34% / VTIP 45% / DBMF 11% (portfolio_return_pct 1.60%, floor_breached=false). Awaiting Evgeny's entry into the allocation sheet Target column -- advisor has no sheet-write tool, target % only.
+3. XAR thesis-failure call remains under genuine reconsideration -- do not execute TRIM/EXIT until geopolitical_premium role split/reweight is resolved via M15 review.
+
+next_session_flags:
+- Confirm with Evgeny whether to write the Relative Roth Target column update (AIPO 10 / MLPX 34 / VTIP 45 / DBMF 11) and/or execute the DBMF/MLPX/SGOL(SGOV) 40/40/20 rebalance for Primary IRA, Primary Roth, and Acc4
+- M15 reclassification review of geopolitical_premium role (XAR sign issue) still pending -- consider splitting into acute-conflict vs defense-procurement sub-components
+- Q2 audit ~15 items, now several days overdue -- needs scheduling
+- Re-verify Hormuz/XAR conflict-gate scoring next session against actual shipping-throughput data, not just formal ceasefire status
 
