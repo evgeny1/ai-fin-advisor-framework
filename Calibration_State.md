@@ -2,10 +2,18 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.53  Last updated: July 3, 2026. v1.53: real_asset_contracted_revenue
-Scenario A reconstructed (§6 item 23 slot [13]) — MEDIUM confidence, [3,7]->
-[8,18] proposed, LOGGED PENDING not adopted; L4 passes cleanly, ready for
-next-audit adoption. v1.52: geopolitical_premium Scenario C reconstructed
+# Version: 1.54  Last updated: July 3, 2026. v1.54: real_estate_equity_income
+leverage-adjustment methodology established — A/F revised [3,8]/[2,5]->[5,9]
+via 1.5x leverage-sensitivity scaling of the 1970s NAREIT analog, MEDIUM
+confidence, LOGGED PENDING; B/D/E/C given a defined remaining task instead of
+"irreconcilable." inflation_linked_sovereign B/C/E reviewed and confirmed —
+structural TIPS-market-didn't-exist-pre-1997 gap is permanent, not a research
+shortfall; marked ✓ instead of perpetually ⚑. consumer_defensive_equity E
+checked against a 1987 analog — crash was mechanical/non-discriminatory
+across sectors, doesn't provide a usable 3rd data point; stays MEDIUM as-is.
+v1.53: real_asset_contracted_revenue Scenario A reconstructed (§6 item 23
+slot [13]) — MEDIUM confidence, [3,7]->[8,18] proposed, LOGGED PENDING not
+adopted; L4 passes cleanly, ready for next-audit adoption. v1.52: geopolitical_premium Scenario C reconstructed
 (slot [14]) — LOW confidence, NOT ADOPTED, feeds the open M15 XAR role-split
 decision (see §3 2026-07-03). §6 item 30 (DBMF D/E/F) found stale/already-
 closed since v1.22/v1.28 — corrected, archived.
@@ -164,6 +172,45 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-03 (v1.54) - real_estate_equity_income: METHODOLOGY finding (§6 item
+31-adjacent, client-directed Batch 2 audit work). The "irreconcilable" framing
+(1970s NAREIT +3-6% real vs 2022 VNQ -26% nominal) was the wrong comparison,
+not an unsolvable one -- these describe two different leverage regimes, not
+two conflicting readings of the same regime.
+LEVERAGE-ADJUSTMENT METHODOLOGY: equity return sensitivity to a given
+  property-value/cap-rate shock scales approximately with 1/(1-LTV). 1970s
+  NAREIT-era leverage ~20-30% LTV -> multiplier ~1.33x. Modern REIT leverage
+  ~40-60% LTV -> multiplier ~2.0x. Ratio ~1.5x -- modern REIT equity should
+  move ~1.5x as much as the 1970s analog for the SAME underlying property
+  fundamentals.
+APPLIED to A and F (scenarios where the 1970s NAREIT figure represents a
+  genuine normal/growth-period unconditional analog, not an acute shock):
+  A: [3,8] -> [5,9] (1970s +3-6% x ~1.5x, rounded). F: [2,5] -> [5,9] (same
+  base figure, F treated as a comparable growth-period analog). Both MEDIUM
+  confidence (1 analog, leverage-scaled) -- LOGGED PENDING, NOT ADOPTED.
+NOT applied to B/D/E: 2022 VNQ (-26% nominal, ~-31.5% real at 8% CPI) is
+  already a modern-leverage empirical data point, so no scaling is needed --
+  but per the SAME acute-vs-sustained distinction already established for
+  secular_technology_growth's B revision (2022 = acute B-ENTRY shock, rates
+  0->4.5% in under a year; framework's B scenario models a SUSTAINED state),
+  using -31.5% directly for sustained B would overstate the damage. This
+  needs the acute-to-sustained adjustment worked out properly, not a search
+  for more data -- flagged as the specific next step, not left vague.
+NOT applied to C: the cited "+3-6% real" 1970s figure is very likely an
+  unconditional multi-year NAREIT average, not a clean 1974-oil-shock-
+  specific reading -- equity REITs are widely reported as having performed
+  poorly during the actual 1973-74 stagflationary shock despite the sector's
+  "inflation hedge" reputation (rent pass-through helps, cap-rate expansion
+  hurts, and the latter dominated in that specific episode). Needs dedicated
+  1974-period-specific data before proposing a number, not the generic 1970s
+  figure currently sitting in the table unlabeled.
+CONCLUSION: item is no longer "irreconcilable" -- it has a defined
+  methodology (leverage scaling) applied cleanly to 2 of 6 cells, and a
+  named, specific remaining task for B/D/E (acute-to-sustained conversion,
+  same technique as STG-B) and C (need 1974-specific data, not unconditional
+  average) rather than an open-ended "reconcile the analogs" ask. D=[-3,2]
+  and E=[-10,-3] unchanged pending that B/D/E pass.
 
 2026-07-03 (v1.53) - real_asset_contracted_revenue Scenario A: RECONSTRUCTED
 per §6 item 23 UNRECOVERABLE slot [13] (v1.12 file-split loss, Batch 1 audit
@@ -920,8 +967,8 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | broad_market_equity_domestic | [10, 20]★ | [-2, +5]★ | [-4, -1]⚠ | [-12, -4]✓ | [-8, -3]✓ | [7, 14]✓ |
 | broad_market_equity_international | [4, 9] | [-5, -1] | [-6, -2] | [-8, -3] | [-10, -4] | [3, 8] |
 | secular_technology_growth | [6, 16] | [-2, +4]★ | [+2, +8] | [-6, 0]⚑ | [-12, -3]⚑ | [4, 11] |
-| inflation_linked_sovereign | [-2, 1]★ | [1, 4]⚑ | [1, 4]⚑ | [0, 3]★ | [-1, 2]⚑ | [-1, 1]★ |
-| real_estate_equity_income | [3, 8]⚠ | [-6, -1]⚠ | [-10, -4]⚠ | [-3, 2]⚠ | [-10, -3]⚠ | [2, 5]⚠ |
+| inflation_linked_sovereign | [-2, 1]★ | [1, 4]✓ | [1, 4]✓ | [0, 3]★ | [-1, 2]✓ | [-1, 1]★ |
+| real_estate_equity_income | [5, 9]⚑ | [-6, -1]⚠ | [-10, -4]⚠ | [-3, 2]⚠ | [-10, -3]⚠ | [5, 9]⚑ |
 | systematic_trend_following | [-12, -3]★ | [+15, +30]★ | [+18, +35]★ | [-5, +15]★ | [-8, +8]★ | [-5, +3]★ |
 | consumer_defensive_equity | [0, +4]★ | [+2, +6]★ | [+2, +6]★ | [-5, 0]★ | [-8, -2]⚑ | [-3, +2]★ |
 | healthcare_defensive_equity | [1, 5]⚑ | [1, 4]⚑ | [-2, 3]⚑ | [-4, 1]⚑ | [-8, -2]⚑ | [1, 5]⚑ |
@@ -973,7 +1020,7 @@ D revised [-2,4]→[-3,+3] ADOPTED HIGH confidence (v1.27, June 1, 2026). M16 4-
 real_asset_contracted_revenue B and C: revised v1.11 May 6 (AMZI 2021-2024 empirical data). D revised [2,6]→[-6,+2] ADOPTED HIGH confidence (v1.26, June 1, 2026). E revised [2,5]→[-10,0] ADOPTED HIGH confidence (v1.26). M16 4-layer complete: L1 infrastructure unconditional ~4-5% real; L2: 2008 AMZ price -53% + ~10% distribution yield = ~-30% total nominal real (primary D analogue), 2020 AMZ ~-20% full year; L3: MLPX contracted fee-based revenue quality above broad AMZ index → upward adj from -8% to -6% D conservative; L4: neutral-weighted +2.65% vs anchor 4-5%, gap -1.35 to -2.35pp, PASS ±3pp. Prior D=[2,6] and E=[2,5] were clearly inconsistent with 2008 empirical data (-30% total real). E more negative than D: acute systemic rupture without multi-year recovery buffer.
 rate_sensitive_income_short_duration: A revised [0,2]→[1,3] ADOPTED HIGH confidence (v1.25, June 1, 2026). D revised [0,3]→[1,4] ADOPTED HIGH confidence (v1.25). M16 4-layer complete: L1 real T-bill anchor ~1.5-2% real unconditional; L2: A analogues 2003 (0 to -1% real), 2016 (-1.5 to -0.5%), 1991 (0 to +1%) + starting rate 3.62% structural upward adj; D analogues 2008 (+1-3% real), 2020 (0-1%), 1990-91 (+1.5-2.5%) + starting rate adj; L3: duration ≤1yr caps price appreciation — limits upside, rejects [2,6] D proposal; L4 neutral check: +0.85% midpoint vs anchor ~1.5-2%, gap -0.65 to -1.15pp, PASS ±3pp. Original proposals [1,4] (A) and [2,6] (D) rejected.
 inflation_linked_sovereign: added v1.12 May 6. A=[-2,1] ADOPTED HIGH confidence (v1.28, June 1, 2026). L2: 2019 Fed cuts (+0-1% real), 2016 neutral (+0-1%), 2003-04 Fed cutting proxy (+1-2%). Values unchanged from ⚑. D=[0,3] ADOPTED HIGH confidence (v1.28). L2: 2008 TIPS ~+2% real, 2020 TIPS +3-5% real (Fed support), 1990-91 proxy +0-2%. F=[-1,1] ADOPTED HIGH confidence (v1.28). L2: 2018 TIPS ~-1% real (rate hike), 2017 +1%, 2015 hiking cycle ~-1%. B=[1,4] and C=[1,4] remain ⚑: 2022 is the only clean B/C TIPS analogue (MEDIUM). E=[-1,2] remains ⚑: 2 clear analogues (2008, 2020 March). Layer 4 neutral check (A=-2, D=0, F=-1): -0.65% vs real yield anchor ~1.89%. Gap -2.54pp. PASS ±3pp.
-real_estate_equity_income: added v1.12 May 6. ALL values LOW confidence — irreconcilable 1970s NAREIT analog (+3-6% real) vs 2022 VNQ actual (-26% nominal). Root cause: modern REIT leverage 40-60% LTV vs 1970s 20-30% LTV. Requires leverage-adjusted calibration at June 30.
+real_estate_equity_income: added v1.12 May 6. Leverage-adjustment methodology established 2026-07-03 (v1.54) — see §3 log entry, full detail. A/F: [3,8]/[2,5] -> [5,9]/[5,9] MEDIUM confidence (1970s NAREIT analog x ~1.5x leverage-sensitivity multiplier), LOGGED PENDING. B/D/E: still ⚠ LOW — 2022 VNQ (-26% nominal) is a clean modern-leverage data point but needs the acute-B-shock-to-sustained-B conversion (same technique as secular_technology_growth's B revision) before use, not more analog search. C: still ⚠ LOW — current figure is likely an unconditional multi-year NAREIT average mislabeled as a scenario-C read; needs 1974-shock-specific data.
 systematic_trend_following: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13). D ADOPTED HIGH confidence (v1.22). E=[-8,+8] ADOPTED HIGH confidence (v1.28, June 1, 2026). L2: 2008 Q4 SG CTA ~-4% quarterly (acute whipsaw), 2020 March DBMF ~-5% (brief correlation spike), 1987 (mixed — some CTAs profitable on short equity). L3: E is binary — correlation spike + trend reversal (bearish) vs established trend acceleration (bullish); wide range IS the calibration. L4: documented structural exception (same as D — DBMF unconditional anchor inapplicable to E-specific scenario). F=[-5,+3] ADOPTED HIGH confidence (v1.28). L2: 2017 SG CTA ~-1% (smooth uptrend, trend desert), 2018 ~-5% (late-cycle reversals), 2019 ~+6% (late-cycle trend development). L3: growth overheat → equities trend smoothly, rates rising gradually, commodities mixed → fewer disruptive cross-asset trends → managed futures headwind. L4: documented structural exception. Layer 4 neutral check: +5.03% midpoints — consistent with AQR TSMOM +5-8% unconditional real.
 consumer_defensive_equity: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13/v1.22). D=[-5,0] ADOPTED HIGH confidence (v1.28, June 1, 2026). L2: 2008-09 2yr annualized XLP ~-1.5% real (XLP -15% in 2008, +14% in 2009; 2yr annualized ~-1.5%); 2020 XLP ~flat; 1990-91 ~flat. L3: Conservative -5% calibrated to extended 3yr D where recovery doesn't fully arrive; upside 0% reflects sustained deflationary drag prevents positive real return. F=[-3,+2] ADOPTED HIGH confidence (v1.28). L2: 2017 XLP F-type +3-5% real, 2003-07 pre-GFC growth +2-4% real, 2018 late-cycle ~-2% real (Fed hiking). L3: growth overheat → staples underperform market but maintain pricing power; modest positive to slight negative real. E=[-8,-2] remains ⚑: variation too wide across analogues (2008 Q4: ~-30% annualized vs 1998 LTCM: ~flat). MEDIUM. Layer 4 neutral check (D=-5, E=-8, F=-3): -0.90% vs anchor 1-3%. Gap -1.90 to -3.90pp. PASS ±3pp (toward limit — acceptable given role defines B/C alpha).
 healthcare_defensive_equity: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: +1.70% midpoints — below JPM LTCMA healthcare 2-4% real; gap reflects B/C distribution penalizing equity. Resolve at June 30.
