@@ -2,7 +2,15 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.58  Last updated: July 3, 2026. v1.58: §6 items 14/15/21/26
+# Version: 1.59  Last updated: July 3, 2026. v1.59: GAP-16 items 42/43/44
+worked. Item 44's documentation half done — proposed sub-condition drivers
+for STF/RAC/IHC added to §11 (DXY+trend-breadth / Brent+HY-OAS / DXY+Brent-
+proxy respectively), all reusing already-fetched data, none live yet — the
+small code branch itself deferred to a proper coding session per the
+framework's own git-HEAD/ADR protocol. Item 43 confirmed as a backtest
+question outside this session's scope, left open. Item 42 confirmed as a
+client methodology decision, not resolved unilaterally.
+v1.58: §6 items 14/15/21/26
 closed — AIPO's weight-drift concern was already caught and fixed by v1.30
 before this session started (checked live §11 before redoing the work);
 other held instruments are single-role/mandate-fixed with no meaningful
@@ -196,6 +204,58 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-03 (v1.59) - GAP-16 items 42/43/44 worked (§6, client-directed Batch
+3 audit work). Checked the actual code (analysis/range_position.py) before
+treating item 44 as pure documentation — its own module docstring says
+extending to new roles needs "§11 documentation... followed by a small
+per-role branch here — not a structural code change," which is narrower
+than item 44's summary ("zero further code change") but still means real
+code work, just small and pattern-following.
+Item 44 (sub-condition driver identification — documentation half only,
+  DONE this pass; the small code branch itself is NOT done, see below):
+  STF (DBMF): DXY_TREND direction + cross-asset trend breadth (same 4-market
+    check — Brent/Gold/DXY/S&P — already computed for the §13 TSC
+    evaluation). Both already-fetched, no new data source needed. Strong
+    clean DXY trend + high breadth (3-4 of 4 trending) = tailwind; flat DXY
+    + low breadth (0-1 trending) = headwind.
+  RAC (MLPX): Brent (BZ=F) trend + HY OAS trend/level (both already tracked
+    M18/M11 series, no new fetch needed). Energy prices rising/stable +
+    calm HY credit = tailwind; falling energy + widening HY credit =
+    headwind.
+  IHC (COPX): DXY_TREND + Brent trend as a general commodity-complex proxy
+    (both already tracked). Flagged as an IMPERFECT proxy — COPX is
+    industrial-metals/copper-mining, not energy, so Brent is a directional
+    stand-in (both correlate with global growth/reflation and dollar
+    weakness) rather than a precise driver. A copper-specific series or
+    China PMI would be more accurate but would need new M18 fetcher work
+    (China PMI isn't currently a DataReading, only used this session via
+    ad-hoc web_search) — noted as a future refinement, not blocking this
+    first pass.
+  NOT done: the actual small per-role branch in range_position.py. Per the
+  framework's own coding-session protocol (git HEAD/ADR verification,
+  codebase-memory-mcp reindex before touching code), that's dedicated
+  coding-session work, not something to improvise mid-advisory-session.
+  §11 notes below are PROPOSED sub-condition drivers, not yet wired to any
+  live EV adjustment — advisory-only even once wired, per GAP-16's own
+  design (never touches blendedScenarioReturn() directly, only annotates
+  the briefing, same as SGOL/SIVR today).
+Item 43 (25%/3pp magnitude calibration): NOT attempted this pass. This is a
+  meta-parameter about adjustment MAGNITUDE, not a scenario return value —
+  the M16 4-layer framework (historical analogs, institutional anchors) is
+  built for the latter and doesn't map cleanly onto the former. Properly
+  calibrating this needs a backtest (how would 25%/3pp vs. alternative
+  magnitudes have performed historically across the roles it applies to),
+  which needs computational/historical-data infrastructure this session
+  doesn't have set up — a coding/backtesting session, not a web-search-based
+  advisory pass. Left as a genuinely open [P1] item, not forced.
+Item 42 (BMED Scenario C conservative bound): NOT resolved — correctly so,
+  per its own prior finding that no further analog search will help (non-
+  recessionary oil shocks are not equity-drawdown events; no analog exists
+  to derive a number from). This is a METHODOLOGY decision needing a
+  client-level judgment call (retain -4% as a deliberate conservative
+  placeholder vs. set a judgment-based modest floor), not more of my own
+  work — presenting as a decision point rather than resolving unilaterally.
 
 2026-07-03 (v1.58) - §11 weight-drift first audit (§6 items 14/15/21/26,
 client-directed Batch 3 audit work) across all currently-held instruments.
@@ -1435,14 +1495,28 @@ to do later.
     magnitude is a PROVISIONAL starting point, never run through
     M16.CalibrationMethodology(). The MECHANISM (bounded / agreement-gated /
     table-clamped / conservative-only) is NOT provisional — only these two
-    numbers are. NEXT STEP: full 4-layer derivation of the adjustment
-    magnitude at a future audit; until then the provisional values stand.
+    numbers are. Checked 2026-07-03 (v1.59) whether this could be resolved
+    this session: NO — this is an adjustment-magnitude backtest question
+    (how would 25%/3pp have performed historically vs. alternatives), not a
+    scenario-return question M16's analog framework is built for. Needs a
+    dedicated coding/backtesting session, not web-search-based advisory
+    work. Remains genuinely open.
 44. [P2] GAP-16 sub-condition map extension (re-filed from item 40, 2026-06-30):
     apply_range_position_adjustment() / clean_signal_role_map() already
     generalize to any role; extending documented sub-condition drivers beyond
     IHP to STF / RAC / IHC is now a pure §11 documentation task (identify 1-2
     governing variables per role, add a sub-condition note) — zero further code
-    change. NEXT STEP: assign at a future session.
+    change. [PARTIALLY DONE 2026-07-03, v1.59] Checked the actual module
+    (analysis/range_position.py) before treating this as pure documentation
+    — its own docstring says a small per-role code branch is also needed,
+    narrower than "zero further code change" implied. Documentation half
+    DONE: STF = DXY_TREND + cross-asset trend breadth (reuses §13 TSC data);
+    RAC = Brent + HY OAS trend (reuses M18/M11); IHC = DXY_TREND + Brent as
+    an imperfect commodity-complex proxy (flagged — a copper-specific series
+    or China PMI would be better but needs new fetcher work). §11 notes
+    added as PROPOSED, not yet live. Code branch NOT done — deferred to a
+    dedicated coding session per the framework's own git-HEAD/ADR/reindex
+    protocol for touching code.
 
 ---
 
@@ -1666,6 +1740,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - EntryExtensionGuard: **CLEARED (v1.17, May 13, 2026).** 90d trailing average: **$72.31**. Guard threshold (20% above avg): **$86.77**. Current price (May 22): **$77.33** (+6.9% above avg — well below 20% threshold). ADD eligible in all accounts.
 - WAR PREMIUM ENTRY GUARD: **CLEARED (v1.17, May 13, 2026).** Same threshold: $86.77. Current $77.33 < $86.77. ADD eligible.
 - Drawdown tolerance: Relative IRA target reduced to 24% per drawdown analysis (see §6 item 22).
+- GAP-16 sub-condition drivers PROPOSED 2026-07-03 (v1.59, §6 item 44) — NOT YET WIRED (documentation only): Brent (BZ=F) trend + HY OAS trend/level (both already-tracked M18/M11 series, no new fetch). Energy prices rising/stable + calm HY credit = tailwind; falling energy + widening HY credit = headwind.
 
 #### SGOL
 - Components: inflation_hedge_precious_metals (1.00)
@@ -1757,6 +1832,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - Last reviewed: 2026-05-06 (v1.13, initial classification)
 - EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
 - TAX PLACEMENT: ALL ACCOUNTS. No K-1. No swap phantom gain issue.
+- GAP-16 sub-condition drivers PROPOSED 2026-07-03 (v1.59, §6 item 44) — NOT YET WIRED to any live EV adjustment (documentation only; range_position.py has no per-role branch for this yet): DXY_TREND direction + cross-asset trend breadth (Brent/Gold/DXY/S&P — reuses the same 4-market check already computed for the §13 TSC evaluation, no new fetch). Strong clean DXY trend + high breadth (3-4 of 4 trending) = tailwind (tracks toward DBMF's upside); flat DXY + low breadth (0-1 trending) = headwind (tracks toward conservative end).
 - ENTRY EXTENSION GUARD: N/A — systematic_trend_following role is explicitly exempt (§9.3).
 - KEY RISK: Trend-reversal events (Scenario A normalization) produce material losses (-12% conservative). A=7% weight creates -0.84% EV drag — priced into EV computation. DBMF and MLPX are partially inversely correlated in A (MLPX appreciates as energy normalizes; DBMF loses as commodity trends reverse) — portfolio diversification benefit.
 - Target allocation (v1.18 CONFIRMED):
@@ -1803,6 +1879,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   - E:  (0.75×2 + 0.25×(-10)) = -1.00% × 0.04 = -0.040%
   - F:  (0.75×2 + 0.25×3) = 2.25% × 0.07 = +0.158%
   - Total floor: +2.601% ≈ +2.60%. Mining-leverage adjusted estimate: ~+3.2-4.0%.
+- GAP-16 sub-condition drivers PROPOSED 2026-07-03 (v1.59, §6 item 44) — NOT YET WIRED (documentation only): DXY_TREND + Brent trend as an imperfect commodity-complex proxy. Flagged: COPX is industrial-metals/copper-mining, not energy, so Brent stands in directionally (both correlate with global growth/reflation and dollar weakness) rather than precisely — a copper-specific series or China PMI would be more accurate but needs new M18 fetcher work (China PMI isn't currently a DataReading, only used ad-hoc via web_search this session).
 - TAX PLACEMENT: ALL ACCOUNTS.
 - ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026) at $83.35. 90d avg ~$85-90; threshold ~$102-106.
   ⚠️ Price update (v1.29, June 2, 2026): COPX closed **$93.66** (+4.00%). 90d reference window has shifted
