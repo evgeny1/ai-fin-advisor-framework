@@ -2,7 +2,13 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.55  Last updated: July 3, 2026. v1.55: healthcare_defensive_equity
+# Version: 1.56  Last updated: July 3, 2026. v1.56: floating_rate_credit_income
+full review — likely role/instrument-severity mismatch found. D/E revised
+[-10,-4]/[-8,-2]->[-2,1]/[-4,0] using FLOT's OWN 14-year actual return
+history (never a negative full year; worst month ever -4.2%, March 2020),
+not an analog — current values read as leveraged-loan-calibrated but FLOT
+is genuinely IG/short-duration. MEDIUM, LOGGED PENDING. A/B/F confirmed (✓).
+v1.55: healthcare_defensive_equity
 full 6-cell review via verified XLV multi-year return history — A/D/F
 confirmed no change (✓), B/C proposed [1,4]/[-2,3]->[-9,-2] both (MEDIUM,
 2022 actual worse than current values, single data point can't separate the
@@ -177,6 +183,41 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-03 (v1.56) - floating_rate_credit_income: full review, likely
+role/instrument-severity mismatch found and corrected (§6 item 32, client-
+directed Batch 2 audit work, not currently held). The current D=[-10,-4]/
+E=[-8,-2] language ("credit seizure") reads as if calibrated against
+leveraged-loan-like severity (2008 S&P/LSTA Leveraged Loan Index: -29%,
+LSTA/Morningstar data) -- but FLOT is genuinely investment-grade with a
+1.79yr average maturity (iShares fact sheet; §11 already correctly notes
+"short duration sovereign/IG credit", so the ROLE definition was never
+wrong, only the §4.1 numbers look inconsistent with it).
+DIRECT EVIDENCE (not a proxy -- FLOT's own actual returns, Yahoo Finance
+  performance table, full history since 2012 launch): every single full
+  calendar year 2012-2025 was POSITIVE (range +0.33% to +6.52%), including
+  2020 (COVID, +0.87% full year) and 2022 (rate shock, +1.28%). Worst month
+  in the fund's entire history: March 2020 at -4.2% (PortfoliosLab, daily-
+  return-derived), which still resolved to a positive full year. No
+  negative full year has ever occurred.
+D revised: [-10,-4] -> [-2,1]. E revised: [-8,-2] -> [-4,0] (E's trough
+  anchored to the actual -4.2% worst-month figure, D set as a full-scenario
+  buffer beyond anything observed to date). MEDIUM confidence (no L1
+  institutional anchor cross-reference found for this specific role this
+  pass, which is what caps it below HIGH -- but this is unusually
+  well-evidenced for a MEDIUM, given it's the instrument's own 14-year
+  actual record, not an analog). LOGGED PENDING, NOT ADOPTED.
+A/B/F: [1,3] each -- confirmed against the same actual data (2016/2017/2022
+  and 2017/2019/2023/2024 all land within or above this range). REVIEWED,
+  NOT REVISED. Marked ✓.
+C: left untouched -- already has its own explicit Q3 flag (nominal-vs-real
+  basis question) in this file; not re-opened here.
+CONCLUSION: this is the strongest evidence base found for any Batch 2 item
+  so far -- direct actual-fund history across 14 years and every scenario
+  type the instrument has lived through, not an analog or a proxy. D/E were
+  very likely inherited from a more severe (leveraged-loan-style) mental
+  model of "floating rate credit" that doesn't match what FLOT specifically
+  holds.
 
 2026-07-03 (v1.55) - healthcare_defensive_equity: full 6-cell review (§6 item
 31, client-directed Batch 2 audit work, not currently held). Found a clean,
@@ -1017,7 +1058,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | systematic_trend_following | [-12, -3]★ | [+15, +30]★ | [+18, +35]★ | [-5, +15]★ | [-8, +8]★ | [-5, +3]★ |
 | consumer_defensive_equity | [0, +4]★ | [+2, +6]★ | [+2, +6]★ | [-5, 0]★ | [-8, -2]⚑ | [-3, +2]★ |
 | healthcare_defensive_equity | [1, 5]✓ | [-9, -2]⚑ | [-9, -2]⚑ | [-4, 1]✓ | [-8, -2]⚑ | [1, 5]✓ |
-| floating_rate_credit_income | [1, 3]⚑ | [1, 3]⚑ | [1, 3]⚑ | [-10, -4]⚑ | [-8, -2]⚑ | [1, 3]⚑ |
+| floating_rate_credit_income | [1, 3]✓ | [1, 3]✓ | [1, 3]⚑ | [-2, 1]⚑ | [-4, 0]⚑ | [1, 3]✓ |
 | emerging_market_equity | [+10, +20]★ | [-12, -6]⚑ | [-15, -9]⚑ | [-25, -15]⚑ | [-22, -14]⚑ | [4, 11]⚑ |
 
 secular_technology_growth: added v1.7 Apr 28. B and C values revised v1.8 Apr 30.
@@ -1069,7 +1110,7 @@ real_estate_equity_income: added v1.12 May 6. Leverage-adjustment methodology es
 systematic_trend_following: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13). D ADOPTED HIGH confidence (v1.22). E=[-8,+8] ADOPTED HIGH confidence (v1.28, June 1, 2026). L2: 2008 Q4 SG CTA ~-4% quarterly (acute whipsaw), 2020 March DBMF ~-5% (brief correlation spike), 1987 (mixed — some CTAs profitable on short equity). L3: E is binary — correlation spike + trend reversal (bearish) vs established trend acceleration (bullish); wide range IS the calibration. L4: documented structural exception (same as D — DBMF unconditional anchor inapplicable to E-specific scenario). F=[-5,+3] ADOPTED HIGH confidence (v1.28). L2: 2017 SG CTA ~-1% (smooth uptrend, trend desert), 2018 ~-5% (late-cycle reversals), 2019 ~+6% (late-cycle trend development). L3: growth overheat → equities trend smoothly, rates rising gradually, commodities mixed → fewer disruptive cross-asset trends → managed futures headwind. L4: documented structural exception. Layer 4 neutral check: +5.03% midpoints — consistent with AQR TSMOM +5-8% unconditional real.
 consumer_defensive_equity: added v1.13 May 6. A/B/C ADOPTED HIGH confidence (v1.13/v1.22). D=[-5,0] ADOPTED HIGH confidence (v1.28, June 1, 2026). L2: 2008-09 2yr annualized XLP ~-1.5% real (XLP -15% in 2008, +14% in 2009; 2yr annualized ~-1.5%); 2020 XLP ~flat; 1990-91 ~flat. L3: Conservative -5% calibrated to extended 3yr D where recovery doesn't fully arrive; upside 0% reflects sustained deflationary drag prevents positive real return. F=[-3,+2] ADOPTED HIGH confidence (v1.28). L2: 2017 XLP F-type +3-5% real, 2003-07 pre-GFC growth +2-4% real, 2018 late-cycle ~-2% real (Fed hiking). L3: growth overheat → staples underperform market but maintain pricing power; modest positive to slight negative real. E=[-8,-2] remains ⚑: variation too wide across analogues (2008 Q4: ~-30% annualized vs 1998 LTCM: ~flat). MEDIUM. Layer 4 neutral check (D=-5, E=-8, F=-3): -0.90% vs anchor 1-3%. Gap -1.90 to -3.90pp. PASS ±3pp (toward limit — acceptable given role defines B/C alpha).
 healthcare_defensive_equity: added v1.13 May 6. Full 6-cell review 2026-07-03 (v1.55) — see §3 log entry for full detail. A/D/F reviewed and confirmed via verified XLV multi-year return history, no revision, marked ✓. B/C proposed [1,4]/[-2,3] -> [-9,-2] both (MEDIUM, single 2022 data point can't separate the two mechanisms yet), LOGGED PENDING. E untouched this pass, remains ⚑.
-floating_rate_credit_income: added v1.13 May 6. ALL values PENDING June 30 (MEDIUM confidence). Key risk: D scenario credit seizure (-10% to -4%) vs SGOV safety. Layer 4 neutral check: +0.93%.
+floating_rate_credit_income: added v1.13 May 6. Full review 2026-07-03 (v1.56) — see §3 log entry, full detail. A/B/F confirmed via FLOT's own 14-year actual return history, no revision, marked ✓. D/E revised [-10,-4]/[-8,-2] -> [-2,1]/[-4,0] — current values read as leveraged-loan-calibrated, but FLOT is genuinely IG/short-duration and has never had a negative full year (worst month ever: -4.2%, March 2020). MEDIUM, LOGGED PENDING. C untouched — separate Q3 nominal-vs-real flag stands as originally noted below.
 emerging_market_equity: added v1.13 May 6. Scenario A ADOPTED HIGH confidence (v1.23 — REVISED [+4,+9]→[+10,+20]; L2: 1991 Gulf drawdown +15-20% real, 2003 Iraq drawdown +15-20% real, 2016 commodity rebound +10-15% real; 3 analogues. L3: VWO Taiwan/China 56.7% concentration depresses D/E conservative values; structural adj documented. L4: gap to institutional anchor +5.5% documented as (a)+(d); expected given VWO concentration vs blended EM unconditional). B-F PENDING June 30 (MEDIUM confidence). Layer 4 neutral check: −2.55% midpoints. Resolve at June 30. ⚠ floating_rate_credit_income C=[+1,+3]: flag for Q3 — may conflate nominal vs real return basis (2022 FLOT: −0.6% nominal ≈ −7% real at 8% CPI). Reconcile at Q3 audit.
 ⚠ 14 additional revision proposals pending June 30 formal adoption — see §6 item 23.
 
