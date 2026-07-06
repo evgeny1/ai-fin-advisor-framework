@@ -33,7 +33,7 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-03, coding session (ENG-46 CLOSED — froze "today" in the two quarter-boundary-hardcoded compaction tests; ENG-47 CLOSED — added _fmt_bps() None-safe formatting, fixed at both call sites including a second occurrence found while fixing the first. Full suite: 801 passed / 46 skipped, 0 failures. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-07-02, coding session (ENG-42 CLOSED — fred_get_history tool + promoted fetch_history_with_dates; ENG-43 CLOSED — ALFRED ruled out empirically, path (c) local self-healing CreditHistoryStore.json implemented, seeded, and wired into advisor_run_computation(); ENG-44 CLOSED — calculator_mcp wired into Claude Desktop's MCP config and documented; ENG-46/47 discovered and logged, not fixed. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-06-30, same-day follow-on coding session (ENG-45 CLOSED — credit.py ccc_widening ratio mode gated behind a new `ccc_ratio_min_bps` calibration threshold (75 bps); full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior, same day (Q2 audit — opened ENG-42/43/44/45: FRED series-history not exposed via any MCP tool; FRED 3y OAS truncation blocks §1 delta verification + §2 5y hit-rate audit; calculator_mcp not wired and still a stub; credit.py §1.3 CCC divergence ratio-mode OR false-positive found live (CCC+29/HY+8 bps → 3.62x). Full bodies in Part 1.) Prior: 2026-06-25 (ENG-33: live-tested the flattened-parameter fix after a clean Claude Desktop restart and a freshly-rebuilt cache — advisor_evaluate_allocation still hung the full ~4 minutes, and the transport log confirms zero occurrences of the tool name anywhere, not just no tools/call entry. This rules out the $ref/$defs hypothesis as cleanly as the prior two attempts ruled out their own. Three independent hypotheses now falsified across two sessions; root cause confirmed client-side, outside this codebase's reach. Flattened account_profile kept regardless as a genuine cleanup; in-process bypass remains the standing workaround — see full ENG-33 entry below). Prior, same day: ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md. Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
+**Last updated:** 2026-07-06, design session (ENG-50 through ENG-55 OPENED — V4 architecture proposal: additive trend/rotation signal layer to be run in shadow mode against the existing scenario/EV engine before any conflict-resolution authority is assigned; instrument classification split from Calibration_State.md into its own persistence entity; structured parseable entry format for Session_Log.md/Calibration_State.md/FRAMEWORK_BACKLOG.md; calendar-age archival for Session_Log.md; FINRA margin-debt data source; relative-strength formula + peer-basket definition explicitly deferred to its own dedicated session (ENG-55) rather than decided ad hoc. Full session hand-off in dev hand-off note, 2026-07-06. Prior: 2026-07-03, coding session (ENG-46 CLOSED — froze "today" in the two quarter-boundary-hardcoded compaction tests; ENG-47 CLOSED — added _fmt_bps() None-safe formatting, fixed at both call sites including a second occurrence found while fixing the first. Full suite: 801 passed / 46 skipped, 0 failures. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-07-02, coding session (ENG-42 CLOSED — fred_get_history tool + promoted fetch_history_with_dates; ENG-43 CLOSED — ALFRED ruled out empirically, path (c) local self-healing CreditHistoryStore.json implemented, seeded, and wired into advisor_run_computation(); ENG-44 CLOSED — calculator_mcp wired into Claude Desktop's MCP config and documented; ENG-46/47 discovered and logged, not fixed. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-06-30, same-day follow-on coding session (ENG-45 CLOSED — credit.py ccc_widening ratio mode gated behind a new `ccc_ratio_min_bps` calibration threshold (75 bps); full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior, same day (Q2 audit — opened ENG-42/43/44/45: FRED series-history not exposed via any MCP tool; FRED 3y OAS truncation blocks §1 delta verification + §2 5y hit-rate audit; calculator_mcp not wired and still a stub; credit.py §1.3 CCC divergence ratio-mode OR false-positive found live (CCC+29/HY+8 bps → 3.62x). Full bodies in Part 1.) Prior: 2026-06-25 (ENG-33: live-tested the flattened-parameter fix after a clean Claude Desktop restart and a freshly-rebuilt cache — advisor_evaluate_allocation still hung the full ~4 minutes, and the transport log confirms zero occurrences of the tool name anywhere, not just no tools/call entry. This rules out the $ref/$defs hypothesis as cleanly as the prior two attempts ruled out their own. Three independent hypotheses now falsified across two sessions; root cause confirmed client-side, outside this codebase's reach. Flattened account_profile kept regardless as a genuine cleanup; in-process bypass remains the standing workaround — see full ENG-33 entry below). Prior, same day: ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md. Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -43,6 +43,12 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 |---|---|---|---|---|
 | ENG-48 | OPEN | HIGH | bug | advisor_write_back's 90s safety-timeout races its own actual completion time — reports TIMEOUT while succeeding server-side |
 | ENG-49 | OPEN | HIGH | bug | advisor_write_back TIMEOUT with a genuinely incomplete server-side operation — files+archive rendered and written, but git add/commit never ran, distinct from ENG-48's "actually succeeded" pattern |
+| ENG-50 | OPEN | HIGH | architecture | V4: Trend/Rotation Signal Layer — deterministic price/relative-strength module, additive to scenario engine, shadow-mode trial before any authority decision |
+| ENG-51 | OPEN | MEDIUM | architecture | V4: split instrument classification (§11) out of Calibration_State.md into its own persistence entity |
+| ENG-52 | OPEN | MEDIUM | hygiene | V4: structured parseable entry format (front-matter block) for Session_Log.md, Calibration_State.md, FRAMEWORK_BACKLOG.md |
+| ENG-53 | OPEN | MEDIUM | architecture | V4: calendar-age archival mechanism for Session_Log.md (and candidate extension to other growing files) |
+| ENG-54 | OPEN | MEDIUM | infrastructure | V4: FINRA margin debt series has no M18 DATA_REGISTRY_ENTRY or fetch path |
+| ENG-55 | OPEN | HIGH | functional-gap | V4: relative-strength formula + peer-basket definition for trend layer — needs its own dedicated session, real judgment calls involved |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -208,6 +214,187 @@ TIMEOUT) should specifically verify the commit landed, not just infer
 success from the timeout racing a known-good completion window — this
 session is proof those are two genuinely different failure modes needing
 one shared diagnostic, not one shared assumption.
+
+### ENG-50 — V4: Trend/Rotation Signal Layer (design + shadow-mode trial)
+<!-- ITEM
+Status:    OPEN
+Severity:  HIGH
+Category:  architecture
+Opened:    2026-07-06
+Area:      new module, TBD name (proposal stage)
+Related:   ENG-51 (persistence split), ENG-52 (parseability), ENG-55 (formula/basket, separate session)
+-->
+
+**Description:** Client-identified gap: the six-scenario/EV engine is
+deliberately conservative by design (session-boundary updates only, 25pp
+cap, T1-only evidence) — appropriate for feasibility/floor math, but
+structurally incapable of catching fast rotations (e.g. XAR's post-Hormuz-
+closure bounce, later confirmed as a real classification bug — see M15
+XAR sign issue — but the *speed* problem is separate and would recur even
+with a correct classification). Client also flagged the July 3→July 6
+session-to-session F-probability swing (29.8%→8.8% on materially identical
+facts) as evidence the subjective 0-3 scoring layer itself introduces
+inconsistency that fine-grained probabilities can't actually support.
+
+**Proposal:** a separate, additive trend/rotation module — NOT feeding
+M03.DeriveScenarioProbabilities() (same NEVER rule M14/M17 already
+follow) — computing deterministic, non-subjective signals directly off
+price/relative-strength data (no Claude scoring judgment calls in the
+critical path, learning directly from the F-swing lesson): relative
+strength of a holding vs. a defined peer basket over a fixed lookback,
+discounted/flagged by margin-debt trend (FINRA, see ENG-54) for rally
+fragility. Advisory only during trial — logged, not routed into
+execution, same pattern M14's regime signal already uses.
+
+**Trial design (per client + Claude discussion 2026-07-06):** run in
+shadow mode — log both the existing `dominant_directive_conflict_aware`
+(from advisor_evaluate_allocation, already computed every session) AND
+the new trend read, per held instrument, per session, plus a forward-
+looking outcome column (did price keep moving the direction trend called).
+Review at a fixed **calendar checkpoint (~8 weeks)**, not a session count.
+Conflict-resolution authority (does trend override EV, and under what
+explicit condition) is decided FROM the trial data, not guessed upfront —
+this was an explicit client decision to avoid re-creating today's
+ambiguity one layer up.
+
+**Suggested next step:** scope as its own persistence entity + minimal
+MCP surface (likely a new fetch for relative-strength calc, reusing
+market_data_mcp:market_get_history) once ENG-55 (formula/peer-basket)
+is resolved in its own dedicated session. Do not build the formula inline
+here.
+
+### ENG-51 — V4: split instrument classification (§11) into its own persistence entity
+<!-- ITEM
+Status:    OPEN
+Severity:  MEDIUM
+Category:  architecture
+Opened:    2026-07-06
+Area:      Calibration_State.md §11 → new file (name TBD, e.g. Instrument_Classification.md)
+Related:   ENG-50, ENG-15/M15_InstrumentClassification.md (role registry logic unchanged, only storage location moves)
+-->
+
+**Description:** Client-requested split, motivated by ENG-50: the trend
+layer needs to read/write per-instrument state (relative-strength rank,
+trend flags) without touching credit thresholds, return tables, or other
+unrelated §1–§10/§12 content currently sharing Calibration_State.md.
+Today §11 (role registry) is one section inside one large file — every
+Calibration_State.md read/write for ANY reason currently touches the same
+file as instrument classification.
+
+**Suggested next step:** extract §11 verbatim into its own file, update
+M15's read path and M12's file-access protocol accordingly, leave the
+role-registry *logic* (classifyInstrument(), ValidateClassifications())
+untouched — this is a storage-location change only, not a semantics
+change. Coordinate with ENG-52 (parseability) so the new file is created
+in the improved structured format from day one rather than migrated
+twice.
+
+### ENG-52 — V4: structured parseable entry format for Session_Log.md / Calibration_State.md / FRAMEWORK_BACKLOG.md
+<!-- ITEM
+Status:    OPEN
+Severity:  MEDIUM
+Category:  hygiene
+Opened:    2026-07-06
+Area:      Session_Log.md §8 entry format; Calibration_State.md; this file's ITEM manifest convention
+Related:   ENG-1 (prior §8 parser-compatibility fix — same failure class, this is prevention not repair), ENG-50, ENG-51, ENG-53
+-->
+
+**Description:** Client observed during this session that extracting a
+specific prior §8 entry's `scenario_probabilities` required visually
+distinguishing between two same-day 2026-07-03 entries in prose — no
+structural markup separates the machine-relevant fields (date,
+scenario_probabilities, session_type) from the free-text driver narrative.
+This is exactly the kind of manual-extraction step that can silently
+introduce the sort of inconsistency already found once in this session
+(see the F-probability discrepancy discussion). FRAMEWORK_BACKLOG.md
+itself already uses a reasonably good ITEM-manifest HTML-comment
+convention (Status/Severity/Category/Opened/Area/Related) — Session_Log.md
+and Calibration_State.md have no equivalent.
+
+**Suggested next step:** define a small structured header block (e.g.
+YAML front-matter or a fenced key:value block) for each Session_Log.md §8
+entry, holding date/scenario_probabilities/session_type/status as
+mechanically parseable fields, with the existing free-text driver
+narrative unchanged below it. Consider the same treatment for
+Calibration_State.md's dated log entries (§3). Do NOT change
+FRAMEWORK_BACKLOG.md's existing ITEM convention — it already satisfies
+this goal for this file.
+
+### ENG-53 — V4: calendar-age archival mechanism for Session_Log.md
+<!-- ITEM
+Status:    OPEN
+Severity:  MEDIUM
+Category:  architecture
+Opened:    2026-07-06
+Area:      Session_Log.md; candidate extension to Calibration_Log.md, FRAMEWORK_BACKLOG_ARCHIVE.md rotation cadence
+Related:   ENG-52 (structured format makes archival mechanical rather than prose-parsing), ENG-5/ENG-7 (prior compaction-cadence work, same file)
+-->
+
+**Description:** Session_Log.md is 156 lines / ~20KB after roughly two
+months of use, with multiple same-day entries on active days (e.g. two
+2026-07-03 entries). Client explicit preference: rotate by **calendar
+age**, not entry count or file size, and the live/current file should
+remain easy to parse at all times — i.e. archival should keep the live
+file small and current, not just prevent it from growing unbounded.
+
+**Suggested next step:** define a fixed calendar-age threshold (e.g.
+entries older than N days move to a Session_Log_Archive.md, mirroring the
+existing FRAMEWORK_BACKLOG_ARCHIVE.md / Calibration_Log.md pattern already
+in use elsewhere in this repo) and implement as part of
+`advisor_write_back()`'s render step, gated on ENG-52's structured format
+landing first so the rotation logic can key off a real `date:` field
+rather than parsing prose.
+
+### ENG-54 — V4: FINRA margin debt series has no M18 DATA_REGISTRY_ENTRY
+<!-- ITEM
+Status:    OPEN
+Severity:  MEDIUM
+Category:  infrastructure
+Opened:    2026-07-06
+Area:      M18_MarketDataFetch.md (new DATA_REGISTRY_ENTRY); new fetcher module
+Related:   ENG-50 (consumer of this data)
+-->
+
+**Description:** Client wants margin-debt trend as a fragility discount
+on the new trend layer's momentum reads (a rally funded heavily by margin
+debt is more prone to a violent unwind). No current MCP tool or M18
+registry entry fetches FINRA margin statistics. Confirmed with client:
+FINRA's data (monthly, ~3–4 week publication lag) is acceptable for this
+purpose — it's a regime-level fragility overlay, not a timing signal;
+the timing job stays with the price/relative-strength side of ENG-50.
+
+**Suggested next step:** register a new M18 DATA_REGISTRY_ENTRY once
+ENG-50's overall shape is settled; identify the specific FINRA published
+series/URL and confirm it's fetchable via the existing web_fetch/
+web_search tools or needs a dedicated scraper.
+
+### ENG-55 — V4: relative-strength formula + peer-basket definition (dedicated session)
+<!-- ITEM
+Status:    OPEN
+Severity:  HIGH
+Category:  functional-gap
+Opened:    2026-07-06
+Area:      new trend module (ENG-50), formula/config only — no persistence or MCP wiring yet
+Related:   ENG-50 (consumer), explicitly scoped OUT of this session by client request
+-->
+
+**Description:** The one piece of ENG-50 with genuine judgment calls
+baked in: what counts as the peer/comparison basket for a given holding
+(e.g. what is MLPX's peer set — other energy-infrastructure/MLP funds?
+broader energy sector? a custom basket?), what lookback window defines
+"relative strength," and how exactly the margin-debt trend discounts a
+momentum read. Client explicitly asked for this to be tackled fresh in
+its own session rather than folded into the broader V4 design discussion
+this session, precisely because it's the least mechanical, most
+judgment-dependent piece of the whole proposal — the same category of
+problem (subjective judgment presented as precise output) that this
+session's F-probability discrepancy stemmed from. Should be resolved
+carefully and explicitly, not inherited from this session's momentum.
+
+**Suggested next step:** dedicated session hand-off already prepared —
+open with peer-basket definition per current holding (MLPX, DBMF, XAR,
+AIPO, COPX, SGOL/SIVR, MAGS), lookback-window choice, and the margin-debt
+discount mechanism, before any code or persistence design.
 
 ### ENG-12 — Tests assert against live, not snapshotted, framework files
 <!-- ITEM
