@@ -2,7 +2,10 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.61  Last updated: July 3, 2026. v1.61: §6 items 17/20/22/24/25
+# Version: 1.62  Last updated: July 6, 2026. v1.62: BALT M16 4-layer proposal
+logged — new candidate role defensive_equity_buffered_domestic, LOW confidence
+all six cells, §6 item 45 [P1] opened, pending Sept 30, 2026 full audit.
+v1.61: §6 items 17/20/22/24/25
 closed or confirmed — role registry confirmed complete/non-redundant;
 §3-logging confirmed as ongoing practice; MLPX target documentation found
 already satisfied; June 30 M16 §5 application confirmed; Session_Log
@@ -215,6 +218,22 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+2026-07-06 (v1.62) - Client-directed ad-hoc session (not a scheduled audit).
+BALT (Innovator Defined Wealth Shield) M16 4-layer calibration drafted for a
+new candidate role, defensive_equity_buffered_domestic. Full detail in §6
+item 45 [P1]. Summary: LOW confidence all six §4.1 cells — no T1
+institutional anchor exists for this asset class (proxy only), 1 historical
+analogue each for B/C (2022 Fed tightening, 2026 Hormuz closure), zero for
+A/D/E/F, and the Layer 4 neutral-distribution consistency check did not
+clear the ±3pp threshold (computed +0.30% vs ~4-7% proxy anchor,
+DOCUMENT_AND_FLAG per M16 §2(d)). Proposed §4.1 row logged in both §4.1 and
+§11.1 as PROPOSED/NOT YET Active. M07.AutoDisqualify() run separately for
+BALT itself: PASS, no flags. Per M16 GUARD NeverReviseWithoutMethodology,
+none of this is adopted — formal adoption decision deferred to the
+September 30, 2026 full audit. §11.4 candidate entry added. No change to
+any existing role's §4.1 values, no probability changes, no change to any
+currently-held instrument.
 
 2026-07-03 (v1.61) - Batch 5 housekeeping (§6, client-directed audit work).
 Item 17 (§11 role registry completeness): reviewed against everything found
@@ -1260,6 +1279,9 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | healthcare_defensive_equity | [1, 5]✓ | [-9, -2]⚑ | [-9, -2]⚑ | [-4, 1]✓ | [-8, -2]⚑ | [1, 5]✓ |
 | floating_rate_credit_income | [1, 3]✓ | [1, 3]✓ | [1, 3]⚑ | [-2, 1]⚑ | [-4, 0]⚑ | [1, 3]✓ |
 | emerging_market_equity | [+10, +20]★ | [-12, -6]✓ | [-15, -9]✓ | [-25, -15]⚑ | [-22, -14]⚑ | [8, 20]⚑ |
+| defensive_equity_buffered_domestic | [6, 10]⚠ | [0, 4]⚠ | [-8, +3]⚠ | [-10, +2]⚠ | [-12, 0]⚠ | [5, 9]⚠ |
+
+defensive_equity_buffered_domestic: added v1.62 July 6, PROPOSED (not yet Active). LOW confidence all cells — no T1 institutional anchor for this asset class exists; proxy anchor only. See §11.1 and §6 item 45 [P1] for full M16 4-layer detail. Conservative end only usable for any interim commentary per LOW-confidence GUARD; upside suppressed. Not usable in EV rank tables or FeasibilityCheck() until formally adopted.
 
 secular_technology_growth: added v1.7 Apr 28. B and C values revised v1.8 Apr 30.
 B revised [-6,-1]→[-2,+4] ADOPTED HIGH confidence (v1.27, June 1, 2026). M16 4-layer:
@@ -1579,6 +1601,35 @@ to do later.
     added as PROPOSED, not yet live. Code branch NOT done — deferred to a
     dedicated coding session per the framework's own git-HEAD/ADR/reindex
     protocol for touching code.
+45. [P1] defensive_equity_buffered_domestic (BALT) — new candidate role,
+    M16 4-layer calibration DRAFTED 2026-07-06 (client-directed ad-hoc
+    session, not a scheduled audit). Layer 1: NO T1 institutional anchor
+    exists for buffered/defined-outcome equity ETFs as an asset class —
+    proxy anchor ~4-7% built from BALT's own realized 5yr record. Layer 2:
+    1 analogue each for B (2022 Fed tightening, BALT +2.51%/+2.46%yr vs
+    SPY -6.66%/-18.62%) and C (Hormuz closure 2026, BALT +1.24% vs SPY
+    +8.36% — shock resolved within the buffer, likely understates true C
+    tail risk); ZERO analogues for A/D/E/F (fund has no history through a
+    genuine recession or systemic-rupture event). Layer 3: mechanically
+    bounded by contract terms (20%/quarter buffer, ~2.4-2.6%/quarter cap,
+    fresh buffer each reset) — genuinely bimodal in C/D/E (protected if a
+    shock is gradual/multi-quarter, exposed if a single quarter breaches
+    20%); cap binds hard in A/F regardless of rally strength. Layer 4:
+    neutral-distribution (A=35/B=15/C=15/D=10/E=5/F=20) weighted average of
+    proposed conservative ends = +0.30%, vs ~4-7% Layer 1 proxy — gap
+    exceeds ±3pp threshold, DOCUMENT_AND_FLAG per M16 §2(d) (no full
+    historical analogue; proxy anchor vs conservative-only Layer 4 read is
+    an expected mismatch, not an error). CONFIDENCE: LOW, all six cells.
+    Proposed §4.1 row (draft, NOT adopted, conservative end only usable per
+    LOW-confidence GUARD): A[6,10] B[0,4] C[-8,+3] D[-10,+2] E[-12,0] F[5,9].
+    Per M16 GUARD NeverReviseWithoutMethodology, cannot be adopted intra-
+    session even at LOW/MEDIUM — formal adoption deferred to the next
+    scheduled full audit, September 30, 2026 (June 30 already passed).
+    BALT itself: M07.AutoDisqualify() run 2026-07-06 — PASS, no flags
+    (AUM $2.46B, 5.0yr track record, 0% foreign concentration, fee-based).
+    §11.1 row and §11.4 candidate entry added this version. No current
+    portfolio allocation; no client decision yet on whether to pursue
+    formal adoption at the September audit.
 
 ---
 
@@ -1751,6 +1802,7 @@ VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v
 | healthcare_defensive_equity | healthcare_demand_inelasticity, pharmaceutical_pricing_power, aging_demographics, biotech_pipeline | v1.13 May 6 | Active - ALL values PENDING June 30 (MEDIUM confidence). Instrument: XLV. All accounts eligible. No entry extension guard. |
 | floating_rate_credit_income | short_term_interest_rates, investment_grade_credit_spread, floating_rate_reset | v1.13 May 6 | Active - ALL values PENDING June 30 (MEDIUM confidence). Instrument: FLOT. Key risk: D/E credit seizure. All accounts eligible. |
 | emerging_market_equity | EM_aggregate_growth, commodity_export_revenue, EM_policy_cycle, USD_direction | v1.13 May 6 | Active - ALL values PENDING June 30 (MEDIUM confidence). Distinguished from broad_market_equity_international by EM-specific political risk, commodity dependency, and USD sensitivity. Instrument candidates: VWO. Entry guard: 15% (same tier as international). |
+| defensive_equity_buffered_domestic | SPY_realized_volatility, options_buffer_cap_structure, outcome_period_path_dependency | v1.62 July 6 | PROPOSED — NOT YET Active. LOW confidence all six §4.1 cells (M16 4-layer drafted, no full historical analogue for this instrument — see §3 log 2026-07-06 / §6 item 45 [P1]). Instrument candidate: BALT. Formal adoption requires the September 30, 2026 full audit at the earliest. No current allocation. |
 
 ### 11.2 secular_technology_growth - Return Estimates
 
@@ -1986,6 +2038,18 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY (REIT distributions predominantly ordinary income).
 - ADOPTION TRIGGER: A > 25% on T1-confirmed US-Iran deal.
 - CURRENT PORTFOLIO ALLOCATION: NONE.
+
+#### BALT
+- Components: defensive_equity_buffered_domestic (1.00)
+- passive_mandate_eligible: false
+- Basis: Innovator Defined Wealth Shield ETF. Actively managed, quarterly-laddered FLEX options referencing SPY. Targets ~20% downside buffer and ~2.4-2.6% upside cap per quarterly outcome period (caps reset each quarter based on prevailing options pricing at reset). Marketed by issuer as a bond alternative, not a growth allocation fund.
+- AUM: $2.46B. Expense ratio: 0.69%. Inception: 2021-06-30 (~5.0yr track record).
+- M07 STATUS (2026-07-06): PASS, no flags — AUM $2.46B, track record 5.0yr, 0% foreign concentration (100% domestic), fee-based revenue type.
+- Backtest evidence (2026-07-06, via portfolio_backtest_mcp + market_data_mcp, since-inception through 2026-07-02): CAGR 5.94%, volatility 3.29%, max drawdown -4.9%, Sharpe 1.80 (vs. matched-window 60/40 VTI/BND Sharpe 0.65). No negative calendar year 2022-2026 (2022 full year +2.46% vs SPY -18.62%). Stress tests: 2022 Fed Tightening Cycle (Mar-Dec) +2.51% vs SPY -6.66% (max DD -1.98% vs SPY -22.09%); 2026 Hormuz Closure (Mar-Jun) +1.24% vs SPY +8.36% (cap constrained participation in the V-shaped recovery rally).
+- PROPOSED NEW ROLE: defensive_equity_buffered_domestic — see §11.1 and §6 item 45 [P1] for full M16 4-layer detail. LOW confidence all cells; cannot be formally adopted before the September 30, 2026 full audit.
+- ADOPTION TRIGGER: client decision to pursue formal role adoption at the September 2026 audit; no trigger has fired yet — this is a logged proposal, not a pending action.
+- CURRENT PORTFOLIO ALLOCATION: NONE.
+- Last reviewed: 2026-07-06 (ad-hoc session — M07 screen + M16 draft 4-layer calibration; role NOT yet in formal Active status pending September audit adoption decision)
 
 #### VEA
 - Components: broad_market_equity_international (1.00)
