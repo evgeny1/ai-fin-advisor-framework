@@ -265,3 +265,59 @@ def test_full_pipeline_open_triggers_round_trip(pipeline_dir, no_network):
     assert state.latest_open_triggers == ["trigger A", "trigger B"]
     assert state.latest_open_decisions == ["decision A"]
     assert state.latest_next_flags == ["flag A"]
+
+
+# ── ENG-57: advisor_evaluate_trend_signal() end-to-end ────────────────────────
+# Same sequential-dependency pattern as evaluate_allocation/write_back above —
+# added here rather than assumed, since ENG-57's own unit tests only covered
+# analysis/trend_signal.py's pure functions and the fetcher/store in isolation,
+# never the actual composed _tool_evaluate_trend_signal() wiring.
+
+def test_trend_signal_fails_without_run_computation():
+    mcp_server._cache.clear()
+    result = json.loads(mcp_server._tool_evaluate_trend_signal())
+    assert result["status"] == "ERROR"
+
+
+@skip_if_missing
+def test_trend_signal_fails_without_apply_scoring(pipeline_dir, no_network):
+    mcp_server._tool_run_computation()
+    result = json.loads(mcp_server._tool_evaluate_trend_signal())
+    assert result["status"] == "ERROR"
+
+
+@skip_if_missing
+def test_trend_signal_completes_after_scoring(pipeline_dir, no_network):
+    """
+    advisor_evaluate_trend_signal() must complete cleanly after
+    run_computation -> apply_scoring. no_network mocks yf.download globally
+    (module-singleton, so this covers the new batched fetcher too) -- the 8
+    held instruments get no own-price history, so every signal must degrade
+    to INCONCLUSIVE with an explicit quality_flag rather than crash. The
+    store's git commit also fails here (tmp_path isn't a git repo) and must
+    be caught, not raised — same contract data/trend_signal_store.py's own
+    tests already cover for that exact case.
+    """
+    mcp_server._tool_run_computation()
+    mcp_server._tool_apply_scoring(_make_stub_answers(mcp_server._cache))
+
+    result = json.loads(mcp_server._tool_evaluate_trend_signal())
+    assert result["status"] == "OK", f"evaluate_trend_signal failed: {result}"
+
+    signals = result["trend_signals"]
+    tickers = {s["ticker"] for s in signals}
+    assert tickers == {"MLPX", "DBMF", "XAR", "AIPO", "COPX", "SGOL", "SIVR", "MAGS"}
+    for s in signals:
+        assert s["rs_signal"] == "INCONCLUSIVE"
+        assert s["quality_flags"], f"{s['ticker']}: expected a flag explaining INCONCLUSIVE"
+        # dominant_directive_conflict_aware doesn't depend on price data at
+        # all (cal + dominant_scenario + DIRECTIVES only) -- must still
+        # populate even when every price-based signal is INCONCLUSIVE.
+        assert s["dominant_directive_conflict_aware"] is not None, (
+            f"{s['ticker']}: dominant_directive_conflict_aware should populate "
+            "independent of price data availability"
+        )
+
+    assert "store_summary" in result
+    store_summary = result["store_summary"]
+    assert store_summary["error"] is not None or store_summary["committed"] is False

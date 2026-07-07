@@ -351,6 +351,31 @@ session until that lands, and the conflict-resolution-authority question
 (does trend ever override EV) stays explicitly undecided until the trial
 produces outcome data to decide it from.
 
+**Progress note (2026-07-07, later same day): e2e wiring test + historical
+backtest capability added.** Two follow-ups after a direct question about
+whether ENG-50/ENG-55 were "fully implemented": (1) `_tool_evaluate_trend_signal()`
+itself had only been unit-tested in pieces, never as the actual composed
+MCP tool — added 3 tests to `test_pattern_b_pipeline.py` exercising it
+end-to-end (sequential-dependency checks + a full no-network run); all
+pass. (2) Built `tools/backtest_trend_signal.py` — a historical backtest,
+explicitly a complement to the live trial, NOT a substitute (see its own
+docstring for the full reasoning: look-ahead-bias risk on today's
+placeholder thresholds, no reconstruction of historical
+`dominant_directive_conflict_aware`, small non-overlapping-window sample
+sizes). Reuses `evaluate_all_trend_signals()` directly against sliced
+historical data rather than reimplementing the formula, so it tests the
+same code path production uses. First real run (~18mo lookback, one bug
+fixed first — the script forgot to load `.env`, so an initial run showed
+false FRED-unavailable results for SGOL/SIVR before that was caught):
+MLPX 5 calls/60% hit rate, XAR 4/25%, COPX 8/75%, MAGS 5/60%, DBMF/SGOL/SIVR
+0 calls (100% INCONCLUSIVE across all 15 windows each — a genuine finding,
+not a bug, once the FRED fix confirmed it), AIPO only 3 windows (inception
+2025-07-24, genuinely short trading history, not a data problem). Overall
+22 calls / 59% hit rate across the whole backtest — small-sample, not
+treated as validating or invalidating the formula. Worth watching whether
+DBMF/SGOL/SIVR's Mode 2 conditions are simply strict-but-correct or too
+strict to ever fire usefully, once more live trial data accumulates.
+
 ### ENG-51 — V4: split instrument classification (§11) into its own persistence entity
 **CLOSED** 2026-07-06 (MEDIUM, architecture). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
