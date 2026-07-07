@@ -494,4 +494,29 @@ _ALL_SPECS: list[FetchSpec] = [
         acceptable_lag_days=1,
         consumer=["M19"],
     ),
+
+    # ── TREND/ROTATION SIGNAL (ENG-50/ENG-55) ─────────────────────────────────
+    # New module, no M-number — explicitly NOT part of the M01-M19 spec
+    # sequence (FRAMEWORK_BACKLOG.md ENG-50). Additive, shadow-mode only;
+    # NEVER feeds M03.DeriveScenarioProbabilities().
+
+    FetchSpec(
+        id="TREND_SIGNAL_HISTORY",
+        source=DataSource.YFINANCE,
+        description="Daily closes (~100 calendar days) for the 8 held instruments "
+                    "(MLPX/DBMF/XAR/AIPO/COPX/SGOL/SIVR/MAGS) plus ENG-55's comparator "
+                    "tickers (BZ=F, HG=F, ITA, PPA, PAVE, QQQM, URA, VEA) — 16 symbols, "
+                    "ONE batched yf.download() call rather than 16 separate registry "
+                    "entries. ENG-35 already flagged advisor_run_computation() running "
+                    "close to the MCP call ceiling; the existing per-symbol weekly-trend "
+                    "pattern (7 separate calls) would make that materially worse at this "
+                    "scale. Feeds analysis/trend_signal.py's Mode 1 return-spread math "
+                    "and the own_short/own_medium legs of Mode 2. Mode 2's macro-"
+                    "confirmation inputs (DXY_TREND, BRENT_TREND, GOLD_TREND, "
+                    "SP500_TREND, REAL_YIELD_10Y_TREND) are NOT refetched here — all "
+                    "five already exist above and are reused as-is.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["TREND_SIGNAL"],
+    ),
 ]

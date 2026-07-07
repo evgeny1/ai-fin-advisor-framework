@@ -59,6 +59,7 @@ from .range_position import (
     clean_signal_role_map,
     evaluate_range_position_advisories,
 )
+from .trend_signal import evaluate_all_trend_signals, TREND_SIGNAL_CONFIG
 
 __all__ = [
     # M11
@@ -94,4 +95,7 @@ __all__ = [
     "RangePositionAdvisory",
     "clean_signal_role_map",
     "apply_range_position_adjustment",
+    # ENG-50/ENG-55 trend/rotation signal (shadow-mode, additive)
+    "evaluate_all_trend_signals",
+    "TREND_SIGNAL_CONFIG",
 ]

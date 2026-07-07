@@ -2722,3 +2722,133 @@ filled in retrospectively next session] }`
 entity + minimal MCP surface, reusing `market_data_mcp:market_get_history`)
 can now proceed once ENG-54 and the fetchability checks above are
 resolved -- this was the explicit prerequisite blocking that step.
+
+
+### ENG-57 — V4: persistence + MCP wiring for the ENG-55 trend/rotation signal
+**CLOSED** 2026-07-07 (HIGH, functional-gap). Full description and resolution below.
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  HIGH
+  Category:  functional-gap
+  Opened:    2026-07-07
+  Closed:    2026-07-07
+  Area:      new module (ENG-50/ENG-55), no M-number -- mcp_server.py 6th tool,
+             new analysis/trend_signal.py, new data/trend_signal_store.py,
+             one new M18 FetchSpec, Project_Instructions_MCP.md wiring
+  Related:   ENG-50 (parent item, still OPEN -- trial hasn't started
+             accumulating data yet), ENG-55 (formula/comparator design this
+             implements), ENG-54 (margin-debt source, still OPEN --
+             margin_debt_fragility_flag stays null until it lands),
+             ENG-35 (MCP call-ceiling concern -- directly shaped the fetch
+             design below), ENG-43 (CreditHistoryStore.json -- the
+             persistence pattern this mirrors)
+-->
+
+**Found:** ENG-55 resolved the formula/comparator design; ENG-50's own
+"suggested next step" was to scope persistence + a minimal MCP surface
+once that happened. This session built it: a new 6th MCP tool, a new
+persistence entity, and the fetch mechanism to feed both -- plus a
+genuine correction to ENG-50's own text, which said the new fetch would
+reuse `market_data_mcp:market_get_history`. That tool belongs to the
+Claude conversation session, not the `python/advisor` MCP server process
+-- the server can only fetch through its own `yfinance_fetcher.py` +
+`m18_registry.py`. Caught before any code was written, not after.
+
+**Design -- persistence:** `TrendSignalStore.json` at the repo root,
+directly modeled on `credit_history_store.py`'s pattern (ENG-43): JSON
+(not markdown/YAML -- this is computational data for a later empirical
+review, not client-facing narrative), git-committed via local `add`+
+`commit` with no push (push rides along with whatever session
+write-back happens next -- same posture, avoids the ENG-33/38 git-push-
+hang class of bug entirely), gated per-ticker not per-day. Shape:
+`{ticker: {date: {rs_signal, own_short_dir, own_medium_dir,
+comparator_mode, comparator_detail, price_at_signal,
+dominant_directive_conflict_aware, margin_debt_fragility_flag,
+quality_flags, forward_outcome}}, last_updated}`.
+
+**Design -- forward-outcome fill (ENG-55's client-confirmed fixed
+~21-trading-day lookback, approximated as 29 calendar days -- same
+trading/calendar conversion convention EntryExtensionGuard already uses
+elsewhere):** every call scans ALL tickers' entries for one whose
+`forward_outcome` is still null and old enough, and fills it using that
+entry's own stored `price_at_signal` (never a re-derived value dependent
+on the current fetch window's depth) plus the current session's price.
+Runs opportunistically on every call, catching up on anything overdue
+regardless of session-cadence gaps -- known limitation, flagged not
+silently accepted: this only runs when a session happens to call it; a
+genuinely fixed schedule independent of session cadence would need a
+standalone check outside live sessions, not built here.
+
+**Design -- fetch mechanism:** one new M18 FetchSpec, `TREND_SIGNAL_HISTORY`
+-- daily closes (~100 calendar days) for all 16 symbols (8 held
+instruments + 8 ENG-55 comparator tickers: BZ=F, HG=F, ITA, PPA, PAVE,
+QQQM, URA, VEA), batched into ONE `yf.download()` call. Deliberately NOT
+16 separate registry entries following the existing per-symbol weekly-
+trend pattern (`_TREND_SPECS`) -- ENG-35 already flagged
+`advisor_run_computation()` running close to the MCP call ceiling, and
+16 more serialized per-symbol calls would make that materially worse.
+Mode 2's macro-confirmation inputs (DXY_TREND, BRENT_TREND, GOLD_TREND,
+SP500_TREND, REAL_YIELD_10Y_TREND) were NOT refetched -- all five already
+exist and are reused as-is by `analysis/trend_signal.py`.
+
+**Design -- MCP tool:** new standalone `advisor_evaluate_trend_signal()`,
+not folded into `advisor_write_back()` or `advisor_evaluate_allocation()`
+-- matches how ENG-16 added `evaluate_allocation`/
+`check_instrument_candidate` as clean new tools rather than extending
+existing ones. Requires `advisor_run_computation()` + `advisor_apply_scoring()`
+already run this session (same precondition as `evaluate_allocation`).
+Recomputes `dominant_directive_conflict_aware` itself (cheap, pure,
+inputs already cached) rather than depending on a separate
+`evaluate_allocation()` call having populated it -- no new inter-tool
+cache dependency introduced.
+
+**Design -- Mode 1 (return-spread) vs Mode 2 (own-trend, macro-confirmed):**
+`analysis/trend_signal.py` implements both, reusing `trend.py`'s existing
+`directional_trend()`/`net_change_pct()` primitives rather than
+reimplementing trend math. Coupling-risk discipline applied throughout:
+where a Mode 2 confirmation reuses the SAME underlying data as an
+existing GAP-16 mechanism (SGOL/SIVR's real-yield+DXY; DBMF's breadth),
+the data fetch is shared but the agreement-gate LOGIC is independently
+reimplemented, never reusing GAP-16's own already-computed
+favorable/unfavorable verdict (which carries GAP-16-specific gating
+conditions -- range width, EV-band bounds -- irrelevant to this module's
+purpose). Full per-instrument mapping documented in each instrument's own
+`Instrument_Classification.md` §11.3 entry, same style as the existing
+GAP-16 notes.
+
+**Design -- session-sequence + briefing wiring (both client-confirmed
+2026-07-07):** new Step 6c (after `advisor_apply_scoring()`, before the
+briefing), automatic every FULL_DESKTOP session -- not conditional,
+not optional, so the shadow trial accumulates consistent data regardless
+of session content. New TREND_ROTATION_SIGNAL briefing section,
+informational only like M14's MARKET_REGIME_SIGNAL, explicitly NOT
+compared against `dominant_directive_conflict_aware` as if the two
+should agree -- independent signals by design during the trial.
+`Project_Instructions_MCP.md` updated in the same session per README §9's
+"non-negotiable" rule (tool count, new tool bullet, Step 6c, section
+order, new NEVER-rules block) -- the separate manual step of pasting the
+updated file into the live Claude Project's Instructions field is still
+outstanding, per the ADR's own already-flagged gap in that mechanism.
+
+**Verified:** 43 new tests (pure-function unit tests for both Modes +
+the DBMF breadth/MLPX HY-OAS confirmation helpers in
+`test_stage3/test_trend_signal.py`; store round-trip + forward-outcome-fill
+tests in `test_stage1/test_trend_signal_store.py`; a live-network
+integration test for the new batched fetcher). Full suite: 854 passed /
+46 skipped / 1 failed -- the 1 failure (`test_pipeline_probabilities_all_at_or_above_floor`,
+Scenario C=2.85% vs a 3% floor) is confirmed pre-existing and
+market-data-dependent (hits live yfinance data unmocked), same baseline
+ENG-53 already logged as "pre-existing failures (unrelated)" -- not
+something this session's changes touched. One legitimate test fix:
+`test_expected_spec_count` bumped 44→45 for the one new FetchSpec.
+
+**Explicitly still open, not decided this session:**
+- `NOISE_FLOOR_PCT` (currently 2.0, a placeholder) and the margin-debt
+  tier thresholds both still need real M16-style historical-analog work
+  -- unchanged from ENG-55's own deferral.
+- ENG-54 (FINRA source) is still OPEN -- `margin_debt_fragility_flag`
+  returns null with an explicit quality_flag every session until it lands.
+- The ~8-week shadow-mode trial itself starts accumulating real data from
+  the next FULL_DESKTOP session onward, not before.
+- The live Claude Project's Instructions field still needs the manual
+  paste-in update separate from this session's repo-file edit.

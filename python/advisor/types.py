@@ -720,3 +720,68 @@ class AutoDisqualifyResult:
     disqualified:  bool
     reason:        Optional[str] = None
     quality_flags: List[str] = field(default_factory=list)
+
+
+# ── Trend/Rotation Signal Types (ENG-50/ENG-55) ────────────────────────────────
+# New module, no M-number (explicitly NOT part of the M01-M19 spec sequence —
+# see FRAMEWORK_BACKLOG.md ENG-50). Additive, shadow-mode only: NEVER feeds
+# M03.DeriveScenarioProbabilities() — same NEVER rule M14/M17 already follow.
+
+class TrendSignalCode(Enum):
+    """ENG-55 relative-strength/rotation read for one instrument this session."""
+    STRENGTHENING = "STRENGTHENING"
+    WEAKENING     = "WEAKENING"
+    INCONCLUSIVE  = "INCONCLUSIVE"
+
+
+class ComparatorMode(Enum):
+    """ENG-55 comparator type per instrument — see analysis/trend_signal.py
+    for the full per-instrument table and rationale."""
+    RETURN_SPREAD       = "return_spread"         # Mode 1 — comparator is a tradeable peer/commodity
+    OWN_TREND_CONFIRMED = "own_trend_confirmed"   # Mode 2 — comparator is a macro driver, not return-comparable
+    HYBRID              = "hybrid"                 # MLPX only — Mode 1 vs Brent + a Mode-2-style confirm gate
+
+
+@dataclass
+class TrendSignalReading:
+    """
+    One instrument's ENG-55 trend/rotation signal read for one session.
+    Logged to TrendSignalStore.json (data/trend_signal_store.py) alongside
+    the session's own dominant_directive_conflict_aware for later
+    comparison at ENG-50's ~8-week shadow-mode trial checkpoint.
+
+    price_at_signal is stored so a later forward-outcome check never
+    depends on that day's price still being inside whatever window a
+    future session's batch fetch happens to cover — self-contained by
+    design, not reliant on fetch-window depth staying constant.
+
+    margin_debt_fragility_flag is None until ENG-54 (FINRA source) is
+    wired — the field exists now so the log's schema doesn't change shape
+    later; quality_flags carries the explicit "why is this null" note
+    rather than the field silently being absent.
+    """
+    ticker:                            str
+    session_date:                      str
+    rs_signal:                         TrendSignalCode
+    own_short_dir:                     Optional[str]   # "up" | "down" | None
+    own_medium_dir:                    Optional[str]   # "up" | "down" | None
+    comparator_mode:                   ComparatorMode
+    comparator_detail:                 str              # human-readable, e.g. "0.671xPAVE+0.195xQQQM+0.134xURA"
+    price_at_signal:                   Optional[float]
+    dominant_directive_conflict_aware: Optional[str]
+    margin_debt_fragility_flag:        Optional[str] = None
+    quality_flags:                     List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "rs_signal":                         self.rs_signal.value,
+            "own_short_dir":                      self.own_short_dir,
+            "own_medium_dir":                     self.own_medium_dir,
+            "comparator_mode":                    self.comparator_mode.value,
+            "comparator_detail":                  self.comparator_detail,
+            "price_at_signal":                    self.price_at_signal,
+            "dominant_directive_conflict_aware":   self.dominant_directive_conflict_aware,
+            "margin_debt_fragility_flag":          self.margin_debt_fragility_flag,
+            "quality_flags":                       self.quality_flags,
+            "forward_outcome":                     None,   # filled in retroactively — see trend_signal_store.py
+        }

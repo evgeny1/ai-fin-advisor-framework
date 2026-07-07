@@ -9,7 +9,7 @@
 ## Section 11 - Instrument Classification Registry (M15)
 
 All values CALIBRATION_DATED. First audit: June 30, 2026.
-VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v1.9). AIPO §11 data updated May 6 (v1.10). MLPX EV updated May 6 (v1.11). New roles inflation_linked_sovereign and real_estate_equity_income added May 6 (v1.12). Five new roles added May 6 (v1.13): systematic_trend_following, consumer_defensive_equity, healthcare_defensive_equity, floating_rate_credit_income, emerging_market_equity. New instruments added May 6 (v1.13): DBMF, SIVR, COPX, VTIP, XLP, VNQ, VEA, XLV, FLOT. AIPO reclassified May 7 (v1.14): ThematicETF_ClassificationAudit() COMPLETE. MLPX entry guards CLEARED May 13 (v1.17). Gold reallocation targets confirmed executed May 22 (v1.18). EVs updated at new probability vector May 25 (v1.19): A=7/B=36/C=41/D=5/E=4/F=7. SIVR EV arithmetic corrected May 26 (v1.21): B blended 5.70%→6.00%, total EV +2.92%→+3.03%. AIPO fully re-audited June 2 (v1.30): RAC(0.55)+STG(0.16)+IHC(0.11)+PDT(0.04)+UNCLASSIFIED(0.07 bitcoin miners); EV +3.28%.
+VTI, XAR, MLPX, SGOL, SGOV, PAVE added Apr 28 (v1.7). AIPO, MAGS added Apr 30 (v1.9). AIPO §11 data updated May 6 (v1.10). MLPX EV updated May 6 (v1.11). New roles inflation_linked_sovereign and real_estate_equity_income added May 6 (v1.12). Five new roles added May 6 (v1.13): systematic_trend_following, consumer_defensive_equity, healthcare_defensive_equity, floating_rate_credit_income, emerging_market_equity. New instruments added May 6 (v1.13): DBMF, SIVR, COPX, VTIP, XLP, VNQ, VEA, XLV, FLOT. AIPO reclassified May 7 (v1.14): ThematicETF_ClassificationAudit() COMPLETE. MLPX entry guards CLEARED May 13 (v1.17). Gold reallocation targets confirmed executed May 22 (v1.18). EVs updated at new probability vector May 25 (v1.19): A=7/B=36/C=41/D=5/E=4/F=7. SIVR EV arithmetic corrected May 26 (v1.21): B blended 5.70%→6.00%, total EV +2.92%→+3.03%. AIPO fully re-audited June 2 (v1.30): RAC(0.55)+STG(0.16)+IHC(0.11)+PDT(0.04)+UNCLASSIFIED(0.07 bitcoin miners); EV +3.28%. ENG-50/ENG-55 trend/rotation comparator documentation added per-instrument 2026-07-07 (MLPX, DBMF, XAR, AIPO, COPX, SGOL, SIVR, MAGS) — shadow-mode signal, never feeds M03 or this section's EV; see FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
 
 ### 11.1 Role Registry
 
@@ -68,6 +68,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - Client preference: exit excess XAR at ~$265 on a conflict-resumption spike. EXECUTED — reduction to 12% confirmed via allocation sheet May 6.
 - HoldJustification: break-even peace probability <5.6%; opportunity cost vs MLPX -4.21%/year (at v1.19 probs).
 - ⚠ Deal trajectory (A rising): geopolitical_premium A return proposed revision to [-6,0] pending June 30. If adopted, XAR EV would decline further.
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or this section's EV): Mode 1 return-spread vs 0.5×ITA+0.5×PPA (defense/aerospace equity peers). Orthogonal to the geopolitical_premium sign-flip review noted above — this reads whether XAR is out/underperforming the sector, not whether the sector's assumed EV sign is correct. See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
 
 #### MLPX
 - Components: real_asset_contracted_revenue (0.50) + inflation_hedge_commodity_linked (0.50)
@@ -85,6 +86,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - WAR PREMIUM ENTRY GUARD: **CLEARED (v1.17, May 13, 2026).** Same threshold: $86.77. Current $77.33 < $86.77. ADD eligible.
 - Drawdown tolerance: Relative IRA target reduced to 24% per drawdown analysis (see §6 item 22).
 - GAP-16 sub-condition drivers PROPOSED 2026-07-03 (v1.59, §6 item 44) — NOT YET WIRED (documentation only): Brent (BZ=F) trend + HY OAS trend/level (both already-tracked M18/M11 series, no new fetch). Energy prices rising/stable + calm HY credit = tailwind; falling energy + widening HY credit = headwind.
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or the EV mechanism above, despite reusing the same Brent/HY OAS data): Mode 1 return-spread vs Brent (BZ=F), gated by an independently-computed HY OAS confirmation (tightening confirms, widening downgrades to INCONCLUSIVE) — same underlying data as the GAP-16 line above but a fully separate decision path, per the coupling-risk discipline in FRAMEWORK_BACKLOG_ARCHIVE.md's ENG-55 writeup. See analysis/trend_signal.py.
 
 #### SGOL
 - Components: inflation_hedge_precious_metals (1.00)
@@ -118,6 +120,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   the real-yield driver is distinct from THREEFYTP10, which M19 §13 below still uses for its
   own "real yield sustained > 2.0%" condition text (term premium, not the same series — see
   §3 v1.44 log entry for why these were split apart).
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or the GAP-16 EV mechanism above): Mode 2 own-trend confirmed by an independently-computed REAL_YIELD_10Y_TREND + DXY agreement gate — reuses the same two data series as GAP-16 above but reimplements the agreement check separately rather than reusing GAP-16's own favorable/unfavorable verdict, per the coupling-risk discipline in FRAMEWORK_BACKLOG_ARCHIVE.md's ENG-55 writeup. See analysis/trend_signal.py.
 
 #### SGOV
 - Components: rate_sensitive_income_short_duration (1.00)
@@ -152,6 +155,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - TAX PLACEMENT: ALL ACCOUNTS including taxable.
 - Target allocation (v1.22, unchanged — see open decision): **7% Primary IRA; 7% Primary Roth**; 8% Primary Taxable; 6% Relative IRA; 10% Relative Roth.
 - ⚠️ TARGET REVIEW IN PROGRESS: Client deliberating IRA/Roth 7%→3% + DBMF bump (+4pp). At corrected EV +3.28%, the substitution thesis (DBMF +11.02%) remains strongly dominant in EV terms. EV differential vs DBMF = −7.74pp/year. However, AIPO now holds a valid thesis position at #3 rank. The reduction is still EV-optimal — but AIPO is no longer marginal. Client decision pending; allocation sheet unchanged.
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or this section's EV): Mode 1 return-spread vs a weighted composite of 0.671×PAVE + 0.195×QQQM + 0.134×URA. Reuses AIPO's own ComponentVector weights (RAC 0.55/STG 0.16/IHC 0.11, renormalized over their 0.82 sum) as the composite blend weights; PDT (0.04) and UNCLASSIFIED (0.07, bitcoin miners) excluded per the client-confirmed 10%-materiality rule, same threshold that kept COPX's 25% BMEI slice in. See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
 #### MAGS
 - Components: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15)
 - passive_mandate_eligible: false
@@ -166,6 +170,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - Target allocation (v1.22): **3% Primary IRA; 4% Primary Roth**; 3% Relative IRA; 8% Relative Roth. (Reduced v1.22 to fund URA addition; EV improvement +0.04pp per account.)
 - TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY. Swap structure generates phantom taxable gains in losing years.
 - MAGS vs AGIX upgrade evaluation: monitor Anthropic IPO news. Assess at Q3 2026 or earlier on announcement.
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or this section's EV): Mode 1 return-spread vs QQQM alone. MAGS's own thesis is concentrated mega-cap tech, so comparing it to the framework's own established, more-diversified STG proxy directly reads whether the concentration is currently outperforming or underperforming the broader AI-capex trade. See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
 
 #### DBMF
 - Components: systematic_trend_following (1.00)
@@ -177,6 +182,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
 - TAX PLACEMENT: ALL ACCOUNTS. No K-1. No swap phantom gain issue.
 - GAP-16 sub-condition drivers PROPOSED 2026-07-03 (v1.59, §6 item 44) — NOT YET WIRED to any live EV adjustment (documentation only; range_position.py has no per-role branch for this yet): DXY_TREND direction + cross-asset trend breadth (Brent/Gold/DXY/S&P — reuses the same 4-market check already computed for the §13 TSC evaluation, no new fetch). Strong clean DXY trend + high breadth (3-4 of 4 trending) = tailwind (tracks toward DBMF's upside); flat DXY + low breadth (0-1 trending) = headwind (tracks toward conservative end).
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03): Mode 2 own-trend confirmed by DXY direction + the same 4-market breadth concept as the GAP-16 line above, reimplemented independently rather than sharing GAP-16's own decision logic, per the coupling-risk discipline in FRAMEWORK_BACKLOG_ARCHIVE.md's ENG-55 writeup. See analysis/trend_signal.py.
 - ENTRY EXTENSION GUARD: N/A — systematic_trend_following role is explicitly exempt (§9.3).
 - KEY RISK: Trend-reversal events (Scenario A normalization) produce material losses (-12% conservative). A=7% weight creates -0.84% EV drag — priced into EV computation. DBMF and MLPX are partially inversely correlated in A (MLPX appreciates as energy normalizes; DBMF loses as commodity trends reverse) — portfolio diversification benefit.
 - Target allocation (v1.18 CONFIRMED):
@@ -201,6 +207,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   since SIVR's 0.55 IHP weight inherits the same monetary-debasement mechanism and the same
   bounded EV adjustment mechanics. Evaluated each session by analysis/range_position.py; see
   the SGOL §11.3 entry above for the full v1.46 mechanism description (not repeated here).
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or the GAP-16 EV mechanism above): Mode 2 own-trend confirmed by the same REAL_YIELD_10Y_TREND + DXY agreement gate as SGOL (v1 simplification, client-confirmed — SIVR's IHC slice arguably behaves more like COPX's industrial-commodity comparator, but treating it identically to SGOL is the simpler v1 default). See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
 - Target allocation (v1.18 CONFIRMED):
   - Primary IRA: 4%
   - Primary Roth: 5%
@@ -224,6 +231,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   - F:  (0.75×2 + 0.25×3) = 2.25% × 0.07 = +0.158%
   - Total floor: +2.601% ≈ +2.60%. Mining-leverage adjusted estimate: ~+3.2-4.0%.
 - GAP-16 sub-condition drivers PROPOSED 2026-07-03 (v1.59, §6 item 44) — NOT YET WIRED (documentation only): DXY_TREND + Brent trend as an imperfect commodity-complex proxy. Flagged: COPX is industrial-metals/copper-mining, not energy, so Brent stands in directionally (both correlate with global growth/reflation and dollar weakness) rather than precisely — a copper-specific series or China PMI would be more accurate but needs new M18 fetcher work (China PMI isn't currently a DataReading, only used ad-hoc via web_search this session).
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or this section's EV): Mode 1 return-spread vs a weighted composite of 0.75×HG=F (copper futures, direct — more precise than the imperfect Brent proxy GAP-16 flags above) + 0.25×VEA (BMEI slice, clears the 10%-materiality threshold comfortably so it's kept rather than excluded). See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
 - TAX PLACEMENT: ALL ACCOUNTS.
 - ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026) at $83.35. 90d avg ~$85-90; threshold ~$102-106.
   ⚠️ Price update (v1.29, June 2, 2026): COPX closed **$93.66** (+4.00%). 90d reference window has shifted

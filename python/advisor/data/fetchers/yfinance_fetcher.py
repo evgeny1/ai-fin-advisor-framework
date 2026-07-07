@@ -150,6 +150,8 @@ def yfinance_dispatcher(spec: FetchSpec) -> List[DataReading]:
         return fetch_yield_curve_partial(spec)
     if spec.id == "HISTORICAL_INSTRUMENT_PRICES":
         raise ValueError("HISTORICAL_INSTRUMENT_PRICES is ON_DEMAND — call fetch_one() explicitly")
+    if spec.id == "TREND_SIGNAL_HISTORY":
+        return fetch_trend_signal_histories(spec)
     # Default: single-quote fetch using _SYMBOL_MAP
     return _fetch_single(spec)
 
@@ -382,6 +384,91 @@ def fetch_yield_curve_partial(spec: FetchSpec) -> List[DataReading]:
         fetched_at=datetime.datetime.utcnow(),
         quality_flags=["PARTIAL: year2=None, spread_10y_2y=None — use FMP MCP for full curve"],
     )]
+
+
+# ── ENG-55 batched trend-signal history ──────────────────────────────────────
+# ONE yf.download() call for all 16 symbols (8 held instruments' own prices +
+# 8 comparator tickers) rather than 16 separate registry entries -- ENG-35
+# already flagged advisor_run_computation() running close to the MCP call
+# ceiling; the existing per-symbol _TREND_SPECS pattern (7 separate calls)
+# would make that materially worse if repeated at this scale. Daily
+# resolution, ~100 calendar days back (comfortably covers the 63-trading-day
+# medium window with margin for holidays/gaps). Mode 2's macro-confirmation
+# inputs (DXY_TREND, BRENT_TREND, GOLD_TREND, SP500_TREND,
+# REAL_YIELD_10Y_TREND) are NOT included here -- all five already exist as
+# separate FetchSpecs and are reused as-is by analysis/trend_signal.py.
+
+_TREND_SIGNAL_SYMBOLS: List[str] = [
+    # 8 held instruments (ENG-55's own scope)
+    "MLPX", "DBMF", "XAR", "AIPO", "COPX", "SGOL", "SIVR", "MAGS",
+    # 8 comparator tickers (ENG-55 design, client-confirmed 2026-07-07)
+    "BZ=F", "HG=F", "ITA", "PPA", "PAVE", "QQQM", "URA", "VEA",
+]
+
+_TREND_SIGNAL_LOOKBACK_DAYS = 100
+
+
+def fetch_trend_signal_histories(spec: FetchSpec) -> List[DataReading]:
+    """
+    TREND_SIGNAL_HISTORY: daily closes for all _TREND_SIGNAL_SYMBOLS,
+    batched into one request. Mirrors mcp_server._fetch_holdings_30d_raw's
+    multi-symbol yf.download() + column-lookup pattern. Per-symbol
+    failures degrade to a FETCH_FAILED reading for that symbol only --
+    never raises for the whole batch.
+    """
+    end_dt = datetime.date.today()
+    start_dt = end_dt - datetime.timedelta(days=_TREND_SIGNAL_LOOKBACK_DAYS)
+    now = datetime.datetime.utcnow()
+
+    try:
+        with _yf_lock_guard():
+            hist = yf.download(
+                _TREND_SIGNAL_SYMBOLS, start=start_dt.isoformat(),
+                end=end_dt.isoformat(), progress=False, auto_adjust=True,
+            )
+    except Exception as e:
+        return [
+            DataReading(spec_id=f"{spec.id}:{sym}", value=None,
+                        source=DataSource.YFINANCE, fetched_at=now,
+                        quality_flags=[f"FETCH_FAILED: batch download error: {e}"])
+            for sym in _TREND_SIGNAL_SYMBOLS
+        ]
+
+    if hist.empty:
+        return [
+            DataReading(spec_id=f"{spec.id}:{sym}", value=None,
+                        source=DataSource.YFINANCE, fetched_at=now,
+                        quality_flags=["FETCH_FAILED: batch download returned empty"])
+            for sym in _TREND_SIGNAL_SYMBOLS
+        ]
+
+    closes_block = hist["Close"] if "Close" in hist.columns else hist
+    readings: List[DataReading] = []
+    for sym in _TREND_SIGNAL_SYMBOLS:
+        col = (closes_block.get(sym) if hasattr(closes_block, "get")
+               else (closes_block[sym] if sym in closes_block.columns else None))
+        if col is None:
+            readings.append(DataReading(
+                spec_id=f"{spec.id}:{sym}", value=None,
+                source=DataSource.YFINANCE, fetched_at=now,
+                quality_flags=[f"FETCH_FAILED: {sym} not present in batch response"],
+            ))
+            continue
+        series = col.dropna()
+        closes = [round(float(c), 4) for c in series.values.flatten().tolist()]
+        if not closes:
+            readings.append(DataReading(
+                spec_id=f"{spec.id}:{sym}", value=None,
+                source=DataSource.YFINANCE, fetched_at=now,
+                quality_flags=[f"UNAVAILABLE: {sym} history empty"],
+            ))
+            continue
+        readings.append(DataReading(
+            spec_id=f"{spec.id}:{sym}",
+            value={"symbol": sym, "closes": closes, "n_days": len(closes)},
+            source=DataSource.YFINANCE, fetched_at=now,
+        ))
+    return readings
 
 
 # ── ON_DEMAND: single instrument history ─────────────────────────────────────

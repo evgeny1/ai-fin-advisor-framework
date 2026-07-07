@@ -33,7 +33,19 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-07, design session (ENG-55 CLOSED — relative-strength
+**Last updated:** 2026-07-07, coding session (ENG-57 CLOSED — persistence +
+MCP wiring for the ENG-55 trend/rotation signal: new 6th MCP tool
+`advisor_evaluate_trend_signal()`, `TrendSignalStore.json` persistence with
+retroactive ~21-trading-day forward-outcome fill (CreditHistoryStore-style,
+local commit only), one new batched `TREND_SIGNAL_HISTORY` FetchSpec (16
+symbols, one yf.download() call rather than 16 separate registry entries —
+ENG-35's MCP-ceiling concern stayed the deciding factor), and full
+Project_Instructions_MCP.md wiring (new Step 6c, automatic every session per
+client confirmation; new informational-only TREND_ROTATION_SIGNAL briefing
+section; NEVER-rules addition). 43 new tests, zero regressions (854 passed /
+46 skipped / 1 pre-existing unrelated failure, same as ENG-53's baseline).
+Full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md.)
+Prior: 2026-07-07, design session (ENG-55 CLOSED — relative-strength
 formula + peer-basket definition resolved: per-instrument comparator/mode table
 (Mode 1 return-spread for XAR/MAGS/AIPO/COPX vs equity or commodity peers, Mode 2
 own-trend-macro-confirmed for DBMF/SGOL/SIVR, hybrid for MLPX), a reusable 10%
@@ -95,6 +107,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-54 | OPEN | MEDIUM | infrastructure | V4: FINRA margin debt series has no M18 DATA_REGISTRY_ENTRY or fetch path |
 | ENG-55 | CLOSED | HIGH | functional-gap | V4: relative-strength formula + peer-basket definition for trend layer — needs its own dedicated session, real judgment calls involved |
 | ENG-56 | OPEN | LOW | hygiene | Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries (inconsistent legacy title-line conventions) |
+| ENG-57 | CLOSED | HIGH | functional-gap | V4: persistence + MCP wiring for the ENG-55 trend/rotation signal — new 6th MCP tool, TrendSignalStore.json, batched daily-history fetch |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -325,6 +338,19 @@ the same YFINANCE pattern already used for BZ=F/HG=F. Nothing here is
 wired yet; this is confirmation the persistence/MCP-wiring step has no
 data-availability surprises waiting, not the wiring itself.
 
+**Progress note (2026-07-07): persistence + MCP wiring done, see ENG-57
+(CLOSED).** `advisor_evaluate_trend_signal()` is now a live 6th MCP tool,
+`TrendSignalStore.json` accumulates readings + forward-outcome fills, and
+it's wired into the session sequence as automatic Step 6c (client-
+confirmed) with a new informational-only TREND_ROTATION_SIGNAL briefing
+section. What's still outstanding for THIS item (ENG-50) specifically:
+the ~8-week shadow-mode trial itself hasn't started accumulating real
+data yet (starts from the next FULL_DESKTOP session), ENG-54 (margin-debt
+source) is still OPEN so `margin_debt_fragility_flag` stays null every
+session until that lands, and the conflict-resolution-authority question
+(does trend ever override EV) stays explicitly undecided until the trial
+produces outcome data to decide it from.
+
 ### ENG-51 — V4: split instrument classification (§11) into its own persistence entity
 **CLOSED** 2026-07-06 (MEDIUM, architecture). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
@@ -358,6 +384,9 @@ series/URL and confirm it's fetchable via the existing web_fetch/
 web_search tools or needs a dedicated scraper.
 
 ### ENG-55 — V4: relative-strength formula + peer-basket definition (dedicated session)
+**CLOSED** 2026-07-07 (HIGH, functional-gap). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+### ENG-57 — V4: persistence + MCP wiring for the ENG-55 trend/rotation signal
 **CLOSED** 2026-07-07 (HIGH, functional-gap). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 ### ENG-56 — Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries

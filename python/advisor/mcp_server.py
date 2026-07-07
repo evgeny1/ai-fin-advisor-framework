@@ -6,7 +6,7 @@ can run the full M05 session pipeline without separate API calls.
 Zero additional cost vs CLI mode (no ANTHROPIC_API_KEY needed here —
 Claude in the conversation IS the AI).
 
-Five tools:
+Six tools:
   advisor_run_computation(floor_account_weights_json?)
                                 M05 Steps 1–4+3b: load config, fetch
                                 market data, compute all signals,
@@ -32,6 +32,11 @@ Five tools:
                                 metrics — no session precondition.
   advisor_write_back()          M05 Step 10: §8 entry + Portfolio_State
                                 → git commit.
+  advisor_evaluate_trend_signal()
+                                ENG-50/ENG-55 Step 6c: deterministic
+                                trend/rotation signal, shadow-mode only —
+                                never feeds M03. Logs to
+                                TrendSignalStore.json for the ~8-week trial.
 
 Usage:
   python -m advisor mcp-server        # start stdio MCP server
@@ -56,7 +61,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # ENG-33 history: advisor_evaluate_allocation's account_profile parameter
@@ -1153,6 +1158,125 @@ def _tool_write_back(
         return _err(str(e))
 
 
+# ── Tool 6: advisor_evaluate_trend_signal() ───────────────────────────────────
+# ENG-50/ENG-55: deterministic trend/rotation signal layer, shadow-mode
+# only. NEVER feeds M03, NEVER overrides an allocation directive — same
+# additive posture M14/M17 already follow. See analysis/trend_signal.py
+# for the per-instrument comparator/mode design and
+# data/trend_signal_store.py for the persistence + forward-outcome fill.
+
+def _tool_evaluate_trend_signal() -> str:
+    cal = _cache.get("cal")
+    probs = _cache.get("scenario_probs")
+    log = _cache.get("log")
+    readings_list = _cache.get("readings", [])
+    if cal is None:
+        return _err("No calibration state cached. Call advisor_run_computation first.")
+    if probs is None:
+        return _err("No scenario probabilities cached. Call advisor_apply_scoring first.")
+
+    from .analysis.trend_signal import evaluate_all_trend_signals, TREND_SIGNAL_CONFIG
+    from .analysis.instruments import dominant_directive
+    from .portfolio.directives import DIRECTIVES
+    from .data.fetchers.yfinance_fetcher import fetch_trend_signal_histories
+    from .data.trend_signal_store import update_trend_signal_store
+    from .types import FetchSpec, DataSource, UpdateFrequency
+
+    held_tickers = list(TREND_SIGNAL_CONFIG.keys())
+    dominant_scenario = max(("A", "B", "C", "D", "E", "F"), key=lambda s: getattr(probs, s))
+
+    result: Dict[str, Any] = {"status": "OK", "flags": []}
+
+    # ── Batched daily-close fetch (own instruments + comparators) ─────────
+    spec = FetchSpec(
+        id="TREND_SIGNAL_HISTORY", source=DataSource.YFINANCE,
+        description="advisor_evaluate_trend_signal ad-hoc call",
+        update_frequency=UpdateFrequency.DAILY, acceptable_lag_days=1,
+    )
+    try:
+        trend_readings = fetch_trend_signal_histories(spec)
+    except Exception as e:
+        return _err(f"TREND_SIGNAL_HISTORY batch fetch failed: {e}")
+
+    daily_histories: Dict[str, List[float]] = {}
+    for r in trend_readings:
+        sym = r.spec_id.split(":", 1)[1]
+        if r.value is not None:
+            daily_histories[sym] = r.value["closes"]
+        else:
+            result["flags"].append(f"⚠ {sym}: {', '.join(r.quality_flags)}")
+
+    # ── Reuse existing weekly-trend readings from this session's fetch_all() ──
+    readings_by_id = {rr.spec_id: rr for rr in readings_list}
+    weekly_trend_readings: Dict[str, Optional[List[float]]] = {}
+    for spec_id in ("DXY_TREND", "BRENT_TREND", "GOLD_TREND", "SP500_TREND", "REAL_YIELD_10Y_TREND"):
+        rr = readings_by_id.get(spec_id)
+        if rr is not None and rr.value is not None:
+            weekly_trend_readings[spec_id] = rr.value.get("closes")
+        else:
+            weekly_trend_readings[spec_id] = None
+            result["flags"].append(
+                f"⚠ {spec_id} unavailable this session — Mode 2 confirmation "
+                "may degrade to INCONCLUSIVE for the instrument(s) that use it."
+            )
+
+    # ── HY OAS session history (MLPX confirm leg — §7 approximation) ──────
+    hy_oas_history: List[Tuple[str, Optional[int]]] = []
+    if log is not None:
+        hy_oas_history = [(cr.date, cr.hy_oas) for cr in log.credit_readings]
+
+    # ── dominant_directive_conflict_aware per ticker (logged, not consumed) ─
+    dominant_directives: Dict[str, Optional[str]] = {}
+    for ticker in held_tickers:
+        try:
+            dominant_directives[ticker] = dominant_directive(ticker, dominant_scenario, DIRECTIVES, cal)
+        except Exception as e:
+            dominant_directives[ticker] = None
+            result["flags"].append(f"⚠ {ticker}: dominantDirective failed — {e}")
+
+    # ── Margin debt (ENG-54 not yet wired — explicit null, not silently absent) ─
+    margin_debt_flag = None
+    margin_debt_note = "ENG-54 not yet wired — margin_debt_fragility_flag unavailable this session"
+
+    signals = evaluate_all_trend_signals(
+        held_tickers=held_tickers,
+        daily_histories=daily_histories,
+        weekly_trend_readings=weekly_trend_readings,
+        hy_oas_session_history=hy_oas_history,
+        dominant_directives=dominant_directives,
+        margin_debt_fragility_flag=margin_debt_flag,
+        margin_debt_note=margin_debt_note,
+    )
+
+    current_prices = {
+        t: daily_histories[t][-1] for t in held_tickers
+        if t in daily_histories and daily_histories[t]
+    }
+    try:
+        store_summary = update_trend_signal_store(signals, current_prices)
+        result["store_summary"] = store_summary
+        if store_summary.get("error"):
+            result["flags"].append(f"⚠ TrendSignalStore update failed (non-fatal): {store_summary['error']}")
+    except Exception as e:
+        result["flags"].append(f"⚠ TrendSignalStore update failed (non-fatal): {e}")
+
+    result["trend_signals"] = [
+        {
+            "ticker":                              s.ticker,
+            "rs_signal":                            s.rs_signal.value,
+            "own_short_dir":                        s.own_short_dir,
+            "own_medium_dir":                       s.own_medium_dir,
+            "comparator_mode":                      s.comparator_mode.value,
+            "comparator_detail":                    s.comparator_detail,
+            "dominant_directive_conflict_aware":    s.dominant_directive_conflict_aware,
+            "margin_debt_fragility_flag":           s.margin_debt_fragility_flag,
+            "quality_flags":                        s.quality_flags,
+        }
+        for s in signals
+    ]
+    return _dumps(result)
+
+
 # ── MCP server ─────────────────────────────────────────────────────────────────
 
 def build_server():
@@ -1397,6 +1521,41 @@ def build_server():
             dry_run=dry_run,
             session_type=session_type,
         )
+
+    @srv.tool()
+    def advisor_evaluate_trend_signal() -> str:
+        """
+        ENG-50/ENG-55: deterministic trend/rotation signal, shadow-mode
+        only — NEVER feeds M03, NEVER overrides an allocation directive.
+        Computes a relative-strength / own-trend read for the 8
+        currently-held ENG-55 instruments (MLPX, DBMF, XAR, AIPO, COPX,
+        SGOL, SIVR, MAGS), logs it to TrendSignalStore.json alongside
+        dominant_directive_conflict_aware for later comparison, and fills
+        in any forward-outcome checks now due (~21 trading days after a
+        prior signal).
+
+        Call after advisor_apply_scoring() (needs cached scenario_probs
+        for dominant_directive) — new M05 Step 6c, before producing the
+        briefing. Present STRENGTHENING/WEAKENING reads in a new,
+        informational-only briefing section (like M14's MARKET_REGIME_SIGNAL)
+        — never as an execution directive. Reviewed at the ~8-week
+        shadow-mode checkpoint per ENG-50's trial design; conflict-
+        resolution authority (does trend ever override EV) is decided
+        FROM that trial data later, not assumed here.
+
+        Returns JSON with:
+          trend_signals: per ticker — rs_signal (STRENGTHENING/WEAKENING/
+            INCONCLUSIVE), own_short_dir/own_medium_dir, comparator_mode/
+            comparator_detail, dominant_directive_conflict_aware,
+            margin_debt_fragility_flag (null until ENG-54 is wired),
+            quality_flags.
+          store_summary: entries_added, forward_outcomes_filled, committed.
+
+        Requires advisor_run_computation() and advisor_apply_scoring() to
+        have run this session (same precondition as
+        advisor_evaluate_allocation()).
+        """
+        return _with_timeout(_tool_evaluate_trend_signal, 60.0)
 
     return srv
 

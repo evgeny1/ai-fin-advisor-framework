@@ -29,11 +29,14 @@ class TestM18Registry:
         assert len(ids) == len(set(ids)), "Duplicate FetchSpec IDs in M18 registry"
 
     def test_expected_spec_count(self):
-        # 44 specs defined in M18 (update this when adding new series).
+        # 45 specs defined in M18 (update this when adding new series).
         # +1 vs prior count (43): REAL_YIELD_10Y_TREND (GAP-16 follow-up,
         # real-yield proxy correction, 2026-06-21).
-        assert len(_ALL_SPECS) == 44, (
-            f"Expected 44 specs, found {len(_ALL_SPECS)}. "
+        # +1 vs prior count (44): TREND_SIGNAL_HISTORY (ENG-50/ENG-55,
+        # 2026-07-07 -- batched daily-close history for the 8 held
+        # instruments + 8 ENG-55 comparator tickers).
+        assert len(_ALL_SPECS) == 45, (
+            f"Expected 45 specs, found {len(_ALL_SPECS)}. "
             "Update this count when adding/removing series."
         )
 
@@ -97,6 +100,23 @@ class TestYfinanceFetcher:
         # At least some should be valid
         valid = [r for r in readings if r.is_valid]
         assert len(valid) > 0
+
+    @pytest.mark.integration
+    def test_fetch_trend_signal_histories(self):
+        """ENG-50/ENG-55: one batched call for all 16 symbols (8 held
+        instruments + 8 comparator tickers) — live network, same
+        unmocked-integration convention as test_fetch_holdings_prices above."""
+        from advisor.data.fetchers.yfinance_fetcher import (
+            fetch_trend_signal_histories, _TREND_SIGNAL_SYMBOLS,
+        )
+        spec = FetchSpec("TREND_SIGNAL_HISTORY", DataSource.YFINANCE, "test",
+                         UpdateFrequency.DAILY, 1)
+        readings = fetch_trend_signal_histories(spec)
+        assert len(readings) == len(_TREND_SIGNAL_SYMBOLS)
+        valid = [r for r in readings if r.is_valid]
+        assert len(valid) > 0
+        for r in valid:
+            assert len(r.value["closes"]) >= 60  # ~100 calendar days -> ~65-70 trading days expected
 
 
 # ── FMP fetcher ───────────────────────────────────────────────────────────────
