@@ -78,6 +78,7 @@ def read_session_log() -> str:
 
 
 import re
+from typing import Dict, List, Tuple
 
 _SEC7_ROW_RE = re.compile(r"^\| \d{4}-\d{2}-\d{2}[^\n]*", re.M)
 _SEC7_TABLE_HEADER = (
@@ -85,63 +86,113 @@ _SEC7_TABLE_HEADER = (
     "| --- | --- | --- | --- | --- | --- |\n"
 )
 
+# ENG-53 (2026-07-06): calendar-age archival threshold, client-confirmed.
+# Replaces the entry-count based rule (ENG-5) entirely -- client's explicit
+# stated preference was "rotate by calendar age, not entry count or file
+# size", so there is deliberately no count-based fallback limit either.
+_ARCHIVE_AGE_DAYS = 90
+
 
 def _quarter_label(d: datetime.date) -> str:
     q = (d.month - 1) // 3 + 1
     return f"{d.year}Q{q}"
 
 
-def _compact_session_log(session_log: str, base: Path):
+def _parse_date_prefix(s: str):
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", s)
+    if not m:
+        return None
+    try:
+        return datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        return None
+
+
+def _row_date(row_text: str):
+    """§7 row's own date, e.g. '| 2026-05-22 (full) | ...' -> date(2026,5,22)."""
+    m = re.match(r"^\|\s*(\d{4}-\d{2}-\d{2})", row_text)
+    return _parse_date_prefix(m.group(1)) if m else None
+
+
+def _entry_date(block_text: str):
+    """§8 entry's own `date:` field (ENG-52 YAML format). Tolerates the
+    quote PyYAML adds around date-shaped scalars on dump."""
+    m = re.search(r"(?m)^date:\s*['\"]?(\d{4}-\d{2}-\d{2})", block_text)
+    return _parse_date_prefix(m.group(1)) if m else None
+
+
+def _compact_session_log(session_log: str, base: Path) -> Tuple[str, Dict[str, str]]:
     """
-    M12 CompactSessionLog (ENG-5): enforce §7 (last 10 rows) / §8 (last 3
-    entries) retention on every write-back, not just quarterly Q-end audits.
+    M12 CompactSessionLog (ENG-53, 2026-07-06): calendar-age based archival,
+    replacing the entry-count based rule (ENG-5) entirely. Any §7 row or §8
+    entry whose own date is more than _ARCHIVE_AGE_DAYS calendar days before
+    today moves to the archive file for ITS OWN quarter (not today's
+    quarter) — a single write-back whose archived items span more than one
+    quarter can touch more than one archive file in one call. There is
+    deliberately no count-based fallback limit — client's stated preference
+    (2026-07-06) was calendar age only, not entry count or file size; a
+    quiet stretch with few sessions just keeps everything live.
 
-    If either limit is exceeded, archives the overflow into the current
-    quarter’s Archive_[Year]Q[N].md (creating it if absent this quarter,
-    appending if it already exists), and returns the compacted session_log.
-
-    Returns (compacted_log, archive_filename_or_None, archive_content_or_None).
-    archive_filename/content are None when nothing needed archiving — caller
-    should skip writing a 4th file in that case.
+    Returns (compacted_log, {archive_filename: archive_content, ...}).
+    The dict is empty when nothing needed archiving this call — caller
+    should skip writing any archive file in that case.
     """
     sec7_idx = session_log.find("## Section 7")
     sec8_idx = session_log.find("## Section 8")
     if sec7_idx == -1 or sec8_idx == -1:
-        return session_log, None, None
+        return session_log, {}
 
     sec7 = session_log[sec7_idx:sec8_idx]
     sec8 = session_log[sec8_idx:]
 
+    today = datetime.date.today()
+    cutoff = today - datetime.timedelta(days=_ARCHIVE_AGE_DAYS)
+    today_iso = today.isoformat()
+
+    # ── §7 rows: split, classify by age ──────────────────────────────────
     row_matches = [(m.start(), m.group()) for m in _SEC7_ROW_RE.finditer(sec7)]
     ends7 = [s for s, _ in row_matches[1:]] + [len(sec7)]
     rows = [sec7[s:e].rstrip() for (s, _), e in zip(row_matches, ends7)]
-    sec7_overflow = max(0, len(rows) - 10)
-    archived_rows = rows[:sec7_overflow]
-    kept_rows = rows[sec7_overflow:]
 
-    blocks = re.split(r"\n\n---\n\n", sec8)
-    header_block = blocks[0]
-    entry_blocks = blocks[1:]
-    sec8_overflow = max(0, len(entry_blocks) - 3)
-    archived_entries = entry_blocks[:sec8_overflow]
-    kept_entries = entry_blocks[sec8_overflow:]
+    archived_rows: List[Tuple[str, datetime.date]] = []
+    kept_rows: List[str] = []
+    for row in rows:
+        d = _row_date(row)
+        (archived_rows.append((row, d)) if d is not None and d < cutoff
+         else kept_rows.append(row))
 
-    if sec7_overflow == 0 and sec8_overflow == 0:
-        return session_log, None, None
+    # ── §8 entries: lookahead-split on '---' so each chunk keeps its own
+    # leading separator (ENG-52 convention — same technique as
+    # rendering.mark_prior_entries_superseded()), then classify by age ────
+    first_sep = re.search(r"(?m)^---\s*$", sec8)
+    if first_sep:
+        header_block = sec8[:first_sep.start()]
+        region = sec8[first_sep.start():]
+        entry_chunks = re.split(r"(?m)^(?=---\s*$)", region)
+    else:
+        header_block = sec8
+        entry_chunks = []
 
-    today = datetime.date.today()
-    today_iso = today.isoformat()
-    quarter = _quarter_label(today)
-    archive_filename = f"Archive_{quarter}.md"
-    archive_path = base / archive_filename
+    archived_entries: List[Tuple[str, datetime.date]] = []
+    kept_entries: List[str] = []
+    for chunk in entry_chunks:
+        d = _entry_date(chunk)
+        (archived_entries.append((chunk, d)) if d is not None and d < cutoff
+         else kept_entries.append(chunk))
 
-    if sec7_overflow > 0:
+    if not archived_rows and not archived_entries:
+        return session_log, {}
+
+    # ── Rebuild §7 ──────────────────────────────────────────────────────────
+    if archived_rows:
         title_line_end = sec7.find("\n")
         title_line = sec7[:title_line_end]
+        quarters7 = sorted({_quarter_label(d) for _, d in archived_rows})
+        dest7 = ", ".join(f"Archive_{q}.md" for q in quarters7)
         note7 = (
-            f"\n\n// COMPACTED: {today_iso} — {sec7_overflow} oldest row(s) "
-            f"archived to {archive_filename}, restoring the last-10 retention rule "
-            f"(FRAMEWORK_BACKLOG.md ENG-5)"
+            f"\n\n// COMPACTED: {today_iso} — {len(archived_rows)} row(s) older than "
+            f"{_ARCHIVE_AGE_DAYS} calendar days archived to {dest7} "
+            f"(FRAMEWORK_BACKLOG.md ENG-53)"
         )
         new_sec7 = (
             title_line + note7 + "\n\n" + _SEC7_TABLE_HEADER
@@ -150,66 +201,92 @@ def _compact_session_log(session_log: str, base: Path):
     else:
         new_sec7 = sec7
 
-    if sec8_overflow > 0:
+    # ── Rebuild §8 ──────────────────────────────────────────────────────────
+    if archived_entries:
+        quarters8 = sorted({_quarter_label(d) for _, d in archived_entries})
+        dest8 = ", ".join(f"Archive_{q}.md" for q in quarters8)
         note8 = (
-            f"\n\n// COMPACTED: {today_iso} — {sec8_overflow} oldest entry(ies) "
-            f"archived to {archive_filename}, restoring the last-3 retention rule "
-            f"(FRAMEWORK_BACKLOG.md ENG-5)"
+            f"\n\n// COMPACTED: {today_iso} — {len(archived_entries)} entry(ies) older "
+            f"than {_ARCHIVE_AGE_DAYS} calendar days archived to {dest8} "
+            f"(FRAMEWORK_BACKLOG.md ENG-53)"
         )
-        new_header_block = header_block.rstrip() + note8
-        new_sec8 = (
-            new_header_block + "\n\n---\n\n" + "\n\n---\n\n".join(kept_entries) + "\n"
-        )
+        new_header_block = header_block.rstrip("\n") + note8 + "\n"
+        new_sec8 = new_header_block + "".join(kept_entries)
     else:
         new_sec8 = sec8
 
     compacted_log = session_log[:sec7_idx] + new_sec7 + new_sec8
 
-    if archive_path.exists():
-        archive_content = archive_path.read_text(encoding="utf-8")
-    else:
-        archive_content = (
-            f"# Archive — {today.year} Q{(today.month - 1) // 3 + 1}\n"
-            f"<!-- Created: {today_iso} — Session_Log.md compaction per M12 CompactSessionLog -->\n"
-            f"<!-- Purpose: append-only archive of displaced §7 rows / §8 entries -->\n\n---\n\n"
-        )
+    # ── Distribute archived items into their own quarter's archive file ────
+    archives: Dict[str, str] = {}
 
-    if archived_rows:
+    def _get_archive(quarter: str) -> str:
+        if quarter in archives:
+            return archives[quarter]
+        path = base / f"Archive_{quarter}.md"
+        if path.exists():
+            content = path.read_text(encoding="utf-8")
+        else:
+            content = (
+                f"# Archive — {quarter[:4]} {quarter[4:]}\n"
+                f"<!-- Created: {today_iso} — Session_Log.md compaction per M12 CompactSessionLog -->\n"
+                f"<!-- Purpose: append-only archive of displaced §7 rows / §8 entries -->\n\n---\n\n"
+            )
+        archives[quarter] = content
+        return content
+
+    rows_by_quarter: Dict[str, List[str]] = {}
+    for row, d in archived_rows:
+        rows_by_quarter.setdefault(_quarter_label(d), []).append(row)
+
+    for quarter, quarter_rows in rows_by_quarter.items():
+        content = _get_archive(quarter)
         marker = "## Archived §7 Credit Readings"
-        idx_sec7_arch = archive_content.find(marker)
-        insertion_text = "\n".join(archived_rows) + "\n"
-        if idx_sec7_arch == -1:
-            archive_content = (
-                archive_content.rstrip() + "\n\n" + marker
-                + " (displaced by last-10 retention)\n\n" + _SEC7_TABLE_HEADER
-                + insertion_text
+        idx = content.find(marker)
+        insertion_text = "\n".join(quarter_rows) + "\n"
+        if idx == -1:
+            content = (
+                content.rstrip() + "\n\n" + marker
+                + f" (displaced by {_ARCHIVE_AGE_DAYS}-day retention)\n\n"
+                + _SEC7_TABLE_HEADER + insertion_text
             )
         else:
-            next_heading = archive_content.find("\n## ", idx_sec7_arch + len(marker))
-            insert_at = next_heading if next_heading != -1 else len(archive_content)
-            archive_content = (
-                archive_content[:insert_at].rstrip() + "\n" + insertion_text
-                + archive_content[insert_at:]
+            next_heading = content.find("\n## ", idx + len(marker))
+            insert_at = next_heading if next_heading != -1 else len(content)
+            content = (
+                content[:insert_at].rstrip() + "\n" + insertion_text
+                + content[insert_at:]
             )
+        archives[quarter] = content
 
-    if archived_entries:
+    entries_by_quarter: Dict[str, List[str]] = {}
+    for chunk, d in archived_entries:
+        entries_by_quarter.setdefault(_quarter_label(d), []).append(chunk)
+
+    for quarter, quarter_entries in entries_by_quarter.items():
+        content = _get_archive(quarter)
         marker8 = "## Archived §8 Session States"
-        idx_sec8_arch = archive_content.find(marker8)
-        insertion_text8 = "\n\n---\n\n".join(archived_entries) + "\n"
-        if idx_sec8_arch == -1:
-            archive_content = (
-                archive_content.rstrip() + "\n\n" + marker8
-                + " (displaced by last-3 retention)\n\n" + insertion_text8
+        idx8 = content.find(marker8)
+        insertion_text8 = "".join(quarter_entries)
+        if idx8 == -1:
+            content = (
+                content.rstrip() + "\n\n" + marker8
+                + f" (displaced by {_ARCHIVE_AGE_DAYS}-day retention)\n"
+                + insertion_text8
             )
         else:
-            next_heading8 = archive_content.find("\n## ", idx_sec8_arch + len(marker8))
-            insert_at8 = next_heading8 if next_heading8 != -1 else len(archive_content)
-            archive_content = (
-                archive_content[:insert_at8].rstrip() + "\n\n" + insertion_text8
-                + archive_content[insert_at8:]
+            next_heading8 = content.find("\n## ", idx8 + len(marker8))
+            insert_at8 = next_heading8 if next_heading8 != -1 else len(content)
+            content = (
+                content[:insert_at8].rstrip() + "\n" + insertion_text8
+                + content[insert_at8:]
             )
+        archives[quarter] = content
 
-    return compacted_log, archive_filename, archive_content
+    archive_files = {f"Archive_{q}.md": content for q, content in archives.items()}
+    return compacted_log, archive_files
+
+
 
 
 def write_back(
@@ -225,8 +302,10 @@ def write_back(
     NEVER commit if §8 probabilities are absent (caller must validate first).
     Returns git commit hash on success.
 
-    §7/§8 compaction (ENG-5): enforced on every call, not gated to
-    quarterly Q-end audits. See _compact_session_log().
+    §7/§8 compaction (ENG-53, 2026-07-06): calendar-age based (90 days),
+    enforced on every call — see _compact_session_log(). A single call can
+    touch more than one Archive_[Year]Q[N].md file if archived items span
+    a quarter boundary.
     """
     if session_type != SessionType.FULL_DESKTOP:
         raise WriteBackGuardViolation(
@@ -238,7 +317,7 @@ def write_back(
     today = datetime.date.today().isoformat()
     files_written = []
 
-    session_log, archive_filename, archive_content = _compact_session_log(session_log, base)
+    session_log, archive_files = _compact_session_log(session_log, base)
 
     if calibration_state is not None:
         _safe_write(base / "Calibration_State.md", calibration_state)
@@ -250,7 +329,7 @@ def write_back(
     _safe_write(base / "Portfolio_State.md", portfolio_state)
     files_written.append("Portfolio_State.md")
 
-    if archive_filename is not None:
+    for archive_filename, archive_content in archive_files.items():
         _safe_write(base / archive_filename, archive_content)
         files_written.append(archive_filename)
 
@@ -259,8 +338,8 @@ def write_back(
         return "dry-run"
 
     commit_msg = f"Session write-back: {today} — §8 scenario state + Portfolio_State"
-    if archive_filename is not None:
-        commit_msg += f" (+ §7/§8 compaction to {archive_filename})"
+    if archive_files:
+        commit_msg += f" (+ §7/§8 compaction to {', '.join(sorted(archive_files))})"
 
     return _git_commit(base, files_written, commit_msg)
 

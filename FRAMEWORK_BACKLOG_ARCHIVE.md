@@ -2548,3 +2548,63 @@ session — zero new regressions.
 **Acceptance met:** §11 lives in its own file; role-registry logic is
 byte-for-byte unchanged; every existing "§11.x" reference in the framework
 still resolves.
+
+
+### ENG-53 — V4: calendar-age archival mechanism for Session_Log.md
+**CLOSED** 2026-07-06 (MEDIUM, architecture). Full description and resolution below.
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  MEDIUM
+  Category:  architecture
+  Opened:    2026-07-06
+  Closed:    2026-07-06
+  Area:      data/file_protocol.py (_compact_session_log, write_back);
+             M12_DriveProtocol.md; tests/test_stage1/test_compaction.py
+  Related:   ENG-52 (prerequisite -- real `date:` YAML field made the age
+             check possible without parsing prose), ENG-5 (the entry-count
+             rule this fully replaces)
+-->
+
+**Found:** Session_Log.md's §7/§8 retention was entry-count based (last 10
+rows / last 3 entries, ENG-5) rather than calendar-age based. Client's
+explicit stated preference (2026-07-06): rotate by calendar age, not entry
+count or file size -- a quiet stretch with few sessions should keep
+everything live regardless of count, and old entries shouldn't linger just
+because session cadence has been sparse.
+
+**Design (client-confirmed 90-day threshold, 2026-07-06):** `_compact_session_log()`
+rewritten from a fixed retention count to `_ARCHIVE_AGE_DAYS = 90` --
+any §7 row or §8 entry whose own date is more than 90 calendar days before
+today archives. Deliberately no count-based fallback either, per the
+client's stated preference. Archive destination is the archived item's
+**own quarter** (`Archive_[Year]Q[N].md`), not today's quarter -- a
+material behavior change from ENG-5, which always used today's quarter
+regardless of how old the archived item actually was. A single write-back
+whose archived items span more than one quarter (or year) can now touch
+more than one archive file in one call; `write_back()`'s return signature
+changed from a single optional `(filename, content)` pair to a
+`Dict[filename, content]` to support this.
+
+§8 entries are split via the same lookahead-on-`---` technique
+`rendering.mark_prior_entries_superseded()` already uses (ENG-52) rather
+than the old fixed 4-newline separator match, so each chunk keeps its own
+leading separator and archives as valid YAML, unchanged, in the new
+format. §3 (Calibration_State.md) was explicitly NOT brought under this
+rule -- it stays count-based and manual, per M12's existing design (§3
+isn't touched by `advisor_write_back()` at all).
+
+**Verified:** rewrote `test_stage1/test_compaction.py` entirely (26
+tests) -- quarter-label coverage unchanged, plus new coverage for: the
+kept-vs-archived boundary at exactly 90 days (kept) vs 91 (archived),
+own-quarter archive routing (a January row from a July session archives
+to Q1, not Q3 -- the core behavior change), cross-quarter and cross-year
+distribution in one call, malformed/unparseable dates failing soft (kept,
+never archived), and the pre-existing merge-not-duplicate regression
+guard. Full suite: 809 passed / 46 skipped / 2 failed -- same two
+pre-existing, unrelated failures as every run this session, zero new
+regressions.
+
+**Acceptance met:** Session_Log.md's live file stays current by calendar
+age regardless of entry count; archived items land in the archive file
+matching their own actual date, not the date they happened to get
+archived on.

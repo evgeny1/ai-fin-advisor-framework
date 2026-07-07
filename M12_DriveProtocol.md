@@ -1,9 +1,9 @@
 # M12 — File Access Protocol
-<!-- Version: Amendment 9 | Updated: see git log -->
+<!-- Version: Amendment 10 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M12_DriveProtocol
-  Version:         Amendment 9
+  Version:         Amendment 10
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: file access sources, write toolchain, or session type rules change.
   Inputs consumed:  (infrastructure — reads and writes framework files; no domain inputs)
@@ -289,7 +289,7 @@ MODULE FileProtocol {
     }
   }
 
-  // ─── COMPACTION PROCEDURE (ENG-5: per-session / per-write-back, NOT quarterly-gated) ─────────
+  // ─── COMPACTION PROCEDURE (ENG-53: calendar-age based; ENG-5: per-write-back, NOT quarterly-gated) ─────
   // CORRECTED 2026-06-19 (ENG-5): this procedure used to be gated to four
   // calendar dates (June 30 / Sep 30 / Dec 31 / Mar 31). That guaranteed §3,
   // §7, and §8 would overrun their stated retention limits between audits —
@@ -297,20 +297,32 @@ MODULE FileProtocol {
   // stated 10, and §7/§8 similarly overran. Trigger is now per-session, and
   // §7/§8 specifically is now automated (no longer something Claude executes
   // by hand at all).
+  //
+  // SUPERSEDED 2026-07-06 (ENG-53): §7/§8's trigger changed from entry-count
+  // (last-10 / last-3) to calendar age (90 days) — client's explicit stated
+  // preference was "rotate by calendar age, not entry count or file size."
+  // There is no longer a count-based fallback either. Gated on ENG-52
+  // landing first so the age check could key off a real `date:` YAML field
+  // rather than parsing prose.
 
   // §7/§8 (Session_Log.md): AUTOMATED. advisor_write_back() /
   // file_protocol.write_back() calls _compact_session_log() on every call —
-  // checks §7 > 10 rows and §8 > 3 entries, and archives any overflow into
-  // the current quarter’s Archive_[Year]Q[N].md (creating it if absent this
-  // quarter, appending if it already exists) in the SAME git commit as the
-  // session write-back. No manual Claude action needed — if you find yourself
-  // about to hand-edit §7/§8 row/entry counts, stop: the tool already did it.
+  // any §7 row or §8 entry whose OWN date is more than 90 calendar days
+  // before today archives to the Archive_[Year]Q[N].md matching THAT
+  // item's own quarter (not today's quarter — a single write-back whose
+  // archived items span more than one quarter can touch more than one
+  // archive file), creating each as needed, in the SAME git commit as the
+  // session write-back. No manual Claude action needed — if you find
+  // yourself about to hand-edit §7/§8 row/entry counts or ages, stop: the
+  // tool already did it.
 
   // §3 (Calibration_State.md): MANUAL, by design — advisor_write_back() NEVER
   // writes Calibration_State.md (see the NEVER rule above: "Calibration_State.md
   // amendments... Desktop Commander + git only"). Trigger condition is now
   // per-session rather than quarterly: check §3’s entry count any time you are
-  // about to add a new §3 entry, not only at Q-end.
+  // about to add a new §3 entry, not only at Q-end. (§3 was NOT brought under
+  // ENG-53's age-based rule — it stayed count-based and manual; only §7/§8
+  // changed.)
 
   PROCEDURE CompactCalibrationLog {
     REQUIRE: about to write or have just written a new §3 entry this session

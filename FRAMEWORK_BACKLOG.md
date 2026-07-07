@@ -33,7 +33,18 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-06, coding session (ENG-51 CLOSED — §11 extracted
+**Last updated:** 2026-07-06, coding session (ENG-53 CLOSED — Session_Log.md
+§7/§8 retention switched from entry-count (last-10/last-3, ENG-5) to pure
+calendar age (90 days, client-confirmed), with no count-based fallback;
+archived items now route to the archive file matching their OWN quarter,
+not today's quarter, so a single write-back can touch more than one
+Archive_[Year]Q[N].md file if archived items span a quarter or year
+boundary; write_back()'s return signature changed to support multiple
+archive files per call. §3 explicitly not brought under this rule -- stays
+count-based/manual. Full suite: 809 passed / 46 skipped / 2 failed, same
+baseline failures, zero new regressions. Full writeup in
+FRAMEWORK_BACKLOG_ARCHIVE.md.)
+Prior: 2026-07-06, coding session (ENG-51 CLOSED — §11 extracted
 verbatim out of Calibration_State.md into its own file, Instrument_Classification.md;
 required zero changes to the existing role/instrument parser functions since
 they already located content via string markers rather than assuming a
@@ -70,7 +81,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-50 | OPEN | HIGH | architecture | V4: Trend/Rotation Signal Layer — deterministic price/relative-strength module, additive to scenario engine, shadow-mode trial before any authority decision |
 | ENG-51 | CLOSED | MEDIUM | architecture | V4: split instrument classification (§11) out of Calibration_State.md into its own persistence entity |
 | ENG-52 | CLOSED | MEDIUM | hygiene | V4: structured parseable entry format (front-matter block) for Session_Log.md, Calibration_State.md, FRAMEWORK_BACKLOG.md |
-| ENG-53 | OPEN | MEDIUM | architecture | V4: calendar-age archival mechanism for Session_Log.md (and candidate extension to other growing files) |
+| ENG-53 | CLOSED | MEDIUM | architecture | V4: calendar-age archival mechanism for Session_Log.md (and candidate extension to other growing files) |
 | ENG-54 | OPEN | MEDIUM | infrastructure | V4: FINRA margin debt series has no M18 DATA_REGISTRY_ENTRY or fetch path |
 | ENG-55 | OPEN | HIGH | functional-gap | V4: relative-strength formula + peer-basket definition for trend layer — needs its own dedicated session, real judgment calls involved |
 | ENG-56 | OPEN | LOW | hygiene | Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries (inconsistent legacy title-line conventions) |
@@ -295,29 +306,7 @@ here.
 **CLOSED** 2026-07-06 (MEDIUM, hygiene). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 ### ENG-53 — V4: calendar-age archival mechanism for Session_Log.md
-<!-- ITEM
-Status:    OPEN
-Severity:  MEDIUM
-Category:  architecture
-Opened:    2026-07-06
-Area:      Session_Log.md; candidate extension to Calibration_Log.md, FRAMEWORK_BACKLOG_ARCHIVE.md rotation cadence
-Related:   ENG-52 (structured format makes archival mechanical rather than prose-parsing), ENG-5/ENG-7 (prior compaction-cadence work, same file)
--->
-
-**Description:** Session_Log.md is 156 lines / ~20KB after roughly two
-months of use, with multiple same-day entries on active days (e.g. two
-2026-07-03 entries). Client explicit preference: rotate by **calendar
-age**, not entry count or file size, and the live/current file should
-remain easy to parse at all times — i.e. archival should keep the live
-file small and current, not just prevent it from growing unbounded.
-
-**Suggested next step:** define a fixed calendar-age threshold (e.g.
-entries older than N days move to a Session_Log_Archive.md, mirroring the
-existing FRAMEWORK_BACKLOG_ARCHIVE.md / Calibration_Log.md pattern already
-in use elsewhere in this repo) and implement as part of
-`advisor_write_back()`'s render step, gated on ENG-52's structured format
-landing first so the rotation logic can key off a real `date:` field
-rather than parsing prose.
+**CLOSED** 2026-07-06 (MEDIUM, architecture). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 ### ENG-54 — V4: FINRA margin debt series has no M18 DATA_REGISTRY_ENTRY
 <!-- ITEM

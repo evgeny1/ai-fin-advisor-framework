@@ -78,7 +78,7 @@ script against `fred_fetcher.py`'s internals.
 | `M09_ScenariosABC.md` | Execution protocols for Scenarios A, B, C |
 | `M10_ScenariosDEF.md` | Execution protocols for Scenarios D, E, F; ScenarioE branches on YieldCurveSignal.e_pathway_type |
 | `M11_CreditAndCalibration.md` | Credit signal protocol; calibration discipline; Scenario D trigger |
-| `M12_DriveProtocol.md` | File access protocol (Amendment 9) — Google Drive primary read, GitHub backup, Desktop Commander + git writes |
+| `M12_DriveProtocol.md` | File access protocol (Amendment 10) — Google Drive primary read, GitHub backup, Desktop Commander + git writes |
 | `M13_GrowthObjectives.md` | Growth objectives, idealAllocation(), FeasibilityCheck() — supersedes M03 for these functions |
 | `M14_MarketRegime.md` | Market regime detection; EntryExtensionGuard; divergence signal |
 | `M15_InstrumentClassification.md` | Role registry, composite decomposition, blendedScenarioReturn(), ValidateClassifications() |
