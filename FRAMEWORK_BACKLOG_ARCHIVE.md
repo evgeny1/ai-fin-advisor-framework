@@ -2608,3 +2608,117 @@ regressions.
 age regardless of entry count; archived items land in the archive file
 matching their own actual date, not the date they happened to get
 archived on.
+
+
+### ENG-55 — V4: relative-strength formula + peer-basket definition (dedicated session)
+**CLOSED** 2026-07-07 (HIGH, functional-gap). Full description and resolution below.
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  HIGH
+  Category:  functional-gap
+  Opened:    2026-07-06
+  Closed:    2026-07-07
+  Area:      new trend module (ENG-50), formula/config only -- no persistence or MCP wiring yet
+  Related:   ENG-50 (consumer, now unblocked for its persistence/MCP-wiring step),
+             ENG-54 (margin-debt data source -- still OPEN, flag mechanism below is
+             designed against it but has no live data yet), GAP-16 (reused
+             agreement-gate pattern; SGOL/SIVR/MLPX/DBMF/COPX driver reuse)
+-->
+
+**Found:** the one piece of ENG-50 with genuine judgment calls baked in --
+what counts as a peer/comparison basket per holding, what lookback window
+defines "relative strength," and how the margin-debt trend should discount
+a momentum read. Deliberately deferred to its own dedicated session
+(2026-07-06 hand-off, run 2026-07-07) rather than decided ad hoc, since
+it's the same category of problem (subjective judgment presented as
+precise output) that produced the F-probability discrepancy motivating
+ENG-50 in the first place.
+
+**Design -- comparator/mode per instrument:** two genuinely different
+comparator types, not one formula shape forced onto both. Mode 1
+(return-spread) for instruments with a real tradeable peer/commodity
+comparator; Mode 2 (own-trend, macro-confirmed) for instruments whose
+driver (DXY, real yield, credit spreads) isn't return-comparable to begin
+with.
+
+| Instrument | Comparator | Mode |
+|---|---|---|
+| MLPX | Brent (BZ=F) [Mode 1] + HY OAS trend [confirmation gate] | Hybrid |
+| DBMF | DXY trend + 4-market breadth (Brent/Gold/DXY/S&P) | Mode 2 -- reuses existing §13 TSC breadth check exactly |
+| XAR | ITA/PPA average | Mode 1 |
+| AIPO | 0.671×PAVE + 0.195×QQQM + 0.134×URA (renormalized) | Mode 1, composite |
+| COPX | 0.75×HG=F + 0.25×VEA | Mode 1, composite |
+| SGOL | REAL_YIELD_10Y_TREND + DXY | Mode 2 -- reuses live v1.46 GAP-16 mechanism's own agreement gate |
+| SIVR | same as SGOL (v1 simplification, client-confirmed) | Mode 2 |
+| MAGS | QQQM | Mode 1 |
+
+**Design -- reusable materiality rule:** any single ComponentVector weight
+below 10% is excluded from the comparator and the remainder renormalized
+(placeholder cutoff, not independently calibrated). Client-confirmed via
+AIPO: PDT (4%) + UNCLASSIFIED (7%, bitcoin miners) excluded; remaining
+RAC/STG/IHC (0.55/0.16/0.11, summing to 0.82) renormalized to
+0.671/0.195/0.134. COPX's BMEI (25%) kept as the contrast case -- clears
+the 10% line comfortably. Note in passing, not fixed this session: AIPO's
+full §11.3 ComponentVector (RAC 0.55 + STG 0.16 + IHC 0.11 + PDT 0.04 +
+UNCLASSIFIED 0.07) sums to 0.93, not 1.00 -- a pre-existing gap
+independent of this renormalization, worth a look sometime but not
+blocking here.
+
+**Design -- lookback window (client-confirmed):** blended two-window,
+~21 trading days (~1mo) + ~63 trading days (~1qtr), both windows' sign
+must agree or the read is INCONCLUSIVE -- same "require agreement, else
+neutral" pattern GAP-16 already uses for SGOL/SIVR's real-yield+DXY gate.
+Rejected: single ~1qtr window (too slow to catch the fast rotations --
+e.g. XAR's post-Hormuz bounce played out in about a week -- that motivate
+ENG-50 in the first place) and single ~1mo window alone (too noisy,
+reintroduces the imprecision problem ENG-50 exists to fix).
+
+**Design -- margin-debt discount mechanism (client-confirmed):** FINRA
+margin debt (ENG-54) is a market-wide aggregate, monthly, ~3-4wk lag --
+not instrument-specific, so it's a single portfolio-wide fragility overlay
+applied uniformly, not a per-instrument input. Input: 3-month rate-of-change
+(not absolute level -- speed of leverage build predicts unwind fragility
+better than a level that can sit high for years without incident).
+Output: discrete tiers (NORMAL/ELEVATED/EXTREME, thresholds TBD). Applies
+only to STRENGTHENING (bullish) reads, never to WEAKENING. For v1 shadow
+mode: a qualitative flag/caveat attached to the logged signal only -- NOT
+a numeric adjustment to the relative-strength score. Deliberate choice:
+the trial exists to find out whether the discount concept is predictive
+before committing to a magnitude; hard-coding a number now risks the exact
+"precise-looking but ungrounded" failure mode that prompted ENG-50.
+
+**Formula (pseudocode, both modes):**
+```
+# Mode 1 -- return-spread
+RS_short  = pct_change(instrument, 21) - pct_change(comparator, 21)
+RS_medium = pct_change(instrument, 63) - pct_change(comparator, 63)
+signal = STRENGTHENING/WEAKENING if sign(RS_short)==sign(RS_medium)
+         and both exceed NOISE_FLOOR [not yet calibrated] else INCONCLUSIVE
+
+# Mode 2 -- own-trend, macro-confirmed
+own_short  = directional_trend(instrument.closes, 21)   # trend.py primitive
+own_medium = directional_trend(instrument.closes, 63)
+signal = STRENGTHENING/WEAKENING if own_short==own_medium
+         and macro_confirms (driver-specific, see table) else INCONCLUSIVE
+```
+
+**Per-session log shape (per ENG-50's shadow-mode trial design):**
+`{ ticker, rs_signal, own_short_dir, own_medium_dir, comparator_type,
+comparator_detail, margin_debt_fragility_flag, dominant_directive_conflict_aware
+[existing signal, logged alongside for comparison], forward_outcome [null,
+filled in retrospectively next session] }`
+
+**Explicitly deferred, not decided this session:**
+- `NOISE_FLOOR` (Mode 1) and margin-debt tier cutoffs both need real
+  M16-style historical-analog work -- `portfolio_backtest_mcp` is the
+  likely tool once that happens, not picked ad hoc here.
+- Data-fetchability of PAVE/URA/HG=F/ITA/PPA via the existing yfinance
+  dispatcher, or new M18 FetchSpecs needed for any of them -- that's
+  ENG-50's own persistence/MCP-wiring step, out of scope for this session.
+- ENG-54 itself (the FINRA series) is still OPEN -- the flag mechanism
+  above is designed against it but has no live data source yet.
+
+**Unblocks:** ENG-50's "suggested next step" (scope as its own persistence
+entity + minimal MCP surface, reusing `market_data_mcp:market_get_history`)
+can now proceed once ENG-54 and the fetchability checks above are
+resolved -- this was the explicit prerequisite blocking that step.

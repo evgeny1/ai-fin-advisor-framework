@@ -33,7 +33,17 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-06, coding session (ENG-53 CLOSED — Session_Log.md
+**Last updated:** 2026-07-07, design session (ENG-55 CLOSED — relative-strength
+formula + peer-basket definition resolved: per-instrument comparator/mode table
+(Mode 1 return-spread for XAR/MAGS/AIPO/COPX vs equity or commodity peers, Mode 2
+own-trend-macro-confirmed for DBMF/SGOL/SIVR, hybrid for MLPX), a reusable 10%
+materiality-exclusion rule, a blended ~1mo+~1qtr agreement-gated lookback window,
+and a soft-flag-only (non-numeric) margin-debt fragility caveat for v1 shadow
+mode — client-confirmed on all three open judgment calls. Noise-floor and
+margin-debt tier thresholds explicitly deferred pending historical-analog work;
+data-fetchability of new comparator tickers (PAVE/URA/HG=F/ITA/PPA) deferred to
+ENG-50's persistence/MCP-wiring step. Full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md.)
+Prior: 2026-07-06, coding session (ENG-53 CLOSED — Session_Log.md
 §7/§8 retention switched from entry-count (last-10/last-3, ENG-5) to pure
 calendar age (90 days, client-confirmed), with no count-based fallback;
 archived items now route to the archive file matching their OWN quarter,
@@ -83,7 +93,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-52 | CLOSED | MEDIUM | hygiene | V4: structured parseable entry format (front-matter block) for Session_Log.md, Calibration_State.md, FRAMEWORK_BACKLOG.md |
 | ENG-53 | CLOSED | MEDIUM | architecture | V4: calendar-age archival mechanism for Session_Log.md (and candidate extension to other growing files) |
 | ENG-54 | OPEN | MEDIUM | infrastructure | V4: FINRA margin debt series has no M18 DATA_REGISTRY_ENTRY or fetch path |
-| ENG-55 | OPEN | HIGH | functional-gap | V4: relative-strength formula + peer-basket definition for trend layer — needs its own dedicated session, real judgment calls involved |
+| ENG-55 | CLOSED | HIGH | functional-gap | V4: relative-strength formula + peer-basket definition for trend layer — needs its own dedicated session, real judgment calls involved |
 | ENG-56 | OPEN | LOW | hygiene | Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries (inconsistent legacy title-line conventions) |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
@@ -332,32 +342,7 @@ series/URL and confirm it's fetchable via the existing web_fetch/
 web_search tools or needs a dedicated scraper.
 
 ### ENG-55 — V4: relative-strength formula + peer-basket definition (dedicated session)
-<!-- ITEM
-Status:    OPEN
-Severity:  HIGH
-Category:  functional-gap
-Opened:    2026-07-06
-Area:      new trend module (ENG-50), formula/config only — no persistence or MCP wiring yet
-Related:   ENG-50 (consumer), explicitly scoped OUT of this session by client request
--->
-
-**Description:** The one piece of ENG-50 with genuine judgment calls
-baked in: what counts as the peer/comparison basket for a given holding
-(e.g. what is MLPX's peer set — other energy-infrastructure/MLP funds?
-broader energy sector? a custom basket?), what lookback window defines
-"relative strength," and how exactly the margin-debt trend discounts a
-momentum read. Client explicitly asked for this to be tackled fresh in
-its own session rather than folded into the broader V4 design discussion
-this session, precisely because it's the least mechanical, most
-judgment-dependent piece of the whole proposal — the same category of
-problem (subjective judgment presented as precise output) that this
-session's F-probability discrepancy stemmed from. Should be resolved
-carefully and explicitly, not inherited from this session's momentum.
-
-**Suggested next step:** dedicated session hand-off already prepared —
-open with peer-basket definition per current holding (MLPX, DBMF, XAR,
-AIPO, COPX, SGOL/SIVR, MAGS), lookback-window choice, and the margin-debt
-discount mechanism, before any code or persistence design.
+**CLOSED** 2026-07-07 (HIGH, functional-gap). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 ### ENG-56 — Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries
 <!-- ITEM
