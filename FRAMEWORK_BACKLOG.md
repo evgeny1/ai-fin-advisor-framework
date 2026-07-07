@@ -309,6 +309,22 @@ market_data_mcp:market_get_history) once ENG-55 (formula/peer-basket)
 is resolved in its own dedicated session. Do not build the formula inline
 here.
 
+**Progress note (2026-07-07):** ENG-55 closed (formula/comparator design
+resolved). Spot-checked comparator-ticker fetchability via
+market_data_mcp this session: PAVE and URA are both already live holdings
+(PAVE 11% Taxable, URA 3% IRA/Roth) and already flow through the existing
+`HOLDINGS_PRICES` FetchSpec -- no new work needed for either. HG=F
+already has a dedicated M18 FetchSpec (added for §13 M19's COPX/URA
+thesis monitoring) -- but registered at WEEKLY granularity there; the new
+RS formula's Mode 1 spread wants daily closes for its 21td/63td windows,
+so either a second daily-granularity fetch or a weekly-close-adapted
+formula variant will be needed. ITA and PPA (XAR's comparator peers) have
+no registry entry anywhere yet, but market_data_mcp confirms clean daily
+history for both (62 trading days, no gaps) -- trivial to add later via
+the same YFINANCE pattern already used for BZ=F/HG=F. Nothing here is
+wired yet; this is confirmation the persistence/MCP-wiring step has no
+data-availability surprises waiting, not the wiring itself.
+
 ### ENG-51 — V4: split instrument classification (§11) into its own persistence entity
 **CLOSED** 2026-07-06 (MEDIUM, architecture). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
