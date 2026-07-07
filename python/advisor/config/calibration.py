@@ -558,19 +558,37 @@ def parse_calibration_log(text: str) -> List[CalibrationLogEntry]:
 # ── Top-level entry point ──────────────────────────────────────────────────────
 
 
-def parse_calibration_state(text: str) -> CalibrationState:
+def parse_calibration_state(
+    text: str,
+    instrument_classification_text: Optional[str] = None,
+) -> CalibrationState:
     """Parse the full text of Calibration_State.md into a CalibrationState.
 
     Args:
         text: Raw markdown content of Calibration_State.md.
+        instrument_classification_text: Raw markdown content of
+            Instrument_Classification.md (ENG-51, 2026-07-06 — §11 was
+            extracted out of Calibration_State.md into its own file so the
+            trend layer, ENG-50, can read/write per-instrument state
+            without touching credit thresholds or the return table).
+            Optional and defaults to None for backward compatibility — if
+            omitted, roles/instruments are parsed from `text` itself
+            (works for any fixture that still embeds "## Section 11" in
+            the same blob, e.g. older tests). Production call sites should
+            always pass this explicitly now that §11 lives in its own file
+            — see M12_DriveProtocol.fetchInstrumentClassification().
 
     Returns:
-        Fully populated CalibrationState dataclass.
+        Fully populated CalibrationState dataclass. `.roles`/`.instruments`
+        are unchanged in shape — classifyInstrument(), ValidateClassifications(),
+        and blendedScenarioReturn() need no changes; this is a storage-
+        location change only.
 
     Raises:
         ValueError: If the file cannot be parsed (e.g., truncated or corrupt).
     """
     version, last_updated = _parse_version_date(text)
+    roles_source = instrument_classification_text if instrument_classification_text is not None else text
     return CalibrationState(
         version      = version,
         last_updated = last_updated,
@@ -579,8 +597,8 @@ def parse_calibration_state(text: str) -> CalibrationState:
         multipliers  = _parse_multipliers(text),
         floor_params = _parse_floor_params(text),
         regime       = _parse_regime(text),
-        roles        = _parse_role_registry(text),
-        instruments  = _parse_instruments(text),
+        roles        = _parse_role_registry(roles_source),
+        instruments  = _parse_instruments(roles_source),
         cascade      = _parse_cascade(text),
         thesis_conditions = _parse_thesis_conditions(text),
     )

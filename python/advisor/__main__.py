@@ -229,12 +229,13 @@ def cmd_session() -> None:
 
 def cmd_validate() -> None:
     """Run ValidateClassifications against current §11. Fast session-start check."""
-    from .data.file_protocol import read_calibration_state
+    from .data.file_protocol import read_calibration_state, read_instrument_classification
     from .config import parse_calibration_state
     from .analysis import validate_classifications
 
     cal_text = read_calibration_state()
-    cal = parse_calibration_state(cal_text)
+    instrument_text = read_instrument_classification()
+    cal = parse_calibration_state(cal_text, instrument_text)
 
     allocation_tickers = [t for t, e in cal.instruments.items() if not e.is_candidate]
     try:
@@ -285,12 +286,12 @@ def cmd_evaluate_allocation() -> None:
         sys.exit(1)
 
     from .config import parse_calibration_state
-    from .data.file_protocol import read_calibration_state
+    from .data.file_protocol import read_calibration_state, read_instrument_classification
     from .mcp_server import _tool_evaluate_allocation
     from .types import ScenarioProbabilities
 
     try:
-        cal = parse_calibration_state(read_calibration_state())
+        cal = parse_calibration_state(read_calibration_state(), read_instrument_classification())
     except Exception as e:
         print(f"ERROR: could not load Calibration_State.md: {e}", file=sys.stderr)
         sys.exit(1)

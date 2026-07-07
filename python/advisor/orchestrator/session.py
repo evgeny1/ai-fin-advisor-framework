@@ -33,7 +33,10 @@ from ..analysis import (
 from ..analysis.scenario_math import apply_all_rules
 from ..config import parse_calibration_state, parse_session_log
 from ..data.fetch_registry import FetchRegistry
-from ..data.file_protocol import framework_path, write_back, read_calibration_state, read_session_log
+from ..data.file_protocol import (
+    framework_path, write_back, read_calibration_state,
+    read_instrument_classification, read_session_log,
+)
 from ..data.m18_registry import register_all
 from ..exceptions import HardStopException
 from ..portfolio import (
@@ -130,17 +133,19 @@ class SessionPipeline:
 
     def _step1_load_config(self, ctx: SessionContext) -> None:
         """
-        M05 Steps 1+3: Read Calibration_State.md + Session_Log.md.
+        M05 Steps 1+3: Read Calibration_State.md + Instrument_Classification.md
+        (ENG-51, 2026-07-06 — §11 split out into its own file) + Session_Log.md.
         Parse into typed CalibrationState + SessionLogState.
         Run ValidateClassifications — HARD_STOP if any allocation ticker absent.
         """
-        self._prog("Step 1/8  Loading Calibration_State.md + Session_Log.md ...")
+        self._prog("Step 1/8  Loading Calibration_State.md + Instrument_Classification.md + Session_Log.md ...")
         logger.info("Step 1: Loading framework config")
 
         cal_text = read_calibration_state()
+        instrument_text = read_instrument_classification()
         log_text = read_session_log()
 
-        ctx.cal = parse_calibration_state(cal_text)
+        ctx.cal = parse_calibration_state(cal_text, instrument_text)
         ctx.log = parse_session_log(log_text)
 
         n_entries = len(ctx.log.scenario_states)

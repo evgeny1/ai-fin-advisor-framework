@@ -33,7 +33,19 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-06, coding session (ENG-52 CLOSED — Session_Log.md
+**Last updated:** 2026-07-06, coding session (ENG-51 CLOSED — §11 extracted
+verbatim out of Calibration_State.md into its own file, Instrument_Classification.md;
+required zero changes to the existing role/instrument parser functions since
+they already located content via string markers rather than assuming a
+single-file structure; parse_calibration_state() gained an optional second
+parameter; all 4 production call sites updated; M12/M15/00_INDEX/
+Project_Instructions_MCP.md framework spec files updated to match, and a
+stale-Amendment-number drift was fixed in passing. Also surfaced that
+whatever backs project_knowledge_search is stale relative to the actual
+repo state in ways beyond this change -- flagged for a separate look. Full
+suite: 807 passed / 46 skipped / 2 failed, same baseline failures, zero new
+regressions. Full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md.)
+Prior: 2026-07-06, coding session (ENG-52 CLOSED — Session_Log.md
 §8 and Calibration_State.md §3 entries now use real YAML front-matter with
 an `entry_id` real-timestamp field and, for §8, a `status: current|superseded`
 field, fixing the exact same-day-entry disambiguation gap that motivated the
@@ -56,7 +68,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-48 | OPEN | HIGH | bug | advisor_write_back's 90s safety-timeout races its own actual completion time — reports TIMEOUT while succeeding server-side |
 | ENG-49 | OPEN | HIGH | bug | advisor_write_back TIMEOUT with a genuinely incomplete server-side operation — files+archive rendered and written, but git add/commit never ran, distinct from ENG-48's "actually succeeded" pattern |
 | ENG-50 | OPEN | HIGH | architecture | V4: Trend/Rotation Signal Layer — deterministic price/relative-strength module, additive to scenario engine, shadow-mode trial before any authority decision |
-| ENG-51 | OPEN | MEDIUM | architecture | V4: split instrument classification (§11) out of Calibration_State.md into its own persistence entity |
+| ENG-51 | CLOSED | MEDIUM | architecture | V4: split instrument classification (§11) out of Calibration_State.md into its own persistence entity |
 | ENG-52 | CLOSED | MEDIUM | hygiene | V4: structured parseable entry format (front-matter block) for Session_Log.md, Calibration_State.md, FRAMEWORK_BACKLOG.md |
 | ENG-53 | OPEN | MEDIUM | architecture | V4: calendar-age archival mechanism for Session_Log.md (and candidate extension to other growing files) |
 | ENG-54 | OPEN | MEDIUM | infrastructure | V4: FINRA margin debt series has no M18 DATA_REGISTRY_ENTRY or fetch path |
@@ -277,30 +289,7 @@ is resolved in its own dedicated session. Do not build the formula inline
 here.
 
 ### ENG-51 — V4: split instrument classification (§11) into its own persistence entity
-<!-- ITEM
-Status:    OPEN
-Severity:  MEDIUM
-Category:  architecture
-Opened:    2026-07-06
-Area:      Calibration_State.md §11 → new file (name TBD, e.g. Instrument_Classification.md)
-Related:   ENG-50, ENG-15/M15_InstrumentClassification.md (role registry logic unchanged, only storage location moves)
--->
-
-**Description:** Client-requested split, motivated by ENG-50: the trend
-layer needs to read/write per-instrument state (relative-strength rank,
-trend flags) without touching credit thresholds, return tables, or other
-unrelated §1–§10/§12 content currently sharing Calibration_State.md.
-Today §11 (role registry) is one section inside one large file — every
-Calibration_State.md read/write for ANY reason currently touches the same
-file as instrument classification.
-
-**Suggested next step:** extract §11 verbatim into its own file, update
-M15's read path and M12's file-access protocol accordingly, leave the
-role-registry *logic* (classifyInstrument(), ValidateClassifications())
-untouched — this is a storage-location change only, not a semantics
-change. Coordinate with ENG-52 (parseability) so the new file is created
-in the improved structured format from day one rather than migrated
-twice.
+**CLOSED** 2026-07-06 (MEDIUM, architecture). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 ### ENG-52 — V4: structured parseable entry format for Session_Log.md / Calibration_State.md / FRAMEWORK_BACKLOG.md
 **CLOSED** 2026-07-06 (MEDIUM, hygiene). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.

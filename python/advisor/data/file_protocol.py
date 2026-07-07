@@ -61,6 +61,14 @@ def read_calibration_state() -> str:
     return read_framework_file("Calibration_State.md")
 
 
+def read_instrument_classification() -> str:
+    """Fetch Instrument_Classification.md (ENG-51, 2026-07-06 — §11 split
+    out of Calibration_State.md into its own file). HARD_STOP if unavailable
+    — same failure mode as any other required framework file; there is no
+    reason a session should proceed with a stale/missing role registry."""
+    return read_framework_file("Instrument_Classification.md")
+
+
 def read_session_log() -> str:
     """Fetch Session_Log.md. HARD_STOP if unavailable."""
     return read_framework_file("Session_Log.md")

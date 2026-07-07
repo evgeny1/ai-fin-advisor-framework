@@ -1,9 +1,9 @@
 # M12 — File Access Protocol
-<!-- Version: Amendment 8 | Updated: see git log -->
+<!-- Version: Amendment 9 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M12_DriveProtocol
-  Version:         Amendment 8
+  Version:         Amendment 9
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: file access sources, write toolchain, or session type rules change.
   Inputs consumed:  (infrastructure — reads and writes framework files; no domain inputs)
@@ -84,8 +84,8 @@ MODULE FileProtocol {
       note:   syncs bidirectionally with Google Drive framework folder via Drive desktop client
       // Desktop Commander:read_file = PRIMARY read path for all .md framework files
       // Desktop Commander write tools = the ONLY write method for all sessions
-      files:  [Calibration_State.md, Session_Log.md, Portfolio_State.md, Calibration_Log.md,
-               M01–M18.md, FW_Types.md, 00_INDEX.md, Archive_*.md]
+      files:  [Calibration_State.md, Instrument_Classification.md, Session_Log.md, Portfolio_State.md, Calibration_Log.md,
+               M01–M19.md, FW_Types.md, 00_INDEX.md, Archive_*.md]
     }
   }
 
@@ -131,12 +131,25 @@ MODULE FileProtocol {
     RETURN allocation_sheet_contents
   }
 
-  // ─── CALIBRATION STATE + SESSION LOG FETCH ──────────────────────────────────
-  // SUPERSEDED — both run automatically at the start of `advisor_run_computation()`
-  // (Project_Instructions_MCP.md Step 3) via `read_calibration_state()` and
-  // `read_session_log()` — no separate Claude call needed. §8 prior probabilities
-  // are AUTHORITATIVE from Session_Log; tool surfaces them as `prior_probs`.
-  // @see python/advisor/data/file_protocol.py read_calibration_state(), read_session_log()
+  // ─── CALIBRATION STATE + INSTRUMENT CLASSIFICATION + SESSION LOG FETCH ──────
+  // SUPERSEDED — all three run automatically at the start of `advisor_run_computation()`
+  // (Project_Instructions_MCP.md Step 3) via `read_calibration_state()`,
+  // `read_instrument_classification()`, and `read_session_log()` — no separate
+  // Claude call needed. §8 prior probabilities are AUTHORITATIVE from Session_Log;
+  // tool surfaces them as `prior_probs`.
+  //
+  // ENG-51 (2026-07-06): §11 (role registry + instrument classification table)
+  // was extracted verbatim out of Calibration_State.md into its own file,
+  // Instrument_Classification.md — a storage-location change only. Motivation:
+  // the planned trend/rotation layer (ENG-50) needs to read/write per-instrument
+  // state without every read/write touching credit thresholds, the return
+  // table, or anything else living in Calibration_State.md. Section numbering
+  // (§11.1-§11.4) is unchanged — every existing "§11.x" cross-reference in this
+  // framework still resolves, just in the other file now.
+  // @see python/advisor/data/file_protocol.py read_calibration_state(),
+  //      read_instrument_classification(), read_session_log()
+  // @see python/advisor/config/calibration.py parse_calibration_state() —
+  //      now takes an optional second `instrument_classification_text` param
 
   // ─── EXPLICIT FRAMEWORK FILE RE-FETCH ───────────────────────────────────────
   // For inspection or debugging only (not part of the standard session sequence).
@@ -255,7 +268,8 @@ MODULE FileProtocol {
                                                   defaults to a path computed relative to
                                                   ADVISOR_FRAMEWORK_PATH's sibling)
       format: { "instruments": [§11.3 active tickers], "last_updated": "[date]", "session": "[date] advisory" }
-      source: §11.3 from Calibration_State.md loaded THIS session — never from memory
+      source: §11.3 from Instrument_Classification.md loaded THIS session (ENG-51:
+              moved out of Calibration_State.md 2026-07-06) — never from memory
       impl:   yfinance_fetcher.write_instruments_json(), called from
               mcp_server._tool_run_computation() — non-fatal on failure (flagged;
               load_instruments() falls back to its own hardcoded list)

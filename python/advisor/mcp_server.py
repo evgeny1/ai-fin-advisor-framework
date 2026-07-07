@@ -308,7 +308,11 @@ def _tool_run_computation(floor_account_weights_json: Optional[Any] = None) -> s
     """
     from .config import parse_calibration_state, parse_session_log
     from .data.fetch_registry import FetchRegistry
-    from .data.file_protocol import read_calibration_state, read_session_log
+    from .data.file_protocol import (
+        read_calibration_state,
+        read_instrument_classification,
+        read_session_log,
+    )
     from .data.m18_registry import register_all
     from .data.fetchers import yfinance_fetcher as yf
     from .analysis import (
@@ -335,12 +339,14 @@ def _tool_run_computation(floor_account_weights_json: Optional[Any] = None) -> s
 
     # ── Step 1: Load config ────────────────────────────────────────────────
     cal_text = read_calibration_state()
+    instrument_text = read_instrument_classification()
     log_text = read_session_log()
-    cal = parse_calibration_state(cal_text)
+    cal = parse_calibration_state(cal_text, instrument_text)
     log = parse_session_log(log_text)
 
     _cache.update({"cal": cal, "log": log,
-                   "cal_text": cal_text, "log_text": log_text})
+                   "cal_text": cal_text, "instrument_text": instrument_text,
+                   "log_text": log_text})
 
     result["calibration_version"] = cal.version
     result["calibration_last_updated"] = cal.last_updated

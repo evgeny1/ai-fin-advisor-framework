@@ -78,7 +78,7 @@ script against `fred_fetcher.py`'s internals.
 | `M09_ScenariosABC.md` | Execution protocols for Scenarios A, B, C |
 | `M10_ScenariosDEF.md` | Execution protocols for Scenarios D, E, F; ScenarioE branches on YieldCurveSignal.e_pathway_type |
 | `M11_CreditAndCalibration.md` | Credit signal protocol; calibration discipline; Scenario D trigger |
-| `M12_DriveProtocol.md` | File access protocol (Amendment 3) — Google Drive primary read, GitHub backup, Desktop Commander + git writes |
+| `M12_DriveProtocol.md` | File access protocol (Amendment 9) — Google Drive primary read, GitHub backup, Desktop Commander + git writes |
 | `M13_GrowthObjectives.md` | Growth objectives, idealAllocation(), FeasibilityCheck() — supersedes M03 for these functions |
 | `M14_MarketRegime.md` | Market regime detection; EntryExtensionGuard; divergence signal |
 | `M15_InstrumentClassification.md` | Role registry, composite decomposition, blendedScenarioReturn(), ValidateClassifications() |
@@ -86,7 +86,8 @@ script against `fred_fetcher.py`'s internals.
 | `M17_SystemicCascadeWarning.md` | Cascade chain registry; yield curve protocol; sector stress scoring; pre-positioning ladder |
 | `M18_MarketDataFetch.md` | Centralized data registry — all DATA_REGISTRY_ENTRIES live here; add new series here only |
 | `FW_Types.md` | Shared type contracts — all modules consume and produce these types |
-| `Calibration_State.md` | Read by `advisor_run_computation()` — live §1–2 thresholds; §4 return table; §9 M14; §11 role registry; §12 cascade |
+| `Calibration_State.md` | Read by `advisor_run_computation()` — live §1–2 thresholds; §4 return table; §9 M14; §12 cascade |
+| `Instrument_Classification.md` | Read by `advisor_run_computation()` — §11 role registry + instrument classification table (ENG-51, 2026-07-06: split out of Calibration_State.md) |
 | `Session_Log.md` | Read by `advisor_run_computation()` — §7 credit readings history; §8 scenario state (AUTHORITATIVE for prior probabilities) |
 | `Portfolio_State.md` | Written every session by `advisor_write_back()` — advisory companion context snapshot only; never use for execution decisions |
 | `Calibration_Log.md` | §3 calibration history archive — read-only |
@@ -144,10 +145,12 @@ Execute the sequence below, in strict order. (This section is itself the authori
    (concurrent with step 3 — only after step 1 succeeds)
 
 3. Call advisor_run_computation(floor_account_weights_json)      ← MCP tool (replaces old steps 3+4+5+6+7)
-                                Reads Calibration_State.md + Session_Log.md from local filesystem.
+                                Reads Calibration_State.md + Instrument_Classification.md +
+                                  Session_Log.md from local filesystem (ENG-51, 2026-07-06:
+                                  §11 now lives in its own file, same §11.x numbering).
                                 Applies all thresholds: §1 credit, §2 energy/macro, §4 return table
-                                  + multipliers (M13), §9 M14 regime, §11 role registry (M15),
-                                  §12 M17 cascade.
+                                  + multipliers (M13), §9 M14 regime, §11 role registry (M15,
+                                  Instrument_Classification.md), §12 M17 cascade.
                                 Loads prior scenario probabilities from §8 — AUTHORITATIVE;
                                   never use memory or Calibration_State.md for prior probs.
                                   IF §8.latest_entry.date > 7 calendar days ago (or missing):
@@ -398,7 +401,7 @@ Hard stops drawn from GUARD blocks across the framework. No exceptions, no judgm
 **File access & write-back (M12)**
 - NEVER use GitHub connector for any write operation
 - Session write-back (Session_Log.md + Portfolio_State.md): always via `advisor_write_back()` MCP tool
-- Calibration_State.md amendments and module file edits: Desktop Commander + git only
+- Calibration_State.md / Instrument_Classification.md amendments and module file edits: Desktop Commander + git only
 - NEVER execute write-back when MCP server is unavailable (treat as READONLY_MOBILE)
 - NEVER hardcode a Google Drive file ID — search by name each call
 - NEVER use web_fetch for any GitHub or Google Drive file

@@ -2473,3 +2473,78 @@ pre-existing, unrelated failures as the baseline; zero new regressions.
 `entry_id` (and `status` for §8) without reading narrative prose. ENG-51
 and ENG-53 can now build on this format rather than migrating twice, per
 the original sequencing request.
+
+
+### ENG-51 — V4: split instrument classification (§11) into its own persistence entity
+**CLOSED** 2026-07-06 (MEDIUM, architecture). Full description and resolution below.
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  MEDIUM
+  Category:  architecture
+  Opened:    2026-07-06
+  Closed:    2026-07-06
+  Area:      Calibration_State.md §11 -> Instrument_Classification.md (new file);
+             config/calibration.py; data/file_protocol.py; mcp_server.py;
+             orchestrator/session.py; __main__.py; M12_DriveProtocol.md;
+             M15_InstrumentClassification.md; 00_INDEX.md; Project_Instructions_MCP.md
+  Related:   ENG-50 (consumer of the resulting per-instrument state),
+             ENG-52 (landed first per the original sequencing request, so this
+             file was created in the improved format from day one)
+-->
+
+**Found:** motivated by ENG-50 — the planned trend/rotation layer needs to
+read/write per-instrument state without every read/write touching credit
+thresholds, the return table, or anything else living in
+Calibration_State.md. §11 (role registry + instrument classification
+table, ~539 lines) was one section inside one 2,697-line file.
+
+**Design:** extracted §11 verbatim (lines 1881-2419, boundary-detected via
+the heading strings themselves rather than hardcoded line numbers) into
+`Instrument_Classification.md`, keeping the exact same `§11.1-§11.4`
+heading numbering so every existing "§11.x" cross-reference in the
+framework still resolves. `Calibration_State.md` §11 was replaced with a
+short pointer stub (not renumbered — §12/§13 keep their existing numbers).
+
+Turned out to require zero changes to `_parse_role_registry()` /
+`_parse_instruments()` in `config/calibration.py`: both already located
+their content via string markers (`### 11.1`/`"## Section 11"`) rather
+than a hardcoded document structure, so calling them on the new file's
+text just works. Only `parse_calibration_state()`'s signature changed —
+gained an optional `instrument_classification_text` parameter (defaults
+to `None`, falling back to parsing roles/instruments from `text` itself
+for backward compatibility with any fixture that still embeds §11 in one
+blob). All 4 production call sites (`mcp_server.py`, `orchestrator/session.py`,
+`__main__.py` x2) were updated to fetch and pass the new file explicitly
+via a new `read_instrument_classification()` in `file_protocol.py`.
+`CalibrationState.roles`/`.instruments` are unchanged in shape —
+`classifyInstrument()`, `ValidateClassifications()`, and
+`blendedScenarioReturn()` needed no changes, per the original ask.
+
+**Framework spec files updated to match** (M12_DriveProtocol.md Amendment
+8→9, M15_InstrumentClassification.md v1.2→1.3, 00_INDEX.md, and the repo
+copy of Project_Instructions_MCP.md — all "§11 lives in Calibration_State.md"
+references corrected to point at the new file). **Note for the client:**
+these are Project Knowledge attachments in this Claude Project, not
+live-synced from git — the repo copies are now correct, but re-uploading
+them to Project Knowledge is a separate manual step if this Project's
+attachments are meant to stay current. While doing this pass, found that
+whatever backs `project_knowledge_search` is already stale relative to
+the repo in more ways than this change touches (e.g. M12's on-disk
+version is Amendment 8/9 with `read_calibration_state()`-based pseudo-code;
+project_knowledge_search returned an older `fetchCalibrationState()`/
+`readFrameworkFile()` version; M15 was v1.0 there vs v1.2 on disk) — worth
+a dedicated look separate from this item.
+
+**Verified:** 4 test fixtures using an isolated tmp framework directory
+were identified via `ADVISOR_FRAMEWORK_PATH` usage; only
+`test_mcp/test_pattern_b_pipeline.py`'s `pipeline_dir` fixture actually
+exercises the full read path (the others either don't call
+`parse_calibration_state()` at all or don't override the framework path),
+and was updated to also seed a copy of the real `Instrument_Classification.md`
+alongside `Calibration_State.md`. Full suite: 807 passed / 46 skipped / 2
+failed — same two pre-existing, unrelated failures as every run this
+session — zero new regressions.
+
+**Acceptance met:** §11 lives in its own file; role-registry logic is
+byte-for-byte unchanged; every existing "§11.x" reference in the framework
+still resolves.

@@ -1,15 +1,17 @@
 # M15 — Instrument Classification
-<!-- Version: 1.2 | Updated: see git log -->
+<!-- Version: 1.3 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M15_InstrumentClassification
-  Version:         1.2
+  Version:         1.3
   Sub-project:     ANALYSIS_ENGINE
   Reason to change: classification logic, blendedScenarioReturn methodology, or ValidateClassifications() rules change.
-                    Role registry and instrument decomposition: add to CALIBRATION_STATE §11 only — not here.
-  Inputs consumed:  instrument metadata; ComponentVector (§11 decomposition from CALIBRATION_STATE)
+                    Role registry and instrument decomposition: add to INSTRUMENT_CLASSIFICATION §11 only — not here.
+                    (ENG-51, 2026-07-06: §11 moved from Calibration_State.md into its own file,
+                    Instrument_Classification.md — storage-location change only, same §11.x numbering.)
+  Inputs consumed:  instrument metadata; ComponentVector (§11 decomposition from Instrument_Classification.md)
   Outputs produced: ComponentVector; BlendedReturn; ValidateClassifications result; dominantDirective
-  Calibration deps: CALIBRATION_STATE §11 (role registry + instrument classification table)
+  Calibration deps: Instrument_Classification.md §11 (role registry + instrument classification table)
                     CALIBRATION_STATE §4.1 (return table — consumed via M13)
   Types consumed:   @see FW_Types.md — ComponentVector, BlendedReturn, RoleID, Directive
 -->
@@ -17,16 +19,24 @@
 ```
 MODULE InstrumentClassification {
 
+  // ENG-51 (2026-07-06): §11 was extracted verbatim out of Calibration_State.md
+  // into its own file, Instrument_Classification.md — a storage-location change
+  // only. classifyInstrument(), ValidateClassifications(), and
+  // blendedScenarioReturn() below are semantically unchanged; every "§11.x"
+  // reference in this module still means the same table, just fetched via
+  // read_instrument_classification() now (@see M12_DriveProtocol.md) rather
+  // than embedded in Calibration_State.md's own text.
+
   // ─── DESIGN PRINCIPLES ───────────────────────────────────────────────────
   // 1. No instrument ticker or role name is hardcoded in any framework module.
-  //    Roles live in CALIBRATION_STATE §11.ROLE_REGISTRY.
-  //    Instrument decompositions live in CALIBRATION_STATE §11.INSTRUMENT_CLASSIFICATION_TABLE.
+  //    Roles live in INSTRUMENT_CLASSIFICATION §11.ROLE_REGISTRY.
+  //    Instrument decompositions live in INSTRUMENT_CLASSIFICATION §11.INSTRUMENT_CLASSIFICATION_TABLE.
   // 2. Any instrument may have multiple role components with fractional weights summing to 1.0.
   //    Single-driver instruments have one component at weight 1.0 — identical to prior behavior.
   // 3. ALL scenario return computations route through blendedScenarioReturn() —
   //    never direct §4.1[role][scenario] lookups.
   // 4. New instruments found in allocation file but absent from §11 → HARD_STOP at session start.
-  // 5. New roles are added via CALIBRATION_STATE §11 only — no module file edits required.
+  // 5. New roles are added via INSTRUMENT_CLASSIFICATION §11 only — no module file edits required.
   // 6. Backward compatible: pure single-role instruments produce identical results to prior sessions.
 
   // ─── SESSION-START VALIDATION ────────────────────────────────────────────
@@ -111,7 +121,7 @@ MODULE InstrumentClassification {
   }
 
   // ─── ROLE REGISTRY MANAGEMENT ────────────────────────────────────────────
-  // Add/remove roles via CALIBRATION_STATE §11 only.
+  // Add/remove roles via INSTRUMENT_CLASSIFICATION §11 only.
   // No framework module file edits required to add a role.
 
   PROCEDURE AddRole(role_name, binding_driver, scenario_sensitivity_notes) {
@@ -187,8 +197,8 @@ MODULE InstrumentClassification {
   // ─── SESSION LOAD REQUIREMENT ────────────────────────────────────────────
 
   REQUIRE at_session_start {
-    CALIBRATION_STATE.§11.ROLE_REGISTRY                    // loaded with Calibration_State.md
-    CALIBRATION_STATE.§11.INSTRUMENT_CLASSIFICATION_TABLE  // loaded with Calibration_State.md
+    INSTRUMENT_CLASSIFICATION.§11.ROLE_REGISTRY                    // loaded with Instrument_Classification.md
+    INSTRUMENT_CLASSIFICATION.§11.INSTRUMENT_CLASSIFICATION_TABLE  // loaded with Instrument_Classification.md
     M15.ValidateClassifications()                          // run after Project_Instructions_MCP.md Steps 1 + 3
     // Absence or validation failure = session invalid for allocation computations
   }

@@ -73,13 +73,17 @@ next_session_flags:
 @pytest.fixture
 def pipeline_dir(tmp_path, monkeypatch):
     """
-    Isolated tmp framework dir with real Calibration_State.md content and a
-    seeded Session_Log.md. Redirects ADVISOR_FRAMEWORK_PATH to tmp_path so
-    run_computation reads config from there and write_back writes there.
-    Never touches the real framework files.
+    Isolated tmp framework dir with real Calibration_State.md +
+    Instrument_Classification.md content (ENG-51: §11 lives in its own file
+    now — both must be present or read_instrument_classification() HARD_STOPs)
+    and a seeded Session_Log.md. Redirects ADVISOR_FRAMEWORK_PATH to
+    tmp_path so run_computation reads config from there and write_back
+    writes there. Never touches the real framework files.
     """
     real_cal = (_FW / "Calibration_State.md").read_text(encoding="utf-8")
+    real_instruments = (_FW / "Instrument_Classification.md").read_text(encoding="utf-8")
     (tmp_path / "Calibration_State.md").write_text(real_cal, encoding="utf-8")
+    (tmp_path / "Instrument_Classification.md").write_text(real_instruments, encoding="utf-8")
     (tmp_path / "Session_Log.md").write_text(SEED_LOG, encoding="utf-8")
     monkeypatch.setenv("ADVISOR_FRAMEWORK_PATH", str(tmp_path))
     mcp_server._cache.clear()

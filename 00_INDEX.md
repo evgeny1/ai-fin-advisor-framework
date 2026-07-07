@@ -89,7 +89,7 @@ FRAMEWORK PersonalFinancialAdvisor {
 
     FRAMEWORK_CORE {
       reason_to_change: "fundamental shared contracts change (rare)"
-      files:            [FW_Types.md, CALIBRATION_STATE, SESSION_LOG, PORTFOLIO_STATE, 00_INDEX]
+      files:            [FW_Types.md, CALIBRATION_STATE, INSTRUMENT_CLASSIFICATION, SESSION_LOG, PORTFOLIO_STATE, 00_INDEX]
       note:             "All other sub-projects depend on FRAMEWORK_CORE. It depends on nothing."
     }
 
@@ -148,7 +148,9 @@ FRAMEWORK PersonalFinancialAdvisor {
     "M19_ThesisSustainingConditions.md" // v1.0: per-instrument thesis monitoring (added June 17, 2026)
 
     // GitHub-resident operational files (fetched every session)
-    "Calibration_State.md"  // LIVE CONFIG: §1–§6, §9–§13 thresholds, return table, classifications
+    "Calibration_State.md"  // LIVE CONFIG: §1–§6, §9–§10, §12–§13 thresholds, return table, classifications
+    "Instrument_Classification.md"  // LIVE CONFIG: §11 role registry + instrument classification table
+                                     //   (ENG-51, 2026-07-06: split out of Calibration_State.md)
     "Session_Log.md"        // SESSION DATA: §7 credit readings, §8 scenario state (AUTHORITATIVE for prior probs)
     "Portfolio_State.md"    // COMPANION CONTEXT: living snapshot written every session — companion project only
     "Calibration_Log.md"    // ARCHIVE: §3 history; read-only
