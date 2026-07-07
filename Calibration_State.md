@@ -219,6 +219,12 @@ narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
 
+---
+entry_id: 2026-07-06T12:41
+date: '2026-07-06'
+version: v1.62
+category: Client-directed ad-hoc session (BALT M16 calibration proposal)
+---
 2026-07-06 (v1.62) - Client-directed ad-hoc session (not a scheduled audit).
 BALT (Innovator Defined Wealth Shield) M16 4-layer calibration drafted for a
 new candidate role, defensive_equity_buffered_domestic. Full detail in §6
@@ -235,6 +241,12 @@ September 30, 2026 full audit. §11.4 candidate entry added. No change to
 any existing role's §4.1 values, no probability changes, no change to any
 currently-held instrument.
 
+---
+entry_id: 2026-07-04T19:07
+date: '2026-07-03'
+version: v1.61
+category: Batch 5 housekeeping (§6 items 17/20/22/24/25)
+---
 2026-07-03 (v1.61) - Batch 5 housekeeping (§6, client-directed audit work).
 Item 17 (§11 role registry completeness): reviewed against everything found
   this session — every issue surfaced (geopolitical_premium sign, real
@@ -268,6 +280,12 @@ CONCLUSION: all five items close or confirm this pass — none needed new
 research, all were verification/documentation tasks against work already
 substantially done.
 
+---
+entry_id: 2026-07-04T19:05
+date: '2026-07-03'
+version: v1.60
+category: Batch 4/5 quick items (§6 items 9/16)
+---
 2026-07-03 (v1.60) - Batch 4/5 quick items (§6, client-directed audit work).
 Item 9 (§4.2/4.3 multiplier floor restoration): checked whether "commodity-
   linked added post-war" has been satisfied. Commodity-linked instruments
@@ -286,6 +304,12 @@ Item 16 (MAGS vs AGIX / Anthropic IPO trigger): Anthropic confidentially
   before Q3 given the reported timeline, not urgent today. No re-evaluation
   performed this pass (no public terms exist yet to evaluate against).
 
+---
+entry_id: 2026-07-04T15:26
+date: '2026-07-03'
+version: v1.59
+category: GAP-16 items 42/43/44
+---
 2026-07-03 (v1.59) - GAP-16 items 42/43/44 worked (§6, client-directed Batch
 3 audit work). Checked the actual code (analysis/range_position.py) before
 treating item 44 as pure documentation — its own module docstring says
@@ -338,6 +362,12 @@ Item 42 (BMED Scenario C conservative bound): NOT resolved — correctly so,
   placeholder vs. set a judgment-based modest floor), not more of my own
   work — presenting as a decision point rather than resolving unilaterally.
 
+---
+entry_id: 2026-07-04T15:11
+date: '2026-07-03'
+version: v1.58
+category: §11 weight-drift audit (§6 items 14/15/21/26)
+---
 2026-07-03 (v1.58) - §11 weight-drift first audit (§6 items 14/15/21/26,
 client-directed Batch 3 audit work) across all currently-held instruments.
 AIPO: the >5pp drift item 14 asks for was ALREADY caught and corrected —
@@ -369,6 +399,12 @@ CONCLUSION: items 14/15/21 close as satisfied (AIPO's drift was already
 found and fixed by the time this session started); item 26 closes as a
 policy confirmation.
 
+---
+entry_id: 2026-07-04T14:45
+date: '2026-07-03'
+version: v1.57
+category: emerging_market_equity B/C/F review
+---
 2026-07-03 (v1.57) - emerging_market_equity: B/C/F reviewed, F revised; D/E
 data-limited (§6 item 33, client-directed Batch 2 audit work, not currently
 held). Found a genuinely clean 15-year country-level MSCI return quilt
@@ -403,6 +439,12 @@ CONCLUSION: same lesson as Scenario A's original L3 adjustment, now applied
   directly, never the blended "EM" figure, which dilutes exactly the
   concentration risk the role is supposed to capture.
 
+---
+entry_id: 2026-07-04T14:36
+date: '2026-07-03'
+version: v1.56
+category: floating_rate_credit_income review
+---
 2026-07-03 (v1.56) - floating_rate_credit_income: full review, likely
 role/instrument-severity mismatch found and corrected (§6 item 32, client-
 directed Batch 2 audit work, not currently held). The current D=[-10,-4]/
@@ -438,6 +480,12 @@ CONCLUSION: this is the strongest evidence base found for any Batch 2 item
   model of "floating rate credit" that doesn't match what FLOT specifically
   holds.
 
+---
+entry_id: 2026-07-04T14:32
+date: '2026-07-03'
+version: v1.55
+category: healthcare_defensive_equity full review
+---
 2026-07-03 (v1.55) - healthcare_defensive_equity: full 6-cell review (§6 item
 31, client-directed Batch 2 audit work, not currently held). Found a clean,
 verified multi-year XLV return history (Yahoo Finance performance table)
@@ -478,6 +526,12 @@ CONCLUSION: 4 of 6 cells reviewed and confirmed (A, D, F -- no change,
   for a real, if modest, downward revision, both MEDIUM, both pending next
   audit.
 
+---
+entry_id: 2026-07-04T14:23
+date: '2026-07-03'
+version: v1.54
+category: real_estate_equity_income methodology finding
+---
 2026-07-03 (v1.54) - real_estate_equity_income: METHODOLOGY finding (§6 item
 31-adjacent, client-directed Batch 2 audit work). The "irreconcilable" framing
 (1970s NAREIT +3-6% real vs 2022 VNQ -26% nominal) was the wrong comparison,
@@ -517,6 +571,12 @@ CONCLUSION: item is no longer "irreconcilable" -- it has a defined
   average) rather than an open-ended "reconcile the analogs" ask. D=[-3,2]
   and E=[-10,-3] unchanged pending that B/D/E pass.
 
+---
+entry_id: 2026-07-04T00:53
+date: '2026-07-03'
+version: v1.53
+category: real_asset_contracted_revenue Scenario A reconstruction
+---
 2026-07-03 (v1.53) - real_asset_contracted_revenue Scenario A: RECONSTRUCTED
 per §6 item 23 UNRECOVERABLE slot [13] (v1.12 file-split loss, Batch 1 audit
 work, item [14] GP-C logged above). PROPOSED [3,7] -> [8,18], MEDIUM
@@ -553,6 +613,12 @@ CONCLUSION: well-supported MEDIUM proposal (L4 passes cleanly, only the
   audit without further work, unlike GP-C above. No §4.1 change this
   session. Full record: §6 item 23[13].
 
+---
+entry_id: 2026-07-04T00:46
+date: '2026-07-03'
+version: v1.52
+category: geopolitical_premium Scenario C reconstruction
+---
 2026-07-03 (v1.52) - geopolitical_premium Scenario C: RECONSTRUCTED per §6
 item 23 UNRECOVERABLE slot (1 of 4; v1.12 file-split loss, client-directed
 Batch 1 audit work). NOT ADOPTED -- findings converge with and substantively
@@ -607,6 +673,12 @@ CONCLUSION: LOW confidence (proxy-dependent 1970s gap + L1 anchor gap,
   XAR/geopolitical_premium split decision (Session_Log.md §8 open_decisions,
   2026-07-03 full M05 session part 2).
 
+---
+entry_id: 2026-07-03T21:18
+date: '2026-07-03'
+version: v1.51
+category: DBMF §13 TSC first evaluation
+---
 2026-07-03 (v1.51) - DBMF §13 Thesis Sustaining Condition: first formal
 evaluation since creation (2026-06-17). Client-prompted, triggered by a T1
 price-vs-calibration cross-check during a broader instrument-simplification
@@ -626,6 +698,12 @@ This is a live sustaining-condition finding, distinct from a return-table
 revision, and does not require M16.CalibrationMethodology(). Detail: §13
 DBMF entry, evaluation_2026_07_03 field.
 
+---
+entry_id: 2026-07-03T21:18
+date: '2026-07-03'
+version: v1.51
+category: RSP EV refresh
+---
 2026-07-03 (v1.51) - RSP EV refresh (client question, same simplification
 review). RSP's §11.4 classification (broad_market_equity_domestic 0.92 +
 secular_technology_growth 0.08, 2026-06-25) is unchanged — re-verified live
@@ -638,6 +716,12 @@ conclusion unchanged; number less negative, not reversed. No classification
 or §4.1 change — logged for continuity since the prior EV figure (-0.87%) is
 now stale by three weeks of calibration changes.
 
+---
+entry_id: 2026-06-30T22:50
+date: '2026-06-30'
+version: v1.49
+category: §1 credit thresholds Batch A audit (Q2 audit)
+---
 2026-06-30 (v1.49, Q2 audit) - §1 credit thresholds Batch A audited.
 Trailing-180d medians computed and recorded in §1 (HY 283 / IG 78 / CCC 935
 bps; via the framework's own fred_fetcher over the FRED REST API). HY_STRESS
@@ -657,6 +741,12 @@ any MCP tool; the 3y truncation itself; calculator_mcp wiring; the CCC-gate
 credit.py change) filed as FRAMEWORK_BACKLOG ENG-42/43/44/45. Detail: §6
 Batch A.
 
+---
+entry_id: 2026-06-30T17:14
+date: '2026-06-30'
+version: v1.48
+category: broad_market_equity_domestic Scenario A (Q2 audit)
+---
 2026-06-30 (v1.48, Q2 audit) - broad_market_equity_domestic Scenario A
 ADOPTED: [5,12] -> [10,20]. Confidence MEDIUM -> HIGH. The 2026-06-25 review
 logged this PENDING solely because its 1991/2003 analog figures were general
@@ -697,6 +787,12 @@ EV-relevant conservative bound; the conservative revision is HELD
   open. §6 item 42 next step re-scoped from "find a better analog" to a
   methodology decision on setting a non-analog-derivable conservative bound.
 
+---
+entry_id: 2026-06-30T00:50
+date: '2026-06-29'
+version: v1.46
+category: BMED Scenario C four-layer review (v1.46 follow-up)
+---
 2026-06-29 (v1.46 follow-up) - M16.CalibrationMethodology() 4-layer run:
 broad_market_equity_domestic Scenario C. Client-prompted follow-up to the
 same-day B revision (above) -- correctly pointed out that C carries the
@@ -774,6 +870,12 @@ dimension HIGH; conservative dimension genuinely unresolved, not LOW or
 MEDIUM-and-being-cautious -- the evidence itself splits along a line that
 doesn't map onto a single confidence tier.
 
+---
+entry_id: 2026-06-30T00:30
+date: '2026-06-29'
+version: v1.46
+category: GAP-16 promoted to live EV adjustment
+---
 2026-06-29 (v1.46) - GAP-16 promoted from advisory-only to a live, bounded EV
 adjustment. Client correctly identified that the framework had built a
 working diagnostic (analysis/range_position.py, v1.42, June 20) confirming

@@ -2366,3 +2366,110 @@ path deterministically instead of waiting for one).
 **Acceptance met:** `_step4_compute_signals()` and
 `_render_briefing_context()` never raise when either yield-curve spread is
 `None` -- both degrade to an "n/a" placeholder.
+
+
+### ENG-52 — V4: structured parseable entry format for Session_Log.md / Calibration_State.md / FRAMEWORK_BACKLOG.md
+**CLOSED** 2026-07-06 (MEDIUM, hygiene). Full description and resolution below.
+<!-- ITEM
+  Status:    CLOSED
+  Severity:  MEDIUM
+  Category:  hygiene
+  Opened:    2026-07-06
+  Closed:    2026-07-06
+  Area:      Session_Log.md §8; Calibration_State.md §3; config/session_log.py;
+             config/calibration.py; rendering.py; types.py
+  Related:   ENG-1 (prior §8 parser-compatibility fix — same failure class,
+             this is prevention not repair), ENG-50, ENG-51, ENG-53, ENG-56
+             (deferred remainder: pre-v1.46 §3 entries)
+-->
+
+**Found:** client observed that extracting a specific prior §8 entry's
+`scenario_probabilities` required visually distinguishing between two
+same-day 2026-07-03 entries in prose — no structural markup separated
+machine-relevant fields (date, scenario_probabilities, session_type) from
+the free-text driver narrative, and nothing disambiguated two entries
+sharing an identical `date:` line. `Calibration_State.md` §3 had the same
+underlying gap (confirmed live: two 2026-07-03 entries both tagged
+`v1.51`, sharing both date AND version).
+
+**Design decisions (client-confirmed 2026-07-06):** real YAML front-matter
+(not a hand-rolled fenced key:value block), parsed via PyYAML (new
+dependency — `PyYAML>=6.0` added to `requirements.txt`; already present
+transitively in the venv, so no install was needed). Entry disambiguation
+via a real wall-clock `entry_id` timestamp (`YYYY-MM-DDTHH:MM`), not a
+sequence number or date+letter suffix. Both §8 and §3 in scope this
+session; `FRAMEWORK_BACKLOG.md`'s existing `<!-- ITEM -->` convention left
+untouched (already satisfies the same goal for this file).
+
+**§8 (Session_Log.md) — full YAML entries:**
+`config/session_log.py`'s `_parse_scenario_states()` rewritten from
+field-by-field regex to `yaml.safe_load()` per `---`-delimited chunk
+(deliberately NOT `yaml.safe_load_all()` across the whole region as one
+stream — a single malformed or un-migrated entry must only drop itself,
+not silently take down every entry parsed after it; this was caught and
+fixed during implementation, not part of the original design). New
+`entry_id`/`status` (`current`|`superseded`) fields added to
+`SessionStateEntry`. `rendering.build_session_log_entry()` rewritten to
+build a Python dict and `yaml.safe_dump()` it rather than hand-formatting
+strings — a `_FlowDict` marker + isolated `_SessionLogDumper` subclass
+keeps `scenario_probabilities` rendered as one compact flow-style line
+while everything else uses block style. New
+`rendering.mark_prior_entries_superseded()` flips a prior same-day
+`status: current` entry to `superseded` as a targeted text patch (not a
+full re-parse/re-dump, to avoid reformatting entries not being touched);
+wired into both `mcp_server._tool_write_back()` (Pattern B) and
+`orchestrator/session.py` (Pattern A) immediately before each appends its
+new entry. Probabilities are now plain numbers (no `%` suffix — YAML
+numerics round-trip exactly; the string convention was dropped).
+
+The 3 live §8 entries were migrated to the new format using each entry's
+**real git commit timestamp** for `entry_id` (`989b407a` /
+2026-07-03T21:26 for the two same-commit recovered entries, `a194436b` /
+2026-07-03T23:36 for the third) — not a fabricated time. The two earlier
+same-day entries are marked `status: superseded`.
+
+**§3 (Calibration_State.md) — front-matter header, narrative untouched:**
+Different treatment from §8 by design: §3's free-text rationale (M16
+4-layer analogues, dense technical prose) was never going to round-trip
+cleanly as a YAML scalar, and nothing parses §3 programmatically today
+(confirmed before starting), so there was no active bug to fix there —
+only a hygiene opportunity. Adopted a small Jekyll-style YAML front-matter
+block (`entry_id`/`date`/`version`/`category`, delimited by `---` — a
+convention §3 didn't use before, so no collision risk) prepended before
+each entry's **completely unchanged** existing text. New
+`config/calibration.py:parse_calibration_log()` + `types.CalibrationLogEntry`
+parse this format; deliberately NOT wired into `parse_calibration_state()`
+(§3 was never part of that dataclass and still isn't — this parser is
+hygiene/tooling, not a live computation path).
+
+Migrated the 17 §3 entries from v1.46 through v1.62 (the entire live
+section using the consistent "DATE (vX.XX) - Title." convention) —
+`entry_id` for each is the real git commit timestamp that introduced it
+(collected via `git log --format="%H|%ad|%s" -- Calibration_State.md`),
+confirming along the way that `version` alone isn't actually a unique
+key (two 2026-07-03 entries both tagged `v1.51` — DBMF and RSP — share
+one commit/timestamp too, which is accurate: they were logged together).
+Entries older than v1.46 (~line 836 onward) use at least one other,
+inconsistent title-line convention (some with no version tag at all) —
+deliberately NOT retrofitted this session; real transcription risk
+outweighed the benefit given nothing depends on parsing them today.
+Tracked as ENG-56, its own low-priority follow-up.
+
+**Verified:** full suite run before any change (baseline): 799 passed / 46
+skipped / 2 failed (both pre-existing and unrelated — `test_pipeline_probabilities_all_at_or_above_floor`,
+already tracked as ENG-41, and an environment-dependent credentials test).
+After migration: 3 test files had seed fixtures written in the old prose
+format (`test_stage2/test_session_log_parser.py`, `test_rendering.py`,
+`test_mcp/test_write_back_format.py`, `test_mcp/test_pattern_b_pipeline.py`,
+`test_stage5/test_session.py`) — all rewritten to the new YAML format, plus
+new coverage for `entry_id`/`status` round-tripping,
+`mark_prior_entries_superseded()` (flip/ignore-other-dates/no-op/idempotent),
+and per-entry parse independence (a malformed entry must only drop itself,
+proven with a two-entry fixture: one broken, one well-formed after it).
+Final full suite: **807 passed / 46 skipped / 2 failed** — the same two
+pre-existing, unrelated failures as the baseline; zero new regressions.
+
+**Acceptance met:** two same-day §8/§3 entries are now unambiguous via
+`entry_id` (and `status` for §8) without reading narrative prose. ENG-51
+and ENG-53 can now build on this format rather than migrating twice, per
+the original sequencing request.

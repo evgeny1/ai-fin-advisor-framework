@@ -1091,6 +1091,7 @@ def _tool_check_instrument_candidate(
 # (Pattern A) via rendering.py -- see ENG-3 (deduplication of the two session pipelines).
 from .rendering import (
     build_session_log_entry as _build_session_log_entry,
+    mark_prior_entries_superseded as _mark_prior_entries_superseded,
     render_portfolio_state as _render_portfolio_state,
 )
 
@@ -1124,6 +1125,7 @@ def _tool_write_back(
     )
 
     log_text = _cache.get("log_text") or read_session_log()
+    log_text = _mark_prior_entries_superseded(log_text, today)
     updated_log = log_text.rstrip() + new_entry
 
     portfolio_state = _render_portfolio_state(

@@ -272,6 +272,36 @@ class CalibrationState:
     # where it's consumed.
 
 
+# ── Calibration Log Types (§3, ENG-52) ──────────────────────────────────────────
+# §3 is NOT loaded by CalibrationState above (that dataclass covers the LIVE
+# config sections §1/§2/§4/§9/§11/§12 only). §3 is prose history read by
+# Claude directly each session, never programmatically consumed by
+# advisor_run_computation() — this parser exists for hygiene/tooling
+# (e.g. future archival automation, ENG-53) not for any live computation path.
+
+@dataclass
+class CalibrationLogEntry:
+    """One §3 Calibration_State.md log entry.
+
+    ENG-52 (2026-07-06): structured YAML header + unchanged free-text
+    rationale below it, same pattern as SessionStateEntry. Only entries
+    from v1.46 onward (the "DATE (vX.XX) - Title." convention) have been
+    migrated to this format — earlier entries use at least one other,
+    inconsistent title-line convention and were deliberately NOT
+    retrofitted in this pass (real transcription risk migrating them by
+    hand outweighed the benefit, since nothing parses §3 programmatically
+    today). See FRAMEWORK_BACKLOG.md for the follow-up item covering them.
+    `entry_id` is the actual git commit timestamp that introduced the
+    entry (minute granularity) — not fabricated — for migrated entries;
+    real write-back time for anything written after 2026-07-06.
+    """
+    entry_id: str
+    date: str
+    version: str
+    category: str
+    narrative: str
+
+
 # ── Session Log Types (Stage 2) ────────────────────────────────────────────────
 
 @dataclass
@@ -287,8 +317,21 @@ class CreditReading:
 
 @dataclass
 class SessionStateEntry:
-    """One block from Session_Log.md §8 (AUTHORITATIVE session state)."""
+    """One block from Session_Log.md §8 (AUTHORITATIVE session state).
+
+    ENG-52 (2026-07-06): entries are now real YAML documents (parsed via
+    PyYAML, see config/session_log.py). `entry_id` and `status` were added
+    specifically to disambiguate same-day entries — e.g. a session that
+    restarts and continues under the same calendar date used to be
+    indistinguishable from a genuinely new session without reading the
+    full primary_driver prose. `entry_id` is a real wall-clock timestamp
+    (write-back time, minute granularity — 'YYYY-MM-DDTHH:MM'), not a
+    fabricated one; for entries migrated from the pre-YAML format, it is
+    the actual git commit timestamp that introduced that entry.
+    """
     date: str
+    entry_id: str
+    status: str                       # "current" | "superseded"
     probabilities: ScenarioProbabilities
     primary_driver: str
     open_triggers: List[str]

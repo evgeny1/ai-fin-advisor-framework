@@ -48,7 +48,7 @@ from ..types import (
 )
 from .ai_client import AIClient, StubAIClient
 from .context import SessionContext
-from ..rendering import build_session_log_entry, render_portfolio_state
+from ..rendering import build_session_log_entry, mark_prior_entries_superseded, render_portfolio_state
 from .scoring_questions import (
     QUALITATIVE_TARGETS,
     aggregate_raw_scores,
@@ -605,6 +605,7 @@ class SessionPipeline:
             ctx.session_date, ctx.session_type.value, ctx.scenario_probs,
             primary_driver, ctx.open_triggers, ctx.open_decisions, ctx.prob_flags,
         )
+        log_text = mark_prior_entries_superseded(log_text, ctx.session_date)
         updated_log = log_text.rstrip() + new_entry
 
         try:

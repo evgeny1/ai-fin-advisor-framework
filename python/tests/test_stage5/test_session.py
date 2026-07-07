@@ -169,11 +169,13 @@ def test_pipeline_session_log_entry_is_parseable():
     assert ctx.scenario_probs is not None
 
     seed_log = (
-        "## Section 8 - Session State Log\n\n---\n\n"
-        "date: 2026-06-01 (full M05 session — seed entry)\n"
-        "scenario_probabilities: { A: 10%, B: 40%, C: 30%, D: 10%, E: 5%, F: 5% }\n"
-        "primary_driver: seed entry for round-trip test\n"
+        "## Section 8 - Session State Log\n\n---\n"
+        "entry_id: 2026-06-01T09:00\n"
+        "date: 2026-06-01\n"
         "session_type: full M05 session\n"
+        "status: current\n"
+        "scenario_probabilities: {A: 10, B: 40, C: 30, D: 10, E: 5, F: 5}\n"
+        "primary_driver: seed entry for round-trip test\n"
     )
     new_entry = build_session_log_entry(
         ctx.session_date, ctx.session_type.value, ctx.scenario_probs,

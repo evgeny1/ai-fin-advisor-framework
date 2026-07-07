@@ -33,7 +33,19 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-06, design session (ENG-50 through ENG-55 OPENED — V4 architecture proposal: additive trend/rotation signal layer to be run in shadow mode against the existing scenario/EV engine before any conflict-resolution authority is assigned; instrument classification split from Calibration_State.md into its own persistence entity; structured parseable entry format for Session_Log.md/Calibration_State.md/FRAMEWORK_BACKLOG.md; calendar-age archival for Session_Log.md; FINRA margin-debt data source; relative-strength formula + peer-basket definition explicitly deferred to its own dedicated session (ENG-55) rather than decided ad hoc. Full session hand-off in dev hand-off note, 2026-07-06. Prior: 2026-07-03, coding session (ENG-46 CLOSED — froze "today" in the two quarter-boundary-hardcoded compaction tests; ENG-47 CLOSED — added _fmt_bps() None-safe formatting, fixed at both call sites including a second occurrence found while fixing the first. Full suite: 801 passed / 46 skipped, 0 failures. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-07-02, coding session (ENG-42 CLOSED — fred_get_history tool + promoted fetch_history_with_dates; ENG-43 CLOSED — ALFRED ruled out empirically, path (c) local self-healing CreditHistoryStore.json implemented, seeded, and wired into advisor_run_computation(); ENG-44 CLOSED — calculator_mcp wired into Claude Desktop's MCP config and documented; ENG-46/47 discovered and logged, not fixed. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-06-30, same-day follow-on coding session (ENG-45 CLOSED — credit.py ccc_widening ratio mode gated behind a new `ccc_ratio_min_bps` calibration threshold (75 bps); full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior, same day (Q2 audit — opened ENG-42/43/44/45: FRED series-history not exposed via any MCP tool; FRED 3y OAS truncation blocks §1 delta verification + §2 5y hit-rate audit; calculator_mcp not wired and still a stub; credit.py §1.3 CCC divergence ratio-mode OR false-positive found live (CCC+29/HY+8 bps → 3.62x). Full bodies in Part 1.) Prior: 2026-06-25 (ENG-33: live-tested the flattened-parameter fix after a clean Claude Desktop restart and a freshly-rebuilt cache — advisor_evaluate_allocation still hung the full ~4 minutes, and the transport log confirms zero occurrences of the tool name anywhere, not just no tools/call entry. This rules out the $ref/$defs hypothesis as cleanly as the prior two attempts ruled out their own. Three independent hypotheses now falsified across two sessions; root cause confirmed client-side, outside this codebase's reach. Flattened account_profile kept regardless as a genuine cleanup; in-process bypass remains the standing workaround — see full ENG-33 entry below). Prior, same day: ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md. Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
+**Last updated:** 2026-07-06, coding session (ENG-52 CLOSED — Session_Log.md
+§8 and Calibration_State.md §3 entries now use real YAML front-matter with
+an `entry_id` real-timestamp field and, for §8, a `status: current|superseded`
+field, fixing the exact same-day-entry disambiguation gap that motivated the
+item; PyYAML added as a dependency; parser rewritten for per-entry-independent
+parsing so one malformed entry can't silently drop every entry after it;
+3 live §8 entries and the 17 live §3 entries from v1.46–v1.62 migrated using
+real git-commit timestamps, not fabricated ones; pre-v1.46 §3 entries
+deliberately deferred as ENG-56 — inconsistent legacy title-line conventions
+made automated retrofitting a real transcription risk. Full suite: 807
+passed / 46 skipped / 2 failed, same two pre-existing unrelated failures as
+baseline, zero new regressions. Full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md.)
+Prior: 2026-07-06, design session (ENG-50 through ENG-55 OPENED — V4 architecture proposal: additive trend/rotation signal layer to be run in shadow mode against the existing scenario/EV engine before any conflict-resolution authority is assigned; instrument classification split from Calibration_State.md into its own persistence entity; structured parseable entry format for Session_Log.md/Calibration_State.md/FRAMEWORK_BACKLOG.md; calendar-age archival for Session_Log.md; FINRA margin-debt data source; relative-strength formula + peer-basket definition explicitly deferred to its own dedicated session (ENG-55) rather than decided ad hoc. Full session hand-off in dev hand-off note, 2026-07-06. Prior: 2026-07-03, coding session (ENG-46 CLOSED — froze "today" in the two quarter-boundary-hardcoded compaction tests; ENG-47 CLOSED — added _fmt_bps() None-safe formatting, fixed at both call sites including a second occurrence found while fixing the first. Full suite: 801 passed / 46 skipped, 0 failures. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-07-02, coding session (ENG-42 CLOSED — fred_get_history tool + promoted fetch_history_with_dates; ENG-43 CLOSED — ALFRED ruled out empirically, path (c) local self-healing CreditHistoryStore.json implemented, seeded, and wired into advisor_run_computation(); ENG-44 CLOSED — calculator_mcp wired into Claude Desktop's MCP config and documented; ENG-46/47 discovered and logged, not fixed. Full writeups in FRAMEWORK_BACKLOG_ARCHIVE.md.) Prior: 2026-06-30, same-day follow-on coding session (ENG-45 CLOSED — credit.py ccc_widening ratio mode gated behind a new `ccc_ratio_min_bps` calibration threshold (75 bps); full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior, same day (Q2 audit — opened ENG-42/43/44/45: FRED series-history not exposed via any MCP tool; FRED 3y OAS truncation blocks §1 delta verification + §2 5y hit-rate audit; calculator_mcp not wired and still a stub; credit.py §1.3 CCC divergence ratio-mode OR false-positive found live (CCC+29/HY+8 bps → 3.62x). Full bodies in Part 1.) Prior: 2026-06-25 (ENG-33: live-tested the flattened-parameter fix after a clean Claude Desktop restart and a freshly-rebuilt cache — advisor_evaluate_allocation still hung the full ~4 minutes, and the transport log confirms zero occurrences of the tool name anywhere, not just no tools/call entry. This rules out the $ref/$defs hypothesis as cleanly as the prior two attempts ruled out their own. Three independent hypotheses now falsified across two sessions; root cause confirmed client-side, outside this codebase's reach. Flattened account_profile kept regardless as a genuine cleanup; in-process bypass remains the standing workaround — see full ENG-33 entry below). Prior, same day: ENG-40 opened and closed same session — fetch_all() had no per-spec timeout and the shared yfinance lock had no bound on acquisition, so one stuck/illiquid symbol (UX=F) could hang advisor_run_computation() for 25+ minutes and then permanently block every later yfinance fetch for the rest of the MCP server process's life; fixed with a per-future timeout in fetch_registry.py and a bounded _yf_lock_guard() in yfinance_fetcher.py; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md. Prior: 2026-06-21 (ENG-39 opened and closed same session — GAP-16's IHP range-position advisory was using THREEFYTP10 (term premium) mislabeled as "real yield"; replaced with a computed REAL_YIELD_10Y_TREND series; full writeup in FRAMEWORK_BACKLOG_ARCHIVE.md). Prior: 2026-06-20/21 (ENG-38 closed — write_back's git-push hang root-caused and fixed via GIT_TERMINAL_PROMPT=0 + timeouts + non-fatal push failure; ENG-27/28/29/32/36 also closed earlier this session — yfinance thread-safety bug, floor_account_weights_json double-encoding crash, thesis.py XAR phrasing gap, GAP-16 flat-vs-unavailable note bug, dominant_directive() DirectiveCode.upper() crash; ENG-30/31/34/35/37 opened — DBMF/AIPO/XAR data-source gaps, run_computation latency, recalibration_sequence anchor heuristic; all found/fixed live across one extended session)
 
 Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHIVE.md`, indexed by the same ENG-N numbers. The Index table below still lists every item (open and closed) for a complete status overview; only OPEN items get full bodies in Part 1 below it -- closed items get a one-line stub pointing to the archive.
 
@@ -45,10 +57,11 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-49 | OPEN | HIGH | bug | advisor_write_back TIMEOUT with a genuinely incomplete server-side operation — files+archive rendered and written, but git add/commit never ran, distinct from ENG-48's "actually succeeded" pattern |
 | ENG-50 | OPEN | HIGH | architecture | V4: Trend/Rotation Signal Layer — deterministic price/relative-strength module, additive to scenario engine, shadow-mode trial before any authority decision |
 | ENG-51 | OPEN | MEDIUM | architecture | V4: split instrument classification (§11) out of Calibration_State.md into its own persistence entity |
-| ENG-52 | OPEN | MEDIUM | hygiene | V4: structured parseable entry format (front-matter block) for Session_Log.md, Calibration_State.md, FRAMEWORK_BACKLOG.md |
+| ENG-52 | CLOSED | MEDIUM | hygiene | V4: structured parseable entry format (front-matter block) for Session_Log.md, Calibration_State.md, FRAMEWORK_BACKLOG.md |
 | ENG-53 | OPEN | MEDIUM | architecture | V4: calendar-age archival mechanism for Session_Log.md (and candidate extension to other growing files) |
 | ENG-54 | OPEN | MEDIUM | infrastructure | V4: FINRA margin debt series has no M18 DATA_REGISTRY_ENTRY or fetch path |
 | ENG-55 | OPEN | HIGH | functional-gap | V4: relative-strength formula + peer-basket definition for trend layer — needs its own dedicated session, real judgment calls involved |
+| ENG-56 | OPEN | LOW | hygiene | Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries (inconsistent legacy title-line conventions) |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -290,35 +303,7 @@ in the improved structured format from day one rather than migrated
 twice.
 
 ### ENG-52 — V4: structured parseable entry format for Session_Log.md / Calibration_State.md / FRAMEWORK_BACKLOG.md
-<!-- ITEM
-Status:    OPEN
-Severity:  MEDIUM
-Category:  hygiene
-Opened:    2026-07-06
-Area:      Session_Log.md §8 entry format; Calibration_State.md; this file's ITEM manifest convention
-Related:   ENG-1 (prior §8 parser-compatibility fix — same failure class, this is prevention not repair), ENG-50, ENG-51, ENG-53
--->
-
-**Description:** Client observed during this session that extracting a
-specific prior §8 entry's `scenario_probabilities` required visually
-distinguishing between two same-day 2026-07-03 entries in prose — no
-structural markup separates the machine-relevant fields (date,
-scenario_probabilities, session_type) from the free-text driver narrative.
-This is exactly the kind of manual-extraction step that can silently
-introduce the sort of inconsistency already found once in this session
-(see the F-probability discrepancy discussion). FRAMEWORK_BACKLOG.md
-itself already uses a reasonably good ITEM-manifest HTML-comment
-convention (Status/Severity/Category/Opened/Area/Related) — Session_Log.md
-and Calibration_State.md have no equivalent.
-
-**Suggested next step:** define a small structured header block (e.g.
-YAML front-matter or a fenced key:value block) for each Session_Log.md §8
-entry, holding date/scenario_probabilities/session_type/status as
-mechanically parseable fields, with the existing free-text driver
-narrative unchanged below it. Consider the same treatment for
-Calibration_State.md's dated log entries (§3). Do NOT change
-FRAMEWORK_BACKLOG.md's existing ITEM convention — it already satisfies
-this goal for this file.
+**CLOSED** 2026-07-06 (MEDIUM, hygiene). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 ### ENG-53 — V4: calendar-age archival mechanism for Session_Log.md
 <!-- ITEM
@@ -395,6 +380,41 @@ carefully and explicitly, not inherited from this session's momentum.
 open with peer-basket definition per current holding (MLPX, DBMF, XAR,
 AIPO, COPX, SGOL/SIVR, MAGS), lookback-window choice, and the margin-debt
 discount mechanism, before any code or persistence design.
+
+### ENG-56 — Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries
+<!-- ITEM
+Status:    OPEN
+Severity:  LOW
+Category:  hygiene
+Opened:    2026-07-06
+Area:      Calibration_State.md §3 (entries older than v1.46)
+Related:   ENG-52 (this is its explicitly-deferred remainder)
+-->
+
+**Description:** ENG-52 migrated §3 entries v1.46 through v1.62 (17
+entries, all live in the file today) to the new front-matter format —
+every one of them used a single consistent "DATE (vX.XX) - Title." title
+line, so extracting entry_id/date/version/category was mechanical, and
+each entry's real git-commit timestamp was used for entry_id (not
+fabricated). Entries older than v1.46 (roughly line 836 onward in the
+current file) were deliberately left untouched: a quick check found at
+least two different legacy title-line conventions ("DATE - Framework
+vX.XX (Title)." and a bare "DATE - Title." with no version tag at all),
+which makes automated splitting meaningfully riskier — the same kind of
+transcription risk this file's own §3 scope-rule note and past compaction
+entries have flagged before. Nothing programmatically parses §3 today
+(parse_calibration_log() in config/calibration.py only recognizes the new
+front-matter format and silently skips anything without it), so there is
+no active bug from leaving these unmigrated — this is pure hygiene, not
+a functional gap.
+
+**Suggested next step:** when a future session has reason to be inside
+§3's older history anyway (e.g. a Q-end audit reviewing pre-v1.46
+decisions), inventory the actual set of legacy title-line conventions in
+use first, then decide per-convention whether a regex extraction is safe
+enough to automate or whether it needs a manual pass. Do not rush this —
+correctness of the *narrative* content matters far more than having
+every historical entry in the new format.
 
 ### ENG-12 — Tests assert against live, not snapshotted, framework files
 <!-- ITEM

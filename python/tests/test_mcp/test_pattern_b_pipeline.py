@@ -53,18 +53,16 @@ SEED_LOG = """# Session Log
 ## Section 8 - Session State Log
 
 ---
-
-date: 2026-06-01 (full M05 session)
-scenario_probabilities: { A: 10%, B: 40%, C: 25%, D: 10%, E: 10%, F: 5% }
-primary_driver: seed entry for Pattern-B e2e test
+entry_id: 2026-06-01T09:00
+date: 2026-06-01
 session_type: full M05 session
-
+status: current
+scenario_probabilities: {A: 10, B: 40, C: 25, D: 10, E: 10, F: 5}
+primary_driver: seed entry for Pattern-B e2e test
 open_triggers:
 - seed trigger
-
 open_decisions:
-1. seed decision
-
+- seed decision
 next_session_flags:
 - seed flag
 """

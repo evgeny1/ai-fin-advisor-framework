@@ -14,6 +14,13 @@ This exercises the real _tool_write_back() code path end-to-end
 framework directory, then re-parses the result with the real
 parse_session_log() to confirm the new entry is recognized as its
 own block with correct values.
+
+ENG-52 (2026-07-06): SEED_LOG rewritten to the real-YAML §8 format
+(entry_id/status added, plain-number probabilities, no more '%' suffix
+or numbered-list convention) — the old prose format this originally
+guarded against is no longer valid input at all; ENG-1's failure mode
+(entries silently merging / disappearing) is now covered by
+test_stage2/test_session_log_parser.py's per-entry-independence tests.
 """
 from __future__ import annotations
 
@@ -36,18 +43,16 @@ SEED_LOG = """# Session Log
 ## Section 8 - Session State Log
 
 ---
-
-date: 2026-06-01 (full M05 session — seed entry)
-scenario_probabilities: { A: 10%, B: 40%, C: 30%, D: 10%, E: 5%, F: 5% }
-primary_driver: seed entry for round-trip test
+entry_id: 2026-06-01T09:00
+date: 2026-06-01
 session_type: full M05 session
-
+status: current
+scenario_probabilities: {A: 10, B: 40, C: 30, D: 10, E: 5, F: 5}
+primary_driver: seed entry for round-trip test
 open_triggers:
 - seed trigger
-
 open_decisions:
-1. seed decision
-
+- seed decision
 next_session_flags:
 - seed flag
 """

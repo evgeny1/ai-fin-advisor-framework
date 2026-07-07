@@ -17,6 +17,7 @@ from advisor.rendering import (
     format_bullet_list,
     format_numbered_list,
     format_scenario_probs,
+    mark_prior_entries_superseded,
     render_portfolio_state,
 )
 from advisor.types import ScenarioProbabilities
@@ -38,15 +39,14 @@ def test_format_scenario_probs_preserves_decimals(probs):
     assert "42.9%" in result
 
 
-def test_format_scenario_probs_matches_parser_regex(probs):
-    """Round-trip through the real parser."""
-    text = f"scenario_probabilities: {format_scenario_probs(probs)}"
-    fake_entry = "date: 2026-06-18 (ad-hoc)\n" + text + "\nprimary_driver: test\n"
-    log = "## Section 8 - Session State Log\n\n---\n\n" + fake_entry
-    state = parse_session_log(log)
-    p = state.latest_probs
-    assert p is not None
-    assert p.A == pytest.approx(14.3)
+def test_format_scenario_probs_is_display_only(probs):
+    """ENG-52: format_scenario_probs() is retained only as a display/briefing
+    helper — §8 persistence goes through build_session_log_entry()'s real
+    YAML now, not this string. No parser round-trip claim anymore; just
+    confirm it still renders sensibly."""
+    result = format_scenario_probs(probs)
+    assert "14.3%" in result
+    assert "42.9%" in result
 
 
 # ── format_bullet_list / format_numbered_list ────────────────────────────────────────────────────────
@@ -78,26 +78,40 @@ def test_format_numbered_list_never_a_python_repr():
     assert "]" not in result
 
 
-# ── build_session_log_entry ───────────────────────────────────────────────────────────
+# ── build_session_log_entry (ENG-52: real YAML) ──────────────────────────────────────
 
 def test_build_session_log_entry_has_separator(probs):
     entry = build_session_log_entry(
         "2026-06-18", "ad-hoc", probs, "test driver", [], [], [],
+        entry_id="2026-06-18T09:00",
     )
-    assert entry.startswith("\n\n---\n\n")
+    assert entry.startswith("\n\n---\n")
+
+
+def test_build_session_log_entry_default_entry_id_is_generated(probs):
+    """entry_id defaults to datetime.now() when not supplied — callers
+    normally leave this to the default; only tests pin it."""
+    entry = build_session_log_entry(
+        "2026-06-18", "ad-hoc", probs, "test driver", [], [], [],
+    )
+    assert "entry_id:" in entry
 
 
 def test_build_session_log_entry_parseable_as_new_block(probs):
     seed = (
-        "## Section 8 - Session State Log\n\n---\n\n"
-        "date: 2026-06-01 (full M05 session)\n"
-        "scenario_probabilities: { A: 10%, B: 40%, C: 30%, D: 10%, E: 5%, F: 5% }\n"
+        "## Section 8 - Session State Log\n\n---\n"
+        "entry_id: 2026-06-01T09:00\n"
+        "date: 2026-06-01\n"
+        "session_type: full M05 session\n"
+        "status: current\n"
+        "scenario_probabilities: {A: 10, B: 40, C: 30, D: 10, E: 5, F: 5}\n"
         "primary_driver: seed\n"
     )
     entry = build_session_log_entry(
         "2026-06-18", "ad-hoc", probs, "test driver", [], [], [],
+        entry_id="2026-06-18T09:00",
     )
-    state = parse_session_log(seed.rstrip() + entry)
+    state = parse_session_log(seed.rstrip("\n") + entry)
     assert len(state.scenario_states) == 2
 
 
@@ -105,12 +119,74 @@ def test_build_session_log_entry_triggers_and_decisions_round_trip(probs):
     entry = build_session_log_entry(
         "2026-06-18", "ad-hoc", probs, "test driver",
         ["trigger A", "trigger B"], ["decision A"], ["flag A"],
+        entry_id="2026-06-18T09:00",
     )
-    seed = "## Section 8 - Session State Log\n\n---\n\ndate: 2026-06-01 (x)\nscenario_probabilities: { A: 50%, B: 50% }\nprimary_driver: seed\n"
-    state = parse_session_log(seed.rstrip() + entry)
+    seed = (
+        "## Section 8 - Session State Log\n\n---\n"
+        "entry_id: 2026-06-01T09:00\ndate: 2026-06-01\nstatus: current\n"
+        "scenario_probabilities: {A: 50, B: 50, C: 0, D: 0, E: 0, F: 0}\n"
+        "primary_driver: seed\n"
+    )
+    state = parse_session_log(seed.rstrip("\n") + entry)
     assert state.latest_open_triggers == ["trigger A", "trigger B"]
     assert state.latest_open_decisions == ["decision A"]
     assert state.latest_next_flags == ["flag A"]
+
+
+def test_build_session_log_entry_entry_id_and_status_round_trip(probs):
+    """The fields ENG-52 exists to add — confirm they actually round-trip,
+    not just render."""
+    entry = build_session_log_entry(
+        "2026-06-18", "ad-hoc", probs, "test driver", [], [], [],
+        entry_id="2026-06-18T09:00",
+    )
+    seed = "## Section 8 - Session State Log\n\n"
+    state = parse_session_log(seed + entry)
+    assert state.scenario_states[-1].entry_id == "2026-06-18T09:00"
+    assert state.scenario_states[-1].status == "current"
+
+
+# ── mark_prior_entries_superseded (ENG-52) ───────────────────────────────────────────
+
+def test_mark_prior_entries_superseded_flips_same_day_current(probs):
+    entry = build_session_log_entry(
+        "2026-07-06", "ad-hoc", probs, "first", [], [], [],
+        entry_id="2026-07-06T10:00",
+    )
+    text = "## Section 8 - Session State Log" + entry
+    patched = mark_prior_entries_superseded(text, "2026-07-06")
+    state = parse_session_log(patched)
+    assert state.scenario_states[0].status == "superseded"
+
+
+def test_mark_prior_entries_superseded_ignores_other_dates(probs):
+    entry = build_session_log_entry(
+        "2026-07-05", "ad-hoc", probs, "first", [], [], [],
+        entry_id="2026-07-05T10:00",
+    )
+    text = "## Section 8 - Session State Log" + entry
+    patched = mark_prior_entries_superseded(text, "2026-07-06")
+    state = parse_session_log(patched)
+    assert state.scenario_states[0].status == "current"
+
+
+def test_mark_prior_entries_superseded_no_op_when_no_section_8():
+    text = "no section 8 heading here"
+    assert mark_prior_entries_superseded(text, "2026-07-06") == text
+
+
+def test_mark_prior_entries_superseded_already_superseded_untouched(probs):
+    """Don't accidentally touch entries that are already superseded from a
+    prior write — count() shouldn't need to guess at idempotency, the regex
+    just never matches a line that already says 'superseded'."""
+    entry = build_session_log_entry(
+        "2026-07-06", "ad-hoc", probs, "first", [], [], [],
+        entry_id="2026-07-06T10:00",
+    )
+    text = "## Section 8 - Session State Log" + entry
+    once = mark_prior_entries_superseded(text, "2026-07-06")
+    twice = mark_prior_entries_superseded(once, "2026-07-06")
+    assert once == twice
 
 
 # ── render_portfolio_state ───────────────────────────────────────────────────────────

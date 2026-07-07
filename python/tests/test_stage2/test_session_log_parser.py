@@ -2,12 +2,19 @@
 tests/test_stage2/test_session_log_parser.py
 
 Unit tests for advisor/config/session_log.py using inline fixture text.
+
+ENG-52 (2026-07-06): rewritten for the YAML-based §8 format. Internal
+helpers this used to import directly (_parse_probs, _extract_list) no
+longer exist -- the parser now delegates to PyYAML rather than field-by-
+field regex. Tests exercise the same behavior through the public
+_parse_scenario_states()/parse_session_log() surface, plus new coverage
+for entry_id/status (the fields ENG-52 added to fix the same-day-entry
+disambiguation gap).
 """
 import pytest
 from advisor.config.session_log import (
     _parse_credit_readings,
-    _parse_probs,
-    _extract_list,
+    _probs_from_doc,
     _parse_scenario_states,
     parse_session_log,
 )
@@ -32,51 +39,43 @@ FIXTURE = """\
 // COMPACTED: 2026-04-30 | A=7%/B=42%/C=42%/D=3%/E=3%/F=3% | Superseded
 
 ---
-
-date: 2026-05-25 (full M05 session — v1.19)
-scenario_probabilities: { A: 7%, B: 36%, C: 41%, D: 5%, E: 4%, F: 7% }
-  // UPDATED from prior carry
-primary_driver: US-Iran War Day 86. BZ=F ~$107.60.
+entry_id: 2026-05-25T10:00
+date: 2026-05-25
 session_type: full M05
-
+status: superseded
+scenario_probabilities: {A: 7, B: 36, C: 41, D: 5, E: 4, F: 7}
+primary_driver: 'US-Iran War Day 86. BZ=F ~$107.60.'
 open_triggers:
-- Brent C-trigger clock: Day 0.
-- CPI mid-June: BINARY EVENT.
-
+- 'Brent C-trigger clock: Day 0.'
+- 'CPI mid-June: BINARY EVENT.'
 open_decisions:
-1. PAVE: exit review deferred.
-2. MAGS: override in force.
-
+- 'PAVE: exit review deferred.'
+- 'MAGS: override in force.'
 next_session_flags:
-- LOAD: confirm Iran deal status
-- FIRST: BZ=F current close
+- 'LOAD: confirm Iran deal status'
+- 'FIRST: BZ=F current close'
 
 ---
-
-date: 2026-06-10 (full M05 — B formal trigger; v1.33)
-scenario_probabilities: { A: 5%, B: 41%, C: 38%, D: 5%, E: 4%, F: 7% }
-  // B formal trigger FIRES: May CPI 4.2% YoY
-primary_driver: May CPI 4.2% YoY T1 BLS. B trigger fires.
+entry_id: 2026-06-10T11:52
+date: 2026-06-10
 session_type: full M05
-
+status: current
+scenario_probabilities: {A: 5, B: 41, C: 38, D: 5, E: 4, F: 7}
+primary_driver: 'May CPI 4.2% YoY T1 BLS. B trigger fires.'
 calibration_changes_this_session:
-- Calibration_State.md v1.33:
-- §2.3: CPI B trigger status updated to FIRED
-
+- 'Calibration_State.md v1.33'
+- '§2.3: CPI B trigger status updated to FIRED'
 open_triggers:
-- FOMC June 17-18: rate decision pending.
-- MOVE 77.03: approaching ELEVATED threshold.
-
+- 'FOMC June 17-18: rate decision pending.'
+- 'MOVE 77.03: approaching ELEVATED threshold.'
 open_decisions:
-1. MAGS: HOLD-only override. EV -0.94%.
-2. URA ADD: IRA 3%, Roth 3%.
-
+- 'MAGS: HOLD-only override. EV -0.94%.'
+- 'URA ADD: IRA 3%, Roth 3%.'
 next_session_flags:
-- LOAD: Calibration State loaded, last update June 10
-- FIRST: Iran deal status
-
----
+- 'LOAD: Calibration State loaded, last update June 10'
+- 'FIRST: Iran deal status'
 """
+
 
 # ── Credit readings ────────────────────────────────────────────────────────────
 
@@ -100,75 +99,36 @@ class TestCreditReadings:
         assert "T1" in self.readings[1].t1_flag
 
 
-# ── _parse_probs ───────────────────────────────────────────────────────────────
+# ── _probs_from_doc ────────────────────────────────────────────────────────────
 
-class TestParseProbs:
+class TestProbsFromDoc:
     def test_valid(self):
-        block = "scenario_probabilities: { A: 7%, B: 36%, C: 41%, D: 5%, E: 4%, F: 7% }"
-        p = _parse_probs(block)
+        doc = {"scenario_probabilities": {"A": 7, "B": 36, "C": 41, "D": 5, "E": 4, "F": 7}}
+        p = _probs_from_doc(doc)
         assert p is not None
         assert p.A == 7.0
         assert p.B == 36.0
         assert p.F == 7.0
 
     def test_sum_100(self):
-        block = "scenario_probabilities: { A: 5%, B: 41%, C: 38%, D: 5%, E: 4%, F: 7% }"
-        p = _parse_probs(block)
+        doc = {"scenario_probabilities": {"A": 5, "B": 41, "C": 38, "D": 5, "E": 4, "F": 7}}
+        p = _probs_from_doc(doc)
         assert p is not None
         assert abs(p.A + p.B + p.C + p.D + p.E + p.F - 100.0) < 0.01
 
     def test_missing_returns_none(self):
-        assert _parse_probs("no probabilities here") is None
+        assert _probs_from_doc({}) is None
+
+    def test_not_a_dict_returns_none(self):
+        assert _probs_from_doc({"scenario_probabilities": "not a mapping"}) is None
+
+    def test_incomplete_mapping_returns_none(self):
+        # Missing F -> KeyError inside, must fail soft to None, not raise.
+        doc = {"scenario_probabilities": {"A": 7, "B": 36, "C": 41, "D": 5, "E": 4}}
+        assert _probs_from_doc(doc) is None
 
 
-# ── _extract_list ──────────────────────────────────────────────────────────────
-
-class TestExtractList:
-    BLOCK = """\
-date: 2026-05-25
-scenario_probabilities: { A: 7%, B: 36%, C: 41%, D: 5%, E: 4%, F: 7% }
-primary_driver: test driver
-session_type: full M05
-
-open_triggers:
-- Trigger one text
-- Trigger two text
-
-open_decisions:
-1. Decision alpha
-2. Decision beta
-
-next_session_flags:
-- Flag one
-- Flag two
-- Flag three
-"""
-
-    def test_triggers_count(self):
-        items = _extract_list(self.BLOCK, "open_triggers")
-        assert len(items) == 2
-
-    def test_triggers_content(self):
-        items = _extract_list(self.BLOCK, "open_triggers")
-        assert "Trigger one text" in items[0]
-
-    def test_decisions_count(self):
-        items = _extract_list(self.BLOCK, "open_decisions")
-        assert len(items) == 2
-
-    def test_decisions_content(self):
-        items = _extract_list(self.BLOCK, "open_decisions")
-        assert "Decision alpha" in items[0]
-
-    def test_flags_count(self):
-        items = _extract_list(self.BLOCK, "next_session_flags")
-        assert len(items) == 3
-
-    def test_missing_key(self):
-        assert _extract_list(self.BLOCK, "nonexistent_key") == []
-
-
-# ── _parse_scenario_states ────────────────────────────────────────────────────
+# ── _parse_scenario_states ─────────────────────────────────────────────────────
 
 class TestParseScenarioStates:
     def setup_method(self):
@@ -178,10 +138,10 @@ class TestParseScenarioStates:
         assert len(self.entries) == 2
 
     def test_first_date(self):
-        assert self.entries[0].date.startswith("2026-05-25")
+        assert self.entries[0].date == "2026-05-25"
 
     def test_second_date(self):
-        assert self.entries[1].date.startswith("2026-06-10")
+        assert self.entries[1].date == "2026-06-10"
 
     def test_first_probs(self):
         p = self.entries[0].probabilities
@@ -197,11 +157,23 @@ class TestParseScenarioStates:
         assert any("v1.33" in c for c in changes)
 
     def test_compacted_line_skipped(self):
-        # The COMPACTED comment block has no date: YYYY-MM-DD — must be skipped
+        # The COMPACTED comment block has no 'date:' key at all — must be
+        # excluded by construction (it's outside the YAML region entirely,
+        # not filtered out post-hoc), never mis-parsed into a bogus entry.
         assert all("COMPACTED" not in e.date for e in self.entries)
 
+    # ENG-52: entry_id / status coverage — the fields added to disambiguate
+    # same-day entries without reading the full primary_driver prose.
+    def test_entry_id_present(self):
+        assert self.entries[0].entry_id == "2026-05-25T10:00"
+        assert self.entries[1].entry_id == "2026-06-10T11:52"
 
-# ── parse_session_log (round-trip) ────────────────────────────────────────────
+    def test_status_values(self):
+        assert self.entries[0].status == "superseded"
+        assert self.entries[1].status == "current"
+
+
+# ── parse_session_log (round-trip) ─────────────────────────────────────────────
 
 class TestParseSessionLog:
     def setup_method(self):
@@ -236,3 +208,42 @@ class TestParseSessionLog:
     def test_latest_next_flags(self):
         flags = self.log.latest_next_flags
         assert len(flags) >= 1
+
+
+# ── Malformed input handling (ENG-52: fail soft, don't crash session start) ────
+
+class TestMalformedInput:
+    def test_no_section_8_heading(self):
+        assert _parse_scenario_states("# Session Log\n\nNo section 8 here.") == []
+
+    def test_section_8_with_no_entries_yet(self):
+        text = "## Section 8 - Session State Log\n\n// COMPACTED: nothing yet\n"
+        assert _parse_scenario_states(text) == []
+
+    def test_broken_yaml_fails_soft(self):
+        text = (
+            "## Section 8\n\n---\n"
+            "date: 2026-07-06\n"
+            "scenario_probabilities: { A: 1, B: this is not: valid: yaml [\n"
+        )
+        # Must not raise -- degrades to an empty list, same as "no entries".
+        assert _parse_scenario_states(text) == []
+
+    def test_one_malformed_entry_does_not_poison_others(self):
+        """The regression this design specifically guards against: parsing
+        must be per-entry independent. A malformed block must only drop
+        itself, never take down every entry parsed after it."""
+        text = (
+            "## Section 8\n\n---\n"
+            "date: 2026-07-05\n"
+            "scenario_probabilities: { A: 1, B: broken: [ unclosed\n"
+            "---\n"
+            "entry_id: 2026-07-06T10:00\n"
+            "date: 2026-07-06\n"
+            "status: current\n"
+            "scenario_probabilities: {A: 20, B: 20, C: 20, D: 20, E: 10, F: 10}\n"
+            "primary_driver: well-formed entry after a broken one\n"
+        )
+        entries = _parse_scenario_states(text)
+        assert len(entries) == 1
+        assert entries[0].date == "2026-07-06"

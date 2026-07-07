@@ -10,7 +10,10 @@ from __future__ import annotations
 import re
 from typing import Dict, List, Optional
 
+import yaml
+
 from ..types import (
+    CalibrationLogEntry,
     CalibrationState,
     CascadeBlock,
     ComponentWeight,
@@ -495,6 +498,60 @@ def _parse_thesis_conditions(text: str) -> Dict[str, "ThesisConditionEntry"]:
             last_reviewed=_extract_quoted_field(block, "last_reviewed") or "",
             notes=_extract_quoted_field(block, "notes") or "",
         )
+    return entries
+
+
+# ── §3 Calibration Log (ENG-52, 2026-07-06) ────────────────────────────────────
+# Deliberately NOT part of CalibrationState/parse_calibration_state() above —
+# §3 is prose history read directly by Claude each session (M05), never
+# consumed by advisor_run_computation(). This parser exists for hygiene/
+# tooling (e.g. a future ENG-53 archival pass), not any live computation path.
+
+_LOG_HEADER_RE = re.compile(r"^---\s*\n(.*?\n)---\s*\n", re.MULTILINE | re.DOTALL)
+
+
+def parse_calibration_log(text: str) -> List[CalibrationLogEntry]:
+    """Parse §3 entries that use the ENG-52 structured front-matter format.
+
+    Each entry is a small Jekyll-style YAML front-matter block (entry_id/
+    date/version/category, delimited by '---' lines — a convention §3 didn't
+    use before, so no collision with anything pre-existing) followed by
+    unchanged free-text rationale, running up to the next entry's front
+    matter or the end of §3.
+
+    Only entries from v1.46 onward were migrated to this format (see
+    CalibrationLogEntry's docstring for why) — older entries use at least
+    one other, inconsistent title-line convention and have no front matter,
+    so they're silently absent from this parser's output, not mis-parsed.
+    This is additive tooling; it does not replace reading §3 directly.
+    """
+    idx3 = text.find("## Section 3")
+    if idx3 == -1:
+        return []
+    idx4 = text.find("## Section 4")
+    s3 = text[idx3:idx4] if idx4 != -1 else text[idx3:]
+
+    matches = list(_LOG_HEADER_RE.finditer(s3))
+    entries: List[CalibrationLogEntry] = []
+
+    for i, m in enumerate(matches):
+        try:
+            header = yaml.safe_load(m.group(1))
+        except yaml.YAMLError:
+            continue
+        if not isinstance(header, dict) or "date" not in header or "version" not in header:
+            continue
+
+        narrative_end = matches[i + 1].start() if i + 1 < len(matches) else len(s3)
+        narrative = s3[m.end():narrative_end].strip()
+
+        entries.append(CalibrationLogEntry(
+            entry_id  = str(header.get("entry_id", "")),
+            date      = str(header["date"]),
+            version   = str(header["version"]),
+            category  = str(header.get("category", "")),
+            narrative = narrative,
+        ))
     return entries
 
 

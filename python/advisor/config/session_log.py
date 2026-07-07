@@ -2,15 +2,29 @@
 advisor/config/session_log.py
 
 Markdown parser: Session_Log.md → SessionLogState dataclass.
-§7 credit readings table + §8 scenario state blocks.
+§7 credit readings table (pipe-table, unchanged by ENG-52) + §8 scenario
+state entries.
 
 §8 is the AUTHORITATIVE source for prior scenario probabilities (M05 rule).
 Never use memory or Calibration_State.md for prior probabilities.
+
+ENG-52 (2026-07-06): §8 entries are now real YAML documents rather than
+loosely-structured markdown key:value lines parsed field-by-field via
+regex. Each entry is still delimited by the pre-existing '---' separator
+convention, but the region is now valid standard YAML multi-document
+syntax and is parsed with yaml.safe_load_all(). This was a client-
+identified gap: two same-day 2026-07-03 entries were indistinguishable
+without reading the full primary_driver prose — no unique id, no way to
+tell which one was authoritative. Both `entry_id` (real timestamp) and
+`status` (current|superseded) are now mandatory-in-practice YAML keys —
+see types.SessionStateEntry.
 """
 from __future__ import annotations
 
 import re
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 from ..types import (
     CreditReading,
@@ -20,17 +34,6 @@ from ..types import (
 )
 
 _SCENARIOS = ("A", "B", "C", "D", "E", "F")
-
-# Top-level §8 field names that signal the start of a new section.
-# Used as stop-markers when extracting list sections.
-_SECTION_KEYS = frozenset({
-    "scenario_probabilities", "primary_driver", "session_type",
-    "open_triggers", "open_decisions", "next_session_flags",
-    "calibration_changes_this_session", "work_completed",
-    "credit_readings", "cascade_signals", "trades_executed",
-    "m14_recomputation_results", "b_watch_level_3",
-    "calibration_versions_this_session", "calibration_changes",
-})
 
 
 def _between(text: str, start: str, end: str) -> str:
@@ -60,7 +63,9 @@ def _extract_int(cell: str) -> Optional[int]:
 
 
 def _parse_credit_readings(text: str) -> List[CreditReading]:
-    """Parse §7 credit readings pipe table → list of CreditReading."""
+    """Parse §7 credit readings pipe table → list of CreditReading.
+    Unchanged by ENG-52 — §7 was already a clean, mechanically-parseable
+    markdown table with no disambiguation problem."""
     s7 = _between(text, "## Section 7", "## Section 8")
     readings: List[CreditReading] = []
     for row in _table_rows(s7):
@@ -77,100 +82,91 @@ def _parse_credit_readings(text: str) -> List[CreditReading]:
     return readings
 
 
-def _parse_probs(block: str) -> Optional[ScenarioProbabilities]:
-    """Extract scenario_probabilities: { A: X%, ... } from a §8 block."""
-    m = re.search(
-        r"scenario_probabilities:\s*\{\s*"
-        r"A:\s*(\d+(?:\.\d+)?)%[^}]*"
-        r"B:\s*(\d+(?:\.\d+)?)%[^}]*"
-        r"C:\s*(\d+(?:\.\d+)?)%[^}]*"
-        r"D:\s*(\d+(?:\.\d+)?)%[^}]*"
-        r"E:\s*(\d+(?:\.\d+)?)%[^}]*"
-        r"F:\s*(\d+(?:\.\d+)?)%",
-        block,
-    )
-    if not m:
+def _probs_from_doc(doc: Dict[str, Any]) -> Optional[ScenarioProbabilities]:
+    """Build ScenarioProbabilities from a parsed §8 doc's
+    scenario_probabilities mapping. Values are plain numbers now (no '%'
+    suffix) — ENG-52 dropped the string convention since YAML numerics
+    round-trip exactly, rather than needing '%'-stripping regex."""
+    raw = doc.get("scenario_probabilities")
+    if not isinstance(raw, dict):
         return None
     try:
-        return ScenarioProbabilities(
-            A=float(m.group(1)), B=float(m.group(2)), C=float(m.group(3)),
-            D=float(m.group(4)), E=float(m.group(5)), F=float(m.group(6)),
-        )
-    except (ValueError, TypeError):
+        return ScenarioProbabilities(**{k: float(raw[k]) for k in _SCENARIOS})
+    except (KeyError, TypeError, ValueError):
         return None
 
 
-def _extract_list(block: str, key: str) -> List[str]:
-    """Extract a bullet (- item) or numbered (N. item) list under key within a §8 block.
-
-    Finds the first occurrence of 'key:' at the start of a line, then collects
-    subsequent '- ' and 'N. ' items until a blank line terminates the list or
-    a new top-level section key is encountered.
-    """
-    m = re.search(rf"(?m)^{re.escape(key)}:\s*$", block)
-    if not m:
+def _str_list(doc: Dict[str, Any], key: str) -> List[str]:
+    val = doc.get(key)
+    if val is None:
         return []
-    items: List[str] = []
-    for line in block[m.end():].splitlines():
-        stripped = line.strip()
-        if not stripped:
-            if items:
-                break          # blank line ends the list
-            continue
-        # New top-level section header (non-indented word ending with colon)
-        if not line.startswith((" ", "\t")):
-            kw_m = re.match(r"^([a-z_][a-z_0-9]*):", line)
-            if kw_m and kw_m.group(1) in _SECTION_KEYS:
-                break
-        # Collect list items
-        if stripped.startswith("- "):
-            items.append(stripped[2:].strip())
-        elif re.match(r"^\d+\.\s", stripped):
-            items.append(re.sub(r"^\d+\.\s+", "", stripped).strip())
-    return items
+    if isinstance(val, list):
+        return [str(v) for v in val]
+    return [str(val)]
 
 
 def _parse_scenario_states(text: str) -> List[SessionStateEntry]:
-    """Parse all §8 session state blocks in chronological order.
+    """Parse all §8 session state entries in chronological order.
 
-    Blocks are separated by '---' horizontal rules.
-    Skips:
-      - The compacted summary line (starts with '//')
-      - The canonical schema template (date: YYYY-MM-DD)
-      - Any block without a valid date or parseable probabilities
+    Entries are delimited by '---' (same convention as before ENG-52), and
+    each entry's content between separators is now valid YAML rather than
+    hand-parsed key:value lines. Deliberately parsed one chunk at a time
+    (yaml.safe_load() per chunk) rather than yaml.safe_load_all() across
+    the whole region as one stream: a single malformed or un-migrated
+    pre-ENG-52 entry must only drop ITSELF, not silently take down every
+    entry after it — the same per-block independence the old regex parser
+    had, just applied to YAML parsing instead of regex matching.
+
+    Skips any chunk that fails to parse, isn't a dict, or lacks a real
+    date / parseable scenario_probabilities (covers the canonical-schema
+    example documented near the top of the file, any malformed entry, and
+    any entry still in the pre-ENG-52 prose format).
     """
     idx8 = text.find("## Section 8")
     if idx8 == -1:
         return []
     s8 = text[idx8:]
 
-    blocks = re.split(r"(?m)^---\s*$", s8)
+    first_sep = re.search(r"(?m)^---\s*$", s8)
+    if not first_sep:
+        return []
+    region = s8[first_sep.start():]
+
+    # Split into individual '---'-delimited chunks and parse each one
+    # independently (rather than yaml.safe_load_all() across the whole
+    # region as a single stream) — a single malformed or pre-migration
+    # entry must only drop ITSELF, not silently wipe out every
+    # well-formed entry after it in the file. Same per-block independence
+    # the old regex parser had; only the per-block parsing method changed.
+    chunks = re.split(r"(?m)^---\s*$", region)
+
     entries: List[SessionStateEntry] = []
-
-    for block in blocks:
-        # Must have a concrete date line (YYYY-MM-DD not literal template)
-        date_m = re.search(r"(?m)^date:\s*(\d{4}-\d{2}-\d{2}[^\n]*)", block)
-        if not date_m:
+    for chunk in chunks:
+        if not chunk.strip():
             continue
-        date_str = date_m.group(1).strip()
-        if date_str.upper().startswith("YYYY"):
-            continue   # template sentinel — skip
-
-        probs = _parse_probs(block)
+        try:
+            doc = yaml.safe_load(chunk)
+        except yaml.YAMLError:
+            continue   # malformed block — skip, don't touch other entries
+        if not isinstance(doc, dict):
+            continue
+        date_val = doc.get("date")
+        if not date_val or not re.match(r"^\d{4}-\d{2}-\d{2}", str(date_val)):
+            continue
+        probs = _probs_from_doc(doc)
         if probs is None:
-            continue   # malformed block
-
-        drv_m  = re.search(r"(?m)^primary_driver:\s*(.+)", block)
-        driver = drv_m.group(1).strip() if drv_m else ""
+            continue
 
         entries.append(SessionStateEntry(
-            date             = date_str,
-            probabilities    = probs,
-            primary_driver   = driver,
-            open_triggers    = _extract_list(block, "open_triggers"),
-            open_decisions   = _extract_list(block, "open_decisions"),
-            next_session_flags = _extract_list(block, "next_session_flags"),
-            calibration_changes = _extract_list(block, "calibration_changes_this_session"),
+            date                = str(date_val),
+            entry_id            = str(doc.get("entry_id", "")),
+            status              = str(doc.get("status", "current")),
+            probabilities       = probs,
+            primary_driver      = str(doc.get("primary_driver", "")),
+            open_triggers       = _str_list(doc, "open_triggers"),
+            open_decisions      = _str_list(doc, "open_decisions"),
+            next_session_flags  = _str_list(doc, "next_session_flags"),
+            calibration_changes = _str_list(doc, "calibration_changes_this_session"),
         ))
 
     return entries

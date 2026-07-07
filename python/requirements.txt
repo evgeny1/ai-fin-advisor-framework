@@ -18,6 +18,7 @@ pandas>=2.2.0
 
 # Utilities
 python-dotenv>=1.0.0       # load .env files
+PyYAML>=6.0                # ENG-52: Session_Log.md §8 / Calibration_State.md §3 entry format
 
 # MCP server (Claude Desktop integration)
 mcp>=1.0.0
