@@ -259,3 +259,55 @@ next_session_flags:
 - Re-verify Hormuz/XAR conflict-gate scoring next session against actual shipping-throughput
   data, not just formal ceasefire status
 
+---
+entry_id: 2026-07-08T13:37
+date: '2026-07-08'
+session_type: full M05 session
+status: current
+scenario_probabilities: {A: 8.3905, B: 50.3433, C: 25.1716, D: 2.9456, E: 8.3905,
+  F: 4.7584}
+primary_driver: 'Major fresh escalation: Trump declared the Iran ceasefire/MOU "over"
+  (2026-07-08 ~11am ET) following Iran''s attacks on three commercial vessels in the
+  Strait of Hormuz and US retaliatory strikes; Iran retaliated with strikes on 85
+  installations in Bahrain/Kuwait. Combined with a hawkish Fed hold (3.50-3.75%, 9-9
+  split on 2026 hikes), CPI re-accelerating to 4.2% YoY (May), GDPNow decelerating
+  sharply from its May peak (~3.8%) though ticking up to 1.4% (July 7) from a 1.2%
+  trough, and June payrolls badly missing (+57k vs 115k consensus). Scenario mix shifted
+  decisively toward B (Stagflation Lock, 50.34%) with C (Inflationary Shock) more
+  than tripling to 25.17%; F (Goldilocks) collapsed from 29.85% to a 25pp-capped 4.76%
+  -- real per the underlying data, full move pending 3+ T1 signals converging within
+  72h.'
+open_triggers:
+- Trump declared the Iran ceasefire/MOU 'over' (2026-07-08, ~11am ET) -- major escalation
+  beyond the fresh-strikes-but-nominally-holding picture from earlier the same day;
+  US struck Iranian air defenses/radar/IRGC boats, Iran retaliated with strikes on
+  85 installations in Bahrain/Kuwait; Treasury revoked Iran's oil-sale waiver
+- MLPX and DBMF TSC recovered DEGRADED->ACTIVE this session (B+C rose to 75.5%, above
+  the 55% sustaining threshold)
+- XAR continued weakening on escalation (-2.97% same-day move) -- another data point
+  for the pending M15 geopolitical_premium sign-flip/role-split review
+- 'ENG-60 opened: TrendSignalCode.INCONCLUSIVE ambiguity (missing-inputs vs. complete-data-no-direction)
+  -- session hand-off produced, needs dedicated session'
+open_decisions:
+- DBMF/MLPX/SGOL(SGOV) 40/40/20 simplification confirmed beneficial for Primary IRA/Roth/Acc4
+  but confirmed unsafe for both FLOOR_THEN_RETURN Relative accounts under current
+  scenario mix -- awaiting Evgeny's go/no-go on the 3-account-only version
+- Relative Roth (...466) corrected target (AIPO 10/MLPX 34/VTIP 45/DBMF 11, portfolio_return_pct
+  1.60%, floor_breached=false) awaiting Evgeny's manual entry into the allocation
+  sheet Target column
+- XAR thesis-failure call remains under genuine reconsideration -- do not execute
+  TRIM/EXIT until geopolitical_premium role split/reweight is resolved via M15 review;
+  today's continued escalation (ceasefire declared over) reinforces the pending review
+  rather than resolving it
+next_session_flags:
+- Confirm with Evgeny whether to write the Relative Roth Target column update (AIPO
+  10 / MLPX 34 / VTIP 45 / DBMF 11) and/or execute the DBMF/MLPX/SGOL(SGOV) 40/40/20
+  rebalance for Primary IRA, Primary Roth, and Acc4
+- M15 reclassification review of geopolitical_premium role (XAR sign issue) still
+  pending -- today's continued XAR weakness on further Hormuz escalation is another
+  confirming data point
+- Q2 audit ~15 items, now well overdue -- needs scheduling
+- ENG-60 (TrendSignalCode.INCONCLUSIVE ambiguity) needs a dedicated session -- see
+  hand-off produced 2026-07-08
+- Relative Roth floor is CLEAR at current probs but F's probability is capped this
+  session (25pp rule) -- could resurface once the cap lifts; re-verify next session
