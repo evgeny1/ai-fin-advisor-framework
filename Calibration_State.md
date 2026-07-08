@@ -220,9 +220,46 @@ FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
 
 ---
-entry_id: 2026-07-06T12:41
-date: '2026-07-06'
-version: v1.62
+entry_id: 2026-07-08T14:20
+date: '2026-07-08'
+version: v1.63
+category: geopolitical_premium Scenario C — M16 continuity check (no revision)
+---
+2026-07-08 (v1.63) - geopolitical_premium Scenario C: continuity check against
+the v1.52 (2026-07-03) M16 4-layer reconstruction, prompted by a fresh T1-
+confirmed data point (Trump declared the Iran ceasefire/MOU "over" ~11am ET
+today; XAR fell -2.97% same-day — see Session_Log.md 2026-07-08 for the full
+narrative, not restated here per this section's scope rule). NOT a redone
+review from scratch — checked whether any of the 4 layers' conclusions
+actually change; they do not.
+L1: still no T1 institutional unconditional anchor for a defense/aerospace-
+  sector-specific role. Unchanged.
+L2: still exactly 1 clean modern analog (2022 Russia-Ukraine) plus the 1970s
+  proxy gap. Today's move is a further OBSERVATION within the SAME ongoing
+  2026 Iran war episode already cited in v1.52 -- it does not create a second
+  independent analog under the ENUM definition (analog count is per distinct
+  historical episode, not per data point within one episode). Still MEDIUM-
+  ceiling-at-best on L2 alone, LOW overall once L1's anchor gap is included.
+L3: the v1.52 "war-consumption vs. arms-sales-tailwind" structural mechanism
+  is, if anything, further consistent with today's escalation (a ceasefire
+  being declared over and met with fresh strikes is squarely a war-
+  consumption dynamic, not an arms-sales one) -- but this is additional
+  consistency with an already-documented hypothesis, not new independent
+  evidence for it.
+L4: still not run -- no L1 anchor exists to compare against.
+CONCLUSION: LOW confidence, NOT ADOPTED, unchanged. Per GUARD
+  NeverReviseWithoutMethodology and M16 §4 RevisionAdoption: a LOW-confidence
+  revision requires 2+ quarters of live performance data since the proposal
+  date (2026-07-03) before it can even be considered for adoption -- not
+  eligible before the March 31, 2027 full audit at the earliest, regardless
+  of how much additional same-episode evidence accumulates before then. This
+  is a time-gated requirement, not an effort-gated one: re-running this
+  analysis more often, or with more within-episode data points, cannot move
+  it to MEDIUM/HIGH or accelerate adoption. §4.1 geopolitical_premium C
+  remains [4, 10], unrevised. Today's data point is logged here specifically
+  so it is not lost before the eventual reassessment; no other action taken.
+
+
 category: Client-directed ad-hoc session (BALT M16 calibration proposal)
 ---
 2026-07-06 (v1.62) - Client-directed ad-hoc session (not a scheduled audit).
