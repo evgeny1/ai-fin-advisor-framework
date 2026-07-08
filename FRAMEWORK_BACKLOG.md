@@ -33,7 +33,32 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-07, coding session (ENG-57 CLOSED — persistence +
+**Last updated:** 2026-07-08, coding session (ENG-58 CLOSED — root-caused
+and fixed the ~240s advisor_run_computation() hangs reported this session:
+_fetch_single() in yfinance_fetcher.py — the URANIUM_SPOT/UX=F single-quote
+path — was the one yfinance call site with no exception handling and no
+independent timeout. UX=F is now confirmed genuinely delisted (live evidence
+via mcp-server-financial-advisor.log); yf.Ticker(...).fast_info hanging on
+it for ~4min compounded into an aggregate delay because the abandoned
+thread kept holding the single global _YF_LOCK (ENG-27), stalling every
+other yfinance-sourced spec in the same fetch_all() batch behind it —
+landing right on Claude Desktop's own ~4min client-side call ceiling.
+Fixed by bounding the actual blocking call to 12s via a worker-thread +
+future.result(timeout=...), same pattern as mcp_server.py's _with_timeout(),
+so _YF_LOCK can never be held past that bound regardless of whether the
+delisted symbol's fetch itself ever completes. Also fixed the secondary
+`TypeError: unsupported operand type(s) for -: float and NoneType` this
+produced downstream (previous_close is None for a delisted symbol; now
+raises a caught, flagged ValueError instead). 3 new tests
+(TestFetchSingle: delisted-symbol degrade, hung-ticker timeout bound,
+hung-ticker releases the lock promptly). Full suite: 866 passed / 46
+skipped / 1 failed (ENG-41, same pre-existing unrelated failure as
+baseline), zero new regressions. Separately confirmed via the same log
+that advisor_evaluate_trend_signal()'s hangs this session are NOT this bug
+— zero log entries for those calls at all, matching ENG-33's already-
+documented client-side transport symptom exactly (request never reaches
+the server); see ENG-33's update below. Full writeup in this entry below.)
+Prior: 2026-07-07, coding session (ENG-57 CLOSED — persistence +
 MCP wiring for the ENG-55 trend/rotation signal: new 6th MCP tool
 `advisor_evaluate_trend_signal()`, `TrendSignalStore.json` persistence with
 retroactive ~21-trading-day forward-outcome fill (CreditHistoryStore-style,
@@ -108,6 +133,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-55 | CLOSED | HIGH | functional-gap | V4: relative-strength formula + peer-basket definition for trend layer — needs its own dedicated session, real judgment calls involved |
 | ENG-56 | OPEN | LOW | hygiene | Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries (inconsistent legacy title-line conventions) |
 | ENG-57 | CLOSED | HIGH | functional-gap | V4: persistence + MCP wiring for the ENG-55 trend/rotation signal — new 6th MCP tool, TrendSignalStore.json, batched daily-history fetch |
+| ENG-58 | CLOSED | HIGH | bug | _fetch_single()'s unguarded URANIUM_SPOT/UX=F fetch could hold the global _YF_LOCK for ~4min, stalling every other yfinance spec in the same fetch_all() batch behind it |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -413,6 +439,108 @@ web_search tools or needs a dedicated scraper.
 
 ### ENG-57 — V4: persistence + MCP wiring for the ENG-55 trend/rotation signal
 **CLOSED** 2026-07-07 (HIGH, functional-gap). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+### ENG-58 — _fetch_single()'s unguarded URANIUM_SPOT fetch could hold _YF_LOCK for ~4min
+<!-- ITEM
+Status:    CLOSED
+Severity:  HIGH
+Category:  bug
+Opened:    2026-07-08
+Closed:    2026-07-08
+Area:      python/advisor/data/fetchers/yfinance_fetcher.py (_fetch_single)
+Related:   ENG-27 (introduced _YF_LOCK), ENG-40 (introduced _FETCH_TIMEOUT_SECONDS
+           and _YF_LOCK_TIMEOUT_SECONDS, same UX=F symbol), ENG-33 (different
+           mechanism — see that entry's update below)
+-->
+
+**Description:** An advisory session reported `advisor_run_computation()` hanging
+the full ~4-minute MCP client ceiling, twice, before a server restart, then
+again once after. Diagnosed live via `mcp-server-financial-advisor.log`
+(Claude Desktop's own MCP transport log) rather than guessed at: the request
+DID reach the server both times, and the server DID eventually return a
+valid, complete result — `notifications/cancelled` from the client arrives
+at almost exactly 240.0s, with the server's actual `result` logged only
+~5-10ms later. The client gave up right as a good answer was arriving, not
+because the server was stuck or crashed.
+
+Immediately after each delayed result, the log shows:
+```
+ERROR yfinance: $UX=F: possibly delisted; no price data found (period=5d)
+ERROR yfinance: $UX=F: possibly delisted; no price data found (period=5d)
+WARNING advisor.data.fetch_registry: Fetch failed [URANIUM_SPOT]: unsupported operand type(s) for -: 'float' and 'NoneType'
+ERROR yfinance: 1 Failed download: ['UX=F']: YFInvalidPeriodError(...)
+```
+
+`URANIUM_SPOT` (`_SYMBOL_MAP["URANIUM_SPOT"] = "UX=F"`, already flagged
+`# ← unconfirmed/illiquid` in this file and `m18_registry.py` — this session
+is the first live confirmation it's genuinely broken, not just theoretically
+risky) routes through `_fetch_single()`, the *one* yfinance call site in
+this module with no try/except and no independent timeout — unlike its two
+siblings `fetch_weekly_trend()` and `fetch_trend_signal_histories()`, both
+of which already degrade gracefully. `yf.Ticker("UX=F").fast_info` hanging/
+retrying internally against a delisted symbol could run for minutes,
+uncaught.
+
+**Why one bad symbol produced an *aggregate* ~240s delay, not just its own
+timeout:** `fetch_registry.py.fetch_all()` already bounds each spec's future
+to `_FETCH_TIMEOUT_SECONDS=25s` (added by ENG-40) and abandons it
+(`ex.shutdown(wait=False)`) rather than waiting further. But the abandoned
+worker thread keeps running in the background — and keeps holding
+`_YF_LOCK`, the single global lock ENG-27 added to prevent cross-symbol
+data corruption under concurrent yfinance calls. Every *other*
+yfinance-sourced spec still pending in the same `fetch_all()` batch then
+also has to wait up to `_YF_LOCK_TIMEOUT_SECONDS=20s` just to acquire that
+still-held lock before it can even start its own fetch. With ~15-20 other
+YFINANCE specs typically in the batch, that's how one bad symbol's own 25s
+timeout compounds into an aggregate delay landing right on Claude Desktop's
+~4-minute client-side call ceiling. ENG-27 and ENG-40 are each individually
+correct; the gap was in the *interaction* between a global lock and a
+timeout mechanism that can only abandon *waiting*, not force the underlying
+thread to actually stop and release what it holds.
+
+**Fix:** bound the actual blocking call inside `_fetch_single()` itself,
+using the same worker-thread + `future.result(timeout=...)` pattern already
+established in `mcp_server.py`'s `_with_timeout()` — `_SINGLE_FETCH_TIMEOUT_SECONDS
+= 12.0`. This guarantees `_fetch_single()` exits (and releases `_YF_LOCK`)
+within its own 12s bound regardless of whether the abandoned inner thread
+ever actually finishes — the same accepted caveat `_with_timeout()` already
+documents, just applied one layer deeper so the *lock specifically* can
+never be held past our own bound, rather than for however long Yahoo
+Finance's retry/backoff behavior against a delisted symbol takes. Also
+fixed the secondary bug this same failure mode was tripping: `fast_info.previous_close`
+is `None` for a delisted symbol, and the day-change computation
+`(last_price - previous_close) / previous_close` raised an uncaught
+`TypeError` on that `None` — now explicitly checked and raised as a caught,
+flagged `ValueError` instead.
+
+**Verification:** 3 new tests added to `TestFetchSingle` in
+`test_yfinance_unit.py` — delisted-symbol (`previous_close=None`) degrades
+to a flagged reading rather than an uncaught `TypeError`; a hung
+`fast_info` property is bounded to the patched-down timeout rather than
+blocking the caller; and, directly targeting the actual regression, a
+second unrelated `_yf_lock_guard()` acquisition immediately after a timed-
+out hung fetch completes near-instantly rather than waiting out
+`_YF_LOCK_TIMEOUT_SECONDS` — proving the lock is released promptly instead
+of staying held by the abandoned thread. Full suite: 866 passed / 46
+skipped / 1 failed (`ENG-41`, same pre-existing unrelated failure as
+baseline — confirmed via `git stash` equivalent reasoning, not new), zero
+new regressions.
+
+**Not fixed as part of this item (deliberately deferred):** whether
+`URANIUM_SPOT` should implement the proxy-substitution fallback its own
+`m18_registry.py` description already promises ("M19 falls back to the URA
+ETF price... flagged as a proxy substitution") — that fallback isn't
+actually wired anywhere today; `URANIUM_SPOT` just fails and flags. Given
+`URA`'s own price already flows through `HOLDINGS_PRICES` regardless, this
+is a real but separate follow-up, not blocking — flagging here rather than
+scope-creeping this fix.
+
+**Suggested next step:** decide whether `URANIUM_SPOT` (the single-quote
+spot price) is worth keeping at all given `URANIUM_TREND` (same `UX=F`,
+weekly closes, already degrades gracefully via `fetch_weekly_trend`) covers
+the same underlying data need for M19's actual sustaining/failure
+conditions. If keeping it, wire the documented URA-proxy substitution
+explicitly rather than leaving it as a bare `FETCH_FAILED`.
 
 ### ENG-56 — Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries
 <!-- ITEM
@@ -810,6 +938,27 @@ importing `advisor.mcp_server` directly and calling `_tool_evaluate_allocation`
 with cached `cal`/`scenario_probs` populated by hand, or via `parse_calibration_state()`
 directly) -- proven fast, correct, and reliable every single time it was
 tried, as opposed to four-for-four live MCP failures.
+
+**Fourth tool now showing the identical symptom (2026-07-08):**
+`advisor_evaluate_trend_signal()` (the new ENG-57 tool) hung the full
+~4-minute client ceiling twice in one advisory session, immediately after
+`advisor_run_computation()` and `advisor_apply_scoring()` had both just
+logged normally on the same connection. Checked `mcp-server-financial-advisor.log`
+directly (the access this entry's 2026-06-24 breakthrough established):
+zero `tools/call` entries appear for either hung attempt at all -- the gap
+between the preceding `advisor_apply_scoring` response and the next logged
+`tools/call` is ~37 minutes, comfortably enough to contain two silent
+~4-minute client-side hangs plus normal conversation time in between. This
+is the exact same "request never arrives" signature this entry already
+established for `evaluate_allocation` -- not a new hypothesis, a fourth
+confirmed occurrence of the same one. (Contrast ENG-58, opened the same
+session: that one's `advisor_run_computation` hangs DID show up in the log,
+with a clear server-side yfinance root cause -- a genuinely different
+mechanism that happened to produce a superficially similar symptom.) No
+`--json-file`-style CLI fallback exists yet for `evaluate_trend_signal` the
+way ENG-33's own workaround exists for `evaluate_allocation` -- worth
+building one on the same pattern if this recurs, since the tool's shadow-
+mode trial data depends on it actually running every FULL_DESKTOP session.
 
 **Breakthrough (2026-06-24): the access this was waiting on existed all
 along.** `C:\Users\evgen\AppData\Roaming\Claude\logs\mcp-server-financial-advisor.log`

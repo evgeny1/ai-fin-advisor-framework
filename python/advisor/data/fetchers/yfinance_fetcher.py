@@ -5,6 +5,7 @@ registration in FetchRegistry covers every YFINANCE spec.
 """
 from __future__ import annotations
 
+import concurrent.futures
 import contextlib
 import datetime
 import json
@@ -497,6 +498,55 @@ def fetch_instrument_history(spec: FetchSpec, symbol: str,
 
 
 # ── Internal: single-quote by spec.id via _SYMBOL_MAP ────────────────────────
+#
+# ENG-58 (2026-07-08): _fetch_single() was the one yfinance call site in this
+# file with NO exception handling and NO independent timeout — unlike its
+# two siblings (fetch_weekly_trend, fetch_trend_signal_histories), which both
+# degrade gracefully. Confirmed live via mcp-server-financial-advisor.log:
+# URANIUM_SPOT (UX=F — already flagged "unconfirmed/illiquid" in _SYMBOL_MAP
+# and m18_registry.py) is now genuinely delisted on Yahoo Finance. Once
+# yf.Ticker(...).fast_info hangs/retries internally against a delisted
+# symbol, it can run for ~4 minutes — well past fetch_registry.py's own
+# _FETCH_TIMEOUT_SECONDS=25s per-future bound. Worse, that outer bound only
+# abandons *waiting* on the future; the underlying thread keeps running and
+# keeps holding _YF_LOCK (the single global lock ENG-27 added to prevent
+# cross-symbol data corruption under concurrent yfinance calls), so every
+# OTHER yfinance-sourced spec in the same fetch_all() batch then also queues
+# behind that still-held lock — this is what compounded one bad symbol into
+# an aggregate ~240s delay landing right on Claude Desktop's own ~4-minute
+# MCP client-side cancellation window (see FRAMEWORK_BACKLOG.md ENG-58).
+#
+# Fix: bound the actual blocking call to _SINGLE_FETCH_TIMEOUT_SECONDS using
+# the same worker-thread + future.result(timeout=...) pattern already used
+# in mcp_server.py's _with_timeout(). This guarantees _fetch_single() exits
+# (and releases _YF_LOCK) well within fetch_all()'s own 25s budget even if
+# the abandoned inner thread keeps running in the background — same accepted
+# caveat _with_timeout() already documents ("a truly stuck thread cannot be
+# force-killed from here"), just applied one layer deeper so the *lock*
+# specifically can never be held past our own bound.
+
+_SINGLE_FETCH_TIMEOUT_SECONDS = 12.0
+_SINGLE_FETCH_EXECUTOR = concurrent.futures.ThreadPoolExecutor(
+    max_workers=4, thread_name_prefix="yf_single_fetch"
+)
+
+
+def _fetch_single_raw(symbol: str) -> Dict[str, float]:
+    """The actual blocking yfinance call — runs inside _SINGLE_FETCH_EXECUTOR
+    so _fetch_single() can bound how long it waits without needing to (and
+    without being able to) kill this thread if the symbol is truly stuck."""
+    info = yf.Ticker(symbol).fast_info
+    price = round(float(info.last_price), 4)
+    previous_close = info.previous_close
+    if previous_close is None:
+        # The exact TypeError this used to raise uncaught (float - NoneType)
+        # when a delisted/illiquid symbol has a price but no previous_close.
+        raise ValueError(
+            f"{symbol}: previous_close unavailable (delisted/illiquid contract?)"
+        )
+    day_change_pct = round((price - previous_close) / previous_close * 100, 2)
+    return {"price": price, "day_change_pct": day_change_pct}
+
 
 def _fetch_single(spec: FetchSpec) -> List[DataReading]:
     symbol = _SYMBOL_MAP.get(spec.id)
@@ -506,17 +556,33 @@ def _fetch_single(spec: FetchSpec) -> List[DataReading]:
             f"Add it to _SYMBOL_MAP in yfinance_fetcher.py."
         )
     with _yf_lock_guard():
-        info = yf.Ticker(symbol).fast_info
-        price = round(float(info.last_price), 4)
-        day_change_pct = round(
-            (info.last_price - info.previous_close) / info.previous_close * 100, 2
-        )
+        future = _SINGLE_FETCH_EXECUTOR.submit(_fetch_single_raw, symbol)
+        try:
+            result = future.result(timeout=_SINGLE_FETCH_TIMEOUT_SECONDS)
+        except concurrent.futures.TimeoutError:
+            return [DataReading(
+                spec_id=spec.id, value=None, source=DataSource.YFINANCE,
+                fetched_at=datetime.datetime.utcnow(),
+                quality_flags=[
+                    f"FETCH_TIMEOUT: {symbol} exceeded "
+                    f"{_SINGLE_FETCH_TIMEOUT_SECONDS:.0f}s bound ─ likely "
+                    f"delisted/illiquid (see ENG-58). _YF_LOCK is released "
+                    f"now regardless, so this does not stall other yfinance "
+                    f"fetches in the same fetch_all() batch."
+                ],
+            )]
+        except Exception as e:
+            return [DataReading(
+                spec_id=spec.id, value=None, source=DataSource.YFINANCE,
+                fetched_at=datetime.datetime.utcnow(),
+                quality_flags=[f"FETCH_FAILED: {e}"],
+            )]
     return [DataReading(
         spec_id=spec.id,
         value={
             "symbol":         symbol,
-            "price":          price,
-            "day_change_pct": day_change_pct,
+            "price":          result["price"],
+            "day_change_pct": result["day_change_pct"],
         },
         source=DataSource.YFINANCE, fetched_at=datetime.datetime.utcnow(),
     )]

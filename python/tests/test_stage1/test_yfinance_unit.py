@@ -13,6 +13,7 @@ assertions.
 """
 from __future__ import annotations
 
+import time
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -192,6 +193,83 @@ class TestFetchSingle:
         for spec_id in ("GOLD_SPOT", "SILVER", "SP500", "VIX", "DXY"):
             assert spec_id in _SYMBOL_MAP
             assert isinstance(_SYMBOL_MAP[spec_id], str) and _SYMBOL_MAP[spec_id]
+
+    # ── ENG-58: bounded timeout + exception safety ────────────────────────
+    # Confirmed live 2026-07-08 (mcp-server-financial-advisor.log): UX=F
+    # (URANIUM_SPOT) is now genuinely delisted. _fetch_single() previously
+    # had no try/except and no independent timeout, so yf.Ticker(...).fast_info
+    # could hang for minutes and -- critically -- keep holding _YF_LOCK the
+    # whole time, stalling every other yfinance-sourced spec in the same
+    # fetch_all() batch behind it. These tests cover the fix, not just the
+    # happy path test_price_and_change_pct_correct already covered above.
+
+    def test_delisted_symbol_previous_close_none_degrades_gracefully(self):
+        """The exact live failure mode: fast_info.previous_close is None for
+        a delisted/illiquid symbol -- must produce a flagged reading, not an
+        uncaught 'unsupported operand type(s) for -: float and NoneType'."""
+        from advisor.data.fetchers.yfinance_fetcher import _fetch_single
+
+        m = MagicMock()
+        m.fast_info.last_price = 25.0
+        m.fast_info.previous_close = None
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.Ticker", return_value=m):
+            readings = _fetch_single(_spec("URANIUM_SPOT"))
+        assert readings[0].value is None
+        assert any("FETCH_FAILED" in f for f in readings[0].quality_flags)
+        assert any("previous_close" in f for f in readings[0].quality_flags)
+
+    def test_hung_ticker_produces_timeout_reading_within_bound(self, monkeypatch):
+        """A yf.Ticker(...).fast_info call that never returns must not hold
+        up the caller past _SINGLE_FETCH_TIMEOUT_SECONDS -- this is what
+        used to compound into fetch_all()'s ~240s aggregate delay."""
+        import advisor.data.fetchers.yfinance_fetcher as yff
+        monkeypatch.setattr(yff, "_SINGLE_FETCH_TIMEOUT_SECONDS", 0.2)
+
+        class _HangingTicker:
+            @property
+            def fast_info(self):
+                time.sleep(5.0)  # far longer than the patched-down timeout
+                raise AssertionError("should never reach this")
+
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.Ticker",
+                   return_value=_HangingTicker()):
+            start = time.monotonic()
+            readings = yff._fetch_single(_spec("URANIUM_SPOT"))
+            elapsed = time.monotonic() - start
+
+        assert elapsed < 2.0, "_fetch_single() must not block on a hung fast_info call"
+        assert readings[0].value is None
+        assert any("FETCH_TIMEOUT" in f for f in readings[0].quality_flags)
+
+    def test_hung_ticker_releases_yf_lock_promptly(self, monkeypatch):
+        """The specific regression this fix targets: a hung fetch must not
+        keep holding _YF_LOCK past its own timeout, or every other
+        yfinance-sourced spec in the same fetch_all() batch queues behind
+        it too (the actual mechanism behind the live ~240s compounding delay)."""
+        import advisor.data.fetchers.yfinance_fetcher as yff
+        monkeypatch.setattr(yff, "_SINGLE_FETCH_TIMEOUT_SECONDS", 0.2)
+
+        class _HangingTicker:
+            @property
+            def fast_info(self):
+                time.sleep(5.0)
+                raise AssertionError("should never reach this")
+
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.Ticker",
+                   return_value=_HangingTicker()):
+            yff._fetch_single(_spec("URANIUM_SPOT"))
+
+        # If the lock were still held by the abandoned thread, this second,
+        # unrelated acquisition would itself block for up to
+        # _YF_LOCK_TIMEOUT_SECONDS (20s) -- assert it's essentially instant.
+        start = time.monotonic()
+        with yff._yf_lock_guard(timeout=2.0):
+            pass
+        assert time.monotonic() - start < 1.0, (
+            "_YF_LOCK was still held after _fetch_single()'s own timeout fired -- "
+            "this is the exact bug that compounded one bad symbol into a "
+            "multi-minute delay across the whole fetch_all() batch"
+        )
 
 
 # ── Generic N-week trend history ──────────────────────────────────────────────
