@@ -2,7 +2,21 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.62  Last updated: July 6, 2026. v1.62: BALT M16 4-layer proposal
+# Version: 1.64  Last updated: July 8, 2026. v1.64: geopolitical_premium
+full-row M16 review (A/B/D/E/F; C already done v1.52/v1.63) — role-level
+finding: no T1 institutional anchor exists for this sector at all, capping
+the whole row at LOW confidence structurally, not per-cell. A: real
+MEDIUM-confidence proposal ([-2,+3]→[-4,+1]) found overdue since June 30,
+now explicitly carried to Sept 30 as OVERDUE (§6 item 13a). D: best-evidenced
+cell, 2 independent analogues (GFC, COVID) both converge on the current
+value — confirming, not revising. E: weakest cell, a real directional
+concern flagged against the current positive value (§6 item 13b) — needs a
+dedicated pass. B/F: single mechanism-ambiguous analogues each, current
+values neither confirmed nor contradicted. No §4.1 values changed.
+v1.63: geopolitical_premium C continuity check (2026-07-08) — today's fresh
+Hormuz escalation does not change any of v1.52's 4-layer conclusions; still
+LOW confidence, still gated to 2+ quarters from the 2026-07-03 proposal date.
+v1.62: BALT M16 4-layer proposal
 logged — new candidate role defensive_equity_buffered_domestic, LOW confidence
 all six cells, §6 item 45 [P1] opened, pending Sept 30, 2026 full audit.
 v1.61: §6 items 17/20/22/24/25
@@ -258,6 +272,160 @@ CONCLUSION: LOW confidence, NOT ADOPTED, unchanged. Per GUARD
   it to MEDIUM/HIGH or accelerate adoption. §4.1 geopolitical_premium C
   remains [4, 10], unrevised. Today's data point is logged here specifically
   so it is not lost before the eventual reassessment; no other action taken.
+
+---
+entry_id: 2026-07-08T15:10
+date: '2026-07-08'
+version: v1.64
+category: geopolitical_premium — full-row M16 review (A/B/D/E/F; C already done v1.52)
+---
+2026-07-08 (v1.64) - Client-directed full-row M16 review of geopolitical_premium,
+completing what v1.52/v1.63 started for Scenario C alone. ROLE-LEVEL FINDING
+FIRST, before the individual cells: every cell hit the same Layer 1 wall — no
+T1 institutional source (LTCMA/VCMM/RA/GMO) publishes defense-sector-specific
+capital market assumptions; the broader "equities" or "industrials" anchors
+these sources do publish are not a clean substitute for a role this narrow.
+Consistent with the precedent already set by the C-cell review (v1.52), this
+pushes every cell toward LOW confidence regardless of analog quality — this
+role structurally cannot clear HIGH confidence under the standard M16
+methodology as currently written, the same limitation already logged for
+defensive_equity_buffered_domestic (v1.62) for a different reason (asset
+class too new there; sector too narrow here). Flagging as a standing,
+role-level ceiling, not a per-cell coincidence — worth deciding at a future
+audit whether M16 should define an alternative anchor-substitution path for
+narrow-sector roles, rather than re-discovering this gap every time a cell
+is touched.
+
+SCENARIO A (Soft Landing) — resolving an OVERDUE item, not new work.
+A real MEDIUM-confidence proposal already exists: §6 item 23[8],
+[-2,+3]→[-4,+1], 2 analogues (post-Gulf War 1991 -15% real defense de-rating;
+Cold War dividend/peace-dividend analogue), explicitly marked "BLOCKED...
+Adjudicate at June 30" back in the May/June batch. June 30 has passed with no
+recorded adjudication either way — this is a genuinely overdue decision, not
+a cell needing fresh research. Checked whether anything since then changes
+the analysis: no new data undermines either analogue. Per M16 GUARD (MEDIUM
+confidence: NEVER adopt intra-session, adopt only at next quarterly audit),
+this cannot be resolved today regardless — it now formally carries forward
+to the September 30, 2026 audit as a specifically overdue item, not merely a
+routine pending one. §4.1 A remains [-2,+3], unrevised.
+
+SCENARIO B (Stagflation Lock).
+L1: no anchor (role-level finding above).
+L2: 1973-82 — no defense-sector data exists at all (ETFs launched 2005+);
+  proxy required, auto-LOW per L2 rule. 2022 (sustained full-year, distinct
+  from C's acute Feb-May usage of the same year) — 1 clean analogue: SPADE
+  Defense Index (PPA) +8.6% vs S&P 500 -19.4% for full-year 2022 (a ~28pp
+  relative outperformance), already cited in the C-cell writeup, reused here
+  for its sustained-year rather than acute-event character.
+L3: open structural question, flagged not resolved: 2022's outperformance is
+  plausibly driven by Ukraine-war order-backlog/rearmament dynamics specific
+  to that conflict, not by "sustained stagflation" as a macro state per se —
+  the same order-backlog-vs-macro-state conflation already flagged for C's
+  mechanism. Cannot separate the two with 1 data point.
+L4: not run — no L1 anchor.
+CONCLUSION: LOW confidence. NOT ADOPTED. §4.1 B remains [+2,+6], unrevised.
+Logged for the eventual audit; the current value is neither confirmed nor
+contradicted by the one analogue available.
+
+SCENARIO D (Deflationary Recession) — the best-evidenced cell in this batch.
+L1: no anchor (role-level finding above).
+L2: 2 clean, independent modern analogues, both T1/T2-sourced:
+  (a) 2008-09 GFC, ITA calendar-year returns (T2, Yahoo Finance, cross-checked
+      against PPA's closely-tracking figures and a T1 SEC N-CSR filing showing
+      PPA -35.46% vs S&P -35.29% for the FY ended Apr 30 2009 — in-line with
+      the broad market, not a laggard or a haven): 2008 -38.64%, 2009 +25.32%,
+      2010 +16.60%. Per this file's own established convention (already used
+      for secular_technology_growth's D cell — annualize over the framework's
+      2-3yr scenario-duration window rather than the single acute year), a
+      3-year (2008-2010) annualized figure = ~-3.6% nominal, and CPI over this
+      window was roughly flat-to-slightly-positive, so real ≈ nominal:
+      ~-3.5 to -4% annualized real. (A 2yr-only window, 2008-09, gives a much
+      harsher ~-11 to -12% annualized — shown for transparency, not used as
+      primary, since 3yr is within the same file's own stated "2-3yr"
+      convention and captures the actual recovery pattern rather than
+      stopping mid-recovery.)
+  (b) 2020-21 COVID, ITA: 2020 -13.57%, 2021 +9.39% (T2, cross-checked against
+      a T1 SEC N-CSR filing for a related defense/aerospace mutual fund:
+      +0.69% for the FY ended Feb 28 2021 vs S&P +31.29% same period — defense
+      MATERIALLY LAGGED the recovery here, unlike GFC's in-line pattern; a
+      real, structural difference, not noise). 2yr annualized nominal ≈ -2.8%;
+      2021's elevated CPI (~7% by year-end) makes the real figure notably
+      worse, roughly -5 to -6% annualized real.
+L3: documented difference between the two analogues — GFC was a broad,
+  correlations-to-1 panic where defense fell with everything else but wasn't
+  specifically targeted; COVID's recovery was a narrow, monetary/fiscal-
+  stimulus-driven rotation INTO risk-on growth names that specifically left
+  defense behind (a structurally different mechanism, not just a magnitude
+  difference). Both still land in a similar final range once real-annualized.
+L4: not run — no L1 anchor.
+CONCLUSION: LOW confidence per the role-level L1 gate, same as every other
+  cell — but substantively this is the best-supported cell in the entire row:
+  2 clean, independent, real-data analogues, both converging on roughly -3.5%
+  to -6% annualized real, which BRACKETS the current §4.1 conservative end of
+  -4% almost exactly. §4.1 D remains [-4, 0], unrevised — this is a confirming
+  finding, not a proposed change. Logged so the convergence is on record for
+  whenever the role-level L1 gap is eventually addressed.
+
+SCENARIO E (Structural Rupture).
+L1: no anchor (role-level finding above).
+L2: 1987 crash and 1998 LTCM — zero defense-sector-specific data exists
+  (pre-dates every relevant ETF by 7-20 years); proxy required, auto-LOW.
+  2008 acute Sep-Nov (the specific systemic-panic window, narrower than D's
+  full-cycle framing) — only a partial, NON-independent data point: PPA fell
+  17.3% in October 2008 alone (T2, SeekingAlpha/ETF Rankings, citing PPA's own
+  monthly return history) during the Lehman/AIG/TARP window. This overlaps
+  with — is not independent of — the same GFC episode already used for D, so
+  it does not count as a second clean analogue under the ENUM's per-episode
+  definition.
+L3: not attempted — insufficient independent evidence to document a
+  structural adjustment against.
+L4: not run.
+CONCLUSION: LOW confidence, effectively unverifiable with real sector data —
+  worse-evidenced than any other cell in the row (0 truly independent
+  analogues, vs. B/F's 1 and D's 2). Flagging a directional concern rather
+  than a finding: the one overlapping data point (-17.3% in a single acute
+  panic month) sits uncomfortably against the current §4.1 E value of
+  [+1, +5] (positive) — a genuine systemic-rupture panic dragging defense down
+  17% in a month does not obviously support a positive E range, though one
+  data point from an overlapping episode cannot settle this either way. This
+  is the same category of flag already on record elsewhere in this file for
+  RSILD's E cell (directionally suspect, not verified) — worth a dedicated
+  pass at the next full audit rather than a same-session guess. §4.1 E
+  remains [+1, +5], unrevised; NOT confirmed, unlike D above.
+
+SCENARIO F (Growth Overheat).
+L1: no anchor (role-level finding above).
+L2: 2 modern windows, both T2-sourced (Yahoo Finance / financecharts.com ITA
+  yearly returns, cross-checked against PPA's closely-tracking figures):
+  2017-19 (ITA: +35.24%, -7.22%, +30.52%) and 2023-24 (ITA: +14.33%, +15.81%).
+  Relative to the S&P 500 over the same years (~+21.8%/-6.2%/+31.5%/~+24-26%/
+  ~+23-25%, standard widely-cited figures): 2017 defense OUTPERFORMED by
+  ~13pp; 2018-19 roughly IN LINE; 2023-24 defense UNDERPERFORMED by ~8-12pp.
+L3: documented, material structural confound — 2017's outperformance
+  coincides with a specific first-term defense-budget/NATO-2%-target policy
+  push, not a generic feature of "growth overheat" as a macro state; 2023-24's
+  underperformance reflects a narrow, AI/mega-cap-tech-led rally that
+  specifically bypassed industrials/defense, not defense-sector weakness
+  per se. Taking 2017 at face value would overstate F's structural return;
+  taking 2023-24 at face value would understate it. Net read: excluding the
+  policy-driven 2017 outlier, defense roughly tracks-to-modestly-lags the
+  broad market in genuine growth-overheat conditions.
+L4: not run.
+CONCLUSION: LOW confidence per the role-level gate. Substantively, the
+  current §4.1 F value of [+1, +4] (modest positive) looks reasonably
+  defensible against this mixed evidence — not contradicted, not strongly
+  confirmed either given the confounds. §4.1 F remains [+1, +4], unrevised.
+
+OVERALL: no §4.1 values changed this session. Confidence across the full row
+remains structurally capped at LOW (role-level L1 gap). Two cells (D, F) are
+reasonably well-supported by convergent evidence; one (B) has one usable but
+mechanism-ambiguous analogue; one (E) is the row's weakest cell and carries a
+genuine, flagged directional concern rather than a confirming finding; A is
+a real overdue decision (not fresh research) now explicitly carried to the
+September 30 audit. Per GUARD NeverReviseWithoutMethodology, none of this is
+adoptable intra-session regardless of today's findings — logged in full so
+none of today's work needs to be redone at the next audit.
+
 
 
 category: Client-directed ad-hoc session (BALT M16 calibration proposal)
@@ -1566,6 +1734,8 @@ to do later.
 11. First audit section 9 M14 thresholds (divergence, underweight, entry extension).
 12. First audit section 10 M08 ETF classification thresholds.
 13. XAR: re-verify at Q2 (standard staleness check; composition drift). XAR now at 12% target across all applicable accounts — confirm structural target remains appropriate.
+13a. [NEW 2026-07-08, v1.64] geopolitical_premium A: MEDIUM-confidence proposal [-2,+3]→[-4,+1] (§6 item 23[8]) was explicitly slated for June 30 adjudication and never resolved — carry to September 30 audit as OVERDUE, not routine. See §3 log entry 2026-07-08 (v1.64).
+13b. [NEW 2026-07-08, v1.64] geopolitical_premium E: directional concern flagged, not resolved — current §4.1 [+1,+5] (positive) sits uncomfortably against the one available (non-independent) data point, PPA -17.3% in Oct 2008's acute panic month. Row's weakest-evidenced cell (0 independent analogues). Needs a dedicated pass, not a same-session guess. See §3 log entry 2026-07-08 (v1.64).
 14. [CLOSED 2026-07-03, v1.58] First audit §11 classification weights — all instruments including AIPO, MAGS, and all v1.13 additions. AIPO's >5pp drift was already caught and corrected by v1.30 (June 2) before this session started; all other held instruments checked and either single-role/mandate-fixed (no drift risk) or recently reviewed. See §3 log entry 2026-07-03 (v1.58).
 15. [CLOSED 2026-07-03, v1.58] AIPO ThematicETF_ClassificationAudit() — superseded by the full 77-holding re-audit already completed at v1.30 (June 2, 2026), which is more current and more rigorous than this item's v1.14 baseline. Weight drift and materiality both addressed there.
 16. [CHECKED 2026-07-03, v1.60 — NOT YET TRIGGERED] MAGS vs AGIX: Anthropic confidentially filed a draft S-1 with the SEC June 1, 2026, press reports pointing to an October 2026 Nasdaq target — but no ticker, price, or public S-1 yet, and the filing itself says timing depends on market conditions. Short of "announced or completed" (a confidential filing isn't public terms), but materially closer than when this item was written. Re-check before Q3 given the reported timeline; no re-evaluation possible yet since there are no public terms to evaluate.
