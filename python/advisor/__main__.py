@@ -56,7 +56,9 @@ Commands (ENG-33 fallback):
                         see FRAMEWORK_BACKLOG.md). Reads Calibration_State.md,
                         Instrument_Classification.md, and Session_Log.md fresh;
                         fetches the five weekly-trend confirmation series
-                        fresh (each degrades gracefully on failure); updates
+                        fresh (each degrades gracefully on failure, with one
+                        bounded retry per spec if the first attempt comes
+                        back flagged — ENG-59); updates
                         TrendSignalStore.json exactly like the MCP tool so the
                         shadow-mode trial's per-session data still accumulates.
                         Input is a JSON file (or stdin if --json-file is
@@ -422,11 +424,29 @@ def cmd_evaluate_trend_signal() -> None:
     # session these come from advisor_run_computation()'s fetch_all() cache.
     # fetch_one() never raises (failures become flagged readings), and the
     # tool itself degrades per-instrument to INCONCLUSIVE on missing series.
+    #
+    # 2026-07-08: a live run showed DXY_TREND / REAL_YIELD_10Y_TREND
+    # unavailable here (flagged, not crashed) while advisor_run_computation's
+    # own fetch_all() had gotten them fine moments earlier. Direct re-testing
+    # immediately after (3 clean isolated attempts, no flags) could NOT
+    # reproduce it — the registry wiring itself is correct; this looks like
+    # a one-off transient hiccup on the external call, not a deterministic
+    # bug (see FRAMEWORK_BACKLOG.md ENG-59). Since the entire point of this
+    # CLI path is to be MORE reliable than the MCP tool it's substituting
+    # for, a single bounded retry here is cheap, well-justified insurance
+    # against exactly that class of blip — not blind/unbounded retrying
+    # (that's the ENG-58 anti-pattern), just one extra attempt for a spec
+    # that came back flagged the first time.
     registry = _build_registry()
     readings = []
     for spec_id in ("DXY_TREND", "BRENT_TREND", "GOLD_TREND",
                     "SP500_TREND", "REAL_YIELD_10Y_TREND"):
-        readings.extend(registry.fetch_one(spec_id))
+        first = registry.fetch_one(spec_id)
+        if first and any(r.quality_flags for r in first):
+            retry = registry.fetch_one(spec_id)
+            readings.extend(retry if retry and not any(r.quality_flags for r in retry) else first)
+        else:
+            readings.extend(first)
 
     print(_tool_evaluate_trend_signal(
         cal=cal, probs=probs, log=log, readings=readings,

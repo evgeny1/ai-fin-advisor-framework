@@ -177,3 +177,79 @@ def test_malformed_scenario_probs_is_a_clean_error(monkeypatch, capsys):
         cmd_evaluate_trend_signal()
     assert exc_info.value.code == 1
     assert "scenario_probs invalid" in capsys.readouterr().err
+
+
+# ── ENG-59: single bounded retry on a flagged weekly-series fetch ────────────
+# 2026-07-08: a live run showed DXY_TREND/REAL_YIELD_10Y_TREND unavailable
+# here transiently; direct re-testing couldn't reproduce it (registry wiring
+# was correct), so this covers the retry behavior itself, not a root cause.
+
+class _FlakyOnceRegistry:
+    """First fetch_one() call for a given spec_id returns a flagged reading;
+    every call after that (for that same spec_id) returns a clean one --
+    models exactly the one-off transient blip this retry targets."""
+
+    def __init__(self):
+        self._seen = set()
+
+    def fetch_one(self, spec_id):
+        if spec_id not in self._seen:
+            self._seen.add(spec_id)
+            return [DataReading(
+                spec_id=spec_id, value=None, source=DataSource.YFINANCE,
+                fetched_at=datetime.utcnow(),
+                quality_flags=["FETCH_FAILED: simulated transient blip"],
+            )]
+        return [DataReading(
+            spec_id=spec_id, value={"closes": [1.0, 2.0]}, source=DataSource.YFINANCE,
+            fetched_at=datetime.utcnow(),
+        )]
+
+
+class _AlwaysFlakyRegistry:
+    """Every fetch_one() call, first and retry alike, comes back flagged --
+    models a genuinely unavailable series, not a transient blip."""
+
+    def fetch_one(self, spec_id):
+        return [DataReading(
+            spec_id=spec_id, value=None, source=DataSource.YFINANCE,
+            fetched_at=datetime.utcnow(),
+            quality_flags=["FETCH_FAILED: genuinely unavailable"],
+        )]
+
+
+@skip_if_missing
+def test_flagged_fetch_retries_once_and_recovers(isolated_framework, monkeypatch, capsys):
+    """A spec flagged on the first attempt but clean on retry must end up
+    clean in the tool's input -- proving the retry actually replaces the
+    bad reading rather than just logging past it."""
+    monkeypatch.setattr(advisor_main, "_build_registry", lambda: _FlakyOnceRegistry())
+    monkeypatch.setattr(sys, "argv", ["__main__.py", "evaluate-trend-signal"])
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"scenario_probs": _PROBS})))
+
+    cmd_evaluate_trend_signal()
+
+    out = json.loads(capsys.readouterr().out)
+    assert out["status"] == "OK"
+    # None of the 5 weekly-series specs should still carry the simulated
+    # transient flag -- each recovered on its retry.
+    all_flags = " ".join(
+        f for s in out["trend_signals"] for f in s["quality_flags"]
+    )
+    assert "simulated transient blip" not in all_flags
+
+
+@skip_if_missing
+def test_genuinely_unavailable_fetch_still_degrades_after_retry(isolated_framework, monkeypatch, capsys):
+    """A spec that fails BOTH the first attempt and the retry must still
+    degrade gracefully (per-instrument INCONCLUSIVE with a flag), not raise
+    -- the retry is one extra chance, not a guarantee, and must not mask a
+    genuinely unavailable series by hanging or erroring instead of degrading."""
+    monkeypatch.setattr(advisor_main, "_build_registry", lambda: _AlwaysFlakyRegistry())
+    monkeypatch.setattr(sys, "argv", ["__main__.py", "evaluate-trend-signal"])
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"scenario_probs": _PROBS})))
+
+    cmd_evaluate_trend_signal()
+
+    out = json.loads(capsys.readouterr().out)
+    assert out["status"] == "OK", f"must still complete, just degraded: {out}"
