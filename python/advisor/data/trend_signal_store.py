@@ -76,7 +76,15 @@ def _load_store() -> Dict[str, Any]:
 
 
 def _save(store: Dict[str, Any]) -> None:
-    _store_path().write_text(json.dumps(store, indent=2, sort_keys=True), encoding="utf-8")
+    # default=str: defense in depth — a single non-JSON-native field (e.g. a
+    # DirectiveCode enum slipping through, the exact 2026-07-08 bug the CLI
+    # fallback's tests caught) must degrade to its string form, not silently
+    # lose the entire session's shadow-trial data. Producers should still
+    # normalize at the source (mcp_server._tool_evaluate_trend_signal does);
+    # this is the backstop, not the fix.
+    _store_path().write_text(
+        json.dumps(store, indent=2, sort_keys=True, default=str), encoding="utf-8"
+    )
 
 
 def _commit(message: str) -> None:

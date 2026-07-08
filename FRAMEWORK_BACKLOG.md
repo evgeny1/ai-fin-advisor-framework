@@ -33,7 +33,23 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-08, coding session (ENG-58 CLOSED — root-caused
+**Last updated:** 2026-07-08, coding session (ENG-33 fallback built for the
+trend signal: new `python -m advisor evaluate-trend-signal --json-file` CLI
+command mirroring evaluate-allocation's — same one-tested-implementation-
+two-entry-points pattern; `_tool_evaluate_trend_signal()` gained optional
+cal/probs/log/readings overrides; the CLI reconstructs everything except
+scenario_probs (framework files parsed fresh, five weekly-trend series
+fetched fresh) and updates TrendSignalStore.json exactly like the MCP tool
+so the ENG-50 shadow trial keeps accumulating data when the transport
+hangs. Building its tests caught and fixed a REAL latent bug: a
+DirectiveCode enum in dominant_directive_conflict_aware was not JSON
+serializable and silently killed the entire TrendSignalStore update —
+normalized to str at the source in mcp_server.py + default=str backstop in
+trend_signal_store._save(). Project_Instructions_MCP.md updated (tool
+bullet + Step 6c fallback notes). 5 new tests; full suite 871 passed / 46
+skipped / 1 failed (ENG-41, same pre-existing unrelated failure), zero new
+regressions.)
+Prior: 2026-07-08, coding session (ENG-58 CLOSED — root-caused
 and fixed the ~240s advisor_run_computation() hangs reported this session:
 _fetch_single() in yfinance_fetcher.py — the URANIUM_SPOT/UX=F single-quote
 path — was the one yfinance call site with no exception handling and no
@@ -954,11 +970,19 @@ established for `evaluate_allocation` -- not a new hypothesis, a fourth
 confirmed occurrence of the same one. (Contrast ENG-58, opened the same
 session: that one's `advisor_run_computation` hangs DID show up in the log,
 with a clear server-side yfinance root cause -- a genuinely different
-mechanism that happened to produce a superficially similar symptom.) No
-`--json-file`-style CLI fallback exists yet for `evaluate_trend_signal` the
-way ENG-33's own workaround exists for `evaluate_allocation` -- worth
-building one on the same pattern if this recurs, since the tool's shadow-
-mode trial data depends on it actually running every FULL_DESKTOP session.
+mechanism that happened to produce a superficially similar symptom.)
+
+**CLI fallback built (2026-07-08, same session):** `python -m advisor
+evaluate-trend-signal --json-file <path>` now exists, mirroring
+`evaluate-allocation`'s. See `Project_Instructions_MCP.md`'s tool bullet
+and Step 6c for usage; `python/tests/test_mcp/test_evaluate_trend_signal_cli.py`
+for coverage. Building it surfaced a real, separate latent bug along the
+way: `dominant_directive_conflict_aware` could carry a raw `DirectiveCode`
+enum, which isn't JSON-serializable and was silently killing the entire
+`TrendSignalStore.json` update on every session, live MCP path included --
+not just the CLI path this item was ostensibly about. Fixed at the source
+(normalized to `.value`/str in `_tool_evaluate_trend_signal`) plus a
+`default=str` backstop in `trend_signal_store._save()`.
 
 **Breakthrough (2026-06-24): the access this was waiting on existed all
 along.** `C:\Users\evgen\AppData\Roaming\Claude\logs\mcp-server-financial-advisor.log`

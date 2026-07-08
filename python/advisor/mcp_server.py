@@ -1165,11 +1165,39 @@ def _tool_write_back(
 # for the per-instrument comparator/mode design and
 # data/trend_signal_store.py for the persistence + forward-outcome fill.
 
-def _tool_evaluate_trend_signal() -> str:
-    cal = _cache.get("cal")
-    probs = _cache.get("scenario_probs")
-    log = _cache.get("log")
-    readings_list = _cache.get("readings", [])
+def _tool_evaluate_trend_signal(
+    cal: Optional[Any] = None,
+    probs: Optional[Any] = None,
+    log: Optional[Any] = None,
+    readings: Optional[List[Any]] = None,
+) -> str:
+    """
+    ENG-50/ENG-55 trend/rotation signal computation.
+
+    Normal path: requires advisor_run_computation() and advisor_apply_scoring()
+    to have been called earlier this session (uses cached cal + scenario_probs +
+    log + readings — §8 AUTHORITATIVE probabilities, never recomputed here).
+
+    cal/probs/log/readings: optional explicit overrides, bypassing the session
+    _cache entirely when given. This is the ENG-33 CLI fallback path's hook —
+    `python -m advisor evaluate-trend-signal` (see __main__.py) is a fresh
+    process with nothing cached, so it reads Calibration_State.md /
+    Session_Log.md itself, fetches the five weekly-trend readings fresh, and
+    takes scenario_probs as an explicit argument (still §8-sourced — whatever
+    advisor_apply_scoring returned earlier in the same MCP session, never
+    independently recomputed), passing all four straight through here. The
+    @srv.tool()-registered advisor_evaluate_trend_signal below never passes
+    these; cache lookup remains the normal live-session path. Same
+    one-tested-implementation-two-entry-points pattern as
+    _tool_evaluate_allocation. The TrendSignalStore.json update runs on both
+    paths — the CLI fallback exists precisely so the shadow-mode trial still
+    accumulates its per-session data when the MCP transport hangs (ENG-33's
+    fourth confirmed occurrence, 2026-07-08).
+    """
+    cal = cal if cal is not None else _cache.get("cal")
+    probs = probs if probs is not None else _cache.get("scenario_probs")
+    log = log if log is not None else _cache.get("log")
+    readings_list = readings if readings is not None else _cache.get("readings", [])
     if cal is None:
         return _err("No calibration state cached. Call advisor_run_computation first.")
     if probs is None:
@@ -1229,7 +1257,14 @@ def _tool_evaluate_trend_signal() -> str:
     dominant_directives: Dict[str, Optional[str]] = {}
     for ticker in held_tickers:
         try:
-            dominant_directives[ticker] = dominant_directive(ticker, dominant_scenario, DIRECTIVES, cal)
+            raw_directive = dominant_directive(ticker, dominant_scenario, DIRECTIVES, cal)
+            # dominant_directive() returns either a DirectiveCode enum member
+            # or a plain str depending on path (ENG-36's history). Normalize
+            # to str here — a raw enum is not JSON serializable and silently
+            # killed the entire TrendSignalStore update (caught by the ENG-33
+            # CLI fallback's tests, 2026-07-08). getattr covers all three
+            # cases: enum → .value, str → itself, None → None.
+            dominant_directives[ticker] = getattr(raw_directive, "value", raw_directive)
         except Exception as e:
             dominant_directives[ticker] = None
             result["flags"].append(f"⚠ {ticker}: dominantDirective failed — {e}")

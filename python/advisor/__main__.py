@@ -46,6 +46,29 @@ Commands (ENG-33 fallback):
                         ("tickers" and "proposed_allocations" are optional —
                         same semantics as the MCP tool.) Prints the same
                         JSON shape that tool returns.
+
+  evaluate-trend-signal --json-file <path>
+                        Run the same ENG-50/ENG-55 trend/rotation signal
+                        computation as the advisor_evaluate_trend_signal MCP
+                        tool, entirely in-process — no MCP transport involved.
+                        Use this when that tool hangs (ENG-33's client-side
+                        transport symptom, fourth tool confirmed 2026-07-08 —
+                        see FRAMEWORK_BACKLOG.md). Reads Calibration_State.md,
+                        Instrument_Classification.md, and Session_Log.md fresh;
+                        fetches the five weekly-trend confirmation series
+                        fresh (each degrades gracefully on failure); updates
+                        TrendSignalStore.json exactly like the MCP tool so the
+                        shadow-mode trial's per-session data still accumulates.
+                        Input is a JSON file (or stdin if --json-file is
+                        omitted) shaped like:
+                          {
+                            "scenario_probs": {"A": 8.39, "B": 50.34,
+                              "C": 25.17, "D": 2.95, "E": 8.39, "F": 4.76}
+                          }
+                        scenario_probs is required and must be exactly what
+                        advisor_apply_scoring returned this session (§8 stays
+                        authoritative — never recompute independently). Prints
+                        the same JSON shape that tool returns.
 """
 from __future__ import annotations
 
@@ -314,6 +337,102 @@ def cmd_evaluate_allocation() -> None:
     ))
 
 
+def cmd_evaluate_trend_signal() -> None:
+    """
+    ENG-33 fallback for advisor_evaluate_trend_signal (fourth tool confirmed
+    showing the client-side transport hang, 2026-07-08 — see FRAMEWORK_BACKLOG.md
+    ENG-33). See module docstring for the input shape. Reads JSON from
+    --json-file <path> if given, else stdin.
+
+    Reconstructs everything the MCP tool normally reads from the session
+    cache: Calibration_State.md + Instrument_Classification.md +
+    Session_Log.md parsed fresh from disk, and the five weekly-trend
+    readings (DXY_TREND, BRENT_TREND, GOLD_TREND, SP500_TREND,
+    REAL_YIELD_10Y_TREND) fetched fresh — each degrades to a flagged
+    reading on failure, same as in a live session, so a partial fetch
+    still produces per-instrument INCONCLUSIVE reads rather than aborting.
+    scenario_probs is the one input that cannot be reconstructed here:
+    pass exactly what advisor_apply_scoring returned this session (§8
+    stays authoritative, never recompute).
+
+    The TrendSignalStore.json update runs on this path too — that is the
+    point: the shadow-mode trial keeps accumulating per-session data even
+    when the MCP transport hangs.
+    """
+    if "--json-file" in sys.argv:
+        idx = sys.argv.index("--json-file")
+        try:
+            raw = Path(sys.argv[idx + 1]).read_text()
+        except IndexError:
+            print("ERROR: --json-file requires a path argument", file=sys.stderr)
+            sys.exit(1)
+    else:
+        raw = sys.stdin.read()
+
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as e:
+        print(f"ERROR: invalid JSON input: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    sp = payload.get("scenario_probs")
+    if not sp:
+        print(
+            "ERROR: scenario_probs is required — this CLI has no live MCP "
+            "session to read it from. Pass exactly what advisor_apply_scoring "
+            "returned earlier this session (§8 stays authoritative; do not "
+            "recompute independently).",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    from .config import parse_calibration_state, parse_session_log
+    from .data.file_protocol import (
+        read_calibration_state,
+        read_instrument_classification,
+        read_session_log,
+    )
+    from .mcp_server import _tool_evaluate_trend_signal
+    from .types import ScenarioProbabilities
+
+    try:
+        cal = parse_calibration_state(read_calibration_state(), read_instrument_classification())
+    except Exception as e:
+        print(f"ERROR: could not load Calibration_State.md: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        log = parse_session_log(read_session_log())
+    except Exception as e:
+        # log feeds only MLPX's HY-OAS confirm leg — degrade, don't abort,
+        # matching the MCP tool's own behavior when log is None.
+        print(f"WARNING: could not load Session_Log.md ({e}) — "
+              f"MLPX HY-OAS confirmation leg will be unavailable", file=sys.stderr)
+        log = None
+
+    try:
+        probs = ScenarioProbabilities(
+            A=sp["A"], B=sp["B"], C=sp["C"], D=sp["D"], E=sp["E"], F=sp["F"],
+        )
+    except (KeyError, ValueError, TypeError) as e:
+        print(f"ERROR: scenario_probs invalid: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Fetch the five Mode-2 confirmation trend series fresh — in a live
+    # session these come from advisor_run_computation()'s fetch_all() cache.
+    # fetch_one() never raises (failures become flagged readings), and the
+    # tool itself degrades per-instrument to INCONCLUSIVE on missing series.
+    registry = _build_registry()
+    readings = []
+    for spec_id in ("DXY_TREND", "BRENT_TREND", "GOLD_TREND",
+                    "SP500_TREND", "REAL_YIELD_10Y_TREND"):
+        readings.extend(registry.fetch_one(spec_id))
+
+    print(_tool_evaluate_trend_signal(
+        cal=cal, probs=probs, log=log, readings=readings,
+    ))
+
+
 def main() -> None:
     args = sys.argv[1:]
     if not args:
@@ -336,6 +455,7 @@ def main() -> None:
         "session":            cmd_session,
         "validate":           cmd_validate,
         "evaluate-allocation": cmd_evaluate_allocation,
+        "evaluate-trend-signal": cmd_evaluate_trend_signal,
     }
 
     fn = dispatch.get(cmd) or dispatch.get(args[0])

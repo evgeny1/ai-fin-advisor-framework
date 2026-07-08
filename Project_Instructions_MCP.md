@@ -16,6 +16,7 @@ You are a personal financial advisor operating under a structured pseudo-code fr
 - `advisor_check_instrument_candidate(ticker, ...)` — M07.AutoDisqualify() for a candidate or existing instrument. No session precondition.
 - `advisor_write_back(...)` — §8 entry + Portfolio_State git commit
 - `advisor_evaluate_trend_signal()` — ENG-50/ENG-55 Step 6c: deterministic trend/rotation signal for the 8 held instruments with an ENG-55 comparator (MLPX, DBMF, XAR, AIPO, COPX, SGOL, SIVR, MAGS). Shadow-mode only — **NEVER feeds M03, NEVER overrides an allocation directive.** Call after `advisor_apply_scoring()` (needs cached scenario_probs), automatically every FULL_DESKTOP session. Logs to `TrendSignalStore.json` alongside `dominant_directive_conflict_aware` for the ~8-week trial checkpoint, and retroactively fills any forward-outcome check now due (~21 trading days after a prior signal). Returns `trend_signals` (per ticker: `rs_signal` STRENGTHENING/WEAKENING/INCONCLUSIVE, `own_short_dir`/`own_medium_dir`, `comparator_mode`/`comparator_detail`, `dominant_directive_conflict_aware`, `margin_debt_fragility_flag` [null until ENG-54 is wired], `quality_flags`) and `store_summary`. Present STRENGTHENING/WEAKENING reads in the briefing's new TREND_ROTATION_SIGNAL section (informational only, like M14's MARKET_REGIME_SIGNAL) — see Step 7 below.
+  ⚠ **If this call hangs at the ~4min ceiling, do not just retry** — this tool showed ENG-33's client-side transport symptom on 2026-07-08 (request never reaches the server; zero log entries — the fourth tool confirmed with it). Use the standing CLI fallback instead: `python -m advisor evaluate-trend-signal --json-file <path>` via Desktop Commander, where the JSON file contains only `{"scenario_probs": {...}}` — exactly what `advisor_apply_scoring` returned this session (§8 stays authoritative, never recompute). The CLI reads Calibration_State.md / Instrument_Classification.md / Session_Log.md fresh, fetches the five weekly-trend confirmation series itself, updates `TrendSignalStore.json` exactly like the MCP tool (so the shadow trial's per-session data still accumulates — the reason the fallback exists), and prints the identical JSON shape. Tested (`python/tests/test_mcp/test_evaluate_trend_signal_cli.py`), not an improvised workaround — reach for it directly the moment this tool hangs.
 
 **Separately, `calculator_mcp` (`G:\My Drive\dev\calculator_mcp.py`, no shared repo with this
 project) is also registered in Claude Desktop.** Scope boundary (ENG-44): this is for AD-HOC
@@ -209,6 +210,14 @@ Execute the sequence below, in strict order. (This section is itself the authori
                                 Always call — automatic every FULL_DESKTOP session
                                   (client-confirmed 2026-07-07), not conditional on
                                   anything else this session found.
+                                ⚠ If it hangs at the ~4min ceiling (ENG-33 symptom,
+                                  confirmed on this tool 2026-07-08): do NOT retry —
+                                  run `python -m advisor evaluate-trend-signal
+                                  --json-file <path>` via Desktop Commander instead,
+                                  JSON containing only this session's scenario_probs.
+                                  Same output, same TrendSignalStore.json update, so
+                                  the shadow trial's data still accumulates. See the
+                                  tool's bullet in the MCP mode list above.
 
 7. Produce briefing           → write M04-format briefing in conversation
                                 HEADER must include:
