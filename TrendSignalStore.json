@@ -1,0 +1,127 @@
+{
+  "AIPO": {
+    "2026-07-08": {
+      "comparator_detail": "0.671xPAVE+0.195xQQQM+0.134xURA (renormalized, PDT+UNCLASSIFIED excluded)",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "+6.28pp",
+      "own_short_dir": "-4.29pp",
+      "price_at_signal": 30.58,
+      "quality_flags": [],
+      "rs_signal": "INCONCLUSIVE"
+    }
+  },
+  "COPX": {
+    "2026-07-08": {
+      "comparator_detail": "0.75xHG=F+0.25xVEA",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "-11.92pp",
+      "own_short_dir": "-15.13pp",
+      "price_at_signal": 74.63,
+      "quality_flags": [],
+      "rs_signal": "WEAKENING"
+    }
+  },
+  "DBMF": {
+    "2026-07-08": {
+      "comparator_detail": "own-trend confirmed by DXY direction + 4-market breadth (>=3/4 trending)",
+      "comparator_mode": "own_trend_confirmed",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": null,
+      "price_at_signal": 30.68,
+      "quality_flags": [
+        "DBMF: own_short or DXY_TREND unavailable \u2014 breadth check skipped",
+        "DBMF: macro confirmation input unavailable this session"
+      ],
+      "rs_signal": "INCONCLUSIVE"
+    }
+  },
+  "MAGS": {
+    "2026-07-08": {
+      "comparator_detail": "QQQM",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "-7.24pp",
+      "own_short_dir": "-0.08pp",
+      "price_at_signal": 66.24,
+      "quality_flags": [],
+      "rs_signal": "INCONCLUSIVE"
+    }
+  },
+  "MLPX": {
+    "2026-07-08": {
+      "comparator_detail": "BZ=F return-spread, HY_OAS confirmation gate",
+      "comparator_mode": "hybrid",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "+35.96pp",
+      "own_short_dir": "+23.08pp",
+      "price_at_signal": 75.15,
+      "quality_flags": [
+        "MLPX: HY_OAS confirmation approximated from Session_Log.md \u00a77 session cadence, not a true fixed-trading-day lookback \u2014 known v1 simplification",
+        "ENG-54 not yet wired \u2014 margin_debt_fragility_flag unavailable this session"
+      ],
+      "rs_signal": "STRENGTHENING"
+    }
+  },
+  "SGOL": {
+    "2026-07-08": {
+      "comparator_detail": "own-trend confirmed by REAL_YIELD_10Y_TREND + DXY agreement gate",
+      "comparator_mode": "own_trend_confirmed",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": "down",
+      "price_at_signal": 39.18,
+      "quality_flags": [
+        "SGOL: real-yield/DXY agreement gate unavailable this session",
+        "SGOL: macro confirmation input unavailable this session"
+      ],
+      "rs_signal": "INCONCLUSIVE"
+    }
+  },
+  "SIVR": {
+    "2026-07-08": {
+      "comparator_detail": "own-trend confirmed by REAL_YIELD_10Y_TREND + DXY agreement gate (v1 simplification, same as SGOL)",
+      "comparator_mode": "own_trend_confirmed",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": "down",
+      "price_at_signal": 57.27,
+      "quality_flags": [
+        "SIVR: real-yield/DXY agreement gate unavailable this session",
+        "SIVR: macro confirmation input unavailable this session"
+      ],
+      "rs_signal": "INCONCLUSIVE"
+    }
+  },
+  "XAR": {
+    "2026-07-08": {
+      "comparator_detail": "0.5xITA+0.5xPPA",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "-0.89pp",
+      "own_short_dir": "-5.06pp",
+      "price_at_signal": 279.33,
+      "quality_flags": [],
+      "rs_signal": "INCONCLUSIVE"
+    }
+  },
+  "last_updated": "2026-07-08"
+}
