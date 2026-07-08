@@ -331,6 +331,16 @@ success from the timeout racing a known-good completion window — this
 session is proof those are two genuinely different failure modes needing
 one shared diagnostic, not one shared assumption.
 
+**Recurrence (2026-07-08):** same exact pattern, fourth-ish occurrence —
+`advisor_write_back()` hit the ~4min ceiling; `git log` showed no new
+commit; `git status`/`git diff` confirmed `Session_Log.md` and
+`Portfolio_State.md` were both rendered completely and correctly (§8 entry
+well-formed, scenario_probabilities summed to 100%, no truncation).
+Recovered the same way: `git add` both files + `git commit -F` + `git push`
+by hand. Still no instrumentation added — the suggested next step above
+remains the actual fix; this is just another data point that it's a
+recurring, not one-off, failure mode.
+
 ### ENG-50 — V4: Trend/Rotation Signal Layer (design + shadow-mode trial)
 <!-- ITEM
 Status:    OPEN
