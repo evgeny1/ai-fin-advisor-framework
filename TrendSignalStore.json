@@ -41,7 +41,7 @@
         "DBMF: own_short or DXY_TREND unavailable \u2014 breadth check skipped",
         "DBMF: macro confirmation input unavailable this session"
       ],
-      "rs_signal": "INCONCLUSIVE"
+      "rs_signal": "DATA_UNAVAILABLE"
     }
   },
   "MAGS": {
@@ -89,7 +89,7 @@
         "SGOL: real-yield/DXY agreement gate unavailable this session",
         "SGOL: macro confirmation input unavailable this session"
       ],
-      "rs_signal": "INCONCLUSIVE"
+      "rs_signal": "DATA_UNAVAILABLE"
     }
   },
   "SIVR": {
@@ -106,7 +106,7 @@
         "SIVR: real-yield/DXY agreement gate unavailable this session",
         "SIVR: macro confirmation input unavailable this session"
       ],
-      "rs_signal": "INCONCLUSIVE"
+      "rs_signal": "DATA_UNAVAILABLE"
     }
   },
   "XAR": {

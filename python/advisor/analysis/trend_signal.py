@@ -19,8 +19,9 @@ onto both (ENG-55 finding, client-confirmed 2026-07-07):
   by DBMF (breadth) and SGOL/SIVR (real-yield+DXY agreement).
 
   MLPX is a hybrid: Mode 1 vs Brent (BZ=F), gated by a Mode-2-style HY OAS
-  confirmation (credit tightening confirms, widening downgrades to
-  INCONCLUSIVE regardless of the Brent spread read).
+  confirmation (credit tightening confirms; widening downgrades a real
+  directional call to INCONCLUSIVE; the confirmation input itself being
+  unavailable downgrades to DATA_UNAVAILABLE instead — ENG-60).
 
 Lookback window (client-confirmed 2026-07-07): blended ~21 trading days
 (~1mo) + ~63 trading days (~1qtr), both windows' sign must agree or the
@@ -194,7 +195,8 @@ def evaluate_return_spread(
 
     if None in (rs_short, rs_medium, cs_short, cs_medium):
         flags.append(f"{ticker}: insufficient history for Mode 1 return-spread windows")
-        return TrendSignalCode.INCONCLUSIVE, None, None, flags
+        # ENG-60: missing input, not a computed non-result -- DATA_UNAVAILABLE.
+        return TrendSignalCode.DATA_UNAVAILABLE, None, None, flags
 
     spread_short = rs_short - cs_short
     spread_medium = rs_medium - cs_medium
@@ -227,13 +229,24 @@ def evaluate_own_trend_confirmed(
     flags: List[str] = []
     if len(instrument_closes) < MEDIUM_WINDOW_DAYS + 1:
         flags.append(f"{ticker}: insufficient own-price history for Mode 2 windows")
-        return TrendSignalCode.INCONCLUSIVE, None, None, flags
+        # ENG-60: no own-price basis to compute anything -- DATA_UNAVAILABLE.
+        return TrendSignalCode.DATA_UNAVAILABLE, None, None, flags
 
     own_short = directional_trend(instrument_closes[-(SHORT_WINDOW_DAYS + 1):], NOISE_FLOOR_PCT)
     own_medium = directional_trend(instrument_closes[-(MEDIUM_WINDOW_DAYS + 1):], NOISE_FLOOR_PCT)
 
     if macro_confirms is None:
+        # ENG-60: the confirmation gate itself never resolved -- own_short/
+        # own_medium may well agree here, but STRENGTHENING/WEAKENING would
+        # be a claim this function has no basis to make without knowing
+        # whether the gate confirms or disconfirms. Distinct from the case
+        # below where the gate genuinely ran and said no (or the own-trend
+        # windows themselves disagree) -- that's a real INCONCLUSIVE, not
+        # a missing input. Report DATA_UNAVAILABLE regardless of own_short/
+        # own_medium's agreement; own_short/own_medium are still returned
+        # for informational display.
         flags.append(f"{ticker}: macro confirmation input unavailable this session")
+        return TrendSignalCode.DATA_UNAVAILABLE, own_short, own_medium, flags
 
     if own_short is not None and own_short == own_medium and macro_confirms:
         code = TrendSignalCode.STRENGTHENING if own_short == "up" else TrendSignalCode.WEAKENING
@@ -282,7 +295,10 @@ def _dbmf_macro_confirms(
 def _mlpx_hy_oas_confirms(hy_oas_readings: List[Tuple[str, Optional[int]]]) -> Tuple[Optional[bool], List[str]]:
     """
     Tightening (lower now than ~21 trading days ago) confirms; widening
-    downgrades to INCONCLUSIVE regardless of the Brent spread read.
+    downgrades a real directional Brent-spread call to INCONCLUSIVE. The
+    caller (evaluate_all_trend_signals) downgrades to DATA_UNAVAILABLE
+    instead when this function itself returns None (ENG-60) — that
+    distinction is applied by the caller, not here.
 
     hy_oas_readings: chronological (date, hy_oas_bps) pairs from
     Session_Log.md §7 — approximated by comparing the two readings
@@ -352,9 +368,10 @@ def evaluate_all_trend_signals(
         flags: List[str] = []
 
         if own_closes is None:
+            # ENG-60: no own-price basis at all -- DATA_UNAVAILABLE, not INCONCLUSIVE.
             out.append(TrendSignalReading(
                 ticker=ticker, session_date=today,
-                rs_signal=TrendSignalCode.INCONCLUSIVE,
+                rs_signal=TrendSignalCode.DATA_UNAVAILABLE,
                 own_short_dir=None, own_medium_dir=None,
                 comparator_mode=mode, comparator_detail=cfg["comparator_detail"],
                 price_at_signal=None,
@@ -369,7 +386,8 @@ def evaluate_all_trend_signals(
                 daily_histories, cfg["comparator_symbols"], cfg["comparator_weights"]
             )
             if comparator_closes is None:
-                code, d1, d2 = TrendSignalCode.INCONCLUSIVE, None, None
+                # ENG-60: missing input, not a computed non-result.
+                code, d1, d2 = TrendSignalCode.DATA_UNAVAILABLE, None, None
                 flags.append(f"{ticker}: comparator history unavailable this session")
             else:
                 code, d1, d2, spread_flags = evaluate_return_spread(ticker, own_closes, comparator_closes)
@@ -381,16 +399,36 @@ def evaluate_all_trend_signals(
                 daily_histories, cfg["comparator_symbols"], cfg["comparator_weights"]
             )
             if comparator_closes is None:
-                code, d1, d2 = TrendSignalCode.INCONCLUSIVE, None, None
+                # ENG-60: missing input, not a computed non-result.
+                code, d1, d2 = TrendSignalCode.DATA_UNAVAILABLE, None, None
                 flags.append(f"{ticker}: Brent comparator history unavailable this session")
             else:
                 code, d1, d2, spread_flags = evaluate_return_spread(ticker, own_closes, comparator_closes)
                 flags.extend(spread_flags)
                 hy_confirms, hy_flags = _mlpx_hy_oas_confirms(hy_oas_session_history)
                 flags.extend(hy_flags)
-                if code != TrendSignalCode.INCONCLUSIVE and hy_confirms is False:
-                    flags.append("MLPX: HY_OAS widening — downgraded to INCONCLUSIVE per confirmation gate")
-                    code = TrendSignalCode.INCONCLUSIVE
+                # ENG-60: the confirmation gate only vets a REAL directional
+                # call from the Brent spread -- if the spread itself already
+                # came back INCONCLUSIVE or DATA_UNAVAILABLE, there's no call
+                # to vet, and hy_confirms must not override that. Previously
+                # this only special-cased hy_confirms is False, which meant
+                # hy_confirms is None (gate itself unavailable) silently fell
+                # through with no downgrade at all, letting an unconfirmed
+                # STRENGTHENING/WEAKENING call pass straight through -- and
+                # separately, `code != INCONCLUSIVE` would have wrongly
+                # clobbered a DATA_UNAVAILABLE code (insufficient windows)
+                # down to INCONCLUSIVE on hy_confirms is False. Both fixed by
+                # gating explicitly on code being a real directional call.
+                if code in (TrendSignalCode.STRENGTHENING, TrendSignalCode.WEAKENING):
+                    if hy_confirms is None:
+                        flags.append(
+                            "MLPX: HY_OAS confirmation input unavailable — "
+                            "downgraded to DATA_UNAVAILABLE per confirmation gate"
+                        )
+                        code = TrendSignalCode.DATA_UNAVAILABLE
+                    elif hy_confirms is False:
+                        flags.append("MLPX: HY_OAS widening — downgraded to INCONCLUSIVE per confirmation gate")
+                        code = TrendSignalCode.INCONCLUSIVE
 
         elif mode == ComparatorMode.OWN_TREND_CONFIRMED:
             if ticker == "DBMF":

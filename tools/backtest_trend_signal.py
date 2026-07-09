@@ -154,7 +154,8 @@ def fetch_all_history(lookback_days: int) -> Dict[str, object]:
     hy_oas_raw = fetch_history_with_dates("BAMLH0A0HYM2", days=lookback_days + 20)
     if not dgs10 or not t10yie:
         print("  WARNING: FRED_API_KEY missing or DGS10/T10YIE empty -- "
-              "SGOL/SIVR real-yield confirmation will degrade to INCONCLUSIVE")
+              "SGOL/SIVR real-yield confirmation will degrade to DATA_UNAVAILABLE "
+              "(ENG-60: missing input, not a computed non-result)")
     if not hy_oas_raw:
         print("  WARNING: HY OAS series empty -- MLPX confirmation gate unavailable")
 
@@ -240,30 +241,47 @@ def run_backtest(lookback_days: int) -> Dict[str, list]:
 
 
 def print_report(results: Dict[str, list]) -> None:
-    print("\n" + "=" * 72)
+    """
+    ENG-60 (2026-07-08): "inconclusive" and "data_unavailable" are now
+    reported as separate columns, not one combined bucket. Before this
+    fix, both a genuinely-computed no-signal and a never-had-enough-data
+    read collapsed into the same "inconclusive" count -- exactly the
+    ambiguity that made the earlier read here ("DBMF/SGOL/SIVR 0 calls,
+    100% INCONCLUSIVE across all 15 windows each" -- see the ENG-55
+    backtest note) impossible to interpret: was the signal design bad for
+    those tickers, or was the data pipeline just missing an input for the
+    whole backtest window? The per-window "signal" string was already
+    being recorded (sig.rs_signal.value) -- this only had to change how
+    the two non-call buckets are aggregated for display.
+    """
+    print("\n" + "=" * 88)
     print("ENG-50/ENG-55 TREND SIGNAL -- HISTORICAL BACKTEST")
     print("(early read against current thresholds -- NOT a substitute for")
     print(" the live shadow-mode trial; see module docstring for limits)")
-    print("=" * 72)
-    total_calls = total_matched = total_inconclusive = 0
+    print("=" * 88)
+    total_calls = total_matched = total_inconclusive = total_data_unavailable = 0
     for ticker, windows in results.items():
         n_windows = len(windows)
         calls = [w for w in windows if w["matched"] is not None]
         matched = [w for w in calls if w["matched"]]
-        inconclusive = n_windows - len(calls)
+        inconclusive = len([w for w in windows if w["matched"] is None and w["signal"] == "INCONCLUSIVE"])
+        data_unavailable = len([w for w in windows if w["matched"] is None and w["signal"] == "DATA_UNAVAILABLE"])
         hit_rate = (len(matched) / len(calls) * 100) if calls else None
         total_calls += len(calls)
         total_matched += len(matched)
         total_inconclusive += inconclusive
+        total_data_unavailable += data_unavailable
         hr_str = f"{hit_rate:.0f}%" if hit_rate is not None else "n/a"
         print(f"{ticker:6s}  windows={n_windows:3d}  calls={len(calls):3d}  "
-              f"hit_rate={hr_str:>5s}  inconclusive={inconclusive}")
+              f"hit_rate={hr_str:>5s}  inconclusive={inconclusive:3d}  "
+              f"data_unavailable={data_unavailable:3d}")
     overall = (total_matched / total_calls * 100) if total_calls else None
-    print("-" * 72)
+    print("-" * 88)
     overall_str = f"{overall:.0f}%" if overall is not None else "n/a"
     print(f"OVERALL  calls={total_calls}  matched={total_matched}  "
-          f"hit_rate={overall_str}  inconclusive={total_inconclusive}")
-    print("=" * 72)
+          f"hit_rate={overall_str}  inconclusive={total_inconclusive}  "
+          f"data_unavailable={total_data_unavailable}")
+    print("=" * 88)
 
 
 def main() -> None:

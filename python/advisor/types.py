@@ -728,10 +728,24 @@ class AutoDisqualifyResult:
 # M03.DeriveScenarioProbabilities() — same NEVER rule M14/M17 already follow.
 
 class TrendSignalCode(Enum):
-    """ENG-55 relative-strength/rotation read for one instrument this session."""
-    STRENGTHENING = "STRENGTHENING"
-    WEAKENING     = "WEAKENING"
-    INCONCLUSIVE  = "INCONCLUSIVE"
+    """ENG-55 relative-strength/rotation read for one instrument this session.
+
+    ENG-60 (2026-07-08): DATA_UNAVAILABLE is distinct from INCONCLUSIVE --
+    the computation never had enough input to run at all (missing
+    comparator/confirmation series, insufficient own-price history), vs.
+    INCONCLUSIVE meaning the computation ran to completion on real,
+    sufficient data and genuinely found no resolved direction (opposite-
+    sign windows, or a spread below NOISE_FLOOR_PCT). Both used to
+    collapse into INCONCLUSIVE, distinguishable only by checking whether
+    quality_flags happened to be empty -- implicit and easy to miss. The
+    8-week shadow trial's hit-rate analysis needs this distinction
+    explicit: "never had enough info to fire" implies a data-pipeline
+    gap; "looked and found nothing" is itself an informative result.
+    """
+    STRENGTHENING     = "STRENGTHENING"
+    WEAKENING         = "WEAKENING"
+    INCONCLUSIVE      = "INCONCLUSIVE"
+    DATA_UNAVAILABLE  = "DATA_UNAVAILABLE"
 
 
 class ComparatorMode(Enum):

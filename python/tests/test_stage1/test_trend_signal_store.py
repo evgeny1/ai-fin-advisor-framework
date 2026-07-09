@@ -163,6 +163,23 @@ class TestForwardOutcomeFill:
         assert outcome["matched_signal"] is None
         assert outcome["price_direction_since_signal"] == "up"  # still recorded, informational
 
+    def test_data_unavailable_signal_gets_null_matched_not_false(self, tmp_path):
+        """ENG-60: DATA_UNAVAILABLE (like INCONCLUSIVE) made no directional
+        call — matched_signal must be null here too. The fill logic's
+        branching is on "STRENGTHENING"/"WEAKENING" explicitly with an else
+        clause, so this needs no code change, but is worth a dedicated
+        regression test now that a 4th rs_signal value exists."""
+        old_date = (datetime.date.today() - datetime.timedelta(days=30)).isoformat()
+        self._seed(tmp_path, "MLPX", old_date, "DATA_UNAVAILABLE", 78.42)
+
+        with patch.object(m, "_commit"):
+            m.update_trend_signal_store([], {"MLPX": 85.00})
+
+        stored = json.loads((tmp_path / m.STORE_FILENAME).read_text(encoding="utf-8"))
+        outcome = stored["MLPX"][old_date]["forward_outcome"]
+        assert outcome["matched_signal"] is None
+        assert outcome["price_direction_since_signal"] == "up"  # still recorded, informational
+
     def test_missing_current_price_records_error_not_exception(self, tmp_path):
         old_date = (datetime.date.today() - datetime.timedelta(days=30)).isoformat()
         self._seed(tmp_path, "MLPX", old_date, "STRENGTHENING", 78.42)

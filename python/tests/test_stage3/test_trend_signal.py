@@ -92,10 +92,18 @@ class TestEvaluateReturnSpread:
     def test_inconclusive_when_short_and_medium_windows_disagree_in_sign(self):
         # Net decline over the full 64-day window, but the trailing 21 days
         # show a rebound of the opposite sign -- short/medium sign mismatch.
-        instrument = _linear(150, 90, 43) + _linear(90, 100, 21)[1:]
+        # ENG-60 discovery: this fixture was previously 43+20=63 points --
+        # one short of the 64 evaluate_return_spread's MEDIUM_WINDOW_DAYS=63
+        # actually needs (len >= window_days+1). It was silently landing in
+        # the insufficient-history branch instead of the intended "windows
+        # computed and disagree" path -- invisible before ENG-60 because
+        # both branches returned INCONCLUSIVE. Fixed to 44+20=64 points so
+        # this test actually exercises what its name and comment describe.
+        instrument = _linear(150, 90, 44) + _linear(90, 100, 21)[1:]
         comparator = [100.0] * 64
         code, d1, d2, flags = m.evaluate_return_spread("XAR", instrument, comparator)
         assert code == TrendSignalCode.INCONCLUSIVE
+        assert flags == []  # a real computation ran -- no missing-input flag
 
     def test_inconclusive_when_spread_below_noise_floor(self):
         instrument = _linear(100, 100.5, 64)  # ~0.5% move, below NOISE_FLOOR_PCT
@@ -103,9 +111,11 @@ class TestEvaluateReturnSpread:
         code, d1, d2, flags = m.evaluate_return_spread("MAGS", instrument, comparator)
         assert code == TrendSignalCode.INCONCLUSIVE
 
-    def test_inconclusive_with_flag_on_insufficient_history(self):
+    def test_data_unavailable_with_flag_on_insufficient_history(self):
+        """ENG-60: missing input (not enough history to even compute a
+        spread) is DATA_UNAVAILABLE, distinct from a computed INCONCLUSIVE."""
         code, d1, d2, flags = m.evaluate_return_spread("MAGS", [100.0, 101.0], [100.0, 100.5])
-        assert code == TrendSignalCode.INCONCLUSIVE
+        assert code == TrendSignalCode.DATA_UNAVAILABLE
         assert any("insufficient history" in f for f in flags)
 
 
@@ -123,15 +133,21 @@ class TestEvaluateOwnTrendConfirmed:
         code, d1, d2, flags = m.evaluate_own_trend_confirmed("DBMF", instrument, macro_confirms=False)
         assert code == TrendSignalCode.INCONCLUSIVE
 
-    def test_inconclusive_with_flag_when_confirmation_input_unavailable(self):
+    def test_data_unavailable_with_flag_when_confirmation_input_unavailable(self):
+        """ENG-60: macro_confirms is None means the confirmation gate itself
+        never resolved — DATA_UNAVAILABLE, even though own_short/own_medium
+        (returned here) both agree ("up"). Distinct from a real disconfirm
+        (macro_confirms=False, covered below) which is a genuine INCONCLUSIVE."""
         instrument = _linear(100, 130, 64)
         code, d1, d2, flags = m.evaluate_own_trend_confirmed("SGOL", instrument, macro_confirms=None)
-        assert code == TrendSignalCode.INCONCLUSIVE
+        assert code == TrendSignalCode.DATA_UNAVAILABLE
+        assert d1 == "up" and d2 == "up"  # still populated for display
         assert any("confirmation input unavailable" in f for f in flags)
 
-    def test_inconclusive_on_insufficient_history(self):
+    def test_data_unavailable_on_insufficient_history(self):
+        """ENG-60: no own-price basis at all — DATA_UNAVAILABLE."""
         code, d1, d2, flags = m.evaluate_own_trend_confirmed("SGOL", [100.0, 101.0], macro_confirms=True)
-        assert code == TrendSignalCode.INCONCLUSIVE
+        assert code == TrendSignalCode.DATA_UNAVAILABLE
         assert any("insufficient own-price history" in f for f in flags)
 
 
@@ -213,16 +229,87 @@ class TestEvaluateAllTrendSignals:
         )
         assert signals[0].margin_debt_fragility_flag == "ELEVATED"
 
-    def test_missing_own_history_produces_inconclusive_reading_not_a_crash(self):
+    def test_missing_own_history_produces_data_unavailable_reading_not_a_crash(self):
+        """ENG-60: no own-price data at all is DATA_UNAVAILABLE, not INCONCLUSIVE."""
         signals = m.evaluate_all_trend_signals(
             held_tickers=["MAGS"], daily_histories={},
             weekly_trend_readings={}, hy_oas_session_history=[],
             dominant_directives={},
         )
         assert len(signals) == 1
-        assert signals[0].rs_signal == TrendSignalCode.INCONCLUSIVE
+        assert signals[0].rs_signal == TrendSignalCode.DATA_UNAVAILABLE
         assert signals[0].price_at_signal is None
         assert any("no own-price daily history" in f for f in signals[0].quality_flags)
+
+    def test_missing_comparator_history_produces_data_unavailable_return_spread(self):
+        """ENG-60: own price present, but the RETURN_SPREAD comparator basket
+        is missing — DATA_UNAVAILABLE, not INCONCLUSIVE (own price data alone
+        never lets evaluate_return_spread run)."""
+        signals = m.evaluate_all_trend_signals(
+            held_tickers=["MAGS"], daily_histories={"MAGS": _linear(100, 112.6, 64)},
+            weekly_trend_readings={}, hy_oas_session_history=[],
+            dominant_directives={},
+        )
+        assert len(signals) == 1
+        assert signals[0].rs_signal == TrendSignalCode.DATA_UNAVAILABLE
+        assert any("comparator history unavailable" in f for f in signals[0].quality_flags)
+
+    def test_missing_brent_comparator_produces_data_unavailable_hybrid(self):
+        """ENG-60: MLPX (HYBRID) with own price present but no Brent
+        comparator — DATA_UNAVAILABLE, same missing-input treatment as the
+        RETURN_SPREAD case above."""
+        signals = m.evaluate_all_trend_signals(
+            held_tickers=["MLPX"], daily_histories={"MLPX": _linear(100, 112.6, 64)},
+            weekly_trend_readings={}, hy_oas_session_history=[],
+            dominant_directives={},
+        )
+        assert len(signals) == 1
+        assert signals[0].rs_signal == TrendSignalCode.DATA_UNAVAILABLE
+        assert any("Brent comparator history unavailable" in f for f in signals[0].quality_flags)
+
+    def test_hybrid_downgrades_to_data_unavailable_when_hy_oas_confirmation_missing(self):
+        """ENG-60: MLPX's Brent spread finds a real STRENGTHENING call, but
+        the HY_OAS confirmation gate itself is unavailable (< 2 valid
+        readings) — the call must downgrade to DATA_UNAVAILABLE, not pass
+        through unconfirmed. Previously this case fell through with no
+        downgrade at all (only hy_confirms is False was handled)."""
+        histories = {"MLPX": _linear(100, 130, 64), "BZ=F": [100.0] * 64}
+        signals = m.evaluate_all_trend_signals(
+            held_tickers=["MLPX"], daily_histories=histories,
+            weekly_trend_readings={}, hy_oas_session_history=[],  # < 2 readings -> None
+            dominant_directives={},
+        )
+        assert len(signals) == 1
+        assert signals[0].rs_signal == TrendSignalCode.DATA_UNAVAILABLE
+        assert any("HY_OAS confirmation input unavailable" in f for f in signals[0].quality_flags)
+
+    def test_hybrid_downgrades_to_inconclusive_when_hy_oas_widens(self):
+        """A real STRENGTHENING call, genuinely disconfirmed (widening HY
+        OAS) — INCONCLUSIVE, not DATA_UNAVAILABLE, since the gate DID run."""
+        histories = {"MLPX": _linear(100, 130, 64), "BZ=F": [100.0] * 64}
+        signals = m.evaluate_all_trend_signals(
+            held_tickers=["MLPX"], daily_histories=histories,
+            weekly_trend_readings={},
+            hy_oas_session_history=[("2026-06-10", 290), ("2026-07-10", 320)],  # widening
+            dominant_directives={},
+        )
+        assert len(signals) == 1
+        assert signals[0].rs_signal == TrendSignalCode.INCONCLUSIVE
+        assert any("HY_OAS widening" in f for f in signals[0].quality_flags)
+
+    def test_hybrid_strengthening_confirmed_by_hy_oas_tightening(self):
+        """Sanity check the happy path still works after the gating rewrite:
+        a real STRENGTHENING call, confirmed by tightening HY OAS, stays
+        STRENGTHENING."""
+        histories = {"MLPX": _linear(100, 130, 64), "BZ=F": [100.0] * 64}
+        signals = m.evaluate_all_trend_signals(
+            held_tickers=["MLPX"], daily_histories=histories,
+            weekly_trend_readings={},
+            hy_oas_session_history=[("2026-06-10", 320), ("2026-07-10", 290)],  # tightening
+            dominant_directives={},
+        )
+        assert len(signals) == 1
+        assert signals[0].rs_signal == TrendSignalCode.STRENGTHENING
 
     def test_ticker_without_config_entry_silently_skipped(self):
         signals = m.evaluate_all_trend_signals(

@@ -68,7 +68,8 @@ next_session_flags:
 class _StubRegistry:
     """fetch_one() degrades to a flagged reading — same contract as the real
     FetchRegistry._safe_fetch() on failure; the tool must turn missing Mode-2
-    confirmation series into per-instrument INCONCLUSIVE, not crash."""
+    confirmation series into per-instrument DATA_UNAVAILABLE (ENG-60: missing
+    input, not a computed non-result), not crash."""
 
     def fetch_one(self, spec_id):
         return [DataReading(
@@ -109,9 +110,10 @@ def no_network(monkeypatch):
 def test_json_file_input_runs_end_to_end(tmp_path, isolated_framework,
                                          no_network, monkeypatch, capsys):
     """Real Calibration_State.md, --json-file input, no network — every
-    signal must degrade to INCONCLUSIVE with a quality_flag rather than
-    crash, and TrendSignalStore.json must be written on the CLI path too
-    (the shadow trial's data accumulation is the point of this fallback)."""
+    signal must degrade to DATA_UNAVAILABLE (ENG-60: missing input, not a
+    computed non-result) with a quality_flag rather than crash, and
+    TrendSignalStore.json must be written on the CLI path too (the shadow
+    trial's data accumulation is the point of this fallback)."""
     input_path = tmp_path / "input.json"
     input_path.write_text(json.dumps({"scenario_probs": _PROBS}))
 
@@ -125,8 +127,10 @@ def test_json_file_input_runs_end_to_end(tmp_path, isolated_framework,
     tickers = {s["ticker"] for s in out["trend_signals"]}
     assert tickers == {"MLPX", "DBMF", "XAR", "AIPO", "COPX", "SGOL", "SIVR", "MAGS"}
     for s in out["trend_signals"]:
-        assert s["rs_signal"] == "INCONCLUSIVE"
-        assert s["quality_flags"], f"{s['ticker']}: expected a flag explaining INCONCLUSIVE"
+        # ENG-60: no network at all means every ticker is missing its
+        # own-price basis -- DATA_UNAVAILABLE, not INCONCLUSIVE.
+        assert s["rs_signal"] == "DATA_UNAVAILABLE"
+        assert s["quality_flags"], f"{s['ticker']}: expected a flag explaining DATA_UNAVAILABLE"
 
     # The store update ran on the CLI path — the reason this fallback exists.
     assert (isolated_framework / "TrendSignalStore.json").exists()
@@ -242,9 +246,10 @@ def test_flagged_fetch_retries_once_and_recovers(isolated_framework, monkeypatch
 @skip_if_missing
 def test_genuinely_unavailable_fetch_still_degrades_after_retry(isolated_framework, monkeypatch, capsys):
     """A spec that fails BOTH the first attempt and the retry must still
-    degrade gracefully (per-instrument INCONCLUSIVE with a flag), not raise
-    -- the retry is one extra chance, not a guarantee, and must not mask a
-    genuinely unavailable series by hanging or erroring instead of degrading."""
+    degrade gracefully (per-instrument DATA_UNAVAILABLE with a flag -- ENG-60:
+    missing input, not a computed non-result), not raise -- the retry is one
+    extra chance, not a guarantee, and must not mask a genuinely unavailable
+    series by hanging or erroring instead of degrading."""
     monkeypatch.setattr(advisor_main, "_build_registry", lambda: _AlwaysFlakyRegistry())
     monkeypatch.setattr(sys, "argv", ["__main__.py", "evaluate-trend-signal"])
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"scenario_probs": _PROBS})))

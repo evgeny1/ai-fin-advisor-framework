@@ -352,7 +352,9 @@ def cmd_evaluate_trend_signal() -> None:
     readings (DXY_TREND, BRENT_TREND, GOLD_TREND, SP500_TREND,
     REAL_YIELD_10Y_TREND) fetched fresh — each degrades to a flagged
     reading on failure, same as in a live session, so a partial fetch
-    still produces per-instrument INCONCLUSIVE reads rather than aborting.
+    still produces per-instrument DATA_UNAVAILABLE reads (ENG-60: distinct
+    from INCONCLUSIVE — missing input, not a computed non-result) rather
+    than aborting.
     scenario_probs is the one input that cannot be reconstructed here:
     pass exactly what advisor_apply_scoring returned this session (§8
     stays authoritative, never recompute).
@@ -423,7 +425,8 @@ def cmd_evaluate_trend_signal() -> None:
     # Fetch the five Mode-2 confirmation trend series fresh — in a live
     # session these come from advisor_run_computation()'s fetch_all() cache.
     # fetch_one() never raises (failures become flagged readings), and the
-    # tool itself degrades per-instrument to INCONCLUSIVE on missing series.
+    # tool itself degrades per-instrument to DATA_UNAVAILABLE on missing
+    # series (ENG-60: distinct from INCONCLUSIVE).
     #
     # 2026-07-08: a live run showed DXY_TREND / REAL_YIELD_10Y_TREND
     # unavailable here (flagged, not crashed) while advisor_run_computation's

@@ -33,7 +33,36 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-08, advisory session (ENG-59 CLOSED — evaluate-trend-signal
+**Last updated:** 2026-07-08, coding session (ENG-60 CLOSED — resolved per the
+session hand-off's own recommendation: added a 4th `TrendSignalCode` value,
+`DATA_UNAVAILABLE`, distinct from `INCONCLUSIVE` [client-confirmed direction
+(a) over additive-field option (b)]. Touched: `evaluate_return_spread()`'s and
+`evaluate_own_trend_confirmed()`'s insufficient-history/missing-confirmation
+branches; `evaluate_all_trend_signals()`'s own-price-missing and both
+RETURN_SPREAD/HYBRID comparator-missing branches. Also fixed a related latent
+bug found while touching MLPX's HY_OAS gate: `hy_confirms is None` (gate
+itself unavailable) previously fell through with no downgrade at all, and
+separately `code != INCONCLUSIVE` could wrongly clobber an already-
+DATA_UNAVAILABLE code down to INCONCLUSIVE on `hy_confirms is False` — both
+fixed by gating explicitly on the code being a real STRENGTHENING/WEAKENING
+call before applying the confirmation veto. Backfilled today's 3 affected
+TrendSignalStore.json entries (DBMF/SGOL/SIVR: INCONCLUSIVE → DATA_UNAVAILABLE;
+AIPO/COPX/MAGS/MLPX/XAR unaffected — real computed reads) per Evgeny's
+explicit confirmation. Project_Instructions_MCP.md synced (tool bullet, Step
+7 TREND_ROTATION_SIGNAL guidance, NEVER-rules) per its own mandatory-sync
+rule. tools/backtest_trend_signal.py's print_report() now reports
+inconclusive/data_unavailable as separate columns — the actual intended
+consumer of this distinction per the hand-off's own framing. Discovered and
+fixed one unrelated pre-existing test bug in the same file: a 63-point
+fixture one short of the 64 evaluate_return_spread's medium window needs,
+silently landing in the insufficient-history branch instead of the
+"windows disagree" branch it claimed to test — invisible before this fix
+because both branches used to return the same value. 10 new tests
+(trend_signal.py wiring/gating, trend_signal_store.py's DATA_UNAVAILABLE
+forward-outcome fill). Full suite: 880 passed / 46 skipped / 0 failed —
+ENG-41's known live-data-dependent flake [see its own entry] not observed
+this run.)
+Prior: 2026-07-08, advisory session (ENG-59 CLOSED — evaluate-trend-signal
 CLI's own weekly-series fetch showed a one-off transient gap for DXY_TREND/
 REAL_YIELD_10Y_TREND; root cause not reproducible on direct re-test [3x
 clean], so added a single bounded retry as hardening rather than claim a
@@ -164,7 +193,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-57 | CLOSED | HIGH | functional-gap | V4: persistence + MCP wiring for the ENG-55 trend/rotation signal — new 6th MCP tool, TrendSignalStore.json, batched daily-history fetch |
 | ENG-58 | CLOSED | HIGH | bug | _fetch_single()'s unguarded URANIUM_SPOT/UX=F fetch could hold the global _YF_LOCK for ~4min, stalling every other yfinance spec in the same fetch_all() batch behind it |
 | ENG-59 | CLOSED | LOW | hardening | evaluate-trend-signal CLI's own weekly-series fetch showed a one-off transient gap; added single bounded retry (root cause not reproducible on direct re-test) |
-| ENG-60 | OPEN | MEDIUM | architecture | TrendSignalCode.INCONCLUSIVE conflates "inputs missing" with "inputs complete, no resolved direction" -- ambiguous for the 8-week trial's eventual hit-rate analysis; needs a dedicated session (touches the MCP tool's documented return contract) |
+| ENG-60 | CLOSED | MEDIUM | architecture | TrendSignalCode gained a 4th value, DATA_UNAVAILABLE, distinct from INCONCLUSIVE -- direction (a) from the hand-off, client-confirmed; backfilled today's 3 affected store entries; also fixed a related MLPX HY_OAS gating bug found in the same code |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -640,18 +669,22 @@ happened in the first place, since it could not be reproduced. If this
 recurs, capture the exact error via `ADVISOR_LOG_LEVEL=DEBUG` on a repeat
 occurrence before assuming the retry alone is sufficient long-term.
 
-### ENG-60 — TrendSignalCode.INCONCLUSIVE conflates two different situations
+### ENG-60 — TrendSignalCode.INCONCLUSIVE conflated two different situations
 <!-- ITEM
-Status:    OPEN
+Status:    CLOSED
 Severity:  MEDIUM
 Category:  architecture
 Opened:    2026-07-08
-Area:      python/advisor/analysis/trend_signal.py (TrendSignalCode,
-           evaluate_return_spread, evaluate_own_trend_confirmed),
+Closed:    2026-07-08
+Area:      python/advisor/types.py (TrendSignalCode),
+           python/advisor/analysis/trend_signal.py (evaluate_return_spread,
+           evaluate_own_trend_confirmed, evaluate_all_trend_signals),
            python/advisor/mcp_server.py (_tool_evaluate_trend_signal's
-           returned rs_signal field), Project_Instructions_MCP.md
-           (documents rs_signal as exactly STRENGTHENING/WEAKENING/
-           INCONCLUSIVE -- a real contract, not just internal detail)
+           docstring), python/advisor/__main__.py (cmd_evaluate_trend_signal
+           docstring/comments), tools/backtest_trend_signal.py (print_report),
+           Project_Instructions_MCP.md (tool bullet, Step 7
+           TREND_ROTATION_SIGNAL guidance, NEVER-rules), TrendSignalStore.json
+           (backfilled 2026-07-08 entries)
 Related:   ENG-50/ENG-55 (the trend signal layer this belongs to)
 -->
 
@@ -661,56 +694,113 @@ into the same `INCONCLUSIVE` value?
 
 1. **Inputs missing** -- a comparator series, macro confirmation gate, or
    own-price history was unavailable this session, so the tool has no
-   basis to compute a direction at all. (Observed this session: DBMF,
-   SGOL, SIVR -- each with an explicit quality_flag naming the missing
-   input.)
+   basis to compute a direction at all. (Observed 2026-07-08: DBMF, SGOL,
+   SIVR -- each with an explicit quality_flag naming the missing input.)
 2. **Inputs complete, no resolved direction** -- the computation ran in
    full, but either the short/medium-window spreads point in opposite
    directions, or one of them falls below the 2.0pp `NOISE_FLOOR_PCT`
    threshold. This is itself an informative result (e.g., "no sustained
-   divergence detected"), not a data problem. (Observed this session:
-   XAR, AIPO, MAGS -- all with empty quality_flags and real numeric
-   spread values.)
+   divergence detected"), not a data problem. (Observed 2026-07-08: XAR,
+   AIPO, MAGS -- all with empty quality_flags and real numeric spread
+   values.)
 
-Both currently produce the identical `rs_signal: "INCONCLUSIVE"`, with the
-only distinguishing signal being whether `quality_flags` happens to be
+Both used to produce the identical `rs_signal: "INCONCLUSIVE"`, with the
+only distinguishing signal being whether `quality_flags` happened to be
 empty -- an implicit, easy-to-miss distinction rather than an explicit one.
 
-**Why this matters specifically for this module:** the ~8-week shadow-mode
+**Why this mattered specifically for this module:** the ~8-week shadow-mode
 trial's entire purpose is to let real accumulated data determine whether
 the trend signal has predictive value and whether it should ever gain
 conflict-resolution authority over the EV engine (deliberately deferred,
 per ENG-50/Project_Instructions_MCP.md's own NEVER-rule). The trial's
 eventual hit-rate analysis (see the ENG-55 backtest note elsewhere in this
 file: "MLPX 5 calls/60% hit rate ... DBMF/SGOL/SIVR 0 calls (100%
-INCONCLUSIVE across all 15 windows each)") needs to distinguish "the
+INCONCLUSIVE across all 15 windows each)") needed to distinguish "the
 signal never had enough information to fire" from "the signal looked and
 genuinely found nothing" -- these have very different implications for
 whether the *signal design* is sound versus whether the *data pipeline*
-needs more work. Conflating them risks either conclusion being drawn on
+needs more work. Conflating them risked either conclusion being drawn on
 the wrong evidence.
 
-**Why this is a dedicated-session item, not a same-session fix:** `rs_signal`
-is a documented MCP tool return contract (`Project_Instructions_MCP.md`
-names exactly three values), so any change here needs to decide, with
-real judgment, between at least two directions:
-(a) add a fourth `TrendSignalCode` value (e.g., `DATA_UNAVAILABLE`)
-    distinct from `INCONCLUSIVE` -- cleaner, but changes the documented
-    contract and the `TrendSignalStore.json` schema mid-trial (only ~1
-    day of real data exists so far, so migration risk is low right now
-    but won't stay that way);
-(b) keep the 3-value enum as-is (no contract change) and add a separate
-    additive field (e.g., `data_complete: bool`) alongside `quality_flags`
-    so consumers can distinguish the two cases without touching the
-    existing taxonomy.
-Both are reasonable; picking one, updating `Project_Instructions_MCP.md`
-in the same change per its own mandatory-sync rule, and deciding whether/
-how to backfill today's one day of `TrendSignalStore.json` history are
-all real decisions this deserves its own session for, not a rushed
-addition alongside a live advisory session's write-back.
+**Decision (client-confirmed, coding session 2026-07-08):** direction (a)
+from the original hand-off -- a fourth `TrendSignalCode` value,
+`DATA_UNAVAILABLE`, distinct from `INCONCLUSIVE`, over option (b)'s
+additive `data_complete: bool` field. Backfill today's one day of
+`TrendSignalStore.json` history to match, rather than forward-only.
 
-**Suggested next step:** see the session hand-off produced alongside this
-entry for a concrete starting point.
+**Fix:**
+- `types.py`: added `TrendSignalCode.DATA_UNAVAILABLE`.
+- `trend_signal.py`: every branch that previously returned `INCONCLUSIVE`
+  for a *missing input* (rather than a computed non-result) now returns
+  `DATA_UNAVAILABLE` instead -- `evaluate_return_spread()`'s insufficient-
+  window-history branch; `evaluate_own_trend_confirmed()`'s insufficient-
+  own-price-history branch and its `macro_confirms is None` branch (own
+  trend agreement is irrelevant here -- the confirmation gate itself never
+  resolved, so no verdict is possible either way);
+  `evaluate_all_trend_signals()`'s no-own-price-history branch and both
+  RETURN_SPREAD/HYBRID comparator-missing branches. Genuine computed
+  non-results (opposite-sign windows, sub-noise-floor spreads, a real
+  `macro_confirms is False`) still correctly return `INCONCLUSIVE`
+  unchanged.
+- **Related bug found and fixed in the same code:** MLPX's (HYBRID mode)
+  HY_OAS confirmation gate previously only special-cased `hy_confirms is
+  False`. This meant `hy_confirms is None` (the gate itself unavailable --
+  fewer than 2 valid HY_OAS readings) fell through with *no* downgrade at
+  all, letting an unconfirmed STRENGTHENING/WEAKENING call from the Brent
+  spread pass straight through as if it had been vetted. Separately, the
+  old `code != INCONCLUSIVE` guard would have wrongly downgraded an
+  already-`DATA_UNAVAILABLE` code (from insufficient windows) to
+  `INCONCLUSIVE` on `hy_confirms is False`, implying a real computation
+  had run when it hadn't. Both fixed by gating explicitly on `code` being
+  a real `STRENGTHENING`/`WEAKENING` call before applying either
+  confirmation-gate outcome (`None` → `DATA_UNAVAILABLE`, `False` →
+  `INCONCLUSIVE`); an already-INCONCLUSIVE or DATA_UNAVAILABLE code from
+  the Brent spread itself is left untouched, since there's no directional
+  call to vet.
+- `mcp_server.py`, `__main__.py`: docstrings/comments updated to document
+  the 4th value and its meaning.
+- `tools/backtest_trend_signal.py`'s `print_report()`: now reports
+  `inconclusive` and `data_unavailable` as separate columns per ticker
+  (previously one combined "inconclusive" bucket) -- this is the actual
+  consumer this distinction exists for; the ENG-55 backtest note's "100%
+  INCONCLUSIVE" read for DBMF/SGOL/SIVR was exactly the ambiguity this
+  closes.
+- `Project_Instructions_MCP.md` synced per its own mandatory-sync rule:
+  the `advisor_evaluate_trend_signal` tool bullet, Step 7's
+  TREND_ROTATION_SIGNAL briefing guidance (present DATA_UNAVAILABLE and
+  INCONCLUSIVE reads as separate lines, not lumped together), and a new
+  NEVER-rule against collapsing the two back together in a briefing.
+- `TrendSignalStore.json`: backfilled the 3 affected 2026-07-08 entries
+  (DBMF, SGOL, SIVR: `INCONCLUSIVE` → `DATA_UNAVAILABLE`). AIPO, COPX,
+  MAGS, MLPX, XAR unaffected -- confirmed real computed reads, not missing
+  input.
+- **Unrelated pre-existing test bug discovered and fixed in the same
+  commit:** `test_inconclusive_when_short_and_medium_windows_disagree_in_sign`
+  built a 63-point fixture (`_linear(150,90,43) + _linear(90,100,21)[1:]`),
+  one point short of the 64
+  `evaluate_return_spread()`'s medium window (`MEDIUM_WINDOW_DAYS=63`)
+  actually needs (`len >= window_days+1`). It was silently landing in the
+  insufficient-history branch instead of the "windows computed and
+  disagree" branch its name and comment describe -- invisible before this
+  fix because both branches used to return the same `INCONCLUSIVE` value.
+  Fixed to a 64-point fixture (44+20) so it now exercises what it claims
+  to test; the ENG-60 fix is precisely what surfaced this, since the two
+  branches now diverge.
+
+**Verification:** 10 new tests across `test_stage3/test_trend_signal.py`
+(missing-input vs. computed-non-result wiring for both modes, the MLPX
+HY_OAS gating fix, the corrected 64-point fixture) and
+`test_stage1/test_trend_signal_store.py` (DATA_UNAVAILABLE's
+forward-outcome fill behaves identically to INCONCLUSIVE's -- no code
+change needed there, confirmed by a dedicated regression test). Full
+suite: 880 passed / 46 skipped / 0 failed. ENG-41's known live-data-
+dependent flake (see its own entry) was not observed this run.
+
+**Honesty note:** conflict-resolution authority (whether the trend signal
+ever overrides EV) remains deliberately deferred to the 8-week trial
+checkpoint, per ENG-50's own design -- this closes only the labeling
+ambiguity flagged in the hand-off, not anything about what the signal is
+allowed to do.
 
 ### ENG-56 — Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries
 <!-- ITEM

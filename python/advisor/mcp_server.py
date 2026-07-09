@@ -1580,10 +1580,14 @@ def build_server():
 
         Returns JSON with:
           trend_signals: per ticker — rs_signal (STRENGTHENING/WEAKENING/
-            INCONCLUSIVE), own_short_dir/own_medium_dir, comparator_mode/
-            comparator_detail, dominant_directive_conflict_aware,
-            margin_debt_fragility_flag (null until ENG-54 is wired),
-            quality_flags.
+            INCONCLUSIVE/DATA_UNAVAILABLE — ENG-60, 2026-07-08: added a
+            4th value distinct from INCONCLUSIVE; DATA_UNAVAILABLE means a
+            required input was missing so the computation never ran to a
+            real verdict, while INCONCLUSIVE means it ran on sufficient
+            data and genuinely found no resolved direction), own_short_dir/
+            own_medium_dir, comparator_mode/comparator_detail,
+            dominant_directive_conflict_aware, margin_debt_fragility_flag
+            (null until ENG-54 is wired), quality_flags.
           store_summary: entries_added, forward_outcomes_filled, committed.
 
         Requires advisor_run_computation() and advisor_apply_scoring() to

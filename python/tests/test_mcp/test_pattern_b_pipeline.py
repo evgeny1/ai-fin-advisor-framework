@@ -293,10 +293,11 @@ def test_trend_signal_completes_after_scoring(pipeline_dir, no_network):
     run_computation -> apply_scoring. no_network mocks yf.download globally
     (module-singleton, so this covers the new batched fetcher too) -- the 8
     held instruments get no own-price history, so every signal must degrade
-    to INCONCLUSIVE with an explicit quality_flag rather than crash. The
-    store's git commit also fails here (tmp_path isn't a git repo) and must
-    be caught, not raised — same contract data/trend_signal_store.py's own
-    tests already cover for that exact case.
+    to DATA_UNAVAILABLE (ENG-60: missing input, not a computed non-result)
+    with an explicit quality_flag rather than crash. The store's git commit
+    also fails here (tmp_path isn't a git repo) and must be caught, not
+    raised — same contract data/trend_signal_store.py's own tests already
+    cover for that exact case.
     """
     mcp_server._tool_run_computation()
     mcp_server._tool_apply_scoring(_make_stub_answers(mcp_server._cache))
@@ -308,11 +309,11 @@ def test_trend_signal_completes_after_scoring(pipeline_dir, no_network):
     tickers = {s["ticker"] for s in signals}
     assert tickers == {"MLPX", "DBMF", "XAR", "AIPO", "COPX", "SGOL", "SIVR", "MAGS"}
     for s in signals:
-        assert s["rs_signal"] == "INCONCLUSIVE"
-        assert s["quality_flags"], f"{s['ticker']}: expected a flag explaining INCONCLUSIVE"
+        assert s["rs_signal"] == "DATA_UNAVAILABLE"
+        assert s["quality_flags"], f"{s['ticker']}: expected a flag explaining DATA_UNAVAILABLE"
         # dominant_directive_conflict_aware doesn't depend on price data at
         # all (cal + dominant_scenario + DIRECTIVES only) -- must still
-        # populate even when every price-based signal is INCONCLUSIVE.
+        # populate even when every price-based signal is DATA_UNAVAILABLE.
         assert s["dominant_directive_conflict_aware"] is not None, (
             f"{s['ticker']}: dominant_directive_conflict_aware should populate "
             "independent of price data availability"
