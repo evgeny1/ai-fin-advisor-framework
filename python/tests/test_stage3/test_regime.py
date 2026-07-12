@@ -6,9 +6,21 @@ fallback. No file I/O, no network; all readings built inline via conftest helper
 """
 from __future__ import annotations
 
-from advisor.analysis.regime import compute_divergence_signal
+import dataclasses
+
+import pytest
+
+from advisor.analysis.regime import compute_divergence_signal, role_repricing_divergence
 from advisor.types import DivergenceLevel, DivergenceSignal
 from .conftest import make_history_reading, make_reading
+
+
+def _cal_with_role_repricing_thresholds(cal, thresholds):
+    """cal fixture's RegimeBlock has no §9.5 thresholds set (empty dict default)
+    -- override just that field via dataclasses.replace rather than editing the
+    shared fixture, so other tests' RegimeBlock stays untouched."""
+    new_regime = dataclasses.replace(cal.regime, role_repricing_thresholds=thresholds)
+    return dataclasses.replace(cal, regime=new_regime)
 
 
 def _brent_history(window_180_base: float, window_90_base: float, current: float) -> list:
@@ -140,3 +152,147 @@ class TestReturnType:
         assert sig.energy_90d_change is None
         assert sig.energy_180d_change is None
         assert sig.commodity_fear_divergence == DivergenceLevel.NONE
+
+
+class TestBroadEquityTrailingKeyExtraction:
+    """
+    Regression coverage for the RoleRepricingDivergence "always skipped" bug
+    (2026-07-12 session fix): fetch_broad_equity_trailing() in both
+    fmp_fetcher.py and yfinance_fetcher.py produces
+    value={"return_30d_pct": X, "return_90d_pct": Y, "current": Z} — a
+    percentage number, e.g. 2.56 == 2.56%. compute_divergence_signal() was
+    only checking for "change_30d"/"pct_30d"/"pct_change_30d", none of which
+    any fetcher has ever produced, so broad_equity_30d silently fell through
+    to a history-based fallback that also can't succeed for this reading
+    shape (no attached series) — broad_equity_30d was always None in
+    production, and RoleRepricingDivergence (mcp_server.py) always skipped
+    as a result. This is exactly the "write real fetcher shape, assert real
+    parsed value" case the round-trip-testing rule (README §8) exists for —
+    a hand-written fixture using the guessed key names would have kept
+    passing right through this bug.
+    """
+
+    def test_return_30d_pct_key_is_recognized_and_converted_to_fraction(self, cal):
+        reading = make_reading(
+            "BROAD_EQUITY_TRAILING",
+            {"return_30d_pct": 2.56, "return_90d_pct": 11.0, "current": 7575.39},
+        )
+        sig = compute_divergence_signal({"BROAD_EQUITY_TRAILING": reading}, cal)
+        assert sig.broad_equity_30d == pytest.approx(0.0256)
+
+    def test_negative_return_30d_pct(self, cal):
+        reading = make_reading(
+            "BROAD_EQUITY_TRAILING",
+            {"return_30d_pct": -5.0, "return_90d_pct": -8.0, "current": 7000.0},
+        )
+        sig = compute_divergence_signal({"BROAD_EQUITY_TRAILING": reading}, cal)
+        assert sig.broad_equity_30d == pytest.approx(-0.05)
+
+    def test_missing_broad_equity_trailing_still_flags_gracefully(self, cal):
+        sig = compute_divergence_signal({}, cal)
+        assert sig.broad_equity_30d is None
+        assert any("BROAD_EQUITY_TRAILING: unavailable" in f for f in sig.quality_flags)
+
+    def test_feeds_equity_scenario_divergence_when_directive_reductive(self, cal):
+        """End-to-end: a real-shaped reading should actually drive classification,
+        not just populate the field and stop there."""
+        reading = make_reading(
+            "BROAD_EQUITY_TRAILING",
+            {"return_30d_pct": 6.0, "return_90d_pct": 10.0, "current": 7600.0},
+        )
+        sig = compute_divergence_signal(
+            {"BROAD_EQUITY_TRAILING": reading},
+            cal,
+            equity_directive_for_dominant_scenario="REDUCE",
+        )
+        # 6% >= equity_div_HIGH_pct (5.0) -> HIGH
+        assert sig.equity_scenario_divergence == DivergenceLevel.HIGH
+
+
+class TestRoleRepricingDivergence:
+    """
+    role_repricing_divergence() (§9.5) had zero test coverage before this
+    session's fix — added alongside the compute_divergence_signal() fix
+    since both feed the same previously-always-skipped briefing section.
+    Threshold values (10/15/20pp) mirror Calibration_State.md §9.5 as of
+    v1.64. SGOL's case below uses the exact real figures from the 2026-07-12
+    session (broad market +2.56%, SGOL -8.87%) that motivated this fix —
+    confirms the corrected broad_equity_30d extraction does NOT, by itself,
+    produce a warning here: 11.43pp underperformance is genuinely below
+    SGOL's calibrated 15pp threshold. The fix corrects a real bug; it does
+    not retroactively make this specific session's SGOL move cross the bar.
+    """
+
+    def test_underperformance_at_or_above_threshold_fires(self, cal):
+        cal2 = _cal_with_role_repricing_thresholds(
+            cal, {"inflation_hedge_precious_metals": 15.0}
+        )
+        # broad +2.56%, SGOL -22.55% (SIVR's actual 2026-07-12 figure, reused
+        # here on SGOL's entry to isolate the threshold-boundary logic from
+        # instrument identity) -> underperformance 25.11pp >= 15pp -> fires.
+        warnings = role_repricing_divergence(
+            holdings_30d_returns={"SGOL": -0.2255},
+            broad_market_30d=0.0256,
+            cal=cal2,
+        )
+        assert len(warnings) == 1
+        w = warnings[0]
+        assert w.ticker == "SGOL"
+        assert w.primary_role_id == "inflation_hedge_precious_metals"
+        assert w.underperformance_pp == pytest.approx(25.11, abs=0.01)
+        assert w.threshold_pp == 15.0
+
+    def test_real_sgol_figures_do_not_cross_threshold(self, cal):
+        """The actual 2026-07-12 SGOL numbers: real decline, but below threshold."""
+        cal2 = _cal_with_role_repricing_thresholds(
+            cal, {"inflation_hedge_precious_metals": 15.0}
+        )
+        warnings = role_repricing_divergence(
+            holdings_30d_returns={"SGOL": -0.0887},
+            broad_market_30d=0.0256,
+            cal=cal2,
+        )
+        assert warnings == []
+
+    def test_role_with_no_threshold_defined_never_fires(self, cal):
+        """DBMF's role (systematic_trend_following) has no §9.5 entry at all."""
+        cal2 = _cal_with_role_repricing_thresholds(
+            cal, {"inflation_hedge_precious_metals": 15.0}
+        )
+        warnings = role_repricing_divergence(
+            holdings_30d_returns={"DBMF": -0.50},  # extreme decline, still no signal
+            broad_market_30d=0.0256,
+            cal=cal2,
+        )
+        assert warnings == []
+
+    def test_broad_market_30d_none_returns_empty(self, cal):
+        cal2 = _cal_with_role_repricing_thresholds(
+            cal, {"inflation_hedge_precious_metals": 15.0}
+        )
+        warnings = role_repricing_divergence(
+            holdings_30d_returns={"SGOL": -0.30},
+            broad_market_30d=None,
+            cal=cal2,
+        )
+        assert warnings == []
+
+    def test_no_thresholds_configured_returns_empty(self, cal):
+        """Default cal fixture has an empty role_repricing_thresholds dict."""
+        warnings = role_repricing_divergence(
+            holdings_30d_returns={"SGOL": -0.30},
+            broad_market_30d=0.0256,
+            cal=cal,
+        )
+        assert warnings == []
+
+    def test_none_instrument_return_skipped_not_crashed(self, cal):
+        cal2 = _cal_with_role_repricing_thresholds(
+            cal, {"inflation_hedge_precious_metals": 15.0}
+        )
+        warnings = role_repricing_divergence(
+            holdings_30d_returns={"SGOL": None},
+            broad_market_30d=0.0256,
+            cal=cal2,
+        )
+        assert warnings == []

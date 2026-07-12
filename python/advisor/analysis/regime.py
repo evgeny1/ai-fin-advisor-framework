@@ -152,10 +152,23 @@ def compute_divergence_signal(
     if equity_r and equity_r.is_valid:
         v = equity_r.value
         if isinstance(v, dict):
-            for key in ("change_30d", "pct_30d", "pct_change_30d"):
-                if key in v and v[key] is not None:
-                    broad_equity_30d = float(v[key])
-                    break
+            # "return_30d_pct" is the actual key both fetch_broad_equity_trailing()
+            # implementations (fmp_fetcher.py, yfinance_fetcher.py) produce, as a
+            # percentage number (e.g. 2.56 == 2.56%) -- needs /100 to become the
+            # fraction this function's threshold comparisons expect (equity_div_HIGH_pct
+            # etc. are likewise divided by 100 before comparison). Root cause of
+            # RoleRepricingDivergence silently skipping every session: this key was
+            # never checked for, so broad_equity_30d fell through to a history-based
+            # fallback that also can't succeed (this reading has no attached series).
+            if "return_30d_pct" in v and v["return_30d_pct"] is not None:
+                broad_equity_30d = float(v["return_30d_pct"]) / 100.0
+            else:
+                # Alternate shapes no fetcher has ever actually produced; kept for
+                # compatibility. Assumed already a fraction (no "_pct" suffix).
+                for key in ("change_30d", "pct_30d", "pct_change_30d"):
+                    if key in v and v[key] is not None:
+                        broad_equity_30d = float(v[key])
+                        break
             if broad_equity_30d is None:
                 hist = get_history(equity_r)
                 broad_equity_30d = compute_pct_change(hist, 30, "BROAD_EQUITY_TRAILING", flags)
