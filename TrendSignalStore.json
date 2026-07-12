@@ -11,6 +11,20 @@
       "price_at_signal": 30.58,
       "quality_flags": [],
       "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-07-11": {
+      "comparator_detail": "0.671xPAVE+0.195xQQQM+0.134xURA (renormalized, PDT+UNCLASSIFIED excluded)",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": null,
+      "price_at_signal": null,
+      "quality_flags": [
+        "AIPO: no own-price daily history this session"
+      ],
+      "rs_signal": "DATA_UNAVAILABLE"
     }
   },
   "COPX": {
@@ -25,6 +39,20 @@
       "price_at_signal": 74.63,
       "quality_flags": [],
       "rs_signal": "WEAKENING"
+    },
+    "2026-07-11": {
+      "comparator_detail": "0.75xHG=F+0.25xVEA",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": null,
+      "price_at_signal": null,
+      "quality_flags": [
+        "COPX: no own-price daily history this session"
+      ],
+      "rs_signal": "DATA_UNAVAILABLE"
     }
   },
   "DBMF": {
@@ -42,6 +70,20 @@
         "DBMF: macro confirmation input unavailable this session"
       ],
       "rs_signal": "DATA_UNAVAILABLE"
+    },
+    "2026-07-11": {
+      "comparator_detail": "own-trend confirmed by DXY direction + 4-market breadth (>=3/4 trending)",
+      "comparator_mode": "own_trend_confirmed",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": null,
+      "price_at_signal": null,
+      "quality_flags": [
+        "DBMF: no own-price daily history this session"
+      ],
+      "rs_signal": "DATA_UNAVAILABLE"
     }
   },
   "MAGS": {
@@ -56,6 +98,20 @@
       "price_at_signal": 66.24,
       "quality_flags": [],
       "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-07-11": {
+      "comparator_detail": "QQQM",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": null,
+      "price_at_signal": null,
+      "quality_flags": [
+        "MAGS: no own-price daily history this session"
+      ],
+      "rs_signal": "DATA_UNAVAILABLE"
     }
   },
   "MLPX": {
@@ -73,6 +129,20 @@
         "ENG-54 not yet wired \u2014 margin_debt_fragility_flag unavailable this session"
       ],
       "rs_signal": "STRENGTHENING"
+    },
+    "2026-07-11": {
+      "comparator_detail": "BZ=F return-spread, HY_OAS confirmation gate",
+      "comparator_mode": "hybrid",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": null,
+      "price_at_signal": null,
+      "quality_flags": [
+        "MLPX: no own-price daily history this session"
+      ],
+      "rs_signal": "DATA_UNAVAILABLE"
     }
   },
   "SGOL": {
@@ -88,6 +158,20 @@
       "quality_flags": [
         "SGOL: real-yield/DXY agreement gate unavailable this session",
         "SGOL: macro confirmation input unavailable this session"
+      ],
+      "rs_signal": "DATA_UNAVAILABLE"
+    },
+    "2026-07-11": {
+      "comparator_detail": "own-trend confirmed by REAL_YIELD_10Y_TREND + DXY agreement gate",
+      "comparator_mode": "own_trend_confirmed",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": null,
+      "price_at_signal": null,
+      "quality_flags": [
+        "SGOL: no own-price daily history this session"
       ],
       "rs_signal": "DATA_UNAVAILABLE"
     }
@@ -107,6 +191,20 @@
         "SIVR: macro confirmation input unavailable this session"
       ],
       "rs_signal": "DATA_UNAVAILABLE"
+    },
+    "2026-07-11": {
+      "comparator_detail": "own-trend confirmed by REAL_YIELD_10Y_TREND + DXY agreement gate (v1 simplification, same as SGOL)",
+      "comparator_mode": "own_trend_confirmed",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": null,
+      "price_at_signal": null,
+      "quality_flags": [
+        "SIVR: no own-price daily history this session"
+      ],
+      "rs_signal": "DATA_UNAVAILABLE"
     }
   },
   "XAR": {
@@ -121,7 +219,21 @@
       "price_at_signal": 279.33,
       "quality_flags": [],
       "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-07-11": {
+      "comparator_detail": "0.5xITA+0.5xPPA",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": null,
+      "price_at_signal": null,
+      "quality_flags": [
+        "XAR: no own-price daily history this session"
+      ],
+      "rs_signal": "DATA_UNAVAILABLE"
     }
   },
-  "last_updated": "2026-07-08"
+  "last_updated": "2026-07-11"
 }
