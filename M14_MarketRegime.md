@@ -1,9 +1,9 @@
 # M14 — Market Regime & Entry Discipline
-<!-- Version: 1.7 | Updated: see git log -->
+<!-- Version: 1.8 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M14_MarketRegime
-  Version:         1.7
+  Version:         1.8
   Sub-project:     ANALYSIS_ENGINE
   Reason to change: market desensitization detection methodology or entry guard thresholds change.
                     Generalizes the WAR PREMIUM ENTRY GUARD (previously user-mandated, unmodularized).
@@ -247,12 +247,13 @@ MODULE MarketRegimeDiscipline {
   // The signal answers: "Is the market disagreeing with our role classification
   // for this instrument in a sustained, material way?"
   //
-  // Data source: holdings 30-day returns from allocation sheet (GOOGLEFINANCE period
-  // returns) or yfinance history. Compared against BROAD_EQUITY_TRAILING (30 trading days).
+  // Data source: holdings 30-day returns from the "Allocation" / "Allocation -
+  // Relative's Schwab Accounts" files (GOOGLEFINANCE period returns) or yfinance
+  // history. Compared against BROAD_EQUITY_TRAILING (30 trading days).
   // If holdings 30d returns are unavailable: step skipped with advisory flag.
 
   FUNCTION RoleRepricingDivergence(
-    holdings_30d_returns,   // Dict[ticker → fraction | null] — from allocation sheet or yfinance
+    holdings_30d_returns,   // Dict[ticker → fraction | null] — from Allocation files or yfinance
     broad_market_30d        // fraction — BROAD_EQUITY_TRAILING 30d return
   ) -> InstrumentRepricingWarning[] {
 

@@ -1,14 +1,14 @@
 # M13 — Growth Objectives
-<!-- Version: 1.3 | Updated: see git log -->
+<!-- Version: 1.4 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M13_GrowthObjectives
-  Version:         1.3
+  Version:         1.4
   Sub-project:     PORTFOLIO_ADVISOR
   Reason to change: account objective logic, feasibility methodology, or recalibration sequence changes.
                     Return table values: go to CALIBRATION_STATE §4 only — not here.
   Inputs consumed:  ScenarioProbabilities (from M03); BlendedReturn (from M15)
-                    account objective profiles (from Allocation sheet "Objectives" tab)
+                    account objective profiles (from the "Allocation - Objectives" file)
   Outputs produced: AllocationTarget, FeasibilityResult, FloorBreachAlert
   Calibration deps: CALIBRATION_STATE §4.1 (return table), §4.2–4.3 (multipliers), §4.4 (floor/cap params)
   Types consumed:   @see FW_Types.md — ScenarioProbabilities, BlendedReturn, AllocationTarget, FeasibilityResult, FloorBreachAlert
@@ -18,8 +18,9 @@
 MODULE GrowthObjectives {
 
   // ─── ACCOUNT OBJECTIVE PROFILES ─────────────────────────────────────────
-  // Lives in: Allocation sheet — dedicated "Objectives" tab
-  // Fetch via: M12_FileProtocol.fetchFile("Allocation") — profiles loaded as part of sheet
+  // Lives in: dedicated "Allocation - Objectives" file (own single-tab spreadsheet
+  //           as of 2026-07-12 — split out of the combined "Allocation" file)
+  // Fetch via: M12_FileProtocol.fetchAllocationFile("Allocation - Objectives")
   // Updatable: any session — no quarter-end gate required
   // REQUIRE: loaded before any idealAllocation() or FeasibilityCheck() call
 
@@ -164,7 +165,8 @@ MODULE GrowthObjectives {
   // (pre-trade); this checks ACTUAL current holdings at current market prices —
   // detecting between-session price drift that has moved a FLOOR_THEN_RETURN
   // account toward or into floor breach without waiting for a formal trade proposal.
-  // Data source: allocation sheet GOOGLEFINANCE current values / account_total —
+  // Data source: the "Allocation" / "Allocation - Relative's Schwab Accounts" files'
+  //   GOOGLEFINANCE current values / account_total —
   // NEVER target allocation weights, which reflect intent, not current state.
   // Fires (any scenario s with probability >= §4.4.floor_nominal_loss_probability_threshold):
   //   Σ current_market_weight[t] × blendedScenarioReturn(t, s, "conservative") < 0
@@ -199,7 +201,7 @@ MODULE GrowthObjectives {
 
   // M03.scenarioWeightedAllocation(asset, account) now calls:
   //   M13.idealAllocation(asset, scenario, account) for each scenario s
-  //   account parameter required — load from Allocation sheet "Objectives" tab
+  //   account parameter required — load from the "Allocation - Objectives" file
   //
   // M03.minimumConvictionWeight() is fully retired (see MINIMUM CONVICTION WEIGHT
   // above) — REDUCE_TO_MIN directives resolve directly to ComputeFloor()'s floor
@@ -207,7 +209,7 @@ MODULE GrowthObjectives {
 
   // Full per-asset per-account recommendation flow:
   SEQUENCE RecommendationFlow {
-    1: load_profiles    → Allocation sheet "Objectives" tab
+    1: load_profiles    → "Allocation - Objectives" file
     2: load_return_tbl  → CALIBRATION_STATE §4.1 (loaded at session start with §4.2–4.4)
     3: classify         → M15_InstrumentClassification.classifyInstrument(asset)
                           // NOT M08_FunctionalRoles.classifyRole() — superseded, see M15
@@ -235,7 +237,7 @@ MODULE GrowthObjectives {
     CALIBRATION_STATE §4.2  // IRA target multipliers
     CALIBRATION_STATE §4.3  // Roth IRA target multipliers
     CALIBRATION_STATE §4.4  // floor and concentration parameters
-    account_objective_profiles  // from Allocation sheet "Objectives" tab
+    account_objective_profiles  // from the "Allocation - Objectives" file
     // Absence of any of the above = session invalid for growth objective computations
   }
 

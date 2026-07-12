@@ -1,9 +1,9 @@
 # M03 — Scenario Framework
-<!-- Version: 1.2 | Updated: see git log -->
+<!-- Version: 1.3 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M03_ScenarioFramework
-  Version:         1.2
+  Version:         1.3
   Sub-project:     ANALYSIS_ENGINE
   Reason to change: scenario definitions, probability derivation rules, B vs C separation, or scoring methodology changes.
                     scenarioWeightedAllocation() and minimumConvictionWeight() delegate to M13 — changes to those go to M13.
@@ -130,7 +130,7 @@ MODULE ScenarioFramework {
   // idealAllocation() is defined in M13_GrowthObjectives — delegates there.
 
   FUNCTION scenarioWeightedAllocation(asset, account) -> Float {
-    // account parameter required — load from Allocation sheet "Objectives" tab
+    // account parameter required — load from the "Allocation - Objectives" file
     // @see M13_GrowthObjectives.idealAllocation()
     result = 0
     FOR each s IN Scenario {

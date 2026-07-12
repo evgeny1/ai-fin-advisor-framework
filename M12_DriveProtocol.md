@@ -1,9 +1,9 @@
 # M12 — File Access Protocol
-<!-- Version: Amendment 10 | Updated: see git log -->
+<!-- Version: Amendment 11 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M12_DriveProtocol
-  Version:         Amendment 10
+  Version:         Amendment 11
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: file access sources, write toolchain, or session type rules change.
   Inputs consumed:  (infrastructure — reads and writes framework files; no domain inputs)
@@ -34,7 +34,7 @@ MODULE FileProtocol {
   // READONLY_MOBILE or coding session):
   //   1st: Desktop Commander (local git path) — FULL_DESKTOP sessions, fast, no decode
   //   2nd: GitHub MCP — backup for READONLY_MOBILE or local read failure
-  //   NOT used for .md reads (by Claude): Google Drive (Drive is for Allocation sheet only)
+  //   NOT used for .md reads (by Claude): Google Drive (Drive is for the Allocation files only)
   //
   // RESOLVED 2026-06-20 (ENG-21): this is a SEPARATE system from the
   // `financial-advisor` Python MCP server's OWN internal read fallback
@@ -53,19 +53,49 @@ MODULE FileProtocol {
 
   SOURCE_MAP {
     drive: {
-      allocation_sheet: {
+      // Split 2026-07-12 from one multi-tab "Allocation" file into three
+      // single-tab files, after discovering Google Drive's read_file_content
+      // reliably surfaces only ONE tab per file — a hard per-call limitation
+      // of the tool, not a length/token-budget issue as first assumed. Which
+      // tab it returns from a multi-tab file depends on which was last active
+      // in the Sheets UI, not a fixed index — so a multi-tab file is
+      // fundamentally unreliable here regardless of tab order, and the fix is
+      // one file per tab, not reordering tabs within one file.
+      allocation_schwab_accounts: {
         file:   "Allocation"
         type:   Google_Sheets
         access: read_only
         search: by title in Drive root — NEVER hardcode file ID
-        // Prices live via GOOGLEFINANCE — treat as current at time of fetch
-        // Framework never writes to Allocation sheet
-        // Read by Claude via the Google Drive MCP connector — NOT by Python.
-        // allocation_sheet.py also contains a Python-native FRED/FINRA-via-sheet
-        // fetcher (fetch_fred_series, fetch_finra_margin) for a possible future
-        // feature; it is not registered in advisor_run_computation()'s live
-        // FetchRegistry today and requires no action (ENG-21).
+        // Holds the Schwab Accounts tab (Evgeny's 4 own accounts + Summary +
+        // tax-loss table). May still also carry leftover Objectives/Color-
+        // Palette tabs from before the split — if so, don't treat this file
+        // as reliably single-purpose until those are removed from it.
       }
+      allocation_relative_accounts: {
+        file:   "Allocation - Relative's Schwab Accounts"
+        type:   Google_Sheets
+        access: read_only
+        search: by title in Drive root — NEVER hardcode file ID
+        // Holds the Relative's Schwab Accounts tab (IRA …469, Roth …466) —
+        // the source for Step 1b's floor_account_weights_json computation.
+      }
+      allocation_objectives: {
+        file:   "Allocation - Objectives"
+        type:   Google_Sheets
+        access: read_only
+        search: by title in Drive root — NEVER hardcode file ID
+        // Holds the Objectives tab (account_id, owner, planning_horizon_years,
+        // objective_type, floor_nominal_loss, concentration_cap,
+        // drawdown_tolerance) — the source for advisor_evaluate_allocation()'s
+        // per-account scalar parameters.
+      }
+      // All three: Prices live via GOOGLEFINANCE — treat as current at time of
+      // fetch. Framework never writes to any Allocation file. Read by Claude
+      // via the Google Drive MCP connector — NOT by Python.
+      // allocation_sheet.py also contains a Python-native FRED/FINRA-via-sheet
+      // fetcher (fetch_fred_series, fetch_finra_margin) for a possible future
+      // feature; it is not registered in advisor_run_computation()'s live
+      // FetchRegistry today and requires no action (ENG-21).
       // NOTE: framework .md files live in Drive but are read via local Desktop Commander,
       // not via Drive API. Drive syncs the local folder bidirectionally.
     }
@@ -91,8 +121,8 @@ MODULE FileProtocol {
 
   GUARD CoreRules {
     NEVER:  use web_fetch for any GitHub or Google Drive file
-    NEVER:  hardcode any Google Drive file ID — search by title for Allocation sheet; use local path for framework files
-    ALWAYS: resolve Allocation sheet via Drive root title search at session start (never hardcode its ID)
+    NEVER:  hardcode any Google Drive file ID — search by title for each Allocation file; use local path for framework files
+    ALWAYS: resolve all three Allocation files via Drive root title search at session start (never hardcode any of their IDs)
     ALWAYS: read framework .md files via Desktop Commander local path (FULL_DESKTOP) or GitHub MCP (READONLY_MOBILE)
     NEVER:  use Google Drive API to read framework .md files (Drive syncs locally; read the local copy)
     NEVER:  use github:push_files, github:create_or_update_file, github:create_branch,
@@ -111,24 +141,37 @@ MODULE FileProtocol {
   // (READONLY_MOBILE) is implemented; Desktop Commander (local) is PRIMARY.
   // @see python/advisor/data/file_protocol.py read_framework_file()
 
-  // ─── ALLOCATION SHEET FETCH ──────────────────────────────────────────────────
+  // ─── ALLOCATION FILES FETCH (three files as of 2026-07-12) ──────────────────
 
-  FUNCTION fetchAllocation() {
+  // Three separate calls as of 2026-07-12 (@see SOURCE_MAP.drive above for why
+  // this is one file per tab, not one multi-tab file). Each file's exact title
+  // must match — NEVER hardcode a file ID, resolve fresh every session.
+
+  FUNCTION fetchAllocationFile(exact_title) {
     STEP 1: search {
       tool:     Google_Drive:search_files
-      query:    "title = 'Allocation' and parentId = 'root'"
+      query:    "title = '[exact_title]' and parentId = 'root'"
       pageSize: 5
     }
     STEP 2: validate {
-      IF count == 0 { HARD_STOP: "Cannot find 'Allocation' in Drive root." }
-      IF count > 1  { HARD_STOP: "Found [N] files named 'Allocation' — delete duplicates." }
+      IF count == 0 { HARD_STOP: "Cannot find '[exact_title]' in Drive root." }
+      IF count > 1  { HARD_STOP: "Found [N] files named '[exact_title]' — delete duplicates." }
     }
     STEP 3: read {
       tool:   Google_Drive:read_file_content
       fileId: [id from Step 1]
       // read_file_content (NOT download_file_content) — Sheets require this tool
     }
-    RETURN allocation_sheet_contents
+    RETURN file_contents
+  }
+
+  FUNCTION fetchAllocation() {
+    schwab_accounts    = fetchAllocationFile("Allocation")
+    relative_accounts  = fetchAllocationFile("Allocation - Relative's Schwab Accounts")
+    objectives         = fetchAllocationFile("Allocation - Objectives")
+    // STOP (via the HARD_STOPs inside fetchAllocationFile) if any of the three fails —
+    // do not proceed on two-of-three; all three are required for a normal M05 session.
+    RETURN { schwab_accounts, relative_accounts, objectives }
   }
 
   // ─── CALIBRATION STATE + INSTRUMENT CLASSIFICATION + SESSION LOG FETCH ──────

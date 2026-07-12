@@ -33,7 +33,60 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-08, coding session (ENG-60 CLOSED — resolved per the
+**Last updated:** 2026-07-12, coding session (ENG-61 CLOSED — root-caused and
+fixed RoleRepricingDivergence's "always skipped" flag, which Evgeny caught by
+noticing SGOL/SIVR's real 30-day declines weren't being surfaced despite
+`advisor_run_computation()`'s market data coverage having recovered from a
+same-session VPN-related outage to 62/70 specs valid, including
+`holdings_30d_returns`. Root cause: `compute_divergence_signal()`
+(analysis/regime.py) only checked `BROAD_EQUITY_TRAILING.value` for keys
+`change_30d`/`pct_30d`/`pct_change_30d` — none of which either
+`fetch_broad_equity_trailing()` implementation (fmp_fetcher.py,
+yfinance_fetcher.py) has ever actually produced; both use `return_30d_pct`,
+a percentage number needing /100 to become the fraction this function's
+threshold comparisons expect (confirmed via `types.py`'s own field comment).
+The mismatch meant `broad_equity_30d` was always None in production,
+regardless of whether holdings 30d data was available, so
+`role_repricing_divergence()` (mcp_server.py) never even got called. Fixed by
+recognizing `return_30d_pct` explicitly with the /100 conversion; other three
+candidate keys kept for compatibility. `role_repricing_divergence()` itself
+had zero test coverage before this session — added
+`tests/test_stage3/test_regime.py::TestBroadEquityTrailingKeyExtraction` and
+`::TestRoleRepricingDivergence` (10 new tests total). One test locks in the
+exact 2026-07-12 SGOL figures (broad +2.56%, SGOL −8.87%) that motivated the
+fix — confirms the corrected extraction does NOT, by itself, produce a
+warning for that specific case: 11.43pp underperformance is genuinely below
+SGOL's calibrated 15pp §9.5 threshold (SIVR's −22.55% would have crossed it
+at 25.11pp, but SIVR isn't currently held in any of the six accounts). The
+fix corrects a real bug; it doesn't retroactively make this session's SGOL
+move cross the bar. Full suite: 889 passed, 46 skipped (one pre-existing,
+unrelated failure — missing `googleapiclient` package for Pattern A's dormant
+`allocation_sheet.py` Drive fallback, not touched by this change).
+`codebase-memory-mcp` was fully unresponsive this session (both `manage_adr`
+and `list_projects` timed out) — freshness check and investigation done via
+Desktop Commander + grep instead, per README §14's own sanctioned fallback
+for a codebase this size.
+
+ENG-62 CLOSED same session — `Project_Instructions_MCP.md` and
+`M03_ScenarioFramework.md`/`M12_DriveProtocol.md`/`M13_GrowthObjectives.md`/
+`M14_MarketRegime.md` synced to the 2026-07-12 Allocation-file split (one
+multi-tab "Allocation" file → three single-tab files: "Allocation",
+"Allocation - Relative's Schwab Accounts", "Allocation - Objectives"). The
+split itself happened in an earlier advisory session this same day, motivated
+by discovering Google Drive's `read_file_content` reliably surfaces only ONE
+tab per file — a hard per-call limitation, not the length/token-budget issue
+first assumed, and which tab it returns from a multi-tab file depends on
+which was last active in the Sheets UI, not a fixed index. `M12_DriveProtocol.md`'s
+`fetchAllocation()` was rewritten as three calls to a new
+`fetchAllocationFile(exact_title)` helper rather than one. Not yet
+independently verified this session: whether the "Other Indexes"/FINRA/FRED
+Series tabs M18_MarketDataFetch.md references (§ALLOCATION_SPREADSHEET_OTHER,
+§ALLOCATION_SPREADSHEET_FINRA) still live inside the "Allocation" file
+post-split, in their own file(s), or have been dropped — M18 was
+deliberately left untouched rather than guessed at; worth a direct check
+next session before touching that module.
+
+Prior: 2026-07-08, coding session (ENG-60 CLOSED — resolved per the
 session hand-off's own recommendation: added a 4th `TrendSignalCode` value,
 `DATA_UNAVAILABLE`, distinct from `INCONCLUSIVE` [client-confirmed direction
 (a) over additive-field option (b)]. Touched: `evaluate_return_spread()`'s and
@@ -194,6 +247,8 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-58 | CLOSED | HIGH | bug | _fetch_single()'s unguarded URANIUM_SPOT/UX=F fetch could hold the global _YF_LOCK for ~4min, stalling every other yfinance spec in the same fetch_all() batch behind it |
 | ENG-59 | CLOSED | LOW | hardening | evaluate-trend-signal CLI's own weekly-series fetch showed a one-off transient gap; added single bounded retry (root cause not reproducible on direct re-test) |
 | ENG-60 | CLOSED | MEDIUM | architecture | TrendSignalCode gained a 4th value, DATA_UNAVAILABLE, distinct from INCONCLUSIVE -- direction (a) from the hand-off, client-confirmed; backfilled today's 3 affected store entries; also fixed a related MLPX HY_OAS gating bug found in the same code |
+| ENG-61 | CLOSED | HIGH | bug | RoleRepricingDivergence always skipped -- BROAD_EQUITY_TRAILING key mismatch (regime.py checked change_30d/pct_30d/pct_change_30d; both fetchers actually produce return_30d_pct) meant broad_equity_30d was always None in production |
+| ENG-62 | CLOSED | LOW | hygiene | Project_Instructions_MCP.md + M03/M12/M13/M14 synced to the 2026-07-12 Allocation-file split (one multi-tab file -> three single-tab files) |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
