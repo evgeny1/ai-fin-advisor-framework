@@ -158,20 +158,34 @@ def _weighted_composite_closes(
 def _agreement_gate(
     series_a: Optional[List[float]], series_b: Optional[List[float]],
     threshold_pct: float = NOISE_FLOOR_PCT,
-) -> Optional[bool]:
+) -> Tuple[Optional[bool], bool]:
     """
-    True iff both series show the SAME directional_trend over their own
-    full supplied window. None if either series is missing or its own
-    trend is indeterminate. Deliberately independent of GAP-16's own
-    range_position_signals verdict — see module docstring.
+    Returns (confirms, data_available).
+
+    confirms: True iff both series show the SAME directional_trend over
+    their own full supplied window; False if they disagree; None if
+    either series' own directional_trend is indeterminate.
+
+    data_available: False only when either raw series itself is missing
+    or empty (a genuine fetch gap). True whenever both raw series were
+    present, even if directional_trend couldn't resolve a direction for
+    one or both — that's a computed result on real data, not a missing
+    input. Carries ENG-60's DATA_UNAVAILABLE-vs-INCONCLUSIVE distinction
+    one layer deeper into this gate (FRAMEWORK_BACKLOG.md ENG-63) — a
+    materially-trending real-yield series that merely dipped below its
+    own starting value before recovering was previously indistinguishable
+    from real-yield data never having been fetched at all.
+
+    Deliberately independent of GAP-16's own range_position_signals
+    verdict — see module docstring.
     """
     if not series_a or not series_b:
-        return None
+        return None, False
     dir_a = directional_trend(series_a, threshold_pct)
     dir_b = directional_trend(series_b, threshold_pct)
     if dir_a is None or dir_b is None:
-        return None
-    return dir_a == dir_b
+        return None, True
+    return dir_a == dir_b, True
 
 
 # ── Mode 1: return-spread ──────────────────────────────────────────────────
@@ -218,6 +232,7 @@ def evaluate_own_trend_confirmed(
     ticker: str,
     instrument_closes: List[float],
     macro_confirms: Optional[bool],
+    confirm_data_available: bool = False,
 ) -> Tuple[TrendSignalCode, Optional[str], Optional[str], List[str]]:
     """
     Mode 2. `macro_confirms` is computed by the caller per-instrument
@@ -225,6 +240,16 @@ def evaluate_own_trend_confirmed(
     confirmation mechanism genuinely differs by instrument — this
     function only applies the shared own-trend + confirmation-gate rule
     once the caller has resolved macro_confirms to True/False/None.
+
+    `confirm_data_available` distinguishes WHY macro_confirms is None
+    (FRAMEWORK_BACKLOG.md ENG-63, carrying ENG-60's DATA_UNAVAILABLE-vs-
+    INCONCLUSIVE split one layer deeper): False means the confirmation
+    gate's own raw inputs were missing (a genuine fetch gap) -- the
+    default, for backward compatibility with any caller that hasn't been
+    updated to pass it. True means the gate ran on real, present data but
+    didn't produce an agreeing direction (e.g. one leg's own
+    directional_trend was indeterminate) -- a computed result, not a
+    missing one.
     """
     flags: List[str] = []
     if len(instrument_closes) < MEDIUM_WINDOW_DAYS + 1:
@@ -236,15 +261,16 @@ def evaluate_own_trend_confirmed(
     own_medium = directional_trend(instrument_closes[-(MEDIUM_WINDOW_DAYS + 1):], NOISE_FLOOR_PCT)
 
     if macro_confirms is None:
-        # ENG-60: the confirmation gate itself never resolved -- own_short/
+        if confirm_data_available:
+            # ENG-63: the gate ran on real, present data and genuinely found
+            # no agreeing direction -- a computed non-result, not a missing one.
+            flags.append(f"{ticker}: macro confirmation gate computed no clear agreement this session")
+            return TrendSignalCode.INCONCLUSIVE, own_short, own_medium, flags
+        # ENG-60: the confirmation gate's own inputs were missing -- own_short/
         # own_medium may well agree here, but STRENGTHENING/WEAKENING would
         # be a claim this function has no basis to make without knowing
-        # whether the gate confirms or disconfirms. Distinct from the case
-        # below where the gate genuinely ran and said no (or the own-trend
-        # windows themselves disagree) -- that's a real INCONCLUSIVE, not
-        # a missing input. Report DATA_UNAVAILABLE regardless of own_short/
-        # own_medium's agreement; own_short/own_medium are still returned
-        # for informational display.
+        # whether the gate confirms or disconfirms. own_short/own_medium are
+        # still returned for informational display.
         flags.append(f"{ticker}: macro confirmation input unavailable this session")
         return TrendSignalCode.DATA_UNAVAILABLE, own_short, own_medium, flags
 
@@ -260,19 +286,33 @@ def evaluate_own_trend_confirmed(
 
 def _dbmf_macro_confirms(
     own_short: Optional[str],
+    own_short_data_available: bool,
     breadth_readings: Dict[str, Optional[List[float]]],
     dxy_closes: Optional[List[float]],
-) -> Tuple[Optional[bool], List[str]]:
+) -> Tuple[Optional[bool], List[str], bool]:
     """
     DXY direction agrees with DBMF's own_short short-window direction AND
     breadth >= 3 of 4 (Brent/Gold/DXY/S&P each independently trending, any
     direction). Exact reuse of the breadth concept GAP-16 already defined
     for DBMF's own §13 TSC evaluation (see FRAMEWORK_BACKLOG_ARCHIVE.md
     ENG-55) — reimplemented here independently per the coupling-risk note.
+
+    Returns (confirms, flags, data_available). own_short_data_available is
+    supplied by the caller (which holds DBMF's raw own-price history and
+    already knows whether it was long enough to compute a short-window
+    read at all) — that's the only genuine data gap on the own-price side.
+    own_short being None despite own_short_data_available=True, or dxy_dir
+    resolving to None on a present dxy_closes series, are both computed
+    results on real data, not missing inputs — data_available stays True
+    in those cases (FRAMEWORK_BACKLOG.md ENG-63).
     """
     flags: List[str] = []
-    if own_short is None or not dxy_closes:
-        return None, ["DBMF: own_short or DXY_TREND unavailable — breadth check skipped"]
+    if not dxy_closes:
+        return None, ["DBMF: DXY_TREND unavailable — breadth check skipped"], False
+    if not own_short_data_available:
+        return None, ["DBMF: insufficient own-price history — breadth check skipped"], False
+    if own_short is None:
+        return None, ["DBMF: own short-window trend indeterminate — breadth check skipped"], True
 
     dxy_dir = directional_trend(dxy_closes, NOISE_FLOOR_PCT)
     breadth_count = 0
@@ -282,12 +322,12 @@ def _dbmf_macro_confirms(
 
     if dxy_dir is None:
         flags.append("DBMF: DXY_TREND direction indeterminate")
-        return None, flags
+        return None, flags, True
 
     confirms = (dxy_dir == own_short) and (breadth_count >= 3)
     if breadth_count < 3:
         flags.append(f"DBMF: breadth {breadth_count}/4 — below the 3/4 confirmation threshold")
-    return confirms, flags
+    return confirms, flags, True
 
 
 # ── MLPX's HY OAS confirmation (hybrid case) ───────────────────────────────
@@ -432,25 +472,31 @@ def evaluate_all_trend_signals(
 
         elif mode == ComparatorMode.OWN_TREND_CONFIRMED:
             if ticker == "DBMF":
+                own_short_data_available = len(own_closes) >= SHORT_WINDOW_DAYS + 1
                 own_short_probe = directional_trend(
                     own_closes[-(SHORT_WINDOW_DAYS + 1):], NOISE_FLOOR_PCT
-                ) if len(own_closes) >= SHORT_WINDOW_DAYS + 1 else None
+                ) if own_short_data_available else None
                 breadth_readings = {
                     sym: weekly_trend_readings.get(sym)
                     for sym in cfg["breadth_symbols"]
                 }
                 dxy_closes = weekly_trend_readings.get(cfg["dxy_symbol"])
-                confirms, confirm_flags = _dbmf_macro_confirms(own_short_probe, breadth_readings, dxy_closes)
+                confirms, confirm_flags, confirm_data_available = _dbmf_macro_confirms(
+                    own_short_probe, own_short_data_available, breadth_readings, dxy_closes
+                )
             else:  # SGOL / SIVR
                 ids = cfg["confirm_reading_ids"]
-                confirms = _agreement_gate(
+                confirms, confirm_data_available = _agreement_gate(
                     weekly_trend_readings.get(ids[0]), weekly_trend_readings.get(ids[1])
                 )
                 confirm_flags = []
                 if confirms is None:
-                    confirm_flags.append(f"{ticker}: real-yield/DXY agreement gate unavailable this session")
+                    if confirm_data_available:
+                        confirm_flags.append(f"{ticker}: real-yield/DXY agreement gate computed no clear agreement this session")
+                    else:
+                        confirm_flags.append(f"{ticker}: real-yield/DXY agreement gate unavailable this session")
 
-            code, d1, d2, own_flags = evaluate_own_trend_confirmed(ticker, own_closes, confirms)
+            code, d1, d2, own_flags = evaluate_own_trend_confirmed(ticker, own_closes, confirms, confirm_data_available)
             flags.extend(confirm_flags)
             flags.extend(own_flags)
 

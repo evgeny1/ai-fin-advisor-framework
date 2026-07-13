@@ -33,7 +33,22 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-12, coding session (ENG-61 CLOSED — root-caused and
+**Last updated:** 2026-07-13, live M05 session (ENG-63 CLOSED — root-caused
+and fixed, mid-session, DBMF/SGOL/SIVR's Mode 2 confirmation gate conflating
+a missing input with a computed no-agreement result: both `_agreement_gate`
+and `_dbmf_macro_confirms` returned a bare `None` whether their raw series
+were genuinely unfetchable or fetched fine but `directional_trend()` simply
+found no resolved direction (a real-yield series with a materially strong
+net move nulled by one early wobble below its own starting value; DBMF's
+own price genuinely below the materiality floor). Both now correctly report
+INCONCLUSIVE, not DATA_UNAVAILABLE, when the gate ran on real data — same
+distinction ENG-60 already drew one layer up. 12 tests added/updated across
+`test_stage3/test_trend_signal.py`; full suite 896 passed / 46 skipped / 0
+failed. ENG-64 OPENED same session — Evgeny requested a polling mechanism to
+replace the two remaining hard MCP-tool timeouts (`advisor_run_computation`,
+`advisor_evaluate_trend_signal`); logged as its own architecture item since
+it needs a server-side job-queue redesign, not a live patch. Prior:
+2026-07-12, coding session (ENG-61 CLOSED — root-caused and
 fixed RoleRepricingDivergence's "always skipped" flag, which Evgeny caught by
 noticing SGOL/SIVR's real 30-day declines weren't being surfaced despite
 `advisor_run_computation()`'s market data coverage having recovered from a
@@ -249,6 +264,8 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-60 | CLOSED | MEDIUM | architecture | TrendSignalCode gained a 4th value, DATA_UNAVAILABLE, distinct from INCONCLUSIVE -- direction (a) from the hand-off, client-confirmed; backfilled today's 3 affected store entries; also fixed a related MLPX HY_OAS gating bug found in the same code |
 | ENG-61 | CLOSED | HIGH | bug | RoleRepricingDivergence always skipped -- BROAD_EQUITY_TRAILING key mismatch (regime.py checked change_30d/pct_30d/pct_change_30d; both fetchers actually produce return_30d_pct) meant broad_equity_30d was always None in production |
 | ENG-62 | CLOSED | LOW | hygiene | Project_Instructions_MCP.md + M03/M12/M13/M14 synced to the 2026-07-12 Allocation-file split (one multi-tab file -> three single-tab files) |
+| ENG-63 | CLOSED | MEDIUM | bug | DBMF/SGOL/SIVR's Mode 2 confirmation gate (_agreement_gate, _dbmf_macro_confirms) conflated a missing input with a computed no-agreement result -- both collapsed to DATA_UNAVAILABLE even when the underlying data fetched cleanly |
+| ENG-64 | OPEN | MEDIUM | architecture | advisor_run_computation / advisor_evaluate_trend_signal have a hard client-side timeout with no polling/job-status mechanism -- both confirmed ENG-33-style transport hangs, not slow computation |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -856,6 +873,145 @@ ever overrides EV) remains deliberately deferred to the 8-week trial
 checkpoint, per ENG-50's own design -- this closes only the labeling
 ambiguity flagged in the hand-off, not anything about what the signal is
 allowed to do.
+
+### ENG-63 — DBMF/SGOL/SIVR's Mode 2 confirmation gate conflated missing input with a computed no-agreement result
+<!-- ITEM
+Status:    CLOSED
+Severity:  MEDIUM
+Category:  bug
+Opened:    2026-07-13
+Closed:    2026-07-13
+Area:      python/advisor/analysis/trend_signal.py (_agreement_gate,
+           _dbmf_macro_confirms, evaluate_own_trend_confirmed,
+           evaluate_all_trend_signals)
+Related:   ENG-60 (the DATA_UNAVAILABLE-vs-INCONCLUSIVE split this
+           carries one layer deeper), ENG-50/ENG-55
+-->
+
+**Description:** Live session finding, caught directly by Evgeny pushing
+back on an initial hand-wave explanation: during the 2026-07-13 M05
+session, `advisor_evaluate_trend_signal`'s CLI fallback reported DBMF,
+SGOL, and SIVR as `DATA_UNAVAILABLE` ("real-yield/DXY agreement gate
+unavailable this session" / "own_short or DXY_TREND unavailable").
+Manually re-fetching `DXY_TREND` and `REAL_YIELD_10Y_TREND` independently,
+three separate times, always returned clean, populated, zero-quality-flag
+data. The bug was not in the fetch layer at all -- it was two layers
+downstream, in how the Mode 2 (`OWN_TREND_CONFIRMED`) confirmation-gate
+helpers collapsed "the raw input was missing" and "the raw input was
+present but `directional_trend()` legitimately computed no resolved
+direction" into the identical `None` return value.
+
+Two distinct mechanisms were found by live-tracing this session's actual
+data, not by inspection alone:
+
+1. **SGOL/SIVR** (`_agreement_gate`): the session's `REAL_YIELD_10Y_TREND`
+   series `[2.16, 2.07, 2.19, 2.17, 2.21, 2.18, 2.26, 2.32]` has a
+   materially strong net move (+7.4%, well past the 2.0pp
+   `NOISE_FLOOR_PCT`), but `directional_trend()` also requires that no
+   later close ever drop back below the window's *first* value, or it
+   calls the whole move a "reversal" and returns `None`. Week 2 (2.07)
+   dipped fractionally below week 1 (2.16) before the series climbed hard
+   and stayed up -- a real, sustained, materially-strengthening trend
+   nulled by one small wobble right at the start.
+2. **DBMF** (`_dbmf_macro_confirms`): a different, more mundane cause --
+   its own trailing 21-day price only moved +0.57% (30.62 -> 30.80),
+   genuinely below the 2.0pp materiality floor. Not missing data; DBMF
+   just hadn't moved enough to call a direction.
+
+Both produced the same "unavailable this session" flag text and the same
+`DATA_UNAVAILABLE` code, even though both were real, valid computations
+on complete data -- exactly the ENG-60 DATA_UNAVAILABLE-vs-INCONCLUSIVE
+distinction, just one layer deeper than where ENG-60 originally drew it.
+
+**Fix:**
+- `_agreement_gate()`: now returns `(confirms, data_available)` instead of
+  a bare `Optional[bool]`. `data_available=False` only when either raw
+  series itself is missing/empty; `True` whenever both raw series were
+  present, regardless of whether `directional_trend()` resolved a
+  direction for either.
+- `_dbmf_macro_confirms()`: now takes an explicit
+  `own_short_data_available: bool` from the caller (which holds DBMF's
+  raw own-price history and already knows whether it was long enough for
+  a short-window read) and returns `(confirms, flags, data_available)`.
+  `data_available=False` only for a missing `DXY_TREND` series or
+  insufficient own-price history; `True` for every other `None` case (own
+  short-window indeterminate on sufficient data, or DXY's own direction
+  indeterminate on present data).
+- `evaluate_own_trend_confirmed()`: new `confirm_data_available: bool =
+  False` parameter (default preserves old behavior for any caller that
+  doesn't pass it). When `macro_confirms is None`: `confirm_data_available
+  =True` now returns `INCONCLUSIVE` ("macro confirmation gate computed no
+  clear agreement this session"); `False` still returns `DATA_UNAVAILABLE`
+  ("macro confirmation input unavailable this session") exactly as
+  before.
+- `evaluate_all_trend_signals()`'s `OWN_TREND_CONFIRMED` branch: both the
+  DBMF and SGOL/SIVR call sites updated to compute and thread
+  `confirm_data_available` through to `evaluate_own_trend_confirmed()`,
+  with matching flag text for each case.
+
+**Verification:** 3 existing tests updated for the new tuple/parameter
+signatures (no change to what they actually assert); 9 new tests added --
+unit-level coverage for both gates' missing-vs-indeterminate split, plus
+two end-to-end `evaluate_all_trend_signals()` regression tests
+reproducing this session's exact SGOL scenario (real, present,
+reversal-nulled real-yield data -> `INCONCLUSIVE`) and its contrast case
+(genuinely absent real-yield data -> `DATA_UNAVAILABLE`, unchanged). Full
+suite: 896 passed / 46 skipped / 0 failed -- confirmed via direct re-run,
+zero regressions.
+
+**Honesty note:** whether `directional_trend()`'s "no reversal through the
+window's starting value" rule is itself too strict (a small early wobble
+nulling an otherwise-clear multi-week trend) is a separate, open design
+question, not addressed here -- this fix only ensures that whatever
+`directional_trend()` decides gets labeled correctly (`INCONCLUSIVE` vs
+`DATA_UNAVAILABLE`), not that the underlying rule is the right one. Worth
+a dedicated look once the 8-week shadow trial has enough real outcome
+data to judge it against -- same posture as `NOISE_FLOOR_PCT` itself
+(flagged as a placeholder since ENG-55).
+
+### ENG-64 — advisor_run_computation / advisor_evaluate_trend_signal: hard timeout with no polling/job-status mechanism
+<!-- ITEM
+Status:    OPEN
+Severity:  MEDIUM
+Category:  architecture
+Opened:    2026-07-13
+Area:      python/advisor/mcp_server.py (_tool_run_computation,
+           _tool_evaluate_trend_signal, their _with_timeout() wrapper)
+Related:   ENG-33 (the underlying client-transport hang these tools
+           guard against), ENG-40 (the per-spec timeout inside
+           fetch_all() these MCP-level timeouts sit on top of)
+-->
+
+**Description:** Raised by Evgeny during the 2026-07-13 M05 session,
+after both `advisor_run_computation()` (180s ceiling) and
+`advisor_evaluate_trend_signal()` (60s ceiling) hit their hard timeout in
+the same session -- both later confirmed via the CLI fallback to be
+ENG-33-style client-transport hangs, not slow computation (both CLI
+calls returned in well under 15s on identical data). The concern: a
+single hardcoded timeout-then-fail call gives Claude no way to
+distinguish "still working, just slow" from "genuinely stuck," and no way
+to check in incrementally on a longer-running call rather than either
+waiting blind or failing outright. This will only get more visible as
+live data volume grows (a slower external fetch is a *when*, not an
+*if*).
+
+Client-side, the CLI fallback used via Desktop Commander's
+`start_process`/`read_process_output` already behaves like real polling
+(no fixed ceiling -- can be re-polled indefinitely for as long as the
+subprocess is genuinely still running); the gap is specific to the two
+in-process MCP tool calls themselves, which are single synchronous
+requests with no exposed intermediate state to poll.
+
+**Suggested next step:** have `advisor_run_computation()` and
+`advisor_evaluate_trend_signal()` kick off their work as a background job
+(thread or subprocess) and return immediately with
+`{"status": "IN_PROGRESS", "job_id": ...}`; add a new MCP tool (e.g.
+`advisor_check_job(job_id)`) that Claude can poll for completion,
+mirroring the pattern Desktop Commander's own `start_process` +
+`read_process_output` already uses. Needs its own dedicated coding
+session -- touches both tools' registration in `mcp_server.py` and
+introduces genuinely new job-lifecycle state (in-memory job registry,
+cleanup/expiry policy for abandoned jobs), not a small patch.
 
 ### ENG-56 — Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries
 <!-- ITEM

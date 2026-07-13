@@ -55,22 +55,46 @@ class TestAgreementGate:
     def test_true_when_both_trend_same_direction(self):
         up_a = _linear(100, 120, 8)
         up_b = _linear(50, 58, 8)
-        assert m._agreement_gate(up_a, up_b) is True
+        confirms, data_available = m._agreement_gate(up_a, up_b)
+        assert confirms is True
+        assert data_available is True
 
     def test_false_when_directions_disagree(self):
         up = _linear(100, 120, 8)
         down = _linear(100, 80, 8)
-        assert m._agreement_gate(up, down) is False
+        confirms, data_available = m._agreement_gate(up, down)
+        assert confirms is False
+        assert data_available is True
 
-    def test_none_when_either_series_missing(self):
+    def test_data_unavailable_when_either_series_missing(self):
         up = _linear(100, 120, 8)
-        assert m._agreement_gate(up, None) is None
-        assert m._agreement_gate(None, up) is None
+        confirms, data_available = m._agreement_gate(up, None)
+        assert confirms is None
+        assert data_available is False
+        confirms, data_available = m._agreement_gate(None, up)
+        assert confirms is None
+        assert data_available is False
 
-    def test_none_when_either_direction_indeterminate(self):
+    def test_data_available_but_indeterminate_when_direction_flat(self):
+        """ENG-63: a genuinely flat/choppy series is a computed result on
+        present data, not a missing input — data_available stays True."""
         up = _linear(100, 120, 8)
         flat = [100.0, 100.5, 99.8, 100.2, 100.1, 99.9, 100.3, 100.0]
-        assert m._agreement_gate(up, flat) is None
+        confirms, data_available = m._agreement_gate(up, flat)
+        assert confirms is None
+        assert data_available is True
+
+    def test_data_available_but_indeterminate_on_early_dip_through_start(self):
+        """ENG-63: this is the exact 2026-07-13 live scenario — a real-yield
+        series with a materially strong net move (+7.4%) that gets nulled by
+        directional_trend's reversal rule because week 2 dipped fractionally
+        below week 1's starting value. Real, present data; a real computed
+        non-result — not a fetch gap."""
+        real_yield = [2.16, 2.07, 2.19, 2.17, 2.21, 2.18, 2.26, 2.32]
+        dxy = [98.91, 100.07, 99.75, 100.85, 101.36, 100.86, 100.97, 101.27]
+        confirms, data_available = m._agreement_gate(real_yield, dxy)
+        assert confirms is None
+        assert data_available is True
 
 
 # ── evaluate_return_spread (Mode 1) ─────────────────────────────────────────
@@ -134,15 +158,30 @@ class TestEvaluateOwnTrendConfirmed:
         assert code == TrendSignalCode.INCONCLUSIVE
 
     def test_data_unavailable_with_flag_when_confirmation_input_unavailable(self):
-        """ENG-60: macro_confirms is None means the confirmation gate itself
-        never resolved — DATA_UNAVAILABLE, even though own_short/own_medium
+        """ENG-60: macro_confirms is None with confirm_data_available at its
+        default (False) means the confirmation gate's own inputs were
+        missing — DATA_UNAVAILABLE, even though own_short/own_medium
         (returned here) both agree ("up"). Distinct from a real disconfirm
-        (macro_confirms=False, covered below) which is a genuine INCONCLUSIVE."""
+        (macro_confirms=False, covered below) which is a genuine INCONCLUSIVE,
+        and from the ENG-63 case below where the gate DID run on real data."""
         instrument = _linear(100, 130, 64)
         code, d1, d2, flags = m.evaluate_own_trend_confirmed("SGOL", instrument, macro_confirms=None)
         assert code == TrendSignalCode.DATA_UNAVAILABLE
         assert d1 == "up" and d2 == "up"  # still populated for display
         assert any("confirmation input unavailable" in f for f in flags)
+
+    def test_inconclusive_when_confirmation_gate_computed_but_no_agreement(self):
+        """ENG-63: macro_confirms is None but confirm_data_available=True —
+        the gate ran on real, present data and genuinely found no agreeing
+        direction. This must be INCONCLUSIVE, not DATA_UNAVAILABLE — the
+        exact distinction that was missing for SGOL/SIVR on 2026-07-13."""
+        instrument = _linear(100, 130, 64)
+        code, d1, d2, flags = m.evaluate_own_trend_confirmed(
+            "SGOL", instrument, macro_confirms=None, confirm_data_available=True
+        )
+        assert code == TrendSignalCode.INCONCLUSIVE
+        assert d1 == "up" and d2 == "up"
+        assert any("no clear agreement" in f for f in flags)
 
     def test_data_unavailable_on_insufficient_history(self):
         """ENG-60: no own-price basis at all — DATA_UNAVAILABLE."""
@@ -157,24 +196,58 @@ class TestDbmfMacroConfirms:
     def test_confirms_when_dxy_agrees_and_breadth_at_least_3_of_4(self):
         trending = _linear(100, 120, 8)
         breadth = {"BRENT_TREND": trending, "GOLD_TREND": trending, "SP500_TREND": trending}
-        confirms, flags = m._dbmf_macro_confirms("up", breadth, dxy_closes=trending)
+        confirms, flags, data_available = m._dbmf_macro_confirms(
+            "up", True, breadth, dxy_closes=trending
+        )
         assert confirms is True
+        assert data_available is True
 
     def test_does_not_confirm_when_breadth_below_threshold(self):
         trending = _linear(100, 120, 8)
         flat = [100.0, 100.1, 99.9, 100.2, 100.0, 99.8, 100.1, 100.0]
         breadth = {"BRENT_TREND": trending, "GOLD_TREND": flat, "SP500_TREND": flat}
-        confirms, flags = m._dbmf_macro_confirms("up", breadth, dxy_closes=trending)
+        confirms, flags, data_available = m._dbmf_macro_confirms(
+            "up", True, breadth, dxy_closes=trending
+        )
         assert confirms is False
+        assert data_available is True
         assert any("below the 3/4" in f for f in flags)
 
-    def test_none_when_dxy_missing(self):
-        confirms, flags = m._dbmf_macro_confirms("up", {}, dxy_closes=None)
+    def test_data_unavailable_when_dxy_missing(self):
+        confirms, flags, data_available = m._dbmf_macro_confirms("up", True, {}, dxy_closes=None)
         assert confirms is None
+        assert data_available is False
 
-    def test_none_when_own_short_none(self):
-        confirms, flags = m._dbmf_macro_confirms(None, {}, dxy_closes=_linear(100, 120, 8))
+    def test_data_unavailable_when_own_short_history_insufficient(self):
+        """ENG-63: own_short_data_available=False is the genuine data gap
+        (not enough own-price history to even attempt a short-window read)."""
+        confirms, flags, data_available = m._dbmf_macro_confirms(
+            None, False, {}, dxy_closes=_linear(100, 120, 8)
+        )
         assert confirms is None
+        assert data_available is False
+
+    def test_inconclusive_basis_when_own_short_indeterminate_on_present_data(self):
+        """ENG-63: own price history WAS long enough (own_short_data_available
+        =True) but its own directional_trend came back None (e.g. a sub-
+        threshold move, exactly DBMF's 2026-07-13 case: +0.57% over 21 days,
+        below the 2% floor) — a computed result, not a missing input."""
+        confirms, flags, data_available = m._dbmf_macro_confirms(
+            None, True, {}, dxy_closes=_linear(100, 120, 8)
+        )
+        assert confirms is None
+        assert data_available is True
+
+    def test_inconclusive_basis_when_dxy_direction_indeterminate(self):
+        """ENG-63: DXY_TREND itself was present but its own directional_trend
+        came back None — also a computed result, not a missing input."""
+        flat_dxy = [100.0, 100.1, 99.9, 100.2, 100.0, 99.8, 100.1, 100.0]
+        confirms, flags, data_available = m._dbmf_macro_confirms(
+            "up", True, {}, dxy_closes=flat_dxy
+        )
+        assert confirms is None
+        assert data_available is True
+        assert any("DXY_TREND direction indeterminate" in f for f in flags)
 
 
 # ── MLPX HY OAS confirmation ─────────────────────────────────────────────────
@@ -317,3 +390,43 @@ class TestEvaluateAllTrendSignals:
             weekly_trend_readings={}, hy_oas_session_history=[], dominant_directives={},
         )
         assert signals == []
+
+    def test_sgol_inconclusive_not_data_unavailable_on_2026_07_13_real_yield_scenario(self):
+        """ENG-63 end-to-end regression: the exact live scenario from
+        2026-07-13. Both weekly_trend_readings are present and real — the
+        real-yield series has a materially strong net move but dips below
+        its own starting value in week 2, so directional_trend nulls it.
+        Before the fix this produced DATA_UNAVAILABLE (indistinguishable
+        from real-yield never having been fetched); it must now be
+        INCONCLUSIVE, since the confirmation gate genuinely ran on present
+        data and found no agreeing direction."""
+        histories = {"SGOL": _linear(100, 130, 64)}
+        weekly = {
+            "REAL_YIELD_10Y_TREND": [2.16, 2.07, 2.19, 2.17, 2.21, 2.18, 2.26, 2.32],
+            "DXY_TREND": [98.91, 100.07, 99.75, 100.85, 101.36, 100.86, 100.97, 101.27],
+        }
+        signals = m.evaluate_all_trend_signals(
+            held_tickers=["SGOL"], daily_histories=histories,
+            weekly_trend_readings=weekly, hy_oas_session_history=[],
+            dominant_directives={"SGOL": "ADD"},
+        )
+        assert len(signals) == 1
+        assert signals[0].rs_signal == TrendSignalCode.INCONCLUSIVE
+        assert any("no clear agreement" in f for f in signals[0].quality_flags)
+
+    def test_sgol_data_unavailable_when_real_yield_genuinely_missing(self):
+        """Sanity check the DATA_UNAVAILABLE path still fires correctly when
+        a weekly reading is genuinely absent (contrast with the test above)."""
+        histories = {"SGOL": _linear(100, 130, 64)}
+        weekly = {
+            "REAL_YIELD_10Y_TREND": None,
+            "DXY_TREND": [98.91, 100.07, 99.75, 100.85, 101.36, 100.86, 100.97, 101.27],
+        }
+        signals = m.evaluate_all_trend_signals(
+            held_tickers=["SGOL"], daily_histories=histories,
+            weekly_trend_readings=weekly, hy_oas_session_history=[],
+            dominant_directives={"SGOL": "ADD"},
+        )
+        assert len(signals) == 1
+        assert signals[0].rs_signal == TrendSignalCode.DATA_UNAVAILABLE
+        assert any("unavailable this session" in f for f in signals[0].quality_flags)
