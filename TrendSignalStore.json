@@ -158,10 +158,10 @@
       "own_short_dir": null,
       "price_at_signal": 30.8,
       "quality_flags": [
-        "DBMF: own_short or DXY_TREND unavailable \u2014 breadth check skipped",
-        "DBMF: macro confirmation input unavailable this session"
+        "DBMF: own short-window trend indeterminate \u2014 breadth check skipped",
+        "DBMF: macro confirmation gate computed no clear agreement this session"
       ],
-      "rs_signal": "DATA_UNAVAILABLE"
+      "rs_signal": "INCONCLUSIVE"
     }
   },
   "MAGS": {
@@ -332,10 +332,10 @@
       "own_short_dir": null,
       "price_at_signal": 39.12,
       "quality_flags": [
-        "SGOL: real-yield/DXY agreement gate unavailable this session",
-        "SGOL: macro confirmation input unavailable this session"
+        "SGOL: real-yield/DXY agreement gate computed no clear agreement this session",
+        "SGOL: macro confirmation gate computed no clear agreement this session"
       ],
-      "rs_signal": "DATA_UNAVAILABLE"
+      "rs_signal": "INCONCLUSIVE"
     }
   },
   "SIVR": {
@@ -393,10 +393,10 @@
       "own_short_dir": null,
       "price_at_signal": 56.71,
       "quality_flags": [
-        "SIVR: real-yield/DXY agreement gate unavailable this session",
-        "SIVR: macro confirmation input unavailable this session"
+        "SIVR: real-yield/DXY agreement gate computed no clear agreement this session",
+        "SIVR: macro confirmation gate computed no clear agreement this session"
       ],
-      "rs_signal": "DATA_UNAVAILABLE"
+      "rs_signal": "INCONCLUSIVE"
     }
   },
   "XAR": {
