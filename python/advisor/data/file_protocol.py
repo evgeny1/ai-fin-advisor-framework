@@ -10,6 +10,7 @@ import subprocess
 import datetime
 import logging
 import os
+import threading
 from pathlib import Path
 from typing import Optional
 
@@ -383,21 +384,35 @@ def _git_commit(repo: Path, files: list[str], message: str) -> str:
     git("commit", "-m", message)
     sha = git("rev-parse", "--short", "HEAD")
 
-    try:
-        git("push", "origin", "master", timeout=30.0)
-        logger.info(f"Write-back committed and pushed: {sha} — {message}")
-    except subprocess.TimeoutExpired:
-        logger.warning(
-            f"Write-back committed locally ({sha}) but `git push` did not "
-            f"complete within 30s -- likely no non-interactive git "
-            f"credentials available to this process. The commit is safe; "
-            f"push manually: git -C {repo} push origin master"
-        )
-    except subprocess.CalledProcessError as e:
-        logger.warning(
-            f"Write-back committed locally ({sha}) but `git push` failed: "
-            f"{e.stderr.strip()}"
-        )
+    def _push_in_background() -> None:
+        try:
+            git("push", "origin", "master", timeout=30.0)
+            logger.info(f"Write-back pushed: {sha} — {message}")
+        except subprocess.TimeoutExpired:
+            logger.warning(
+                f"Write-back committed locally ({sha}) but `git push` did not "
+                f"complete within 30s -- likely no non-interactive git "
+                f"credentials available to this process. The commit is safe; "
+                f"push manually: git -C {repo} push origin master"
+            )
+        except subprocess.CalledProcessError as e:
+            logger.warning(
+                f"Write-back committed locally ({sha}) but `git push` failed: "
+                f"{e.stderr.strip()}"
+            )
+
+    # ENG-48 fix: push used to run synchronously here, taking up to 30s
+    # inside the 90s _with_timeout() budget it shares with render/compact/
+    # file-write/commit above -- both confirmed ENG-48 TIMEOUTs landed at
+    # ~90.02s, right at the edge, strongly suggesting push's own up-to-30s
+    # allowance was eating most of the margin. Push failures have been
+    # non-fatal since ENG-38 (the local commit is what matters for session
+    # continuity) -- backgrounding it changes no write guarantee, it only
+    # removes its duration from the synchronous critical path the caller's
+    # own timeout is racing against.
+    threading.Thread(
+        target=_push_in_background, name="advisor_git_push", daemon=True
+    ).start()
 
     return sha
 

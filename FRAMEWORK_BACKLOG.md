@@ -281,8 +281,8 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 
 | ID | Status | Severity | Category | Title |
 |---|---|---|---|---|
-| ENG-48 | OPEN | HIGH | bug | advisor_write_back's 90s safety-timeout races its own actual completion time — reports TIMEOUT while succeeding server-side |
-| ENG-49 | OPEN | HIGH | bug | advisor_write_back TIMEOUT with a genuinely incomplete server-side operation — files+archive rendered and written, but git add/commit never ran, distinct from ENG-48's "actually succeeded" pattern |
+| ENG-48 | CLOSED 2026-07-14 | HIGH | bug | advisor_write_back's 90s safety-timeout races its own actual completion time — reports TIMEOUT while succeeding server-side |
+| ENG-49 | MITIGATED 2026-07-14 (root fix — full step instrumentation — not built) | HIGH | bug | advisor_write_back TIMEOUT with a genuinely incomplete server-side operation — files+archive rendered and written, but git add/commit never ran, distinct from ENG-48's "actually succeeded" pattern |
 | ENG-50 | OPEN | HIGH | architecture | V4: Trend/Rotation Signal Layer — deterministic price/relative-strength module, additive to scenario engine, shadow-mode trial before any authority decision |
 | ENG-51 | CLOSED | MEDIUM | architecture | V4: split instrument classification (§11) out of Calibration_State.md into its own persistence entity |
 | ENG-52 | CLOSED | MEDIUM | hygiene | V4: structured parseable entry format (front-matter block) for Session_Log.md, Calibration_State.md, FRAMEWORK_BACKLOG.md |
@@ -353,72 +353,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 ## Part 1 — Engineering Items
 
 ### ENG-48 — advisor_write_back's 90s safety-timeout races its own actual completion time
-<!-- ITEM
-Status:    OPEN
-Severity:  HIGH
-Category:  bug
-Opened:    2026-07-03
-Area:      python/advisor/mcp_server.py — _tool_write_back()
-Related:   ENG-33 (different mechanism — see Description), ENG-38 (git-push timeout,
-           likely upstream of this one)
--->
-
-**Description:** During one advisory session, `advisor_write_back()` was called
-four times. Two returned `{"status": "TIMEOUT", "error": "_tool_write_back
-exceeded its 90s safety timeout without returning..."}` to Claude. Both were
-initially treated as failures and retried/abandoned per the tool's own advice
-("check git log for a new commit before retrying"). Checking `.git/logs/HEAD`
-confirmed no commit had landed either time — consistent with genuine failure.
-
-Much later in the same session, `git status` unexpectedly showed uncommitted
-modifications to `Session_Log.md` and `Portfolio_State.md`, plus an untracked
-`Archive_2026Q3.md` — despite neither reported TIMEOUT having produced a
-commit. Reading both modified files found two COMPLETE, well-formed §8
-entries with correct scenario probabilities, primary_driver, open_triggers,
-open_decisions, and next_session_flags — matching the content of both
-"failed" calls exactly. Nothing was garbled or partial.
-
-Cross-referencing `mcp-server-financial-advisor.log` (Claude Desktop's MCP
-transport log — request/response pairs are timestamped even though tool
-names/params are redacted) confirms the mechanism precisely:
-
-| Call | Client request sent | Server response logged | Delta |
-|---|---|---|---|
-| 1st write_back TIMEOUT | 20:13:23.115Z | 20:14:53.136Z | **90.021s** |
-| 2nd write_back TIMEOUT | 20:19:16.022Z | 20:20:46.040Z | **90.018s** |
-
-Both deltas land right at the "90s safety timeout" named in the tool's own
-error string — not a client-transport hang (contrast ENG-33, where the
-transport log showed the tool name occurring ZERO times, meaning the request
-never reached the server at all). Here the request DID reach the server, the
-server DID complete the full operation (render, write both files, git
-add+commit — no push landed either time, worth checking separately whether
-that's ENG-38 resurfacing or a distinct third step), and the response WAS
-sent — it just arrived at approximately the same instant the tool's own
-internal safety-timeout gave up waiting on it, so Claude's tool-call layer
-reported failure a beat before (or during) an actual success.
-
-Net effect: a client-visible "TIMEOUT" that is frequently (possibly always,
-for this specific tool) actually a success delayed to just past the
-watchdog's own deadline. The uncommitted files sat unrecovered for the
-remainder of the session until manually found and committed by hand.
-
-**Suggested next step:** the 90s figure is suspiciously tight against
-observed real completion time (both instances landed at ~90.02s, not spread
-across a wide range) — profile `_tool_write_back()`'s actual wall-clock
-breakdown (render time vs. git add vs. git commit vs. git push attempt) to
-find what's consistently taking it right up to the wire. Two independent
-fixes, either sufficient alone: (a) raise the safety-timeout comfortably
-above observed worst-case completion time, or (b) have the safety-timeout
-handler check whether the commit actually landed (a fast git call) before
-returning TIMEOUT, and return the real success result if so instead of a
-false failure. (b) is more robust against the timeout ever being too tight
-again. Also worth deciding deliberately: should `git push` be attempted
-synchronously inside this call at all, given ENG-38 already made push
-failures non-fatal — if push is the slow step, making it fire-and-forget
-(commit synchronously, push in a background thread, log push failures
-separately) would shorten the critical path without changing write
-guarantees for the two files that actually matter to session continuity.
+**CLOSED** 2026-07-14 (HIGH, bug). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 ### ENG-49 — advisor_write_back TIMEOUT with genuinely incomplete server-side work
 <!-- ITEM
@@ -475,6 +410,27 @@ Recovered the same way: `git add` both files + `git commit -F` + `git push`
 by hand. Still no instrumentation added — the suggested next step above
 remains the actual fix; this is just another data point that it's a
 recurring, not one-off, failure mode.
+
+**MITIGATION (2026-07-14, coding session):** the full step-by-step
+instrumentation suggested above was NOT built — this item stays OPEN for
+that reason. What did change, as part of closing ENG-48 (same code paths):
+`file_protocol._git_commit()` now backgrounds `git push` in a daemon thread
+instead of running it synchronously inside the 90s critical path, and
+`mcp_server._write_back_with_verification()` now checks `git rev-parse
+HEAD` before/after a TIMEOUT to distinguish a raced-but-real success from a
+genuinely stuck operation (see ENG-48's resolution in
+FRAMEWORK_BACKLOG_ARCHIVE.md for both in full). Net effect on this item
+specifically: the synchronous window between file-write and git-commit —
+the actual failure boundary this item describes — no longer has push's
+up-to-30s allowance sitting inside it competing for the same 90s budget,
+so the operation as a whole should have more comfortable margin and this
+failure mode should occur less often. It has NOT been made structurally
+impossible, and there is still no per-step visibility into exactly where a
+future occurrence stalls — a real TIMEOUT after the 2026-07-14 fix now
+reliably means "verified no new commit landed, something is actually
+stuck," which is a strictly better diagnostic starting point than before,
+but "which step" still requires the same manual `git status`/`git diff`
+forensic pass this item was opened to eliminate.
 
 ### ENG-50 — V4: Trend/Rotation Signal Layer (design + shadow-mode trial)
 <!-- ITEM

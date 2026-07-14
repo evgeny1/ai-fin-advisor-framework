@@ -60,6 +60,8 @@ import datetime
 import json
 import logging
 import os
+import subprocess
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -125,6 +127,109 @@ def _with_timeout(fn, timeout_s: float, *args, **kwargs) -> str:
             f"before retrying rather than assuming it failed.",
             status="TIMEOUT",
         )
+
+
+def _git_head_short() -> Optional[str]:
+    """
+    ENG-48: fast, read-only check of the framework repo's current HEAD —
+    used to tell a genuinely-late-but-successful advisor_write_back() apart
+    from a genuinely-stuck one, instead of trusting whichever one the
+    90s/future.result() race happens to land on. Returns None (never
+    raises) if git isn't available or the call fails for any reason --
+    callers treat that the same as "couldn't verify," not as a signal
+    either way.
+    """
+    from .data.file_protocol import framework_path
+
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(framework_path()), "rev-parse", "HEAD"],
+            capture_output=True, text=True, check=True, timeout=5.0,
+        )
+        return result.stdout.strip()
+    except Exception:
+        return None
+
+
+def _write_back_with_verification(
+    primary_driver: str,
+    open_triggers: List[str],
+    open_decisions: List[str],
+    session_type: str,
+    next_session_flags: Optional[List[str]] = None,
+    dry_run: bool = False,
+) -> str:
+    """
+    ENG-48 fix (2026-07-14): thin wrapper around
+    _with_timeout(_tool_write_back, 90.0, ...) that tells a genuinely-late-
+    but-successful write-back apart from a genuinely-stuck one, instead of
+    trusting whichever side of the 90s race the response happens to land
+    on. Pulled out of the advisor_write_back @srv.tool() closure so it's
+    directly callable/testable — same pattern _tool_write_back() itself
+    already follows one layer in.
+
+    Confirmed race (FRAMEWORK_BACKLOG.md ENG-48): both observed TIMEOUTs
+    landed at ~90.02s against the 90.0s budget -- the underlying call had
+    actually finished, including the git commit, a beat after
+    future.result() gave up waiting. The background thread _with_timeout()
+    leaves running is not cancelled, so checking git HEAD before and after
+    tells us definitively whether that happened, rather than inferring it
+    from timing alone.
+
+    Returns {"status": "OK_DELAYED", "committed": true, "commit_hash": ...}
+    when a new commit is found post-timeout -- treat exactly like a normal
+    success. A real {"status": "TIMEOUT"} still means what it always has
+    (ENG-49): the operation may be genuinely stuck; check `git log`/
+    `git status` before retrying rather than assuming success or failure.
+    """
+    head_before = None if dry_run else _git_head_short()
+
+    result = _with_timeout(
+        _tool_write_back, 90.0,
+        primary_driver=primary_driver,
+        open_triggers=open_triggers,
+        open_decisions=open_decisions,
+        next_session_flags=next_session_flags or [],
+        dry_run=dry_run,
+        session_type=session_type,
+    )
+
+    if dry_run or head_before is None:
+        return result
+
+    try:
+        status = json.loads(result).get("status")
+    except (json.JSONDecodeError, AttributeError):
+        status = None
+    if status != "TIMEOUT":
+        return result
+
+    # Grace-poll a short bounded window: both confirmed ENG-48 occurrences
+    # resolved within ~20ms of the deadline, so this is generous margin
+    # for the known race, not a disguised longer timeout.
+    for _ in range(8):  # ~2s total (8 x 0.25s)
+        time.sleep(0.25)
+        head_after = _git_head_short()
+        if head_after and head_after != head_before:
+            return _dumps({
+                "status": "OK_DELAYED",
+                "committed": True,
+                "commit_hash": head_after[:7],
+                "note": (
+                    "advisor_write_back exceeded its 90s safety timeout, "
+                    "but a new commit landed while this tool was waiting "
+                    "for the response -- this is the known ENG-48 race, "
+                    "not a failure. Verified via git rev-parse HEAD, not "
+                    "inferred from timing alone."
+                ),
+            })
+
+    # No new commit even after the grace window -- either still genuinely
+    # running (should be rare now that git push runs in the background,
+    # see the ENG-48 fix in file_protocol.py) or genuinely stuck (ENG-49).
+    # Original TIMEOUT result stands; its own message already advises
+    # checking `git log` before retrying.
+    return result
 
 
 logger = logging.getLogger(__name__)
@@ -1546,15 +1651,24 @@ def build_server():
         dry_run: if true, writes files locally but skips git commit
 
         Returns commit hash on success.
+
+        ENG-48 fix: this call is wrapped in a 90s safety timeout. If the
+        underlying write actually completes (files written, git commit
+        landed) but the response arrives just past that deadline, this
+        tool now verifies via `git rev-parse HEAD` and returns
+        {"status": "OK_DELAYED", "committed": true, "commit_hash": ...}
+        instead of a false TIMEOUT — treat OK_DELAYED as a normal success,
+        not a failure requiring investigation. A real {"status": "TIMEOUT"}
+        still means what it always has: check `git log`/`git status`
+        before retrying rather than assuming success or failure.
         """
-        return _with_timeout(
-            _tool_write_back, 90.0,
+        return _write_back_with_verification(
             primary_driver=primary_driver,
             open_triggers=open_triggers,
             open_decisions=open_decisions,
+            session_type=session_type,
             next_session_flags=next_session_flags or [],
             dry_run=dry_run,
-            session_type=session_type,
         )
 
     @srv.tool()

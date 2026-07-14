@@ -2852,3 +2852,116 @@ something this session's changes touched. One legitimate test fix:
   the next FULL_DESKTOP session onward, not before.
 - The live Claude Project's Instructions field still needs the manual
   paste-in update separate from this session's repo-file edit.
+
+
+### ENG-48 — advisor_write_back's 90s safety-timeout races its own actual completion time
+<!-- ITEM
+Status:    CLOSED 2026-07-14
+Severity:  HIGH
+Category:  bug
+Opened:    2026-07-03
+Area:      python/advisor/mcp_server.py — _tool_write_back(), _with_timeout()
+           python/advisor/data/file_protocol.py — _git_commit()
+Related:   ENG-33 (different mechanism — see Description), ENG-38 (git-push timeout,
+           likely upstream of this one), ENG-49 (same symptom, different mechanism)
+-->
+
+**Description:** During one advisory session, `advisor_write_back()` was called
+four times. Two returned `{"status": "TIMEOUT", "error": "_tool_write_back
+exceeded its 90s safety timeout without returning..."}` to Claude. Both were
+initially treated as failures and retried/abandoned per the tool's own advice
+("check git log for a new commit before retrying"). Checking `.git/logs/HEAD`
+confirmed no commit had landed either time — consistent with genuine failure.
+
+Much later in the same session, `git status` unexpectedly showed uncommitted
+modifications to `Session_Log.md` and `Portfolio_State.md`, plus an untracked
+`Archive_2026Q3.md` — despite neither reported TIMEOUT having produced a
+commit. Reading both modified files found two COMPLETE, well-formed §8
+entries with correct scenario probabilities, primary_driver, open_triggers,
+open_decisions, and next_session_flags — matching the content of both
+"failed" calls exactly. Nothing was garbled or partial.
+
+Cross-referencing `mcp-server-financial-advisor.log` (Claude Desktop's MCP
+transport log — request/response pairs are timestamped even though tool
+names/params are redacted) confirms the mechanism precisely:
+
+| Call | Client request sent | Server response logged | Delta |
+|---|---|---|---|
+| 1st write_back TIMEOUT | 20:13:23.115Z | 20:14:53.136Z | **90.021s** |
+| 2nd write_back TIMEOUT | 20:19:16.022Z | 20:20:46.040Z | **90.018s** |
+
+Both deltas land right at the "90s safety timeout" named in the tool's own
+error string — not a client-transport hang (contrast ENG-33, where the
+transport log showed the tool name occurring ZERO times, meaning the request
+never reached the server at all). Here the request DID reach the server, the
+server DID complete the full operation (render, write both files, git
+add+commit — no push landed either time, worth checking separately whether
+that's ENG-38 resurfacing or a distinct third step), and the response WAS
+sent — it just arrived at approximately the same instant the tool's own
+internal safety-timeout gave up waiting on it, so Claude's tool-call layer
+reported failure a beat before (or during) an actual success.
+
+Net effect: a client-visible "TIMEOUT" that is frequently (possibly always,
+for this specific tool) actually a success delayed to just past the
+watchdog's own deadline. The uncommitted files sat unrecovered for the
+remainder of the session until manually found and committed by hand.
+
+**Suggested next step (at the time):** the 90s figure is suspiciously tight
+against observed real completion time (both instances landed at ~90.02s, not
+spread across a wide range) — profile `_tool_write_back()`'s actual
+wall-clock breakdown (render time vs. git add vs. git commit vs. git push
+attempt) to find what's consistently taking it right up to the wire. Two
+independent fixes, either sufficient alone: (a) raise the safety-timeout
+comfortably above observed worst-case completion time, or (b) have the
+safety-timeout handler check whether the commit actually landed (a fast git
+call) before returning TIMEOUT, and return the real success result if so
+instead of a false failure. (b) is more robust against the timeout ever
+being too tight again. Also worth deciding deliberately: should `git push`
+be attempted synchronously inside this call at all, given ENG-38 already
+made push failures non-fatal — if push is the slow step, making it
+fire-and-forget (commit synchronously, push in a background thread, log
+push failures separately) would shorten the critical path without changing
+write guarantees for the two files that actually matter to session
+continuity.
+
+**RESOLUTION (2026-07-14, coding session):** implemented both threads of
+the suggested next step, favoring (b) over (a) exactly as flagged above as
+more robust.
+
+1. `file_protocol._git_commit()`: `git push` now runs in a daemon background
+   thread instead of synchronously — `git add`/`git commit`/`git rev-parse`
+   (the steps that matter for Session_Log.md/Portfolio_State.md integrity)
+   complete and the sha is returned before push is even attempted. Push
+   failures remain non-fatal exactly as ENG-38 established, just logged from
+   the background thread instead of the main call. This directly shortens
+   the synchronous critical path competing with the 90s outer timeout — push
+   was the prime suspect for eating the ~90.02s margin, since it alone could
+   take up to 30s of its own.
+2. `mcp_server.py`: new `_write_back_with_verification()` (module-level, not
+   buried in the `@srv.tool()` closure, so it's directly testable) wraps
+   `_with_timeout(_tool_write_back, 90.0, ...)`. On a TIMEOUT, it checks
+   `git rev-parse HEAD` before and after a short bounded grace-poll (~2s,
+   8 x 0.25s) — both confirmed occurrences resolved within ~20ms of the
+   deadline, so this window is generous margin for the known race, not a
+   disguised longer timeout. If HEAD changed, returns
+   `{"status": "OK_DELAYED", "committed": true, "commit_hash": ...}` instead
+   of the false TIMEOUT. A genuine TIMEOUT (HEAD never changes) still
+   returns unchanged — this is ENG-49's territory, not silently upgraded.
+
+`Project_Instructions_MCP.md` updated in the same change (its own §9 rule)
+to document `OK_DELAYED` as a normal success, not a failure requiring
+investigation.
+
+Tests added: `tests/test_stage1/test_file_protocol_write_back.py` (push
+backgrounding — returns before push completes, push still completes on its
+own, sha unaffected by a slow/failing push) and
+`tests/test_mcp/test_write_back_verification.py` (OK passthrough, dry_run
+skips verification, OK_DELAYED when HEAD changes during the grace poll,
+TIMEOUT stands when HEAD never changes, verification skipped when HEAD
+can't be read at all). Full suite: 909 passed / 46 skipped / 0 failed
+(baseline was 900/46/0 before this session's other changes).
+
+Not done, and not required to close this item: full step-by-step
+instrumentation (render / file-write / archive-rotation / git-add /
+git-commit / git-push, individually visible) — see ENG-49, which remains
+open specifically for that.
