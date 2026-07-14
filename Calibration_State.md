@@ -2,7 +2,12 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.65  Last updated: July 14, 2026. v1.65: geopolitical_premium
+# Version: 1.66  Last updated: July 14, 2026. v1.66: GAP-17 approach
+decided by Evgeny — flip-within-role (targeted Scenario C/E sign revision),
+not a new RoleID split. Numbers not yet derived; still LOW confidence,
+still gated to March 31, 2027 at the earliest. §6 item 46 updated.
+
+v1.65: geopolitical_premium
 XAR sign-question fresh re-verification (coding session, GAP-17 opened) --
 6 independently-dated inflection points (3 escalation/3 de-escalation,
 2026-05-20 through 2026-07-13) checked against SPY as a market-beta
@@ -2067,16 +2072,18 @@ to do later.
     re-verification this session (6 dated inflection points vs SPY,
     2026-05-20 to 2026-07-13) confirms the inverse pattern is defense-
     sector-specific, not broad market beta — see §3 log entry 2026-07-14
-    (v1.65) for full method and results. DECISION NEEDED (Evgeny):
+    (v1.65) for full method and results. DECIDED (Evgeny, 2026-07-14):
     targeted Scenario C/E sign revision within the existing
-    geopolitical_premium role (recommended — M15.AddRole()'s own
-    2+-analogue requirement is at least as hard to clear for a brand-new
-    role, given this mechanism has exactly 1 instance so far) vs. a new
-    RoleID split. Either path is currently LOW confidence and gated to
-    2+ quarters of live data since the 2026-07-03 proposal date — not
-    eligible for formal §4.1 adoption before March 31, 2027 at the
-    earliest, regardless of which path is chosen. No §4.1 change, no XAR
-    execution this session — HOLD/frozen status stands per the hand-off.
+    geopolitical_premium role, not a new RoleID split — M15.AddRole()'s
+    own 2+-analogue requirement is at least as hard to clear for a
+    brand-new role, given this mechanism has exactly 1 instance so far.
+    APPROACH DECIDED; NUMBERS NOT YET DERIVED — no analog-period return
+    calculation has been run for a revised Scenario C (or E) range yet,
+    only the sign/direction question. This is still LOW confidence and
+    gated to 2+ quarters of live data since the 2026-07-03 proposal date
+    — not eligible for formal §4.1 adoption before March 31, 2027 at the
+    earliest. No §4.1 change, no XAR execution this session — HOLD/frozen
+    status stands per the hand-off.
 
 ---
 
