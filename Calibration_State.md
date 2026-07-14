@@ -2,7 +2,22 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.64  Last updated: July 8, 2026. v1.64: geopolitical_premium
+# Version: 1.65  Last updated: July 14, 2026. v1.65: geopolitical_premium
+XAR sign-question fresh re-verification (coding session, GAP-17 opened) --
+6 independently-dated inflection points (3 escalation/3 de-escalation,
+2026-05-20 through 2026-07-13) checked against SPY as a market-beta
+control, not just raw price moves as before; XAR showed negative excess
+return vs SPY on every escalation event and positive excess return on
+every de-escalation event, confirming the pattern is defense-sector-
+specific, not broad risk-off/on beta. Strengthens but does not change
+v1.52/v1.63/v1.64's LOW-confidence, NOT ADOPTED conclusion -- still gated
+to the March 31, 2027 audit at the earliest per v1.63's time-based rule.
+Flip-vs-role-split decision framed for Evgeny's judgment (§6 item 46) --
+recommendation leans flip-within-role given M15.AddRole()'s own
+2+-analogue bar, which a single-instance mechanism can't clear either
+way. No §4.1 change, no XAR execution. Full detail: §3 log 2026-07-14.
+
+v1.64: geopolitical_premium
 full-row M16 review (A/B/D/E/F; C already done v1.52/v1.63) — role-level
 finding: no T1 institutional anchor exists for this sector at all, capping
 the whole row at LOW confidence structurally, not per-cell. A: real
@@ -232,6 +247,111 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+---
+entry_id: 2026-07-14T11:00
+date: '2026-07-14'
+version: v1.65
+category: geopolitical_premium — XAR sign-question fresh re-verification (GAP-17 opened, coding session)
+---
+2026-07-14 (v1.65) - Client-directed coding-session re-verification of the
+inverse-sign finding underlying the open M15 XAR/geopolitical_premium split
+decision (carried as an open_decision in Session_Log.md §8 since 2026-07-03;
+builds on v1.52/v1.63/v1.64's C-cell work). NOT a new methodology pass from
+scratch -- targets the one open question those entries left unresolved: is
+the inverse pattern actually defense-sector-specific, or could it just be
+XAR riding broad market beta during a volatile period? Prior evidence (the
+client's own price-vs-timeline observation, Arbor Data Science's third-party
+cross-conflict comparison) used raw price moves only; this pass adds a
+market-beta control that wasn't run before.
+
+METHOD: 6 independently-dated conflict inflection points, 2026-05-20 through
+2026-07-13 (3 escalation, 3 de-escalation), each checked against SPY over the
+same window (T1 market_data_mcp daily closes for both). Excess return = XAR
+return minus SPY return over the window -- isolates whatever XAR is doing
+beyond whatever the broad market is doing.
+
+  1. 2026-05-19->05-28 (de-escalation: Hormuz tanker-crossing satellite data,
+     Brent -19% MTD on deal optimism): XAR +11.6%, SPY +2.85%, excess +8.8pp.
+     Standard sign predicts XAR should UNDERPERFORM on de-escalation (war
+     premium fades) -- opposite observed.
+  2. 2026-06-12->06-18 (de-escalation: MOU announced 06-14, formally signed
+     06-17 Switzerland): XAR +1.5%, SPY +0.9%, excess +0.6pp. Same direction,
+     smaller magnitude -- weak but consistent.
+  3. 2026-06-18->06-22 (escalation: IRGC re-closed Hormuz 06-20): XAR -2.2%,
+     SPY -0.3%, excess -1.9pp. Standard sign predicts XAR should OUTPERFORM
+     on escalation (war premium) -- opposite observed.
+  4. 2026-06-24->06-30 (de-escalation: Bürgenstock deconfliction channel,
+     Brent to pre-war lows): XAR +4.2%, SPY +1.9%, excess +2.3pp.
+  5. 2026-07-07->07-08 (escalation: ceasefire/MOU declared "over," fresh
+     US-Iran strikes): XAR -2.0% close-to-close (v1.63's -2.97% same-day
+     figure was likely an intraday read at time of writing -- data-
+     provenance note only, direction unaffected), SPY -0.3%, excess -1.7pp.
+  6. 2026-07-10->07-13 (escalation: continued strikes, Hormuz traffic still
+     severely depressed): XAR -2.7% (hand-off's -2.78% figure reconfirmed
+     within rounding), SPY -0.8%, excess -1.9pp.
+
+RESULT: excess-return sign matches the INVERSE pattern in all 6/6 cases --
+negative excess on every escalation event, positive excess on every
+de-escalation event, magnitudes (0.6pp to 8.8pp) well above noise for
+events 1/3/4/5/6. This rules out the "just beta" alternative the prior
+sessions' raw-price-move evidence couldn't rule out on its own: XAR is not
+merely falling because the market fell that day, it is under- or
+over-performing the market specifically in the direction opposite the
+geopolitical_premium role's assumed sign.
+
+L3 mechanism (unchanged from v1.52, reinforced not revised): "war-
+consumption" (US as direct combatant burning its own stockpiles/budget
+under uncertainty -- near-term cost overhang) vs. "arms-sales tailwind"
+(US/NATO arms a third party -- pure revenue upside), compounded by a
+genuine chokepoint/oil-shock hit to broad risk appetite this cycle carries
+that 2022 Ukraine didn't. All 3 escalation events tested here are ACUTE
+shocks (Scenario-C-type), where the current §4.1 value is strongest-
+positive ([4,10]) and the contradiction is cleanest. This pass does NOT
+test whether Scenario B's "sustained lock" mechanism (rearmament/
+replenishment demand over a longer horizon) shares the same problem --
+sustained tension and acute shock are different time horizons/mechanisms
+and this evidence shouldn't be extended to B without its own check.
+
+FLIP vs. SPLIT (the open decision itself, framed not resolved -- see §6
+item 46): M15.AddRole()'s own requirement for any brand-new role is "at
+least 2 historical analogue periods identified and cited" for each of its
+6 scenario cells. The "war-consumption" mechanism has exactly ONE clean
+instance across the analogue set checked so far (this war itself) -- a new
+role would face the identical single-analogue ceiling the existing C-cell
+already sits at (v1.52: LOW confidence, "fewer than 1 clean analogue" per
+M16's own ENUM), not an easier one. Recommendation for Evgeny's decision: a
+targeted Scenario C (and likely E, per v1.64's item 13b directional
+concern) revision WITHIN the existing geopolitical_premium role is the more
+tractable path -- XAR's composition (0.90 GP / 0.10 BMED) doesn't need to
+change, only the assumed sign/magnitude for acute-shock scenarios
+specifically. A new RoleID doesn't escape the evidence problem; it just
+rebuilds a 6-cell table from the same thin evidence base plus the added
+burden of qualifying under AddRole()'s own citation requirement.
+
+PROCEDURAL NOTE (unchanged per M16 GUARD NeverReviseWithoutMethodology): no
+§4.1 value changes. Per v1.63's own ruling, geopolitical_premium C is a
+LOW-confidence finding gated to 2+ quarters of live data since the
+2026-07-03 proposal date -- not eligible for formal adoption before the
+March 31, 2027 full audit at the earliest, regardless of how much
+additional confirming evidence accumulates before then (time-gated, not
+effort-gated). This entry adds evidence to the record; it does not and
+cannot advance the adoption timeline.
+
+SEPARATE METHODOLOGY GAP FLAGGED (not resolved here, worth a future M16
+amendment discussion): the LOW-confidence GUARD's "use the conservative end
+of the range" rule implicitly assumes the range's SIGN is correct and only
+the magnitude is uncertain. It has no mechanism for a cell where the sign
+itself may be wrong -- using +4% (§4.1 C's conservative end) as the
+"conservative" fallback is not actually conservative if the true expected
+value is negative, as this and the prior three sessions' evidence
+increasingly suggests for acute-shock scenarios specifically. Flagging for
+Evgeny; not something to fix unilaterally mid-session.
+
+Feeds directly into the open M15 XAR/geopolitical_premium split decision
+(Session_Log.md §8 open_decisions, carried 2026-07-03 through 2026-07-12;
+hand-off 2026-07-13 flagged this as top priority). No XAR execution action
+taken or recommended this session -- HOLD/frozen status stands.
 
 ---
 entry_id: 2026-07-08T14:20
@@ -1939,6 +2059,24 @@ to do later.
     §11.1 row and §11.4 candidate entry added this version. No current
     portfolio allocation; no client decision yet on whether to pursue
     formal adoption at the September audit.
+46. [P1] geopolitical_premium — XAR sign-question decision point (GAP-17,
+    opened 2026-07-14, coding session). Carried as an open Session_Log.md
+    §8 decision since 2026-07-03 (M15 XAR/geopolitical_premium split
+    question); this item gives it a tracked identity instead of an
+    indefinitely-recurring ad-hoc note. Fresh beta-controlled
+    re-verification this session (6 dated inflection points vs SPY,
+    2026-05-20 to 2026-07-13) confirms the inverse pattern is defense-
+    sector-specific, not broad market beta — see §3 log entry 2026-07-14
+    (v1.65) for full method and results. DECISION NEEDED (Evgeny):
+    targeted Scenario C/E sign revision within the existing
+    geopolitical_premium role (recommended — M15.AddRole()'s own
+    2+-analogue requirement is at least as hard to clear for a brand-new
+    role, given this mechanism has exactly 1 instance so far) vs. a new
+    RoleID split. Either path is currently LOW confidence and gated to
+    2+ quarters of live data since the 2026-07-03 proposal date — not
+    eligible for formal §4.1 adoption before March 31, 2027 at the
+    earliest, regardless of which path is chosen. No §4.1 change, no XAR
+    execution this session — HOLD/frozen status stands per the hand-off.
 
 ---
 

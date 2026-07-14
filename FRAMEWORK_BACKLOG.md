@@ -1915,6 +1915,7 @@ first; update this index to match, not the other way around.
 | GAP-11 | OPEN | M07 EV floor — see ENG-14, no description recovered yet | Session_Log.md |
 | GAP-15 | CLOSED v1.32 | B_WATCH_LEVEL_3 graduated protocol added to §2.3 | Calibration_State.md §3 |
 | GAP-16 | CLOSED v1.42; real-yield driver corrected v1.44 (ENG-39) | Within-scenario sub-condition advisory (range-position) for wide-range roles — IHP (real yield/DXY) implemented; STF/RAC/IHC sub-conditions not yet identified, separate follow-on | Calibration_State.md §3 |
+| GAP-17 | OPEN — decision point framed, opened v1.65 | geopolitical_premium — XAR sign-question (M15 role-split vs. targeted Scenario C/E sign revision within the existing role); LOW confidence either path, gated to March 31, 2027 audit at the earliest | Calibration_State.md §3/§6 item 46 |
 
 ---
 
