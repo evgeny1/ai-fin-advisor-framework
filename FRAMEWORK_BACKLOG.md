@@ -33,7 +33,28 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-13, live M05 session (ENG-63 CLOSED — root-caused
+**Last updated:** 2026-07-13, live M05 session (ENG-65 CLOSED — direct
+follow-on from ENG-63: `directional_trend()`'s "no reversal through the
+window's start" rule was found to be a faithful implementation of
+`Calibration_State.md` §13's own DBMF-specific text ("directional = net
+move >= 8% in one direction without full reversal"), but had been
+silently reused as the GENERAL trend definition for every other caller —
+SGOL/SIVR's own price, GAP-16's real-yield/DXY gate, URA/COPX's §13
+conditions — none of which have any documented text requiring it.
+Evgeny's framing (DBMF is a strategy classification whose OWN price
+should get the same plain trend treatment as any instrument; only its
+macro-breadth condition, checking OTHER markets as a strategy-backdrop
+proxy, should keep the stricter reading) resolved this cleanly:
+`directional_trend()` gained an explicit `require_no_reversal` opt-in,
+default False (plain time-series momentum — sign of net change, gated by
+materiality, no path dependence), applied only at DBMF's own two §13
+call sites (`thesis.py`) and its breadth-check mirror in `trend_signal.py`.
+Live impact: SGOL and SIVR now correctly resolve to a real, confirmed
+WEAKENING signal matching their actual observed decline, instead of the
+misleading INCONCLUSIVE both reported before. 12 tests added/updated
+across `test_stage3/test_trend.py` and `test_stage3/test_trend_signal.py`;
+full suite 900 passed / 46 skipped / 0 failed, confirmed live. Prior:
+2026-07-13, live M05 session (ENG-63 CLOSED — root-caused
 and fixed, mid-session, DBMF/SGOL/SIVR's Mode 2 confirmation gate conflating
 a missing input with a computed no-agreement result: both `_agreement_gate`
 and `_dbmf_macro_confirms` returned a bare `None` whether their raw series
@@ -266,6 +287,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-62 | CLOSED | LOW | hygiene | Project_Instructions_MCP.md + M03/M12/M13/M14 synced to the 2026-07-12 Allocation-file split (one multi-tab file -> three single-tab files) |
 | ENG-63 | CLOSED | MEDIUM | bug | DBMF/SGOL/SIVR's Mode 2 confirmation gate (_agreement_gate, _dbmf_macro_confirms) conflated a missing input with a computed no-agreement result -- both collapsed to DATA_UNAVAILABLE even when the underlying data fetched cleanly |
 | ENG-64 | OPEN | MEDIUM | architecture | advisor_run_computation / advisor_evaluate_trend_signal have a hard client-side timeout with no polling/job-status mechanism -- both confirmed ENG-33-style transport hangs, not slow computation |
+| ENG-65 | CLOSED | HIGH | bug | directional_trend()'s unconditional "no reversal" veto (built to match DBMF's own §13 text) silently suppressed real, material trends for every other caller -- SGOL/SIVR's own price, GAP-16's real-yield/DXY gate, URA/COPX conditions; now an explicit require_no_reversal opt-in, kept only for DBMF's own documented strategy-backdrop condition |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -1012,6 +1034,131 @@ mirroring the pattern Desktop Commander's own `start_process` +
 session -- touches both tools' registration in `mcp_server.py` and
 introduces genuinely new job-lifecycle state (in-memory job registry,
 cleanup/expiry policy for abandoned jobs), not a small patch.
+
+### ENG-65 — directional_trend()'s unconditional "no reversal" veto suppressed real, material trends across every module that uses it
+<!-- ITEM
+Status:    CLOSED
+Severity:  HIGH
+Category:  bug
+Opened:    2026-07-13
+Closed:    2026-07-13
+Area:      python/advisor/analysis/trend.py (directional_trend,
+           mean_reversion_mode), python/advisor/analysis/thesis.py
+           (DBMF's two §13 call sites), python/advisor/analysis/
+           trend_signal.py (_dbmf_macro_confirms's breadth check)
+Related:   ENG-63 (found while investigating this), ENG-13 (original
+           trend.py build), ENG-55 (trend/rotation layer design)
+-->
+
+**Description:** Direct follow-on from ENG-63, raised by Evgeny after
+noticing gold (SGOL) and silver (SIVR) were still reporting INCONCLUSIVE
+despite visibly, materially declining. Live-tracing SGOL/SIVR's actual own
+daily closes showed both were genuinely down -13.89%/-21.06% over the
+63-day window and -3.53%/-8.50% over 21 days — well past any reasonable
+materiality floor — but `directional_trend()`'s "no later close may cross
+back through the window's own starting value" rule was nulling the read,
+because both series ticked up briefly a few days after the window opened
+before their sustained decline resumed.
+
+Checked how widely this rule is actually used before touching anything:
+`analysis/thesis.py` (M09/M10 §13 sustaining conditions, live, not
+shadow-mode) and `analysis/range_position.py` (GAP-16's real-yield/DXY
+gate, feeding `range_position_advisories` on every real session) both
+depend on the same primitive, not just the ENG-55 trend/rotation layer.
+
+Checked whether the "no reversal" rule was itself a mistake or
+intentional: it is NOT a bug in the sense of an oversight.
+`Calibration_State.md` 13 documents DBMF's own sustaining condition
+word-for-word: *"directional = net move >= 8% in one direction without
+full reversal"* — `directional_trend()` was built to implement that exact
+sentence (see the original ENG-13 test comment: *"DBMF's own text
+requires 'without full reversal'"*), then reused as the GENERAL
+"is this trending" definition across every other caller, none of which
+have any documented text requiring that behavior. Grepped
+`Calibration_State.md` for every occurrence of "reversal" to confirm: the
+phrase appears exactly once, in DBMF's own 13 block. Every other
+condition (SGOL/SIVR's DXY-appreciation check, URA's uranium trend, COPX's
+copper trend, GAP-16's real-yield/DXY gate, every instrument's own-price
+trend in the ENG-55 layer) inherited the veto as an unintended side effect
+of sharing the function, not because their own documented text asked for
+it.
+
+**Decision (client-directed, live session):** this is two genuinely
+separate layers that had been conflated — a data-driven, instrument-
+agnostic trend calculation (should be one standard method, used
+identically everywhere) versus a strategy-specific consumption rule
+(DBMF's own documented macro-breadth condition, which legitimately wants
+the stricter "no reversal" reading since DBMF is a `systematic_trend_
+following` strategy fund, and a choppy/reversing macro backdrop genuinely
+undermines its own thesis — see `Calibration_State.md` 13's
+`systematic_trend_following` note). Client's framing, confirmed correct
+against the code: DBMF's OWN price should get the same plain trend
+treatment as any other instrument; only the breadth condition that checks
+OTHER markets as a strategy-backdrop proxy should keep the stricter
+reading.
+
+**Fix:**
+- `directional_trend()`: new `require_no_reversal: bool = False`
+  parameter. Default is now plain time-series momentum — sign of
+  `net_change_pct` over the window, gated by the materiality threshold,
+  full stop (the same baseline "sign of trailing return" measure used in
+  time-series-momentum trend-following research/practice). The path taken
+  to get there no longer matters — only the net outcome. `require_no_
+  reversal=True` restores the exact old behavior byte-for-byte, as an
+  explicit, documented opt-in.
+- `mean_reversion_mode()`: threads the same parameter through (it's a
+  logical negation of `directional_trend()`).
+- `thesis.py`'s two DBMF 13 call sites (the "trending directionally"
+  sustaining condition and the "mean-reversion mode" failure condition):
+  updated to pass `require_no_reversal=True` — DBMF's own documented text
+  is preserved exactly, byte-for-byte.
+- `trend_signal.py`'s `_dbmf_macro_confirms`: its breadth check (`dxy_dir`
+  and the Brent/Gold/S&P breadth loop) also passes `require_no_
+  reversal=True` internally — its own docstring already describes this as
+  "exact reuse of the breadth concept GAP-16/13 already defined for
+  DBMF," so it keeps the same documented semantics for consistency. DBMF's
+  OWN price trend (`own_short`/`own_medium`, computed by the caller) does
+  NOT get this flag — it's a plain instrument read, same as any other
+  ticker.
+- Every other caller (SGOL/SIVR's own price and DXY-appreciation checks,
+  URA's uranium check, COPX's copper checks, MLPX's Brent-floor check,
+  GAP-16's real-yield/DXY gate, every Mode-1/Mode-2 instrument-level trend
+  read in the ENG-55 layer) needed NO code change — they automatically get
+  the corrected, standard behavior via the new default.
+
+**Live impact:** SGOL and SIVR now correctly resolve to a real, confirmed
+WEAKENING signal on 2026-07-13's actual data (own_short=down,
+own_medium=down, both agree, real-yield/DXY confirmation gate agrees) —
+matching gold and silver's actual observed decline, instead of the
+misleading INCONCLUSIVE both were reporting before. DBMF correctly stays
+INCONCLUSIVE — its own trailing 21-day move is a genuine +0.57%, below the
+materiality floor on its own merits, unrelated to the reversal rule.
+
+**Verification:** checked every existing test in
+`test_stage3/test_thesis.py` and `test_stage3/test_range_position.py`
+before changing anything — none rely on reversal-veto-specific fixtures
+(all monotonic or clearly-flat series), confirming this was safe to
+change without touching those two modules' own tests. 7 new/updated tests
+in `test_stage3/test_trend.py` (the default vs. opt-in behavior,
+`mean_reversion_mode`'s threading), 5 new/updated in
+`test_stage3/test_trend_signal.py` (the corrected `_agreement_gate`
+outcome, an end-to-end SGOL regression using SGOL's real declining
+closes, `_dbmf_macro_confirms`'s breadth check keeping the veto
+internally, DBMF's own price NOT keeping it). Full suite: 900 passed / 46
+skipped / 0 failed. Confirmed live against tonight's actual data via the
+CLI fallback.
+
+**Honesty note:** plain time-series momentum (sign of net change, no path
+dependence) is the simplest, most standard baseline — not the most
+sophisticated. A regression-slope-based measure (fitting a trend line
+across the whole window, weighting every point rather than just the two
+endpoints) would be more robust to single-day noise at either endpoint
+and is a legitimate, common alternative; it wasn't adopted here because it
+changes what "materiality" means (a projected slope-based move rather than
+the literally observed net change) and is exactly the kind of judgment
+call ENG-55 already carved out for its own dedicated session. Worth
+revisiting once the 8-week shadow trial has real outcome data — same
+posture already established for `NOISE_FLOOR_PCT`.
 
 ### ENG-56 — Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries
 <!-- ITEM

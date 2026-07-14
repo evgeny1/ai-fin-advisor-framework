@@ -177,7 +177,7 @@ def _eval_trend(
                 flags.append(f"{ticker}: {spec_id} unavailable for DBMF directional check")
                 continue
             any_data = True
-            if directional_trend(closes, _DBMF_DIRECTIONAL_THRESHOLD) is not None:
+            if directional_trend(closes, _DBMF_DIRECTIONAL_THRESHOLD, require_no_reversal=True) is not None:
                 trending += 1
         return (trending >= 2) if any_data else None
 
@@ -189,7 +189,7 @@ def _eval_trend(
             if closes is None:
                 flags.append(f"{ticker}: {spec_id} unavailable for mean-reversion check")
                 continue
-            results.append(mean_reversion_mode(closes, _DBMF_DIRECTIONAL_THRESHOLD))
+            results.append(mean_reversion_mode(closes, _DBMF_DIRECTIONAL_THRESHOLD, require_no_reversal=True))
         if not results or any(r is None for r in results):
             return None
         return all(results)

@@ -305,6 +305,16 @@ def _dbmf_macro_confirms(
     resolving to None on a present dxy_closes series, are both computed
     results on real data, not missing inputs — data_available stays True
     in those cases (FRAMEWORK_BACKLOG.md ENG-63).
+
+    dxy_dir and the breadth check both use require_no_reversal=True — this
+    breadth check is an explicit reuse of Calibration_State.md 13's own
+    DBMF sustaining-condition concept (checking whether OTHER markets are
+    trending as a proxy for a supportive trend-following backdrop), not a
+    plain instrument trend read, so it keeps that condition's documented
+    "without full reversal" semantics (FRAMEWORK_BACKLOG.md ENG-65). This
+    is deliberately NOT applied to own_short (DBMF's own price, computed by
+    the caller) — DBMF's own price is a plain instrument trend, evaluated
+    the same standard way as any other ticker.
     """
     flags: List[str] = []
     if not dxy_closes:
@@ -314,10 +324,10 @@ def _dbmf_macro_confirms(
     if own_short is None:
         return None, ["DBMF: own short-window trend indeterminate — breadth check skipped"], True
 
-    dxy_dir = directional_trend(dxy_closes, NOISE_FLOOR_PCT)
+    dxy_dir = directional_trend(dxy_closes, NOISE_FLOOR_PCT, require_no_reversal=True)
     breadth_count = 0
     for sym, closes in breadth_readings.items():
-        if closes and directional_trend(closes, NOISE_FLOOR_PCT) is not None:
+        if closes and directional_trend(closes, NOISE_FLOOR_PCT, require_no_reversal=True) is not None:
             breadth_count += 1
 
     if dxy_dir is None:

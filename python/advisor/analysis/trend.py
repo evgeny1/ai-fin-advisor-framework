@@ -38,27 +38,46 @@ def net_change_pct(weekly_closes: List[float]) -> Optional[float]:
     return (weekly_closes[-1] / weekly_closes[0] - 1.0) * 100.0
 
 
-def directional_trend(weekly_closes: List[float], threshold_pct: float) -> Optional[str]:
+def directional_trend(
+    weekly_closes: List[float],
+    threshold_pct: float,
+    require_no_reversal: bool = False,
+) -> Optional[str]:
     """
     "up" | "down" | None.
 
-    Implements the "directional, without full reversal" definition DBMF's
-    own §13 sustaining condition already uses in its text ("directional =
-    net move >= 8% in one direction without full reversal"):
+    Default (require_no_reversal=False): standard time-series-momentum
+    trend read — the sign of the net change over the window
+    (net_change_pct), gated by a materiality floor
+    (|net_change_pct| >= threshold_pct). This is a plain, industry-
+    standard measure (the same baseline "sign of trailing return"
+    definition systematic trend-following strategies use) and is what
+    every caller should use for an instrument's own price, a macro
+    series, or any other general-purpose trend read. It does not care
+    whether the path to get there was smooth — only the net outcome over
+    the window (FRAMEWORK_BACKLOG.md ENG-65).
 
-      1. |net_change_pct| >= threshold_pct over the window, AND
-      2. no later close in the window has crossed back through the
-         window's starting value (weekly_closes[0]) — i.e. the move never
-         fully gave itself back at any point along the way.
-
-    Returns None when either the net move never cleared the materiality
-    threshold, or it cleared the threshold but later reversed through the
-    starting level (not "sustained" by this definition — a single net
-    number can hide a round trip in between).
+    require_no_reversal=True additionally requires that no later close in
+    the window ever crossed back through the window's *starting* value —
+    i.e. the move never fully gave itself back at any point along the
+    way. This is NOT a general trend-detection requirement. It exists
+    solely to implement Calibration_State.md 13's own documented text for
+    DBMF's macro-breadth sustaining/failure conditions ("directional =
+    net move >= 8% in one direction without full reversal"), which check
+    whether OTHER markets (BZUSD/GCUSD/DXY/^GSPC) are trending as a proxy
+    for whether DBMF's trend-following STRATEGY has a supportive
+    backdrop — a strategy-level condition, not a property of any
+    instrument's own price. Do not set this for an instrument's own price
+    trend or any other module's trend read — doing so will silently and
+    materially suppress a real, sustained move that merely had one early
+    wobble (the exact failure mode found live on 2026-07-13, see ENG-65).
     """
     net = net_change_pct(weekly_closes)
     if net is None or abs(net) < threshold_pct:
         return None
+    if not require_no_reversal:
+        return "up" if net > 0 else "down"
+
     base = weekly_closes[0]
     if net > 0:
         if any(c < base for c in weekly_closes[1:]):
@@ -106,6 +125,7 @@ def mean_reversion_mode(
     weekly_closes: List[float],
     threshold_pct: float,
     trailing_weeks: Optional[int] = None,
+    require_no_reversal: bool = False,
 ) -> Optional[bool]:
     """
     True if the trailing `trailing_weeks` closes (or the full window, when
@@ -118,8 +138,14 @@ def mean_reversion_mode(
     misclassified an ongoing longer trend as "mean-reversion" — a steady
     trend typically moves less than the materiality threshold within almost
     any short sub-window of itself. None if insufficient history.
+
+    require_no_reversal is threaded straight through to directional_trend()
+    — see that function's docstring. DBMF's own §13 failure condition
+    ("all 4 markets in mean-reversion mode") is this module's sole real
+    caller and passes True, since it's checking the same trend-following-
+    strategy-backdrop concept as DBMF's sustaining condition.
     """
     window = weekly_closes if trailing_weeks is None else weekly_closes[-trailing_weeks:]
     if len(window) < 2 or (trailing_weeks is not None and len(weekly_closes) < trailing_weeks):
         return None
-    return directional_trend(window, threshold_pct) is None
+    return directional_trend(window, threshold_pct, require_no_reversal=require_no_reversal) is None

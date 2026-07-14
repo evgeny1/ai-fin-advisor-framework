@@ -84,16 +84,19 @@ class TestAgreementGate:
         assert confirms is None
         assert data_available is True
 
-    def test_data_available_but_indeterminate_on_early_dip_through_start(self):
-        """ENG-63: this is the exact 2026-07-13 live scenario — a real-yield
-        series with a materially strong net move (+7.4%) that gets nulled by
-        directional_trend's reversal rule because week 2 dipped fractionally
-        below week 1's starting value. Real, present data; a real computed
-        non-result — not a fetch gap."""
+    def test_confirms_true_on_2026_07_13_real_yield_scenario_after_eng65_fix(self):
+        """ENG-65 regression: this is the exact live scenario from
+        2026-07-13. Before ENG-65, directional_trend()'s unconditional
+        reversal veto nulled the real-yield leg (a materially strong +7.4%
+        net move that merely dipped below its own starting value in week
+        2), forcing this gate to report confirms=None even though both
+        legs were genuinely, materially trending. _agreement_gate uses the
+        default (require_no_reversal=False, plain time-series momentum),
+        so both legs now correctly resolve and agree."""
         real_yield = [2.16, 2.07, 2.19, 2.17, 2.21, 2.18, 2.26, 2.32]
         dxy = [98.91, 100.07, 99.75, 100.85, 101.36, 100.86, 100.97, 101.27]
         confirms, data_available = m._agreement_gate(real_yield, dxy)
-        assert confirms is None
+        assert confirms is True
         assert data_available is True
 
 
@@ -249,6 +252,21 @@ class TestDbmfMacroConfirms:
         assert data_available is True
         assert any("DXY_TREND direction indeterminate" in f for f in flags)
 
+    def test_dxy_breadth_check_keeps_no_reversal_veto_internally(self):
+        """ENG-65: this breadth check is the explicit reuse of
+        Calibration_State.md 13's own DBMF sustaining-condition concept, so
+        it keeps require_no_reversal=True internally even though the
+        general-purpose directional_trend() default no longer vetoes on a
+        reversal. A DXY series with a real net move that dipped through its
+        own starting value must still read as indeterminate here."""
+        dxy_with_early_dip = [100, 95, 90, 95, 96, 98, 100, 109]  # net +9%, dipped below 100
+        confirms, flags, data_available = m._dbmf_macro_confirms(
+            "up", True, {}, dxy_closes=dxy_with_early_dip
+        )
+        assert confirms is None
+        assert data_available is True
+        assert any("DXY_TREND direction indeterminate" in f for f in flags)
+
 
 # ── MLPX HY OAS confirmation ─────────────────────────────────────────────────
 
@@ -391,16 +409,28 @@ class TestEvaluateAllTrendSignals:
         )
         assert signals == []
 
-    def test_sgol_inconclusive_not_data_unavailable_on_2026_07_13_real_yield_scenario(self):
-        """ENG-63 end-to-end regression: the exact live scenario from
-        2026-07-13. Both weekly_trend_readings are present and real — the
-        real-yield series has a materially strong net move but dips below
-        its own starting value in week 2, so directional_trend nulls it.
-        Before the fix this produced DATA_UNAVAILABLE (indistinguishable
-        from real-yield never having been fetched); it must now be
-        INCONCLUSIVE, since the confirmation gate genuinely ran on present
-        data and found no agreeing direction."""
-        histories = {"SGOL": _linear(100, 130, 64)}
+    def test_sgol_weakening_on_2026_07_13_real_scenario_after_eng65_fix(self):
+        """ENG-65 end-to-end regression: the exact live scenario from
+        2026-07-13, using SGOL's REAL own daily closes (genuinely down
+        -13.89% over the 63-day window, -3.53% over 21 days — both past
+        NOISE_FLOOR_PCT, both dipped briefly above their own starting value
+        early on) alongside the real REAL_YIELD_10Y_TREND/DXY_TREND weekly
+        series. Before ENG-65 this produced INCONCLUSIVE twice over (the
+        confirmation gate AND SGOL's own price were both nulled by the
+        reversal veto). After the fix, both legs resolve for real: real
+        yield up, DXY up (confirms=True); SGOL's own price down/down
+        (agrees) -> a genuine, confirmed WEAKENING call, matching gold's
+        actual observed decline."""
+        sgol_63d_closes = [
+            45.43, 45.34, 45.17, 46.16, 45.68, 45.65, 46.24, 45.84, 44.56, 45.14,
+            44.72, 44.94, 44.58, 43.76, 43.3, 43.96, 43.9, 43.02, 43.38, 44.68,
+            44.77, 44.99, 45.09, 44.91, 44.66, 44.3, 43.28, 43.4, 42.69, 43.3,
+            43.24, 42.94, 42.93, 42.38, 42.83, 43.28, 42.66, 42.72, 42.3, 42.66,
+            41.12, 41.21, 40.55, 38.88, 40.06, 40.1, 41.15, 41.27, 40.32, 40.16,
+            39.89, 39.15, 37.96, 38.34, 38.77, 38.24, 38.23, 38.45, 39.24, 39.65,
+            39.18, 38.85, 39.23, 39.12,
+        ]
+        histories = {"SGOL": sgol_63d_closes}
         weekly = {
             "REAL_YIELD_10Y_TREND": [2.16, 2.07, 2.19, 2.17, 2.21, 2.18, 2.26, 2.32],
             "DXY_TREND": [98.91, 100.07, 99.75, 100.85, 101.36, 100.86, 100.97, 101.27],
@@ -411,8 +441,9 @@ class TestEvaluateAllTrendSignals:
             dominant_directives={"SGOL": "ADD"},
         )
         assert len(signals) == 1
-        assert signals[0].rs_signal == TrendSignalCode.INCONCLUSIVE
-        assert any("no clear agreement" in f for f in signals[0].quality_flags)
+        assert signals[0].own_short_dir == "down"
+        assert signals[0].own_medium_dir == "down"
+        assert signals[0].rs_signal == TrendSignalCode.WEAKENING
 
     def test_sgol_data_unavailable_when_real_yield_genuinely_missing(self):
         """Sanity check the DATA_UNAVAILABLE path still fires correctly when
@@ -430,3 +461,37 @@ class TestEvaluateAllTrendSignals:
         assert len(signals) == 1
         assert signals[0].rs_signal == TrendSignalCode.DATA_UNAVAILABLE
         assert any("unavailable this session" in f for f in signals[0].quality_flags)
+
+    def test_dbmf_own_price_uses_plain_trend_not_no_reversal_veto(self):
+        """ENG-65: DBMF's OWN price is a plain instrument trend read (no
+        require_no_reversal) — only the breadth CONFIRMATION check (other
+        markets' trends, as a strategy-backdrop proxy) keeps the DBMF-
+        specific veto. Both the trailing 22-point (short) and full 64-point
+        (medium) windows here have their own early dip below their own
+        respective starting value, each followed by a real, material rise
+        — under the corrected default neither window should be nulled."""
+        dbmf_closes = (
+            [100, 95, 90, 95]           # idx 0-3: dips below idx0=100 (tests medium's guard)
+            + _linear(96, 102, 38)      # idx 4-41: gentle rise
+            + [103, 98, 95, 100]        # idx 42-45: dips below idx42=103 (tests short's guard)
+            + _linear(101, 115, 18)     # idx 46-63: rise to the end
+        )
+        assert len(dbmf_closes) == 64
+        histories = {"DBMF": dbmf_closes}
+        weekly = {
+            "DXY_TREND": _linear(100, 96, 8),
+            "BRENT_TREND": _linear(70, 75, 8),
+            "GOLD_TREND": _linear(2000, 2100, 8),
+            "SP500_TREND": _linear(5000, 5200, 8),
+        }
+        signals = m.evaluate_all_trend_signals(
+            held_tickers=["DBMF"], daily_histories=histories,
+            weekly_trend_readings=weekly, hy_oas_session_history=[],
+            dominant_directives={"DBMF": "ADD"},
+        )
+        assert len(signals) == 1
+        # DBMF's own price is genuinely "up" net in both windows -- the
+        # early dip in each must not suppress it, since own price never
+        # gets require_no_reversal.
+        assert signals[0].own_short_dir == "up"
+        assert signals[0].own_medium_dir == "up"
