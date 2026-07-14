@@ -299,7 +299,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-63 | CLOSED | MEDIUM | bug | DBMF/SGOL/SIVR's Mode 2 confirmation gate (_agreement_gate, _dbmf_macro_confirms) conflated a missing input with a computed no-agreement result -- both collapsed to DATA_UNAVAILABLE even when the underlying data fetched cleanly |
 | ENG-64 | OPEN | MEDIUM | architecture | advisor_run_computation / advisor_evaluate_trend_signal have a hard client-side timeout with no polling/job-status mechanism -- both confirmed ENG-33-style transport hangs, not slow computation |
 | ENG-65 | CLOSED | HIGH | bug | directional_trend()'s unconditional "no reversal" veto (built to match DBMF's own §13 text) silently suppressed real, material trends for every other caller -- SGOL/SIVR's own price, GAP-16's real-yield/DXY gate, URA/COPX conditions; now an explicit require_no_reversal opt-in, kept only for DBMF's own documented strategy-backdrop condition |
-| ENG-66 | OPEN | MEDIUM | functional-gap | COPX's "China demand collapse >=2 consecutive months" §13 condition has no evaluator (same consecutive-period problem as ENG-26/31) -- the one genuinely new gap from a full coverage audit that otherwise reconfirmed ENG-26/30/31/34 are still open; also documents an Objectives-file column misread (concentration_cap vs drawdown_tolerance) found in the same pass |
+| ENG-66 | CLOSED 2026-07-14 (COPX leg only) | MEDIUM | functional-gap | COPX's "China demand collapse >=2 consecutive months" §13 condition has no evaluator (same consecutive-period problem as ENG-26/31) -- the one genuinely new gap from a full coverage audit that otherwise reconfirmed ENG-26/30/31/34 are still open; also documents an Objectives-file column misread (concentration_cap vs drawdown_tolerance) found in the same pass, still UNRESOLVED, no ENG number yet |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -325,12 +325,12 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-23 | CLOSED | MEDIUM | architecture | M05_SessionInit.md retired outright (ENG-2 follow-on decision #2) |
 | ENG-24 | CLOSED | MEDIUM | architecture | M13.RecalibrationSequence() has no Python implementation — still 100% manual |
 | ENG-25 | CLOSED | LOW | architecture | instruments.json write not wired — Project_Instructions_MCP.md claimed MCP server writes it; it doesn't |
-| ENG-26 | OPEN | LOW | functional-gap | MAGS's "consecutive sessions" §13 condition needs cross-session SIGNAL history — different problem from ENG-13's price-series trends |
+| ENG-26 | CLOSED 2026-07-14 | LOW | functional-gap | MAGS's "consecutive sessions" §13 condition needs cross-session SIGNAL history — different problem from ENG-13's price-series trends |
 | ENG-27 | CLOSED | CRITICAL | data-integrity | yfinance concurrent fetches under ThreadPoolExecutor returned cross-contaminated *_TREND data |
 | ENG-28 | CLOSED | HIGH | data-integrity | floor_account_weights_json double-JSON-encoding crashed CurrentHoldingsFloorCheck/PassiveMandateAbsentWarning |
 | ENG-29 | CLOSED | LOW | hygiene | thesis.py XAR Call-2 routing missed an alternate §13 phrasing for the same de-escalation judgment |
-| ENG-30 | OPEN | MEDIUM | functional-gap | DBMF's "3M return < -3% while B+C>=55%" §13 failure condition has no FetchSpec/evaluator |
-| ENG-31 | OPEN | LOW | functional-gap | AIPO's hyperscaler capex guidance §13 sustaining condition has no data source |
+| ENG-30 | CLOSED 2026-07-14 | MEDIUM | functional-gap | DBMF's "3M return < -3% while B+C>=55%" §13 failure condition has no FetchSpec/evaluator |
+| ENG-31 | CLOSED 2026-07-14 | LOW | functional-gap | AIPO's hyperscaler capex guidance §13 sustaining condition has no data source |
 | ENG-32 | CLOSED | LOW | hygiene | range_position.py conflated "trend data flat" with "trend data unavailable" in GAP-16 advisory note text |
 | ENG-33 | OPEN | MEDIUM | infrastructure | advisor_evaluate_allocation's MCP transport-layer hang -- request confirmed (via mcp-server-financial-advisor.log) to never reach the server at all. Three hypotheses tested and ruled out across two sessions (execution-layer timeout; Dict[str,Any]/pydantic shape; nested-vs-flat schema). Flattened account_profile kept anyway (cleaner, matches other tools) but did not fix it. Root cause remains in Claude Desktop's client, outside this codebase. In-process bypass remains the standing workaround. |
 | ENG-34 | OPEN | LOW | functional-gap | XAR's "Defense budget trajectory positive" §13 sustaining condition has no Call-2 question or data source |
@@ -1129,65 +1129,7 @@ revisiting once the 8-week shadow trial has real outcome data — same
 posture already established for `NOISE_FLOOR_PCT`.
 
 ### ENG-66 — COPX's consecutive-months condition has no evaluator; audit reconfirms ENG-26/30/31/34
-<!-- ITEM
-Status:    OPEN
-Severity:  MEDIUM
-Category:  functional-gap
-Opened:    2026-07-13
-Area:      python/advisor/analysis/thesis.py, Allocation - Objectives
-           (Google Sheet, column-boundary issue only)
-Related:   ENG-26 (MAGS, same consecutive-period problem), ENG-30 (DBMF),
-           ENG-31 (AIPO, both its conditions), ENG-34 (XAR) — all
-           reconfirmed still open by this same audit, not superseded
--->
-
-**Description:** Client-requested audit, live session: for every
-currently-held instrument with a documented §13 sustaining/failure
-condition, is that condition actually being checked by anything? Ran
-`advisor_apply_scoring()`'s `tsc_evaluations` output and read each
-ticker's `quality_flags`/`missing_dependencies` directly.
-
-**Correction to this item's own first draft:** it initially restated
-DBMF's, AIPO's, and XAR's gaps as if newly found. They aren't — ENG-30,
-ENG-31, and ENG-34 already document those exact three, in more detail,
-since 2026-06-20. This audit's actual contribution is narrower:
-confirming those three are still open and unchanged as of tonight, and
-finding one gap none of them cover:
-
-- **COPX** — "China demand collapse signal (T1 PMI < 47 for >= 2
-  consecutive months)" needs a multi-month PMI streak; this session's
-  single-snapshot data can't supply it. Same underlying problem as
-  ENG-26 (MAGS) and half of ENG-31 (AIPO's capex-guidance condition) —
-  a condition that's recognized in principle but needs a persisted
-  trailing-period data trail no current infrastructure provides.
-- **SIVR** (not held) — full automated coverage, no gap — noted here
-  only because its failure condition genuinely fired live tonight
-  ("COPX sustained decline > 15% over 8 weeks," confirmed via COPX's
-  actual 8-week close history, -15.36% net), which is what prompted
-  checking coverage everywhere else in the first place.
-
-**Side finding, same audit:** the "Allocation - Objectives" Google
-Sheet's `floor_nominal_loss` column reads as populated with a numeric
-value (0.4, constant across every account) in Drive's `contentSnippet`
-text extraction, despite `floor_nominal_loss` being a boolean parameter
-in `advisor_evaluate_allocation()`. That 0.4 is actually
-`concentration_cap` (constant firm-wide), with the sheet's second number
-being `drawdown_tolerance` (the one that varies sensibly by account).
-`floor_nominal_loss` itself appears genuinely unpopulated for every row.
-Caused a real misread this session — concentration_cap was passed as
-the 0.35/0.25/0/0.2 values instead — which didn't change the specific
-proposed-rebalance feasibility conclusions checked against it, but did
-visibly distort the unconstrained scenario-weighted target figures
-(SGOL's real target under the correct 0.4 cap is 18.54%, not the 10.73%
-first computed under the wrong 0.2). Worth confirming the sheet's actual
-column boundaries directly in the Sheets UI rather than trusting the
-Drive text-extraction snippet for this file specifically.
-
-**Suggested next step:** fold COPX's gap into whichever fix addresses
-ENG-26/31's shared consecutive-period problem — solve the persistence
-design once, apply to all three (MAGS, AIPO's capex-guidance leg, COPX),
-rather than separately. See ENG-30/31/34 directly for the DBMF/AIPO/XAR
-work; nothing further to add here beyond tonight's reconfirmation.
+**CLOSED** 2026-07-14, COPX consecutive-months leg only (MEDIUM, functional-gap). A side finding from this item's audit (Allocation - Objectives sheet's floor_nominal_loss/concentration_cap column misread) is UNRESOLVED and not tracked under any ENG number — worth a fresh item. Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 ### ENG-56 — Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries
 <!-- ITEM
@@ -1250,33 +1192,7 @@ known-good values) onto static fixture files committed under
 production data that's expected to keep changing.
 
 ### ENG-26 — MAGS "consecutive sessions" condition needs cross-session SIGNAL history
-<!-- ITEM
-  Status:    OPEN
-  Severity:  LOW
-  Category:  functional-gap
-  Opened:    2026-06-20 (split out of ENG-13 on closing it)
-  Area:      python/advisor/analysis/thesis.py
-  Related:   ENG-13 (closed — see FRAMEWORK_BACKLOG_ARCHIVE.md)
--->
-
-**Description:** ENG-13 closed the price-series half of §13's trailing-window
-gap (DBMF/SGOL/SIVR/MLPX/URA/COPX — all evaluable in one yfinance/FRED call
-per session, no persistence needed). One condition remains genuinely
-unsolved: MAGS's failure signal "equity_scenario_divergence shifts to
-MODERATE for >= 2 consecutive sessions." That's a condition over a
-COMPUTED SIGNAL's value across sessions, not a raw price series — yfinance/
-FRED can't serve "what was M14's divergence level last session," because
-nothing persists it. `analysis/thesis.py`'s `_eval_trend()` explicitly
-flags this case (`"ENG-26"` in the quality_flag text) rather than lumping
-it in with the now-solved price-trend conditions.
-
-**Suggested next step:** a small per-session signal-history file (mirrors
-the existing local-only `instruments.json` write pattern — JSON, outside
-the git repo, never committed) recording M14's `equity_scenario_divergence`
-level each session would let `thesis.py` check "was it MODERATE last
-session too." Low priority — MAGS already carries a HOLD-only override for
-unrelated EV reasons, so this one failure signal not firing doesn't change
-current execution; it just means a real exit trigger is currently inert.
+**CLOSED** 2026-07-14 (LOW, functional-gap). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 ### ENG-14 — GAP-11 label has no description anywhere
 <!-- ITEM
@@ -1456,33 +1372,11 @@ folder.
 
 
 ### ENG-30 — DBMF's own-performance §13 failure condition has no FetchSpec/evaluator
-<!-- ITEM
-  Status:    OPEN
-  Severity:  MEDIUM
-  Category:  functional-gap
-  Opened:    2026-06-20
-  Area:      python/advisor/analysis/thesis.py, data/fetchers/, data/m18_registry.py
-  Related:   ENG-13 (closed — solved the *_TREND price-series half; this is a different, ticker-own-performance condition)
--->
-
-**Description:** DBMF's §13 failure_signals includes "DBMF_3M_return < -3% while B+C >= 55% (instrument underperforming own scenario)". This isn't a generic market-index trend (which ENG-13 already solved for BRENT/GOLD/DXY/SP500/COPPER/URANIUM/COPX) — it needs DBMF's *own* 3-month return, which has no FetchSpec anywhere (holdings_30d_returns in mcp_server.py only covers a ~35-trading-day window, not 3 months) and no regex pattern in `_eval_simple_numeric`. Surfaced 2026-06-20 as a "no evaluator recognizes condition" quality_flag, separate from that session's ENG-27 data-corruption bug (which affected DBMF's mean-reversion sustaining/failure check, not this one).
-
-**Suggested next step:** add a `DBMF_3M_RETURN` FetchSpec (same pattern as `fetch_nasdaq_trailing`/`fetch_broad_equity_trailing` — one `yf.download` call, ~64 trading days, `(last/first - 1) * 100`), then a regex in `_eval_simple_numeric` matching `DBMF_3M_return\s*(>=|<=|>|<)\s*(-?\d+(?:\.\d+)?)%` combined with the existing `B+C` combined-probability check (`_BC_PROB_RE`) via an AND. Confirm with Evgeny whether -3%/55% are the intended live thresholds or illustrative placeholders before wiring.
+**CLOSED** 2026-07-14 (MEDIUM, functional-gap). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 
 ### ENG-31 — AIPO's hyperscaler capex §13 sustaining condition has no data source
-<!-- ITEM
-  Status:    OPEN
-  Severity:  LOW
-  Category:  functional-gap
-  Opened:    2026-06-20
-  Area:      python/advisor/analysis/thesis.py, orchestrator/scoring_questions.py
-  Related:   —
--->
-
-**Description:** AIPO's §13 sustaining condition "AI infrastructure capital expenditure cycle intact (hyperscaler capex guidance positive)" and failure condition "Hyperscaler capex guidance revised down >=2 consecutive quarters" have no Call-2 judgment question wired (unlike SGOL/SIVR/URA/XAR/COPX, which each route through a `M19_{TICKER}_*` scoring question) and no quantitative data source either. Surfaced 2026-06-20 as `missing_dependencies` on an otherwise-ACTIVE evaluation — not a crash, just permanently unevaluable as-is.
-
-**Suggested next step:** decide whether this should be a new Call-2 judgment question (qualitative, Claude answers from hyperscaler earnings-call research each session — cheapest fix, same pattern as `M19_URA_NUCLEAR_POLICY`) or a quantitative consecutive-quarters tracker (harder — needs cross-session persistence like ENG-26, since "2 consecutive quarters" of guidance can't be derived from one session's data alone). Given AIPO's UNCLASSIFIED-weight EV flag is already a standing item, low priority relative to that.
+**CLOSED** 2026-07-14 (LOW, functional-gap). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 
 ### ENG-33 — advisor_evaluate_allocation hangs ~4min in live MCP use

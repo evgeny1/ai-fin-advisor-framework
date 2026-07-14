@@ -13,3 +13,5 @@ python/htmlcov/
 .venv/
 .pytest_cache/
 __pycache__/
+
+.git-commit-msg.txt

@@ -15,13 +15,21 @@ from recognized phrasings to live data. It does NOT hardcode any threshold
 VALUE; those are parsed from the condition text itself or read from cal/
 readings/probs at call time.
 
-KNOWN LIMITATION (flagged via quality_flags, never hidden — ENG-26): the one
-remaining trailing-window category this module cannot evaluate is a
-condition over CONSECUTIVE SESSIONS of a computed signal (currently only
-MAGS's "equity_scenario_divergence shifts to MODERATE for >= 2 consecutive
-sessions"). That needs persisted per-session SIGNAL history — a different
-problem from a price series, which yfinance/FRED already serve on demand
-for any historical window in one call. See FRAMEWORK_BACKLOG.md ENG-26.
+KNOWN LIMITATION (flagged via quality_flags, never hidden): a genuinely
+unrecognized condition phrasing, or one whose persisted history isn't deep
+enough yet, always surfaces as UNKNOWN with an explicit flag — never
+silently guessed at.
+
+ENG-26/31/66 (2026-07-14): §13 conditions over a COMPUTED SIGNAL's value
+across multiple sessions/months/quarters (MAGS's consecutive-sessions
+divergence check, AIPO's consecutive-quarters capex-guidance check, COPX's
+consecutive-months PMI check) are now evaluated via _eval_persisted_streak()
+below, reading persisted history from data/signal_history_store.py — a
+different problem from a price series, which yfinance/FRED already serve
+on demand for any historical window in one call (see analysis/trend.py).
+The session's own reading is recorded to that store separately, in
+mcp_server.py right after regime_signal/call2_answers are computed, so this
+module stays a pure, read-only consumer like every other _eval_* function.
 
 All other §13 conditions containing "sustained"/"consecutive"/"rolling"/
 "trend"/"reversal" (DBMF, SGOL, SIVR, MLPX, URA, COPX) ARE evaluated this
@@ -48,7 +56,14 @@ from ..types import (
     ThesisEvaluation,
     ThesisStatus,
 )
+from ..data.signal_history_store import get_history
 from ._utils import get_scalar
+from .signal_history import (
+    consecutive_calendar_streak,
+    consecutive_session_streak,
+    next_month_period,
+    next_quarter_period,
+)
 from .trend import (
     all_weeks_meet,
     decline_from_high_pct,
@@ -77,6 +92,15 @@ _BZUSD_RE         = re.compile(r"^BZUSD\s*(>=|<=|>|<)\s*(\d+(?:\.\d+)?)\b")
 _TP10_RE          = re.compile(r"THREEFYTP10\)?\s*(>=|<=|>|<)\s*(\d+(?:\.\d+)?)%")
 _HYOAS_RE         = re.compile(r"HY OAS\s*(>=|<=|>|<)\s*(\d+(?:\.\d+)?)\s*bps")
 _NASDAQ_30D_RE    = re.compile(r"Nasdaq 30d return\s*(>=|<=|>|<)\s*(-?\d+(?:\.\d+)?)%")
+# ENG-30: a COMPOUND AND of two clauses in one condition string — DBMF's
+# own 3-month return AND the B+C probability, both parsed from the text
+# itself (not hardcoded). Deliberately separate from _BC_PROB_RE above:
+# this condition's B+C clause is phrased "B+C >= 55%" (no "combined
+# probability" wording), so it needs its own capture rather than reusing
+# that regex, which requires the longer phrase and won't match here.
+_DBMF_3M_RETURN_RE = re.compile(
+    r"DBMF_3M_return\s*(>=|<=|>|<)\s*(-?\d+(?:\.\d+)?)%\s*while\s*B\+C\s*(>=|<=|>|<)\s*(\d+(?:\.\d+)?)%"
+)
 
 
 def _eval_simple_numeric(
@@ -119,6 +143,22 @@ def _eval_simple_numeric(
             return None
         val = r.value.get("return_30d_pct") if isinstance(r.value, dict) else None
         return None if val is None else _cmp(m.group(1), val, float(m.group(2)))
+
+    m = _DBMF_3M_RETURN_RE.search(cond)
+    if m:
+        return_op, return_thresh = m.group(1), float(m.group(2))
+        bc_op, bc_thresh = m.group(3), float(m.group(4))
+        r = readings.get("DBMF_3M_RETURN")
+        if r is None or not r.is_valid:
+            flags.append("DBMF_3M_RETURN: reading unavailable")
+            return None
+        dbmf_return = r.value.get("return_3m_pct") if isinstance(r.value, dict) else None
+        if dbmf_return is None:
+            flags.append("DBMF_3M_RETURN: reading malformed (no return_3m_pct)")
+            return None
+        return_hit = _cmp(return_op, dbmf_return, return_thresh)
+        bc_hit = _cmp(bc_op, probs.B + probs.C, bc_thresh)
+        return return_hit and bc_hit
 
     return None  # not recognized — caller flags as such
 
@@ -267,15 +307,77 @@ def _eval_trend(
             return None
         return directional_trend(closes[-8:], _COPPER_DECLINE_THRESHOLD) == "down"
 
-    # MAGS failure: cross-session SIGNAL streak — not a price series; ENG-26
-    if "consecutive sessions" in low:
-        flags.append(
-            f"{ticker}: requires cross-session signal history not yet implemented "
-            f"(ENG-26) — \"{cond[:90]}\""
-        )
-        return None
-
     return None  # genuinely unrecognized — caller adds the generic flag
+
+
+# ── Persisted cross-period streak evaluation (ENG-26/31/66) ────────────────────
+# §13 conditions over a COMPUTED SIGNAL's or Call-2 judgment's value across
+# multiple sessions/months/quarters — a different problem from _eval_trend's
+# price-series conditions above (yfinance/FRED serve those on demand for any
+# historical window in one call; a computed signal's own history has to be
+# persisted somewhere, since nothing else remembers "what was it last time").
+#
+# Read-only here, by design: this function only reads persisted history via
+# data/signal_history_store.get_history(). The session's own reading is
+# recorded separately in mcp_server.py, right after regime_signal/
+# call2_answers are computed — keeps every _eval_* function in this module a
+# pure consumer, matching the module's own read-only-consumer contract.
+
+def _eval_persisted_streak(
+    ticker: str,
+    cond: str,
+    call2_answers: Dict[str, int],
+    flags: List[str],
+) -> Optional[bool]:
+    low = cond.lower()
+
+    # MAGS failure: equity_scenario_divergence == MODERATE, >=2 consecutive
+    # sessions (ENG-26). Session-granularity — consecutive_session_streak()
+    # just checks the last 2 RECORDED entries, since each entry is one
+    # session by construction.
+    if "consecutive sessions" in low and "equity_scenario_divergence" in low:
+        history = get_history(ticker, "equity_scenario_divergence")
+        result = consecutive_session_streak(history, lambda v: v == "MODERATE", min_count=2)
+        if result is None:
+            flags.append(
+                f"{ticker}: not enough session history yet for the "
+                f"2-consecutive-session MODERATE check (ENG-26)"
+            )
+        return result
+
+    # COPX failure: China demand collapse, T1 PMI < 47 for >= 2 consecutive
+    # MONTHS (ENG-66). Calendar-granularity — the two most recent recorded
+    # months must be genuinely back-to-back, not just the last 2 readings
+    # (which could span a gap if a session was skipped that month).
+    if "china demand collapse" in low:
+        history = get_history(ticker, "china_pmi_below_47")
+        result = consecutive_calendar_streak(
+            history, lambda v: v is True, min_count=2, step=next_month_period,
+        )
+        if result is None:
+            flags.append(
+                f"{ticker}: not enough month-over-month PMI history yet, or "
+                f"a month was skipped, for the 2-consecutive-month check (ENG-66)"
+            )
+        return result
+
+    # AIPO failure: hyperscaler capex guidance revised down, >=2 consecutive
+    # QUARTERS (ENG-31's harder leg — the sustaining condition is a plain
+    # single-session Call-2 judgment, handled in _eval_call2 below).
+    if "hyperscaler capex guidance revised down" in low and "consecutive quarters" in low:
+        history = get_history(ticker, "capex_guidance_negative")
+        result = consecutive_calendar_streak(
+            history, lambda v: v is True, min_count=2, step=next_quarter_period,
+        )
+        if result is None:
+            flags.append(
+                f"{ticker}: not enough quarter-over-quarter capex guidance "
+                f"history yet, or a quarter was skipped, for the "
+                f"2-consecutive-quarter check (ENG-31)"
+            )
+        return result
+
+    return None  # not a persisted-streak condition — caller tries other evaluators
 
 
 # ── Call-2 judgment routing ────────────────────────────────────────────────────
@@ -286,6 +388,7 @@ _CALL2_CB_NARRATIVE   = "cb_gold_reserve_accumulation"   # → M19_{ticker}_CB_N
 _CALL2_NUCLEAR_POLICY = "nuclear_policy_trajectory"      # → M19_URA_NUCLEAR_POLICY
 _CALL2_XAR_GATE       = "M19_XAR_CONFLICT_GATE"
 _CALL2_COPX_PMI       = "M19_COPX_CHINA_PMI"
+_CALL2_AIPO_CAPEX     = "M19_AIPO_CAPEX_GUIDANCE"
 
 def _eval_call2(
     ticker: str,
@@ -342,11 +445,30 @@ def _eval_call2(
         return ans == 0   # gate NOT fired → conflict premise still active
 
     if "China PMI Manufacturing" in cond:
+        # ENG-66 (2026-07-14): widened from a 0/1 binary to a 3-way scale
+        # (0/1/2) so ONE Call-2 answer can drive both this sustaining
+        # condition's 49-threshold AND the failure_signals' separate
+        # 47-threshold ("China demand collapse", routed through
+        # _eval_persisted_streak above) without redefining either
+        # threshold or asking two overlapping questions about the same
+        # PMI print. 2 = PMI >= 49; 1 = 47 <= PMI < 49; 0 = PMI < 47.
         ans = call2_answers.get(_CALL2_COPX_PMI)
         if ans is None:
             flags.append(f"{_CALL2_COPX_PMI}: no Call-2 answer present")
             return None
-        return bool(ans)   # 1 = PMI >= 49
+        return ans == 2   # only the top tier meets the >=49 sustaining floor
+
+    if "hyperscaler capex guidance positive" in cond:
+        # ENG-31's sustaining leg — a plain single-session Call-2 judgment
+        # (cheapest fix per the item's own suggested next step). The
+        # failure leg ("revised down >=2 consecutive quarters") needs
+        # cross-quarter persistence instead — see _eval_persisted_streak
+        # above, which reuses this same answer's negation (ans == 0).
+        ans = call2_answers.get(_CALL2_AIPO_CAPEX)
+        if ans is None:
+            flags.append(f"{_CALL2_AIPO_CAPEX}: no Call-2 answer present")
+            return None
+        return bool(ans)
 
     return None
 
@@ -367,6 +489,12 @@ def _evaluate_one_condition(
     if result is not None:
         return result
 
+    flags_before_streak = len(flags)
+    result = _eval_persisted_streak(ticker, cond, call2_answers, flags)
+    if result is not None:
+        return result
+    streak_recognized_but_unevaluable = len(flags) > flags_before_streak
+
     flags_before = len(flags)
     result = _eval_trend(ticker, cond, readings, flags)
     if result is not None:
@@ -381,7 +509,7 @@ def _evaluate_one_condition(
     if result is not None:
         return result
 
-    if not trend_recognized_but_unevaluable:
+    if not (trend_recognized_but_unevaluable or streak_recognized_but_unevaluable):
         if _needs_trailing_window(cond):
             flags.append(
                 f"{ticker}: requires trailing-window analysis not evaluable "

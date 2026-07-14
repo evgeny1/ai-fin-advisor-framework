@@ -205,10 +205,12 @@ class TestUraCopxTrendConditions:
         assert results[0].status == ThesisStatus.FAILED
 
 
-class TestMagsConsecutiveSessionsDeferred:
-    """ENG-26: the one trailing-window category genuinely NOT solved here —
-    a cross-SESSION signal streak, not a price series. Must stay flagged
-    and unevaluable, never silently guessed."""
+class TestMagsConsecutiveSessionsStreak:
+    """ENG-26: equity_scenario_divergence shifts to MODERATE for >= 2
+    consecutive sessions. Solved via persisted per-session history
+    (data/signal_history_store.py) — isolated automatically by
+    conftest.py's autouse _isolated_signal_history_store fixture, so these
+    tests never touch the real SignalHistoryStore.json."""
 
     def _entry(self) -> ThesisConditionEntry:
         return ThesisConditionEntry(
@@ -221,12 +223,31 @@ class TestMagsConsecutiveSessionsDeferred:
             data_dependencies=["MAGS", "^GSPC", "HY_OAS"], last_reviewed="2026-06-17",
         )
 
-    def test_consecutive_sessions_condition_flags_eng26_not_silently_false(self, cal):
+    def test_no_history_yet_flags_eng26_not_silently_false(self, cal):
         cal.thesis_conditions["MAGS"] = self._entry()
         readings = {"HY_OAS": DataReading("HY_OAS", {"current": 300.0}, DataSource.FRED_SPREADSHEET_TAB, datetime(2026, 6, 20))}
         results = evaluate_thesis_conditions(["MAGS"], readings, _probs(), None, cal, {})
         assert results[0].status == ThesisStatus.ACTIVE
         assert any("ENG-26" in f for f in results[0].quality_flags)
+
+    def test_two_consecutive_moderate_sessions_fires_failure(self, cal):
+        from advisor.data.signal_history_store import record_signal
+        record_signal("MAGS", "equity_scenario_divergence", "2026-07-13", "MODERATE")
+        record_signal("MAGS", "equity_scenario_divergence", "2026-07-14", "MODERATE")
+        cal.thesis_conditions["MAGS"] = self._entry()
+        readings = {"HY_OAS": DataReading("HY_OAS", {"current": 300.0}, DataSource.FRED_SPREADSHEET_TAB, datetime(2026, 6, 20))}
+        results = evaluate_thesis_conditions(["MAGS"], readings, _probs(), None, cal, {})
+        assert results[0].status == ThesisStatus.FAILED
+        assert "consecutive sessions" in results[0].fired_condition_text
+
+    def test_only_one_moderate_session_does_not_fire(self, cal):
+        from advisor.data.signal_history_store import record_signal
+        record_signal("MAGS", "equity_scenario_divergence", "2026-07-13", "HIGH")
+        record_signal("MAGS", "equity_scenario_divergence", "2026-07-14", "MODERATE")
+        cal.thesis_conditions["MAGS"] = self._entry()
+        readings = {"HY_OAS": DataReading("HY_OAS", {"current": 300.0}, DataSource.FRED_SPREADSHEET_TAB, datetime(2026, 6, 20))}
+        results = evaluate_thesis_conditions(["MAGS"], readings, _probs(), None, cal, {})
+        assert results[0].status == ThesisStatus.ACTIVE
 
     def test_nasdaq_30d_return_regex_now_fires(self, cal):
         """Previously had no FetchSpec or regex pattern at all — confirms
@@ -257,3 +278,167 @@ class TestResolutionOrderAndScope:
         results = evaluate_thesis_conditions(["XYZ"], {}, _probs(), None, cal, {})
         assert results[0].status == ThesisStatus.UNKNOWN
         assert any("no evaluator recognizes" in f for f in results[0].quality_flags)
+
+
+class TestDbmfOwnPerformance:
+    """ENG-30: DBMF_3M_return < -3% while B+C >= 55% — a compound AND of
+    two clauses in one condition string, both parsed from the text
+    itself, not hardcoded."""
+
+    def _entry(self) -> ThesisConditionEntry:
+        return ThesisConditionEntry(
+            ticker="DBMF", primary_driver="trend following",
+            sustaining_conditions=["B+C combined probability >= 55%"],
+            failure_signals=[
+                "DBMF_3M_return < -3% while B+C >= 55% (instrument underperforming own scenario)",
+            ],
+            data_dependencies=["DBMF"], last_reviewed="2026-07-03",
+        )
+
+    def test_both_clauses_true_fires_failure(self, cal):
+        cal.thesis_conditions["DBMF"] = self._entry()
+        readings = {"DBMF_3M_RETURN": DataReading(
+            "DBMF_3M_RETURN", {"return_3m_pct": -5.2}, DataSource.YFINANCE, datetime(2026, 7, 14),
+        )}
+        results = evaluate_thesis_conditions(["DBMF"], readings, _probs(B=30, C=30), None, cal, {})
+        assert results[0].status == ThesisStatus.FAILED
+        assert "DBMF_3M_return" in results[0].fired_condition_text
+
+    def test_return_ok_does_not_fire_even_if_bc_high(self, cal):
+        """B+C >= 55% alone must not fire — both clauses are ANDed."""
+        cal.thesis_conditions["DBMF"] = self._entry()
+        readings = {"DBMF_3M_RETURN": DataReading(
+            "DBMF_3M_RETURN", {"return_3m_pct": 0.5}, DataSource.YFINANCE, datetime(2026, 7, 14),
+        )}
+        results = evaluate_thesis_conditions(["DBMF"], readings, _probs(B=30, C=30), None, cal, {})
+        assert results[0].status == ThesisStatus.ACTIVE
+
+    def test_bc_below_threshold_does_not_fire_even_if_return_bad(self, cal):
+        """DBMF_3M_return < -3% alone must not fire if B+C is below 55% —
+        the condition is specifically about underperforming ITS OWN
+        scenario, not a bad return in any regime."""
+        cal.thesis_conditions["DBMF"] = self._entry()
+        readings = {"DBMF_3M_RETURN": DataReading(
+            "DBMF_3M_RETURN", {"return_3m_pct": -8.0}, DataSource.YFINANCE, datetime(2026, 7, 14),
+        )}
+        results = evaluate_thesis_conditions(["DBMF"], readings, _probs(A=60, B=10, C=10, D=10, E=5, F=5), None, cal, {})
+        assert results[0].status == ThesisStatus.ACTIVE
+
+    def test_missing_reading_flagged_not_silently_false(self, cal):
+        cal.thesis_conditions["DBMF"] = self._entry()
+        results = evaluate_thesis_conditions(["DBMF"], {}, _probs(B=30, C=30), None, cal, {})
+        assert any("DBMF_3M_RETURN" in f for f in results[0].quality_flags)
+
+
+class TestCopxChinaDemandCollapseStreak:
+    """ENG-66: China demand collapse, T1 PMI < 47 for >= 2 consecutive
+    MONTHS. Calendar-granularity — a skipped month must not falsely
+    confirm the streak."""
+
+    def _entry(self) -> ThesisConditionEntry:
+        return ThesisConditionEntry(
+            ticker="COPX", primary_driver="industrial commodity cycle",
+            sustaining_conditions=["China PMI Manufacturing >= 49 (demand floor)"],
+            failure_signals=[
+                "China demand collapse signal (T1 PMI < 47 for >= 2 consecutive months)",
+            ],
+            data_dependencies=["COPX"], last_reviewed="2026-07-14",
+        )
+
+    def test_two_consecutive_months_below_47_fires_failure(self, cal):
+        from advisor.data.signal_history_store import record_signal
+        record_signal("COPX", "china_pmi_below_47", "2026-06", True)
+        record_signal("COPX", "china_pmi_below_47", "2026-07", True)
+        cal.thesis_conditions["COPX"] = self._entry()
+        results = evaluate_thesis_conditions(["COPX"], {}, _probs(), None, cal, {})
+        assert results[0].status == ThesisStatus.FAILED
+        assert "China demand collapse" in results[0].fired_condition_text
+
+    def test_gap_month_does_not_falsely_confirm_streak(self, cal):
+        from advisor.data.signal_history_store import record_signal
+        record_signal("COPX", "china_pmi_below_47", "2026-05", True)
+        record_signal("COPX", "china_pmi_below_47", "2026-07", True)  # June skipped
+        cal.thesis_conditions["COPX"] = self._entry()
+        results = evaluate_thesis_conditions(["COPX"], {}, _probs(), None, cal, {})
+        assert results[0].status == ThesisStatus.UNKNOWN
+        assert any("ENG-66" in f for f in results[0].quality_flags)
+
+    def test_sustaining_pmi_call2_top_tier_only(self, cal):
+        """ENG-66's 3-way scale: only score 2 (PMI >= 49) satisfies the
+        sustaining condition — tested directly against _eval_call2, since
+        a sustaining condition evaluating to False vs. not-evaluated both
+        leave evaluate_thesis_conditions()'s overall status/missing_
+        dependencies output identical (only failure_signals affect
+        status) — the 2-vs-1 distinction isn't observable at that level."""
+        from advisor.analysis.thesis import _eval_call2
+        cond = "China PMI Manufacturing >= 49 (demand floor)"
+        flags: list = []
+        assert _eval_call2("COPX", cond, {"M19_COPX_CHINA_PMI": 1}, flags) is False
+        assert _eval_call2("COPX", cond, {"M19_COPX_CHINA_PMI": 0}, flags) is False
+
+    def test_sustaining_pmi_call2_score_two_meets_floor(self, cal):
+        cal.thesis_conditions["COPX"] = self._entry()
+        results = evaluate_thesis_conditions(
+            ["COPX"], {}, _probs(), None, cal, {"M19_COPX_CHINA_PMI": 2},
+        )
+        assert results[0].status == ThesisStatus.ACTIVE
+        assert results[0].missing_dependencies == []
+
+
+class TestAipoCapexGuidanceStreak:
+    """ENG-31: sustaining condition is a plain single-session Call-2
+    judgment (cheap leg); failure condition needs >=2 consecutive QUARTERS
+    of negative guidance (the hard leg, same persisted-streak mechanism
+    as MAGS/COPX)."""
+
+    def _entry(self) -> ThesisConditionEntry:
+        return ThesisConditionEntry(
+            ticker="AIPO", primary_driver="AI infrastructure",
+            sustaining_conditions=[
+                "AI infrastructure capital expenditure cycle intact (hyperscaler capex guidance positive)",
+            ],
+            failure_signals=[
+                "Hyperscaler capex guidance revised down \u22652 consecutive quarters",
+            ],
+            data_dependencies=["AIPO"], last_reviewed="2026-07-14",
+        )
+
+    def test_sustaining_call2_positive_is_active(self, cal):
+        cal.thesis_conditions["AIPO"] = self._entry()
+        results = evaluate_thesis_conditions(
+            ["AIPO"], {}, _probs(), None, cal, {"M19_AIPO_CAPEX_GUIDANCE": 1},
+        )
+        assert results[0].status == ThesisStatus.ACTIVE
+
+    def test_two_consecutive_quarters_negative_fires_failure(self, cal):
+        from advisor.data.signal_history_store import record_signal
+        record_signal("AIPO", "capex_guidance_negative", "2026-Q2", True)
+        record_signal("AIPO", "capex_guidance_negative", "2026-Q3", True)
+        cal.thesis_conditions["AIPO"] = self._entry()
+        results = evaluate_thesis_conditions(["AIPO"], {}, _probs(), None, cal, {})
+        assert results[0].status == ThesisStatus.FAILED
+        assert "consecutive quarters" in results[0].fired_condition_text
+
+    def test_gap_quarter_does_not_falsely_confirm_streak(self, cal):
+        from advisor.data.signal_history_store import record_signal
+        record_signal("AIPO", "capex_guidance_negative", "2026-Q1", True)
+        record_signal("AIPO", "capex_guidance_negative", "2026-Q3", True)  # Q2 skipped
+        cal.thesis_conditions["AIPO"] = self._entry()
+        results = evaluate_thesis_conditions(["AIPO"], {}, _probs(), None, cal, {})
+        assert results[0].status == ThesisStatus.UNKNOWN
+        assert any("ENG-31" in f for f in results[0].quality_flags)
+
+    def test_only_one_negative_quarter_does_not_fire(self, cal):
+        """Q2/Q3 are gap-free consecutive quarters, so the streak check
+        gets a definite answer (not just 'not enough history') — it's
+        definitively False since only one of the two was negative. That
+        still evaluates the failure condition (to False), so overall
+        status is ACTIVE, not UNKNOWN — contrast with the gap case above,
+        where the condition can't be evaluated at all."""
+        from advisor.data.signal_history_store import record_signal
+        record_signal("AIPO", "capex_guidance_negative", "2026-Q2", False)
+        record_signal("AIPO", "capex_guidance_negative", "2026-Q3", True)
+        cal.thesis_conditions["AIPO"] = self._entry()
+        results = evaluate_thesis_conditions(["AIPO"], {}, _probs(), None, cal, {})
+        assert results[0].status == ThesisStatus.ACTIVE
+        assert results[0].fired_condition_text is None

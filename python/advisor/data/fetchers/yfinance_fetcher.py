@@ -144,6 +144,8 @@ def yfinance_dispatcher(spec: FetchSpec) -> List[DataReading]:
         return fetch_broad_equity_trailing(spec)
     if spec.id == "NASDAQ_30D_RETURN":
         return fetch_nasdaq_trailing(spec)
+    if spec.id == "DBMF_3M_RETURN":
+        return fetch_dbmf_3m_return(spec)
     if spec.id in _TREND_SPECS:
         symbol, weeks = _TREND_SPECS[spec.id]
         return fetch_weekly_trend(spec, symbol, weeks)
@@ -303,6 +305,36 @@ def fetch_nasdaq_trailing(spec: FetchSpec) -> List[DataReading]:
     return [DataReading(
         spec_id=spec.id,
         value={"return_30d_pct": pct30, "current": round(closes[-1], 2)},
+        source=DataSource.YFINANCE, fetched_at=datetime.datetime.utcnow(),
+    )]
+
+
+# ── DBMF own 3-month trailing return (ENG-30) ─────────────────────────────────
+
+def fetch_dbmf_3m_return(spec: FetchSpec) -> List[DataReading]:
+    """DBMF_3M_RETURN: DBMF's own trailing ~3-month (64 trading-day) pct-
+    change. Same pattern as fetch_nasdaq_trailing — added so DBMF's
+    "DBMF_3M_return < -3% while B+C >= 55%" failure_signal
+    (analysis/thesis.py) has data to evaluate against; it previously had
+    no FetchSpec or regex pattern at all (fell through to "no evaluator
+    recognizes condition" every session). This is DBMF's OWN performance,
+    not a generic market-index trend — ENG-13 already covers the
+    BRENT/GOLD/DXY/SP500/COPPER/URANIUM/COPX *_TREND series."""
+    today = datetime.date.today()
+    start = today - datetime.timedelta(days=110)
+    with _yf_lock_guard():
+        df = yf.download("DBMF", start=start.isoformat(), progress=False, auto_adjust=True)
+    if df.empty or "Close" not in df.columns:
+        raise RuntimeError("DBMF history returned empty")
+    raw = df["Close"].dropna()
+    closes = raw.values.flatten().tolist()
+    if not closes:
+        raise RuntimeError("DBMF history returned empty")
+    n = min(64, len(closes))
+    pct3m = round((closes[-1] / closes[-n] - 1) * 100, 2)
+    return [DataReading(
+        spec_id=spec.id,
+        value={"return_3m_pct": pct3m, "current": round(closes[-1], 2)},
         source=DataSource.YFINANCE, fetched_at=datetime.datetime.utcnow(),
     )]
 

@@ -566,11 +566,30 @@ def generate_m19_judgment_questions(cal: CalibrationState) -> List[ScoringQuesti
         qs.append(ScoringQuestion(
             id="M19_COPX_CHINA_PMI", scenario="N/A",
             question=(
-                "Is China's most recent official NBS Manufacturing PMI print >= 49 "
+                "Where does China's most recent official NBS Manufacturing PMI print fall "
                 "(per CHINA_PMI_MANUFACTURING — WEBSEARCH_T1, same official-statistics "
-                "pattern as CPI_YOY)? Score 1=yes (>=49); 0=no (<49)."
+                "pattern as CPI_YOY)? Score 2 if PMI >= 49 (§13 sustaining demand floor "
+                "intact); 1 if 47 <= PMI < 49 (below the sustaining floor but not yet in "
+                "the failure zone); 0 if PMI < 47 (§13 'China demand collapse' failure "
+                "threshold — ENG-66 tracks this reading across consecutive months)."
             ),
             evidence="WEBSEARCH_T1 — see CHINA_PMI_MANUFACTURING gather result.",
+            valid_scores=[0, 1, 2],
+            consumer="M19",
+        ))
+
+    if "AIPO" in tc:
+        qs.append(ScoringQuestion(
+            id="M19_AIPO_CAPEX_GUIDANCE", scenario="N/A",
+            question=(
+                "Is the hyperscaler AI infrastructure capex guidance trend currently "
+                "positive this session (per the most recent hyperscaler earnings-call "
+                "commentary — Microsoft/Google/Amazon/Meta capex guidance)? Score "
+                "1=positive/intact (§13 sustaining condition); 0=negative/revised down "
+                "(ENG-31 tracks this reading across consecutive quarters for the "
+                "failure_signals threshold)."
+            ),
+            evidence="Qualitative — hyperscaler earnings-call capex guidance research.",
             valid_scores=[0, 1],
             consumer="M19",
         ))

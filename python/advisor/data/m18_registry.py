@@ -495,6 +495,20 @@ _ALL_SPECS: list[FetchSpec] = [
         consumer=["M19"],
     ),
 
+    FetchSpec(
+        id="DBMF_3M_RETURN",
+        source=DataSource.YFINANCE,
+        description="DBMF's own ~64-trading-day (3-month) pct-change. Feeds "
+                    "DBMF's 'DBMF_3M_return < -3% while B+C >= 55%' failure "
+                    "signal (ENG-30) — previously had no FetchSpec or regex "
+                    "pattern at all (silently unevaluable). Own-performance, "
+                    "not a generic market-index trend — distinct from the "
+                    "*_TREND specs below, which ENG-13 already covers.",
+        update_frequency=UpdateFrequency.DAILY,
+        acceptable_lag_days=1,
+        consumer=["M19"],
+    ),
+
     # ── TREND/ROTATION SIGNAL (ENG-50/ENG-55) ─────────────────────────────────
     # New module, no M-number — explicitly NOT part of the M01-M19 spec
     # sequence (FRAMEWORK_BACKLOG.md ENG-50). Additive, shadow-mode only;

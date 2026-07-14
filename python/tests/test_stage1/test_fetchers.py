@@ -29,14 +29,17 @@ class TestM18Registry:
         assert len(ids) == len(set(ids)), "Duplicate FetchSpec IDs in M18 registry"
 
     def test_expected_spec_count(self):
-        # 45 specs defined in M18 (update this when adding new series).
+        # 46 specs defined in M18 (update this when adding new series).
         # +1 vs prior count (43): REAL_YIELD_10Y_TREND (GAP-16 follow-up,
         # real-yield proxy correction, 2026-06-21).
         # +1 vs prior count (44): TREND_SIGNAL_HISTORY (ENG-50/ENG-55,
         # 2026-07-07 -- batched daily-close history for the 8 held
         # instruments + 8 ENG-55 comparator tickers).
-        assert len(_ALL_SPECS) == 45, (
-            f"Expected 45 specs, found {len(_ALL_SPECS)}. "
+        # +1 vs prior count (45): DBMF_3M_RETURN (ENG-30, 2026-07-14 --
+        # DBMF's own trailing 3-month return, feeds its
+        # "DBMF_3M_return < -3% while B+C >= 55%" failure_signal).
+        assert len(_ALL_SPECS) == 46, (
+            f"Expected 46 specs, found {len(_ALL_SPECS)}. "
             "Update this count when adding/removing series."
         )
 

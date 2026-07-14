@@ -2965,3 +2965,221 @@ Not done, and not required to close this item: full step-by-step
 instrumentation (render / file-write / archive-rotation / git-add /
 git-commit / git-push, individually visible) — see ENG-49, which remains
 open specifically for that.
+
+
+### ENG-26 — MAGS "consecutive sessions" condition needs cross-session SIGNAL history
+<!-- ITEM
+Status:    CLOSED 2026-07-14
+Severity:  LOW
+Category:  functional-gap
+Opened:    2026-06-20 (split out of ENG-13 on closing it)
+Area:      python/advisor/analysis/thesis.py, data/signal_history_store.py (new),
+           analysis/signal_history.py (new), mcp_server.py
+Related:   ENG-13 (closed — see above in this file), ENG-31/ENG-66 (same
+           shared persistence mechanism, closed same session)
+-->
+
+**Description:** ENG-13 closed the price-series half of §13's trailing-window
+gap (DBMF/SGOL/SIVR/MLPX/URA/COPX — all evaluable in one yfinance/FRED call
+per session, no persistence needed). One condition remained genuinely
+unsolved: MAGS's failure signal "equity_scenario_divergence shifts to
+MODERATE for >= 2 consecutive sessions." That's a condition over a
+COMPUTED SIGNAL's value across sessions, not a raw price series — yfinance/
+FRED can't serve "what was M14's divergence level last session," because
+nothing persisted it.
+
+**Suggested next step (at the time):** a small per-session signal-history
+file (mirrors the existing local-only `instruments.json` write pattern —
+JSON, outside the git repo, never committed) recording M14's
+`equity_scenario_divergence` level each session would let `thesis.py` check
+"was it MODERATE last session too."
+
+**RESOLUTION (2026-07-14, coding session):** built exactly this, as the
+shared mechanism for ENG-26/31/66 all at once (per ENG-66's own suggested
+next step to solve it once, not three times):
+
+- `data/signal_history_store.py` (new): local-only JSON store, mirrors
+  `instruments.json`'s pattern exactly (ENG-25) — same sibling
+  `market_data_mcp/` folder, never committed to git. `record_signal(ticker,
+  signal_name, period, value)` appends or overwrites-in-place if the same
+  period is checked twice; `get_history(ticker, signal_name)` is a
+  read-only accessor that never raises (missing/corrupt store degrades to
+  "no history," the same conservative default as any other missing
+  dependency).
+- `analysis/signal_history.py` (new): pure functions —
+  `consecutive_session_streak()` (MAGS: last N recorded entries, no
+  calendar-gap logic, since each entry is one session by construction) and
+  `consecutive_calendar_streak()` (COPX/AIPO: the last N distinct periods
+  must be genuinely back-to-back per a `step()` function — a skipped
+  period returns None/inconclusive rather than a false positive).
+- `analysis/thesis.py`: new `_eval_persisted_streak()`, read-only (only
+  calls `get_history()`), dispatched right after `_eval_call2` in
+  `_evaluate_one_condition()`. MAGS's condition now resolves to
+  True/False/None (insufficient history) instead of always None.
+- `mcp_server.py`: this session's own reading is recorded (not evaluated)
+  in a new block right after `regime_signal`/`call2_answers` are computed,
+  before `evaluate_thesis_conditions()` runs — so today's value is already
+  part of the history the evaluator reads. Non-fatal on write failure,
+  flagged like any other soft failure.
+
+Tests: `tests/test_stage3/test_signal_history.py` (pure streak functions),
+`tests/test_stage1/test_signal_history_store.py` (store round-trip,
+overwrite-same-period, corrupt-file handling), `tests/test_stage3/
+test_thesis.py::TestMagsConsecutiveSessionsStreak` (fires on a real
+2-consecutive-MODERATE streak, does not fire on 1, still flags ENG-26 when
+history is empty). `tests/test_stage3/conftest.py` gained an autouse
+fixture isolating the store path per test, preserving that package's own
+"no file I/O" test guarantee. Full suite: 947 passed / 46 skipped / 0
+failed (baseline 909/46/0 before this item plus ENG-30/31/66).
+
+### ENG-30 — DBMF's own-performance §13 failure condition has no FetchSpec/evaluator
+<!-- ITEM
+Status:    CLOSED 2026-07-14
+Severity:  MEDIUM
+Category:  functional-gap
+Opened:    2026-06-20
+Area:      python/advisor/analysis/thesis.py, data/fetchers/yfinance_fetcher.py,
+           data/m18_registry.py
+Related:   ENG-13 (closed — solved the *_TREND price-series half; this is a
+           different, ticker-own-performance condition)
+-->
+
+**Description:** DBMF's §13 failure_signals includes "DBMF_3M_return < -3% while B+C >= 55% (instrument underperforming own scenario)". This isn't a generic market-index trend (which ENG-13 already solved for BRENT/GOLD/DXY/SP500/COPPER/URANIUM/COPX) — it needs DBMF's *own* 3-month return, which had no FetchSpec anywhere and no regex pattern in `_eval_simple_numeric`.
+
+**Suggested next step (at the time):** add a `DBMF_3M_RETURN` FetchSpec
+(same pattern as `fetch_nasdaq_trailing`), then a regex combined with the
+existing B+C check via an AND. Confirm -3%/55% are the intended live
+thresholds, not placeholders.
+
+**RESOLUTION (2026-07-14, coding session):** on the threshold question —
+these are not placeholders; the 2026-07-03 DBMF evaluation session
+(Calibration_State.md §3) already used -3%/55% as live values in a manual
+qualitative check, so they were wired as-is, parsed from the condition
+text itself (never hardcoded), per this module's own rule.
+
+- `data/fetchers/yfinance_fetcher.py`: new `fetch_dbmf_3m_return()` —
+  DBMF's own ~64-trading-day pct-change, registered in
+  `yfinance_dispatcher()` as `DBMF_3M_RETURN`.
+- `data/m18_registry.py`: new `FetchSpec(id="DBMF_3M_RETURN", ...)`,
+  `consumer=["M19"]`.
+- `analysis/thesis.py`: new `_DBMF_3M_RETURN_RE` regex — a COMPOUND AND of
+  two clauses in one condition string (DBMF's own return AND the B+C
+  probability), both parsed from the text, not hardcoded — wired into
+  `_eval_simple_numeric()`.
+
+Tests: `tests/test_stage3/test_thesis.py::TestDbmfOwnPerformance` (both
+clauses true fires; return-bad-alone doesn't fire; B+C-high-alone doesn't
+fire; missing reading flagged not silently false). `tests/test_stage1/
+test_fetchers.py::test_expected_spec_count` bumped 45→46 for the new spec.
+Full suite: 947 passed / 46 skipped / 0 failed.
+
+### ENG-31 — AIPO's hyperscaler capex §13 conditions have no data source
+<!-- ITEM
+Status:    CLOSED 2026-07-14
+Severity:  LOW
+Category:  functional-gap
+Opened:    2026-06-20
+Area:      python/advisor/analysis/thesis.py, orchestrator/scoring_questions.py,
+           data/signal_history_store.py, analysis/signal_history.py
+Related:   ENG-26/ENG-66 (shared persisted-streak mechanism, closed same session)
+-->
+
+**Description:** AIPO's §13 sustaining condition "AI infrastructure capital
+expenditure cycle intact (hyperscaler capex guidance positive)" and failure
+condition "Hyperscaler capex guidance revised down >=2 consecutive
+quarters" had no Call-2 judgment question wired and no quantitative data
+source either.
+
+**Suggested next step (at the time):** the sustaining leg is cheap (a
+plain Call-2 judgment question, same pattern as `M19_URA_NUCLEAR_POLICY`);
+the failure leg is harder (needs cross-session persistence like ENG-26).
+
+**RESOLUTION (2026-07-14, coding session):** did both, as suggested.
+
+- `orchestrator/scoring_questions.py`: new `M19_AIPO_CAPEX_GUIDANCE`
+  Call-2 question (0/1 — positive/negative), added to
+  `generate_m19_judgment_questions()`.
+- `analysis/thesis.py`: sustaining leg routes through `_eval_call2()`
+  (`"hyperscaler capex guidance positive" in cond` → `bool(ans)`).
+  Failure leg routes through the new `_eval_persisted_streak()` (see
+  ENG-26's resolution above for the shared mechanism) — reuses the SAME
+  Call-2 answer's negation (`ans == 0`), recorded to persisted history
+  keyed by calendar quarter ("YYYY-Qn"), checked via
+  `consecutive_calendar_streak()` for 2 consecutive quarters.
+- `mcp_server.py`: records this session's `M19_AIPO_CAPEX_GUIDANCE`
+  reading (negated) to the signal-history store alongside MAGS/COPX, same
+  block, before `evaluate_thesis_conditions()` runs.
+
+Tests: `tests/test_stage3/test_thesis.py::TestAipoCapexGuidanceStreak`
+(sustaining Call-2 positive → ACTIVE; 2 consecutive negative quarters →
+FAILED; a skipped quarter → UNKNOWN with an ENG-31 flag, not a false
+positive; one negative quarter out of two gap-free ones → ACTIVE, a
+definite non-fire, not "not enough data"). Full suite: 947 passed / 46
+skipped / 0 failed.
+
+### ENG-66 — COPX's consecutive-months condition has no evaluator; audit reconfirms ENG-26/30/31/34
+<!-- ITEM
+Status:    CLOSED 2026-07-14 (COPX consecutive-months leg only — see note below)
+Severity:  MEDIUM
+Category:  functional-gap
+Opened:    2026-07-13
+Area:      python/advisor/analysis/thesis.py, orchestrator/scoring_questions.py,
+           data/signal_history_store.py, analysis/signal_history.py
+Related:   ENG-26 (MAGS, same shared mechanism), ENG-30 (DBMF, closed same
+           session), ENG-31 (AIPO, same shared mechanism, closed same
+           session), ENG-34 (XAR — still OPEN, deliberately deferred until
+           the GAP-17 sign-split review resolves)
+-->
+
+**Description:** Client-requested audit, live session 2026-07-13: for
+every currently-held instrument with a documented §13 condition, is it
+actually being checked by anything? Found COPX's "China demand collapse
+signal (T1 PMI < 47 for >= 2 consecutive months)" needs a multi-month PMI
+streak a single session's data can't supply — same underlying problem as
+ENG-26 (MAGS) and half of ENG-31 (AIPO). The audit also reconfirmed ENG-30/
+31/34 were still open and unchanged (not new findings) and surfaced a
+SEPARATE side finding: the "Allocation - Objectives" Google Sheet's
+`floor_nominal_loss` column reads as populated (0.4) in Drive's
+`contentSnippet` text extraction, but that 0.4 is actually
+`concentration_cap` — `floor_nominal_loss` itself appears genuinely
+unpopulated for every row. This distorted one session's unconstrained
+scenario-weighted target figures (SGOL's real target under the correct 0.4
+cap is 18.54%, not 10.73% under the wrong 0.2 read). **This side finding is
+UNRESOLVED and not tracked under any ENG number as of this close — worth a
+fresh item next session**, since it's a Sheets column-boundary issue
+unrelated to the thesis-condition work this item's core scope covers.
+
+**RESOLUTION (2026-07-14, coding session) — core scope only:** COPX's
+consecutive-months PMI leg is closed via the same shared mechanism built
+for ENG-26/31 (see ENG-26's resolution above for the persistence design).
+Additionally, `M19_COPX_CHINA_PMI`'s Call-2 question was widened from a 0/1
+binary to a 3-way scale (2 = PMI >= 49, sustaining floor; 1 = 47-49, below
+floor but not failure; 0 = PMI < 47, failure zone) so ONE answer drives
+both the existing 49-threshold sustaining check and this new 47-threshold
+failure check, without redefining either threshold or asking two
+overlapping questions about the same PMI print.
+
+- `orchestrator/scoring_questions.py`: `M19_COPX_CHINA_PMI`'s
+  `valid_scores` widened `[0,1]` → `[0,1,2]`; question text updated to
+  describe all three tiers.
+- `analysis/thesis.py`: `_eval_call2()`'s COPX routing changed to
+  `ans == 2` (only the top tier meets the sustaining floor). New
+  `_eval_persisted_streak()` branch for "china demand collapse" records
+  `ans == 0` to persisted history keyed by calendar month, checked via
+  `consecutive_calendar_streak()`.
+- `mcp_server.py`: records this session's `M19_COPX_CHINA_PMI` reading
+  (as `ans == 0`) to the signal-history store, same block as MAGS/AIPO.
+
+**NOT resolved by this item, deliberately:** ENG-34 (XAR's defense-budget
+Call-2 question) stays OPEN and untouched — the hand-off explicitly flagged
+it as blocked on the GAP-17 sign-split review (Calibration_State.md §6 item
+46), and it's an independent, simple wiring task once that's clear; touching
+XAR's evaluation path while its underlying economics are in question wasn't
+worth the small risk for a LOW-severity item.
+
+Tests: `tests/test_stage3/test_thesis.py::TestCopxChinaDemandCollapseStreak`
+(2 consecutive months below 47 fires; a skipped month doesn't falsely
+confirm; the 3-way Call-2 scale's score-1-vs-2 distinction tested directly
+against `_eval_call2`, since a sustaining condition evaluating False vs.
+not-evaluated are observationally identical at the top-level API). Full
+suite: 947 passed / 46 skipped / 0 failed.

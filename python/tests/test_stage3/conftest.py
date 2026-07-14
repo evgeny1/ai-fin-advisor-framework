@@ -235,3 +235,22 @@ def make_history_reading(spec_id: str, history: list, current: float) -> DataRea
         source=DataSource.FRED_SPREADSHEET_TAB,
         fetched_at=datetime(2026, 6, 12),
     )
+
+
+@pytest.fixture(autouse=True)
+def _isolated_signal_history_store(tmp_path, monkeypatch):
+    """
+    ENG-26/31/66: analysis/thesis.py now reads persisted signal history via
+    data/signal_history_store.get_history() for a few conditions (MAGS/
+    COPX/AIPO). This module's own docstring promises "no file I/O — all
+    tests pass without network access"; autouse here so that guarantee
+    holds without every test needing to opt in individually, and so no
+    test run can ever read (or, via a future test, write) the real
+    SignalHistoryStore.json in market_data_mcp/. Patches the module
+    attribute directly (not the env var) since _STORE_FILE is computed
+    once at import time — same reasoning as
+    test_dispatcher_and_instruments.py's per-test _INSTRUMENTS_FILE patch.
+    """
+    from advisor.data import signal_history_store as m
+    monkeypatch.setattr(m, "_MCP_DIR", tmp_path)
+    monkeypatch.setattr(m, "_STORE_FILE", tmp_path / "SignalHistoryStore.json")

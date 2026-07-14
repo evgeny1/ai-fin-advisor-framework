@@ -851,6 +851,40 @@ def _tool_apply_scoring(answers: Dict[str, int]) -> str:
             except Exception as e:
                 result["flags"].append(f"⚠ M19: DivergenceSignal recompute failed: {e}")
 
+            # ── ENG-26/31/66: record this session's trackable signals ──────
+            # §13 conditions needing cross-session/cross-period history a
+            # single session's data can't supply on its own (MAGS/session,
+            # COPX/month, AIPO/quarter). Local-only store (never git —
+            # mirrors instruments.json, ENG-25); a write failure here is
+            # non-fatal and just means that ticker's streak condition stays
+            # UNKNOWN this session, same as any other missing dependency.
+            # Must run BEFORE evaluate_thesis_conditions() below so today's
+            # reading is already part of the history it reads.
+            try:
+                from .data.signal_history_store import record_signal
+
+                today_iso = datetime.date.today()
+                if regime_signal is not None and "MAGS" in held_tickers:
+                    record_signal(
+                        "MAGS", "equity_scenario_divergence", today_iso.isoformat(),
+                        regime_signal.equity_scenario_divergence.value,
+                    )
+                if "COPX" in held_tickers and "M19_COPX_CHINA_PMI" in call2_answers:
+                    record_signal(
+                        "COPX", "china_pmi_below_47",
+                        f"{today_iso.year:04d}-{today_iso.month:02d}",
+                        call2_answers["M19_COPX_CHINA_PMI"] == 0,
+                    )
+                if "AIPO" in held_tickers and "M19_AIPO_CAPEX_GUIDANCE" in call2_answers:
+                    quarter = (today_iso.month - 1) // 3 + 1
+                    record_signal(
+                        "AIPO", "capex_guidance_negative",
+                        f"{today_iso.year:04d}-Q{quarter}",
+                        call2_answers["M19_AIPO_CAPEX_GUIDANCE"] == 0,
+                    )
+            except Exception as e:
+                result["flags"].append(f"⚠ Signal history record failed (non-fatal): {e}")
+
             tsc = evaluate_thesis_conditions(
                 held_tickers=held_tickers,
                 readings=readings_by_id,
