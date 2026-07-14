@@ -56,13 +56,15 @@ across `test_stage3/test_trend.py` and `test_stage3/test_trend_signal.py`;
 full suite 900 passed / 46 skipped / 0 failed, confirmed live. Same
 session, post-restart: ENG-66 OPENED — client-requested audit of every
 held instrument's §13 automated thesis coverage, run directly against
-tsc_evaluations rather than assumed; found only SGOL/MLPX fully covered,
-DBMF/AIPO/XAR each missing at least one evaluator entirely, COPX/AIPO
-also blocked on a consecutive-period data trail this session's snapshot
-can't supply (MAGS's version of that same gap is the pre-existing
-ENG-26); also caught and logged a related Objectives-file misread
-(concentration_cap vs drawdown_tolerance column confusion) found during
-the same pass. Prior:
+tsc_evaluations rather than assumed. First draft of this item wrongly
+restated DBMF/AIPO/XAR's gaps as new finds — corrected in the same
+session once a full backlog search surfaced ENG-30/31/34 already
+documenting those exact three since 2026-06-20; ENG-66 now scoped to
+what's actually new (COPX's consecutive-PMI-months gap, no prior
+entry) plus reconfirming ENG-26/30/31/34 are all still open. Also
+caught and logged a related Objectives-file misread (concentration_cap
+vs drawdown_tolerance column confusion) found during the same pass.
+Prior:
 2026-07-13, live M05 session (ENG-63 CLOSED — root-caused
 and fixed, mid-session, DBMF/SGOL/SIVR's Mode 2 confirmation gate conflating
 a missing input with a computed no-agreement result: both `_agreement_gate`
@@ -297,7 +299,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-63 | CLOSED | MEDIUM | bug | DBMF/SGOL/SIVR's Mode 2 confirmation gate (_agreement_gate, _dbmf_macro_confirms) conflated a missing input with a computed no-agreement result -- both collapsed to DATA_UNAVAILABLE even when the underlying data fetched cleanly |
 | ENG-64 | OPEN | MEDIUM | architecture | advisor_run_computation / advisor_evaluate_trend_signal have a hard client-side timeout with no polling/job-status mechanism -- both confirmed ENG-33-style transport hangs, not slow computation |
 | ENG-65 | CLOSED | HIGH | bug | directional_trend()'s unconditional "no reversal" veto (built to match DBMF's own §13 text) silently suppressed real, material trends for every other caller -- SGOL/SIVR's own price, GAP-16's real-yield/DXY gate, URA/COPX conditions; now an explicit require_no_reversal opt-in, kept only for DBMF's own documented strategy-backdrop condition |
-| ENG-66 | OPEN | HIGH | functional-gap | thesis-condition (13) automated coverage audit -- of 8 currently-held instruments with documented sustaining/failure conditions, only SGOL and MLPX have full automated coverage; DBMF, AIPO, XAR each have >=1 condition text with no evaluator at all, COPX/AIPO also have consecutive-period conditions no evaluator can check this session; MAGS's gap is the pre-existing ENG-26 |
+| ENG-66 | OPEN | MEDIUM | functional-gap | COPX's "China demand collapse >=2 consecutive months" §13 condition has no evaluator (same consecutive-period problem as ENG-26/31) -- the one genuinely new gap from a full coverage audit that otherwise reconfirmed ENG-26/30/31/34 are still open; also documents an Objectives-file column misread (concentration_cap vs drawdown_tolerance) found in the same pass |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -1170,90 +1172,66 @@ call ENG-55 already carved out for its own dedicated session. Worth
 revisiting once the 8-week shadow trial has real outcome data — same
 posture already established for `NOISE_FLOOR_PCT`.
 
-### ENG-66 — §13 thesis-condition automated coverage audit
+### ENG-66 — COPX's consecutive-months condition has no evaluator; audit reconfirms ENG-26/30/31/34
 <!-- ITEM
 Status:    OPEN
-Severity:  HIGH
+Severity:  MEDIUM
 Category:  functional-gap
 Opened:    2026-07-13
-Area:      python/advisor/analysis/thesis.py (evaluate_thesis_conditions'
-           condition-text matcher), Calibration_State.md 13 (the
-           documented sustaining/failure conditions themselves)
-Related:   ENG-26 (MAGS's specific gap, already tracked separately),
-           ENG-13 (original trend.py build this matcher is part of)
+Area:      python/advisor/analysis/thesis.py, Allocation - Objectives
+           (Google Sheet, column-boundary issue only)
+Related:   ENG-26 (MAGS, same consecutive-period problem), ENG-30 (DBMF),
+           ENG-31 (AIPO, both its conditions), ENG-34 (XAR) — all
+           reconfirmed still open by this same audit, not superseded
 -->
 
 **Description:** Client-requested audit, live session: for every
 currently-held instrument with a documented §13 sustaining/failure
-condition, is that condition actually being checked by anything?
-Ran `advisor_apply_scoring()`'s `tsc_evaluations` output and read each
-ticker's `quality_flags`/`missing_dependencies` directly rather than
-assume coverage from the fact that a `ThesisConditionEntry` exists.
+condition, is that condition actually being checked by anything? Ran
+`advisor_apply_scoring()`'s `tsc_evaluations` output and read each
+ticker's `quality_flags`/`missing_dependencies` directly.
 
-Of the 8 currently-held instruments with a documented thesis:
+**Correction to this item's own first draft:** it initially restated
+DBMF's, AIPO's, and XAR's gaps as if newly found. They aren't — ENG-30,
+ENG-31, and ENG-34 already document those exact three, in more detail,
+since 2026-06-20. This audit's actual contribution is narrower:
+confirming those three are still open and unchanged as of tonight, and
+finding one gap none of them cover:
 
-- **SGOL, MLPX** — full automated coverage, no gaps.
-- **SIVR** — full automated coverage (and its failure condition
-  genuinely fired live tonight: "COPX sustained decline > 15% over 8
-  weeks," confirmed via COPX's actual 8-week close history, -15.36% net
-  — not held, so no position action, but the automated check itself
-  works correctly end-to-end).
-- **DBMF** — one condition text ("DBMF_3M_return < -3% while B+C >= 55%")
-  has no evaluator recognizing it at all; never checked, any session.
 - **COPX** — "China demand collapse signal (T1 PMI < 47 for >= 2
-  consecutive months)" needs a multi-month PMI streak this session's
-  single-snapshot data can't supply.
-- **AIPO** — two gaps: "hyperscaler capex guidance revised down >= 2
-  consecutive quarters" (same consecutive-period problem as COPX's) and
-  "AI infrastructure capital expenditure cycle intact" (no evaluator
-  recognizes the condition text at all).
-- **XAR** — "Defense budget trajectory positive (not subject to
-  emergency cuts)" has no evaluator recognizing it.
-- **MAGS** — "equity_scenario_divergence shifts to MODERATE for >= 2
-  consecutive sessions" is the pre-existing, already-tracked ENG-26 gap
-  (cross-session signal history, not a price series — genuinely a
-  different kind of problem than the others here).
+  consecutive months)" needs a multi-month PMI streak; this session's
+  single-snapshot data can't supply it. Same underlying problem as
+  ENG-26 (MAGS) and half of ENG-31 (AIPO's capex-guidance condition) —
+  a condition that's recognized in principle but needs a persisted
+  trailing-period data trail no current infrastructure provides.
+- **SIVR** (not held) — full automated coverage, no gap — noted here
+  only because its failure condition genuinely fired live tonight
+  ("COPX sustained decline > 15% over 8 weeks," confirmed via COPX's
+  actual 8-week close history, -15.36% net), which is what prompted
+  checking coverage everywhere else in the first place.
 
-Two distinct sub-problems, worth keeping separate when this gets picked
-up: (1) condition text with literally no code path recognizing it
-(DBMF, AIPO's capex-cycle condition, XAR) — needs new evaluator logic
-written from scratch; (2) condition text that's recognized in principle
-but needs a persisted multi-period data trail this session's snapshot
-fetch can't supply (COPX, AIPO's capex-guidance condition, and ENG-26's
-MAGS case) — the same underlying "trailing consecutive periods" problem
-ENG-13's own docstring already flagged as a separate, harder infrastructure
-question from single-window trend reads.
+**Side finding, same audit:** the "Allocation - Objectives" Google
+Sheet's `floor_nominal_loss` column reads as populated with a numeric
+value (0.4, constant across every account) in Drive's `contentSnippet`
+text extraction, despite `floor_nominal_loss` being a boolean parameter
+in `advisor_evaluate_allocation()`. That 0.4 is actually
+`concentration_cap` (constant firm-wide), with the sheet's second number
+being `drawdown_tolerance` (the one that varies sensibly by account).
+`floor_nominal_loss` itself appears genuinely unpopulated for every row.
+Caused a real misread this session — concentration_cap was passed as
+the 0.35/0.25/0/0.2 values instead — which didn't change the specific
+proposed-rebalance feasibility conclusions checked against it, but did
+visibly distort the unconstrained scenario-weighted target figures
+(SGOL's real target under the correct 0.4 cap is 18.54%, not the 10.73%
+first computed under the wrong 0.2). Worth confirming the sheet's actual
+column boundaries directly in the Sheets UI rather than trusting the
+Drive text-extraction snippet for this file specifically.
 
-**Practical implication:** for the 6 non-fully-covered instruments, a
-documented failure condition could fire in reality and this pipeline
-would not surface it — the briefing would show ACTIVE with a
-`missing_dependencies`/`quality_flags` note, which is honest (flagged,
-not silently assumed) but is easy to read past if not specifically
-audited, as this session just demonstrated.
-
-**Side finding, same audit:** the "Allocation - Objectives" file's
-`floor_nominal_loss` column reads as populated with a numeric value
-(0.4, constant across every account) in Google Drive's `contentSnippet`
-extraction, despite `floor_nominal_loss` being a boolean parameter in
-`advisor_evaluate_allocation()` — that numeric value is actually
-`concentration_cap` (constant 0.4 firm-wide), with the sheet's second
-number being `drawdown_tolerance` (the one that varies sensibly by
-account). `floor_nominal_loss` itself appears genuinely unpopulated for
-every row. Caused a real misread this session (concentration_cap was
-passed as the 0.35/0.25/0/0.2 drawdown_tolerance values instead) — didn't
-change the specific proposed-rebalance feasibility conclusions checked
-against it, but did visibly distort the unconstrained scenario-weighted
-target figures. Worth confirming the sheet's actual column boundaries
-directly in the Sheets UI rather than trusting the Drive text-extraction
-snippet for this file specifically.
-
-**Suggested next step:** prioritize by what's actually actionable —
-DBMF's condition and XAR's condition are both single-snapshot-evaluable
-in principle (3-month return vs. scenario probabilities; defense-budget
-trajectory via a web-search-backed qualitative check similar to the M19
-gates) and could close relatively quickly. The consecutive-period
-problem (COPX, AIPO, MAGS/ENG-26) needs a shared persistence design —
-worth solving once, generically, rather than three times.
+**Suggested next step:** fold COPX's gap into whichever fix addresses
+ENG-26/31's shared consecutive-period problem — solve the persistence
+design once, apply to all three (MAGS, AIPO's capex-guidance leg, COPX),
+rather than separately. See ENG-30/31/34 directly for the DBMF/AIPO/XAR
+work; nothing further to add here beyond tonight's reconfirmation.
 
 ### ENG-56 — Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries
 <!-- ITEM
