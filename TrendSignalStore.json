@@ -154,7 +154,7 @@
       "dominant_directive_conflict_aware": "ADD",
       "forward_outcome": null,
       "margin_debt_fragility_flag": null,
-      "own_medium_dir": null,
+      "own_medium_dir": "up",
       "own_short_dir": null,
       "price_at_signal": 30.8,
       "quality_flags": [
@@ -328,14 +328,11 @@
       "dominant_directive_conflict_aware": "ADD",
       "forward_outcome": null,
       "margin_debt_fragility_flag": null,
-      "own_medium_dir": null,
-      "own_short_dir": null,
+      "own_medium_dir": "down",
+      "own_short_dir": "down",
       "price_at_signal": 39.12,
-      "quality_flags": [
-        "SGOL: real-yield/DXY agreement gate computed no clear agreement this session",
-        "SGOL: macro confirmation gate computed no clear agreement this session"
-      ],
-      "rs_signal": "INCONCLUSIVE"
+      "quality_flags": [],
+      "rs_signal": "WEAKENING"
     }
   },
   "SIVR": {
@@ -389,14 +386,11 @@
       "dominant_directive_conflict_aware": "ADD",
       "forward_outcome": null,
       "margin_debt_fragility_flag": null,
-      "own_medium_dir": null,
-      "own_short_dir": null,
+      "own_medium_dir": "down",
+      "own_short_dir": "down",
       "price_at_signal": 56.71,
-      "quality_flags": [
-        "SIVR: real-yield/DXY agreement gate computed no clear agreement this session",
-        "SIVR: macro confirmation gate computed no clear agreement this session"
-      ],
-      "rs_signal": "INCONCLUSIVE"
+      "quality_flags": [],
+      "rs_signal": "WEAKENING"
     }
   },
   "XAR": {
