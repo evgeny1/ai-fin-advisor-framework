@@ -383,3 +383,66 @@ next_session_flags:
   before next editing that module
 - '''Copy of Allocation'' stale duplicate Drive file still exists -- delete for hygiene;
   doesn''t collide with the exact-title fetch logic but is clutter'
+
+---
+entry_id: 2026-07-14T21:20
+date: '2026-07-14'
+session_type: full M05 session
+status: current
+scenario_probabilities: {A: 11.75, B: 47.0, C: 23.5, D: 3.0, E: 11.75, F: 3.0}
+primary_driver: 'Hormuz naval blockade reinstated (T1-confirmed: CENTCOM/NPR/CNN/Axios)
+  vs. cooler June CPI print (headline 3.5% vs 4.2% May; core 2.6% vs 2.9%) -- net
+  scenario shift: C down 31.33%->23.5%, A/E up 7.83%->11.75% each, B flat 47%, D/F
+  flat 3%. Live discovery: C_check_brent auto-scorer (scoring_questions.py) scored
+  0 despite the T1-verified blockade because Brent''s absolute price hasn''t closed
+  the gap to the $110 nominal trigger -- logged as ENG-67 (OPEN), likely understates
+  C tonight. FeasibilityCheck also run fresh under tonight''s mix for Relative IRA,
+  Relative Roth, and the Primary IRA/Roth/Acc4 40/40/20 simplification -- all reconfirmed
+  feasible.'
+open_triggers:
+- Hormuz blockade reinstated 2026-07-14 (4pm ET), 4th consecutive night of US strikes
+  on Iran, missile fire reaching Jordan (intercepted) and Kuwait -- no de-escalation
+  signal, if anything more active than last session
+- June CPI cooled to 3.5% headline / 2.6% core (BLS) but multiple T1 sources confirm
+  this predates the renewed oil spike -- watch the July print (BLS, Aug 12) for reversal
+- GDPNow ~1.3% for Q2 2026, next Atlanta Fed update July 16
+- China NBS Manufacturing PMI 50.3 in June, third consecutive expansionary month --
+  no China-demand-collapse signal for COPX
+- Central bank gold accumulation narrative and nuclear policy support (US/EU/Japan/UK,
+  all 4 confirmed intact) both hold up this session
+- Fed held 3.50-3.75% June 17 under new Chair Warsh, forward guidance removed entirely,
+  hawkish dot plot (median 2026 now 3.8%) -- next FOMC July 29
+open_decisions:
+- Relative IRA (...469) rebalance (SGOL 4.85%->9%, VTIP 12.25%->12%, DBMF 15.71%->17%,
+  funded from SGOV 26.02%->20%) reconfirmed feasible under tonight's mix at 3.11%
+  portfolio return (down from 3.91% under last session's C-heavier mix), floor clear
+  -- still awaiting Evgeny's staged-vs-lump-sum execution call given SGOL/SIVR's recent
+  declines
+- Relative Roth (...466) corrected target (AIPO 10/MLPX 34/VTIP 45/DBMF 11) reconfirmed
+  feasible at 2.78% (down from 3.39%), floor clear -- still awaiting manual entry
+  into the allocation sheet's Target column
+- DBMF/MLPX/SGOL(SGOV) 40/40/20 simplification -- FeasibilityCheck now run fresh for
+  Primary IRA (5.48% vs 3.36% required, 1.39x), Primary Roth (5.48% vs 3.12% required,
+  1.59x), and Acc4 taxable (5.29%, drawdown-adjusted 21.16) -- all feasible; still
+  awaiting Evgeny's go/no-go, confirmed unsafe for both Relative FLOOR_THEN_RETURN
+  accounts
+- 'XAR thesis: GAP-17 approach now decided by Evgeny -- flip-within-role sign revision
+  on Scenario C/E, not a new RoleID split (Calibration_State.md v1.66) -- numbers
+  not yet derived, still LOW confidence, still gated to the March 31, 2027 audit at
+  the earliest. Directive remains HOLD everywhere; do not execute TRIM/EXIT'
+next_session_flags:
+- 'ENG-67 (NEW, OPEN, MEDIUM/bug): C_check_brent auto-scorer forces auto_score=0 whenever
+  Brent sits >15% below the $110 nominal trigger, regardless of a T1-verified supply
+  event -- exposed live tonight by the Hormuz blockade. Suggested fix is a one-line
+  deletion in scoring_questions.py (leave c_brent_auto=None to match the existing
+  above-trigger branch''s precedent of deferring to Claude). Full repro + suggested
+  fix + regression-test note in FRAMEWORK_BACKLOG.md Part 1 and Index -- prioritize
+  for next coding session'
+- AIPO component weights sum to only 0.86 (14% unclassified, excluded from EV) --
+  verify classified weights at next §11 audit
+- '§13 coverage gaps persist: COPX consecutive-PMI-months, MAGS consecutive-session,
+  AIPO consecutive-quarter-capex all lack sufficient history; XAR''s ''defense budget
+  trajectory positive'' condition still has no evaluator at all (ENG-34)'
+- 'Reminder for future sessions: SIVR appears in role_repricing_warnings/trend-signal
+  output as one of the framework''s 8 monitored comparator instruments -- it is NOT
+  an actual holding in any account; don''t present its moves as portfolio impact'
