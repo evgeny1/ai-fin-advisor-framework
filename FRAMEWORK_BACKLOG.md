@@ -33,7 +33,16 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-13, live M05 session (ENG-65 CLOSED — direct
+**Last updated:** 2026-07-14, live M05 session (ENG-67 OPENED — client-side
+audit found `C_check_brent`'s auto-scorer forces score=0 whenever Brent
+sits >15% below the $110 nominal trigger, with no way to distinguish "no
+supply event" from "verified event, price hasn't caught up" -- exposed
+live tonight when a T1-confirmed Hormuz naval blockade still scored 0
+because Brent ($85.30) hadn't moved far enough. Not fixed this session
+(advisory session, no code changes) -- flagged for the next coding
+session; suggested fix is a one-line deletion, see full entry in Part 1).
+Prior:
+2026-07-13, live M05 session (ENG-65 CLOSED — direct
 follow-on from ENG-63: `directional_trend()`'s "no reversal through the
 window's start" rule was found to be a faithful implementation of
 `Calibration_State.md` §13's own DBMF-specific text ("directional = net
@@ -300,6 +309,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-64 | OPEN | MEDIUM | architecture | advisor_run_computation / advisor_evaluate_trend_signal have a hard client-side timeout with no polling/job-status mechanism -- both confirmed ENG-33-style transport hangs, not slow computation |
 | ENG-65 | CLOSED | HIGH | bug | directional_trend()'s unconditional "no reversal" veto (built to match DBMF's own §13 text) silently suppressed real, material trends for every other caller -- SGOL/SIVR's own price, GAP-16's real-yield/DXY gate, URA/COPX conditions; now an explicit require_no_reversal opt-in, kept only for DBMF's own documented strategy-backdrop condition |
 | ENG-66 | CLOSED 2026-07-14 (COPX leg only) | MEDIUM | functional-gap | COPX's "China demand collapse >=2 consecutive months" §13 condition has no evaluator (same consecutive-period problem as ENG-26/31) -- the one genuinely new gap from a full coverage audit that otherwise reconfirmed ENG-26/30/31/34 are still open; also documents an Objectives-file column misread (concentration_cap vs drawdown_tolerance) found in the same pass, still UNRESOLVED, no ENG number yet |
+| ENG-67 | OPEN | MEDIUM | bug | C_check_brent auto-scorer forces score=0 whenever Brent is >15% below the $110 nominal trigger, regardless of whether a T1-verified supply event (e.g. tonight's Hormuz blockade) is active -- can silently understate C; existing above-trigger branch already defers to Claude, below-trigger branch should too |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -1266,6 +1276,63 @@ breaking relative imports/fixtures (e.g. `test_stage3/conftest.py` and
 fixture discovery, not explicit imports) and should get its own
 verification pass (`pytest -q` clean) before moving on to the next
 folder.
+
+### ENG-67 — C_check_brent auto-scorer can't distinguish "no supply event" from "verified event, price hasn't caught up"
+<!-- ITEM
+Status:    OPEN
+Severity:  MEDIUM
+Category:  bug
+Opened:    2026-07-14
+Area:      python/advisor/orchestrator/scoring_questions.py (C_check_brent
+           construction, ~line 225-245)
+Related:   none
+-->
+
+**Description:** Raised during the 2026-07-14 M05 session. The live
+example: the U.S. reinstated a full naval blockade of Iranian ports
+that afternoon (T1-confirmed via CENTCOM/NPR/CNN/Axios — an
+unambiguous, dateable supply-chokepoint event), yet `C_check_brent`
+auto-scored **0** solely because Brent ($85.30) sat 22.5% below the
+$110 nominal trigger.
+
+Root cause, in `scoring_questions.py`:
+```python
+gap_pct = (brent_trigger_nominal - brent) / brent_trigger_nominal * 100
+c_brent_ev += f" — {gap_pct:.1f}% BELOW nominal trigger"
+if gap_pct > 15:
+    c_brent_auto = 0  # well below trigger, no verified supply event implied
+```
+The comment's own assumption is the bug: price distance from the $110
+trigger says nothing about whether a supply event is actually
+happening — only that price hasn't (yet) caught up to it. Per the
+question's own written rubric, "1=T1 supply event verified but Brent
+below 15%-gap band" is a *valid, reachable* score whenever gap_pct >
+15%, but the current code forecloses it unconditionally and hands
+Claude no way to override, since `auto_score` is only left to the AI
+when it's `None`. Practically: any T1-verified chokepoint event that
+hasn't yet moved absolute Brent price within 15% of $110 will always
+silently understate C, regardless of how clear the evidence is —
+exactly what happened tonight.
+
+Note the asymmetry already in the same function: the `brent >=
+brent_trigger_nominal` branch deliberately leaves `c_brent_auto = None`
+("Leave for AI since we don't track sustained days automatically") —
+i.e. the code already has a precedent for deferring to Claude's
+qualitative judgment when a pure-price check can't resolve the
+question alone. The `else` branch just doesn't follow that same
+precedent.
+
+**Suggested fix:** don't auto-set `c_brent_auto = 0` when `gap_pct >
+15`; leave it `None` (matching the existing above-trigger branch) so
+the question reaches Claude with the gap_pct evidence already embedded
+in `c_brent_ev`, and Claude scores 0 vs 1 using the same qualitative
+chokepoint verification it already does for `C_check_chokepoint` in
+the same session. Smallest safe change: delete the `if gap_pct > 15:
+c_brent_auto = 0` line entirely (the `c_brent_auto: Optional[int] =
+None` initialization already covers the "no data" default). Add a
+regression test asserting `auto_score is None` for a case with
+Brent far below trigger, to lock in that this question is never
+silently auto-scored 0 again.
 
 ---
 
