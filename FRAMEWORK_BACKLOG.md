@@ -1278,61 +1278,7 @@ verification pass (`pytest -q` clean) before moving on to the next
 folder.
 
 ### ENG-67 — C_check_brent auto-scorer can't distinguish "no supply event" from "verified event, price hasn't caught up"
-<!-- ITEM
-Status:    OPEN
-Severity:  MEDIUM
-Category:  bug
-Opened:    2026-07-14
-Area:      python/advisor/orchestrator/scoring_questions.py (C_check_brent
-           construction, ~line 225-245)
-Related:   none
--->
-
-**Description:** Raised during the 2026-07-14 M05 session. The live
-example: the U.S. reinstated a full naval blockade of Iranian ports
-that afternoon (T1-confirmed via CENTCOM/NPR/CNN/Axios — an
-unambiguous, dateable supply-chokepoint event), yet `C_check_brent`
-auto-scored **0** solely because Brent ($85.30) sat 22.5% below the
-$110 nominal trigger.
-
-Root cause, in `scoring_questions.py`:
-```python
-gap_pct = (brent_trigger_nominal - brent) / brent_trigger_nominal * 100
-c_brent_ev += f" — {gap_pct:.1f}% BELOW nominal trigger"
-if gap_pct > 15:
-    c_brent_auto = 0  # well below trigger, no verified supply event implied
-```
-The comment's own assumption is the bug: price distance from the $110
-trigger says nothing about whether a supply event is actually
-happening — only that price hasn't (yet) caught up to it. Per the
-question's own written rubric, "1=T1 supply event verified but Brent
-below 15%-gap band" is a *valid, reachable* score whenever gap_pct >
-15%, but the current code forecloses it unconditionally and hands
-Claude no way to override, since `auto_score` is only left to the AI
-when it's `None`. Practically: any T1-verified chokepoint event that
-hasn't yet moved absolute Brent price within 15% of $110 will always
-silently understate C, regardless of how clear the evidence is —
-exactly what happened tonight.
-
-Note the asymmetry already in the same function: the `brent >=
-brent_trigger_nominal` branch deliberately leaves `c_brent_auto = None`
-("Leave for AI since we don't track sustained days automatically") —
-i.e. the code already has a precedent for deferring to Claude's
-qualitative judgment when a pure-price check can't resolve the
-question alone. The `else` branch just doesn't follow that same
-precedent.
-
-**Suggested fix:** don't auto-set `c_brent_auto = 0` when `gap_pct >
-15`; leave it `None` (matching the existing above-trigger branch) so
-the question reaches Claude with the gap_pct evidence already embedded
-in `c_brent_ev`, and Claude scores 0 vs 1 using the same qualitative
-chokepoint verification it already does for `C_check_chokepoint` in
-the same session. Smallest safe change: delete the `if gap_pct > 15:
-c_brent_auto = 0` line entirely (the `c_brent_auto: Optional[int] =
-None` initialization already covers the "no data" default). Add a
-regression test asserting `auto_score is None` for a case with
-Brent far below trigger, to lock in that this question is never
-silently auto-scored 0 again.
+**CLOSED** 2026-07-14 (MEDIUM, bug). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
 
 ---
 

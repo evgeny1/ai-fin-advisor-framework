@@ -3183,3 +3183,67 @@ confirm; the 3-way Call-2 scale's score-1-vs-2 distinction tested directly
 against `_eval_call2`, since a sustaining condition evaluating False vs.
 not-evaluated are observationally identical at the top-level API). Full
 suite: 947 passed / 46 skipped / 0 failed.
+
+
+### ENG-67 — C_check_brent auto-scorer can't distinguish "no supply event" from "verified event, price hasn't caught up"
+<!-- ITEM
+Status:    CLOSED 2026-07-14
+Severity:  MEDIUM
+Category:  bug
+Opened:    2026-07-14
+Area:      python/advisor/orchestrator/scoring_questions.py (C_check_brent
+           construction, ~line 225-245)
+Related:   none
+-->
+
+**Description:** Raised during the 2026-07-14 M05 session. The live
+example: the U.S. reinstated a full naval blockade of Iranian ports
+that afternoon (T1-confirmed via CENTCOM/NPR/CNN/Axios — an
+unambiguous, dateable supply-chokepoint event), yet `C_check_brent`
+auto-scored **0** solely because Brent ($85.30) sat 22.5% below the
+$110 nominal trigger.
+
+Root cause, in `scoring_questions.py`:
+```python
+gap_pct = (brent_trigger_nominal - brent) / brent_trigger_nominal * 100
+c_brent_ev += f" — {gap_pct:.1f}% BELOW nominal trigger"
+if gap_pct > 15:
+    c_brent_auto = 0  # well below trigger, no verified supply event implied
+```
+The comment's own assumption is the bug: price distance from the $110
+trigger says nothing about whether a supply event is actually
+happening — only that price hasn't (yet) caught up to it. Per the
+question's own written rubric, "1=T1 supply event verified but Brent
+below 15%-gap band" is a *valid, reachable* score whenever gap_pct >
+15%, but the current code forecloses it unconditionally and hands
+Claude no way to override, since `auto_score` is only left to the AI
+when it's `None`. Practically: any T1-verified chokepoint event that
+hasn't yet moved absolute Brent price within 15% of $110 will always
+silently understate C, regardless of how clear the evidence is —
+exactly what happened tonight.
+
+Note the asymmetry already in the same function: the `brent >=
+brent_trigger_nominal` branch deliberately leaves `c_brent_auto = None`
+("Leave for AI since we don't track sustained days automatically") —
+i.e. the code already has a precedent for deferring to Claude's
+qualitative judgment when a pure-price check can't resolve the
+question alone. The `else` branch just doesn't follow that same
+precedent.
+
+**RESOLUTION (2026-07-14, coding session):** Deleted the
+`if gap_pct > 15: c_brent_auto = 0` line entirely — the existing
+`c_brent_auto: Optional[int] = None` initialization already covers the
+"no data" default, so the below-trigger branch now matches the
+above-trigger branch's precedent and leaves the question for Claude,
+with the gap_pct evidence already embedded in `c_brent_ev`.
+
+`tests/test_stage5/test_scoring_questions.py::test_brent_well_below_trigger_auto_scores_0`
+had encoded the buggy behavior as its own assertion (`auto_score == 0`)
+— renamed to `test_brent_well_below_trigger_auto_score_is_none` and
+rewritten to assert `auto_score is None`, so this regresses loudly if
+the bug is reintroduced. Module docstring's coverage bullet updated to
+match. Full suite run twice: once with the fix stashed (baseline) and
+once with fix + updated test applied — both 947 passed / 46 skipped /
+0 failed, confirming no other test depended on the old behavior.
+
+Commit: `7345b2a`.
