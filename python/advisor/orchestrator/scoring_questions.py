@@ -236,8 +236,8 @@ def generate_questions(
         else:
             gap_pct = (brent_trigger_nominal - brent) / brent_trigger_nominal * 100
             c_brent_ev += f" — {gap_pct:.1f}% BELOW nominal trigger"
-            if gap_pct > 15:
-                c_brent_auto = 0  # well below trigger, no verified supply event implied
+            # Leave for AI: gap_pct alone can't distinguish "no supply event"
+            # from "verified event, price hasn't caught up" (ENG-67)
 
     qs.append(ScoringQuestion(
         id="C_check_brent", scenario="C",

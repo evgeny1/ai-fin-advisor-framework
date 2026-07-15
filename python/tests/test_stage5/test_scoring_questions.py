@@ -7,7 +7,9 @@ Coverage:
   - All question IDs are unique
   - Questions covering credit signals auto-score correctly
   - Questions needing AI input have auto_score=None
-  - Brent below trigger → C_check_brent auto-scores 0
+  - Brent below trigger → C_check_brent auto_score stays None (ENG-67:
+    gap_pct alone can't distinguish "no supply event" from "verified
+    event, price hasn't caught up")
   - aggregate_raw_scores(): merges auto + AI scores correctly
   - aggregate_raw_scores(): Scenario F negative raw clamped to 0
   - questions_for_ai(): filters correctly to None auto_score
@@ -228,12 +230,24 @@ def test_e_ig_calm_auto_scores_0():
 
 # ── Auto-scoring: Brent threshold ─────────────────────────────────────────────
 
-def test_brent_well_below_trigger_auto_scores_0():
-    """Brent at $75 with no supply event verifiable → auto_score = 0."""
+def test_brent_well_below_trigger_auto_score_is_none():
+    """ENG-67 regression: Brent at $75 (>15% below the $110 nominal trigger)
+    must NOT auto-score 0. Price gap alone can't distinguish "no supply
+    event" from "verified T1 supply event, price hasn't caught up" (e.g.
+    the 2026-07-14 Hormuz naval blockade, which auto-scored 0 under the
+    old logic despite a T1-confirmed active chokepoint event). auto_score
+    must stay None here, matching the precedent the above-trigger branch
+    already sets, so the question reaches Claude with the gap_pct evidence
+    intact rather than being silently foreclosed to 0.
+    """
     readings = [_brent_reading(75.0)]
     qs = generate_questions(readings, _minimal_cal(), None, {})
     q = next(q for q in qs if q.id == "C_check_brent")
-    assert q.auto_score == 0
+    assert q.auto_score is None, (
+        "C_check_brent auto-scored a non-None value from price gap alone; "
+        "this forecloses score=1 (T1-verified supply event, Brent below "
+        "15%-gap band) with no way for Claude to override — the ENG-67 bug."
+    )
 
 
 def test_brent_near_trigger_auto_score_is_none():
