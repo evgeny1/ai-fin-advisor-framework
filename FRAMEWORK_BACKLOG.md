@@ -33,7 +33,21 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
-**Last updated:** 2026-07-14, live M05 session (ENG-67 OPENED — client-side
+**Last updated:** 2026-07-21, live advisory session (ENG-68 OPENED — client
+challenged the DBMF_3M_RETURN figure cited in the session briefing (-4.19%);
+direct market_data_mcp verification showed it was actually MAGS's price
+series/return mislabeled as DBMF's, and DBMF's real 3-month return is
++2.53%. Same failure signature as ENG-27 (concurrent yfinance fetch
+cross-contamination, closed 2026-06-20) but manifesting in the ENG-30
+DBMF §13 evaluator's new data reading, not the *_TREND specs. Not fixed
+this session (advisory session, no code changes) -- flagged for the next
+coding session; see full entry in Part 1. Same session: confirmed ENG-67's
+fix IS live and working (C_check_brent's auto_score correctly returned
+None/deferred to Claude this session) -- a Claude briefing error stated it
+was "still open," which was incorrect; ENG-67 remains CLOSED, no code
+action needed there).
+Prior:
+2026-07-14, live M05 session (ENG-67 OPENED — client-side
 audit found `C_check_brent`'s auto-scorer forces score=0 whenever Brent
 sits >15% below the $110 nominal trigger, with no way to distinguish "no
 supply event" from "verified event, price hasn't caught up" -- exposed
@@ -1279,6 +1293,63 @@ folder.
 
 ### ENG-67 — C_check_brent auto-scorer can't distinguish "no supply event" from "verified event, price hasn't caught up"
 **CLOSED** 2026-07-14 (MEDIUM, bug). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
+
+
+### ENG-68 — DBMF_3M_RETURN data reading returns MAGS's price series, not DBMF's
+<!-- ITEM
+  Status:    OPEN
+  Severity:  HIGH
+  Category:  data-integrity
+  Opened:    2026-07-21
+  Area:      python/advisor/data/fetch_registry.py (fetch_all, parallel dispatch),
+             python/advisor/data/fetchers/yfinance_fetcher.py (fetch_dbmf_3m_return)
+  Related:   ENG-27 (closed 2026-06-20 -- same failure signature: concurrent
+             yfinance fetches cross-contaminating results), ENG-30 (closed
+             2026-07-14 -- built the §13 evaluator that consumes this reading;
+             this is the first live session where that evaluator actually fired)
+-->
+
+**Description:** During the 2026-07-21 live advisory session,
+`advisor_run_computation`'s `market_data.DBMF_3M_RETURN` reading was
+`{"return_3m_pct": -4.19, "current": 66.93}`. The client challenged this
+figure. Direct verification via `market_data_mcp:market_get_history`:
+
+- DBMF (period=3m, 2026-04-21 to 2026-07-20): first_close 30.1766, last_close
+  30.94, **total_return_pct +2.53**.
+- MAGS (same window): last_close **66.93** -- an exact match to the "current"
+  value the DBMF_3M_RETURN reading reported.
+- MAGS's close on 2026-06-01 was 69.86. (69.86 -> 66.93) = **-4.194%**, an
+  exact match to the reported -4.19%.
+
+So the reading is not DBMF data at all -- it is MAGS's price series, over a
+~7-week window (2026-06-01 to 2026-07-20), mislabeled as DBMF's 3-month
+return. `fetch_dbmf_3m_return()` (yfinance_fetcher.py) looks correct in
+isolation -- it explicitly calls `yf.download("DBMF", ...)` inside
+`_yf_lock_guard()` -- so the contamination most likely happens downstream,
+in `fetch_all()`'s parallel-dispatch/merge step (`fetch_registry.py`) rather
+than in the fetcher function itself. Not yet traced to an exact line;
+flagging for a coding session rather than guessing further.
+
+**Consequence (same session):** `analysis/thesis.py`'s §13 evaluator for
+DBMF ("DBMF_3M_return < -3% while B+C >= 55%") fired **FAILED**, using the
+corrupted -4.19% figure. With the correct +2.53%, this condition does not
+fire. This was presented to the client as a live thesis-sustaining-condition
+failure before being caught -- should have been caught proactively per the
+standing Price Integrity Rule (Calibration_State.md) before citing an
+instrument-specific return figure, the same category of miss as the
+original XAR sign-convention incident. Corrected via a same-session
+Session_Log.md §8 amendment.
+
+**Suggested next step:** trace `fetch_registry.py`'s `fetch_all()` merge
+path for how `DataReading`s get keyed/assembled from the `ThreadPoolExecutor`
+results -- check for a shared/reused variable (e.g. a `closes` or `df` local
+that outlives its loop iteration) or a dict keyed by something coarser than
+`spec.id` across the DBMF_3M_RETURN and MAGS-touching fetches (NASDAQ_30D_RETURN,
+TREND_SIGNAL_HISTORY, or holdings-price fetches all touch MAGS). Add a
+regression test asserting `DBMF_3M_RETURN.current` matches a direct
+single-symbol DBMF fetch within a live `fetch_all()` run, not just
+`fetch_dbmf_3m_return()` in isolation (isolated unit tests would not have
+caught this if the bug is in cross-spec merging, not the fetcher itself).
 
 ---
 
