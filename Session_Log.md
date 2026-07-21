@@ -446,3 +446,71 @@ next_session_flags:
 - 'Reminder for future sessions: SIVR appears in role_repricing_warnings/trend-signal
   output as one of the framework''s 8 monitored comparator instruments -- it is NOT
   an actual holding in any account; don''t present its moves as portfolio impact'
+
+---
+entry_id: 2026-07-21T13:59
+date: '2026-07-21'
+session_type: full M05 session
+status: current
+scenario_probabilities: {A: 13.0, B: 39.0, C: 39.0, D: 3.0, E: 3.0, F: 3.0}
+primary_driver: 'Iran/Hormuz conflict sharply re-escalated (10th consecutive night
+  of US strikes vs 4th last session, 3 US KIA, tanker hit in Strait of Hormuz July
+  20, gas ~$4/gal) against a Fed holding rates with no forward guidance (Warsh: inflation
+  "too high", FOMC split hike-vs-hold) -- pushed C 23.5%->39%, held B at 39% (both
+  above 30% co-elevation threshold, documented as independent signal families). E
+  collapsed 11.75%->3% on IMF COFER Q1 2026 data showing dollar reserve share rose
+  (57.13% vs 56.42%), no de-dollarization event this quarter.'
+open_triggers:
+- 'Iran war: 10th consecutive night of US strikes as of July 20, 2026; naval blockade
+  active since July 14; 3 US service members killed, ~100 injured since July 7; tanker
+  struck in Strait of Hormuz July 20 (UKMTO); no de-escalation signal -- watch for
+  Brent breaching the $110 nominal C-trigger (currently $91.09, 17.2% below).'
+- June CPI (3.5% headline/2.6% core, released July 14) predates the current oil-price
+  re-acceleration (Brent ~$72 early June to $91 now) -- July print (BLS, Aug 12) is
+  the key test of whether C's score reverses upward further.
+- Next FOMC July 28-29 -- no cut expected; watch guidance language given committee
+  reportedly split hike-vs-hold.
+- GDPNow next update July 27 (currently 1.7% for Q2, up from 1.3% on July 8).
+- 'DBMF Sec13 thesis-sustaining condition FAILED this session: DBMF_3M_return -4.19%
+  while B+C=78% -- real performance diverging from systematic_trend_following thesis
+  even as EV math (blended_conservative_return_pct 10.77%) directs ADD across every
+  account holding it. Needs Evgeny''s judgment, not auto-resolved.'
+- 'SIVR/COPX role-repricing divergence (Sec9.5): SIVR -24.63% 30d, COPX -17.71% 30d,
+  both vs broad market +0.13% -- underperforming inflation-hedge role thesis by >15pp
+  threshold.'
+- 'SGOL: GAP-16 range-position read ''unfavorable'' in Scenario B (rising real yields)
+  -- blended_conservative_return_pct now negative (-0.06%) despite an ADD directive
+  from position-sizing; flag before executing.'
+- 'XAR: GAP-17 sign-flip approach decided (v1.66) but replacement Scenario C/E numbers
+  not yet derived; still HOLD everywhere; still gated to March 31, 2027 audit at earliest.'
+- 'ENG-67 (C_check_brent auto-scorer bug): still open in code; manually corrected
+  this session''s score to 1 (T1 supply event verified, Brent below 15%-gap band)
+  to avoid understating C. One-line fix still needed.'
+- 'AIPO: 14% of component weight remains unclassified, excluded from EV -- verify
+  at next Sec11 audit.'
+open_decisions:
+- Relative IRA (...469) rebalance (SGOL 4.85%->9%, VTIP 12.25%->12%, DBMF 15.71%->17%,
+  funded from SGOV 26.17%->20%) reconfirmed feasible tonight at 3.88% portfolio return,
+  floor clear -- still awaiting Evgeny's staged-vs-lump-sum execution call.
+- Relative Roth (...466) corrected target (AIPO 10/MLPX 34/VTIP 45/DBMF 11) reconfirmed
+  feasible at 3.56%, floor clear -- still awaiting manual entry into the allocation
+  sheet's Target column.
+- DBMF/MLPX/SGOL(SGOV) 40/40/20 simplification -- FeasibilityCheck re-run fresh tonight
+  for Primary IRA (6.43% vs 3.49% required, 1.41x), Primary Roth (6.43% vs 3.18% required,
+  1.6x), and Acc4 taxable (6.62%, drawdown-adjusted 26.50) -- all feasible; still
+  awaiting Evgeny's go/no-go; confirmed unsafe for both Relative FLOOR_THEN_RETURN
+  accounts.
+- 'XAR thesis: flip-within-role sign revision on Scenario C/E (not a new RoleID split,
+  per v1.66) -- numbers not yet derived, LOW confidence, gated to March 31, 2027 audit
+  at earliest. Directive remains HOLD everywhere; do not execute TRIM/EXIT.'
+next_session_flags:
+- ENG-67 still open in scoring_questions.py -- apply the one-line fix (leave c_brent_auto=None)
+  next coding session.
+- DBMF Sec13 FAILED this session -- track whether this persists or resolves next session
+  before treating as a pattern.
+- AIPO 14% unclassified component -- verify at next Sec11 audit.
+- Watch July CPI (Aug 12) and next FOMC (July 28-29) for confirmation of the C-ward
+  shift.
+- 'Python interpreter path in memory is stale: claude_desktop_config.json now points
+  to C:\Python\python.exe (confirmed working), not the old miniforge3 path -- update
+  stored path reference.'
