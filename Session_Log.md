@@ -448,7 +448,7 @@ next_session_flags:
   an actual holding in any account; don''t present its moves as portfolio impact'
 
 ---
-entry_id: 2026-07-21T14:03
+entry_id: 2026-07-21T14:46
 date: '2026-07-21'
 session_type: full M05 session
 status: current
@@ -459,7 +459,9 @@ primary_driver: 'Iran/Hormuz conflict sharply re-escalated (10th consecutive nig
   "too high", FOMC split hike-vs-hold) -- pushed C 23.5%->39%, held B at 39% (both
   above 30% co-elevation threshold, documented as independent signal families). E
   collapsed 11.75%->3% on IMF COFER Q1 2026 data showing dollar reserve share rose
-  (57.13% vs 56.42%), no de-dollarization event this quarter.'
+  (57.13% vs 56.42%), no de-dollarization event this quarter. Correction same session:
+  DBMF Sec13 FAILED flag retracted (data bug, ENG-68); ENG-67 status corrected to
+  CLOSED (was mischaracterized as open).'
 open_triggers:
 - 'Iran war: 10th consecutive night of US strikes as of July 20, 2026; naval blockade
   active since July 14; 3 US service members killed, ~100 injured since July 7; tanker
@@ -471,10 +473,13 @@ open_triggers:
 - Next FOMC July 28-29 -- no cut expected; watch guidance language given committee
   reportedly split hike-vs-hold.
 - GDPNow next update July 27 (currently 1.7% for Q2, up from 1.3% on July 8).
-- 'DBMF Sec13 thesis-sustaining condition FAILED this session: DBMF_3M_return -4.19%
-  while B+C=78% -- real performance diverging from systematic_trend_following thesis
-  even as EV math (blended_conservative_return_pct 10.77%) directs ADD across every
-  account holding it. Needs Evgeny''s judgment, not auto-resolved.'
+- 'CORRECTION: the DBMF Sec13 ''FAILED'' flag reported earlier this session was a
+  false positive. The underlying DBMF_3M_RETURN reading was corrupted (it was actually
+  MAGS''s price series, not DBMF''s -- confirmed via direct market_data_mcp check
+  after client challenge). DBMF''s real 3-month return is +2.53%, not -4.19%; on the
+  correct figure the Sec13 condition does not fire. Logged as ENG-68 (data-integrity,
+  HIGH). DBMF''s ADD directive (blended_conservative_return_pct 10.77%) stands on
+  its EV math, unaffected by this correction.'
 - 'SIVR/COPX role-repricing divergence (Sec9.5): SIVR -24.63% 30d, COPX -17.71% 30d,
   both vs broad market +0.13% -- underperforming inflation-hedge role thesis by >15pp
   threshold.'
@@ -483,9 +488,10 @@ open_triggers:
   from position-sizing; flag before executing.'
 - 'XAR: GAP-17 sign-flip approach decided (v1.66) but replacement Scenario C/E numbers
   not yet derived; still HOLD everywhere; still gated to March 31, 2027 audit at earliest.'
-- 'ENG-67 (C_check_brent auto-scorer bug): still open in code; manually corrected
-  this session''s score to 1 (T1 supply event verified, Brent below 15%-gap band)
-  to avoid understating C. One-line fix still needed.'
+- 'CORRECTION: ENG-67 (C_check_brent auto-scorer) is CLOSED (fixed 2026-07-14) and
+  confirmed working correctly this session -- auto_score correctly returned None/deferred
+  to Claude. An earlier note this session incorrectly called it ''still open'' with
+  a ''fix still needed''; that was wrong, retracted.'
 - 'AIPO: 14% of component weight remains unclassified, excluded from EV -- verify
   at next Sec11 audit.'
 open_decisions:
@@ -504,10 +510,12 @@ open_decisions:
   per v1.66) -- numbers not yet derived, LOW confidence, gated to March 31, 2027 audit
   at earliest. Directive remains HOLD everywhere; do not execute TRIM/EXIT.'
 next_session_flags:
-- ENG-67 still open in scoring_questions.py -- apply the one-line fix (leave c_brent_auto=None)
-  next coding session.
-- DBMF Sec13 FAILED this session -- track whether this persists or resolves next session
-  before treating as a pattern.
+- ENG-67 CONFIRMED CLOSED and working correctly this session (C_check_brent auto_score
+  returned None, correctly deferring to Claude) -- an earlier briefing this session
+  incorrectly called it 'still open'; that was wrong, no code action needed.
+- 'ENG-68 (NEW, OPEN, HIGH/data-integrity): DBMF_3M_RETURN data reading returned MAGS''s
+  price series, not DBMF''s -- prioritize for next coding session. Re-verify the DBMF
+  Sec13 read once fixed.'
 - AIPO 14% unclassified component -- verify at next Sec11 audit.
 - Watch July CPI (Aug 12) and next FOMC (July 28-29) for confirmation of the C-ward
   shift.
