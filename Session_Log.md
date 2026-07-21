@@ -448,7 +448,7 @@ next_session_flags:
   an actual holding in any account; don''t present its moves as portfolio impact'
 
 ---
-entry_id: 2026-07-21T14:46
+entry_id: 2026-07-21T14:48
 date: '2026-07-21'
 session_type: full M05 session
 status: current
