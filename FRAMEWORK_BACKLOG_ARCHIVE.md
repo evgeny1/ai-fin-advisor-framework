@@ -3247,3 +3247,91 @@ once with fix + updated test applied — both 947 passed / 46 skipped /
 0 failed, confirming no other test depended on the old behavior.
 
 Commit: `7345b2a`.
+
+
+### ENG-68 — DBMF_3M_RETURN data reading returned MAGS's price series, not DBMF's
+<!-- ITEM
+Status:    CLOSED 2026-07-21
+Severity:  HIGH
+Category:  data-integrity
+Opened:    2026-07-21
+Area:      python/advisor/analysis/thesis.py, python/advisor/data/fetchers/yfinance_fetcher.py,
+           python/advisor/data/m18_registry.py
+Related:   ENG-27 (closed 2026-06-20 -- same failure signature: concurrent
+           yfinance fetches cross-contaminating results), ENG-30 (closed
+           2026-07-14 -- built the §13 evaluator that consumed this reading;
+           this was the first live session where that evaluator actually fired)
+-->
+
+**Description:** During the 2026-07-21 live advisory session,
+`advisor_run_computation`'s `market_data.DBMF_3M_RETURN` reading was
+`{"return_3m_pct": -4.19, "current": 66.93}`. The client challenged this
+figure. Direct verification via `market_data_mcp:market_get_history`:
+DBMF's real 3-month return (2026-04-21 to 2026-07-20) was +2.53%
+(last_close 30.94); MAGS's last_close over the same window was exactly
+66.93, and MAGS's return from its 2026-06-01 close (69.86) to 2026-07-20
+was exactly -4.19%. The reading was entirely MAGS's data, mislabeled.
+
+`analysis/thesis.py`'s §13 evaluator for DBMF ("DBMF_3M_return < -3%
+while B+C >= 55%") had fired FAILED that session using the corrupted
+figure -- a false positive, since the correct +2.53% does not meet the
+condition. Presented to the client before being caught; retracted the
+same session via a Session_Log.md §8 amendment.
+
+**Root cause, confirmed against the installed yfinance source** (0.2.58,
+`yfinance/multi.py` + `shared.py` — read directly, not inferred):
+
+```python
+# multi.py, download(), at the start of every call:
+shared._DFS = {}
+...
+# after spawning per-ticker worker threads:
+while len(shared._DFS) < len(tickers):
+    _time.sleep(0.01)
+```
+
+`shared._DFS` is a single module-level global dict, shared across every
+concurrent `yf.download()` call in the process. The wait condition
+checks only the COUNT of entries, never WHICH tickers are present.
+DBMF was fetched via two overlapping code paths in the same
+`fetch_all()` batch: (1) `fetch_dbmf_3m_return()`'s own dedicated
+`yf.download("DBMF", ...)` call, and (2) as one of the 8 held
+instruments inside `fetch_trend_signal_histories()`'s 16-symbol batch
+call. A straggler worker thread from one call finishing late — after
+the other call has already reset `shared._DFS = {}` — can satisfy that
+other call's length-only wait condition with the wrong ticker's entry.
+This matches a confirmed, externally documented yfinance defect
+(GitHub `ranaroussi/yfinance` issue #2557: "yfinance.download is not
+thread-safe... concurrent calls... may overwrite results") — not a bug
+introduced in this codebase, though fetching the same ticker twice
+concurrently in the same batch is what exposed it.
+
+Confirmed genuinely intermittent, not a fixed 100%-repro: 5x isolated
+`fetch_dbmf_3m_return()` calls, a direct 2-way concurrent repro
+(`DBMF_3M_RETURN` racing `TREND_SIGNAL_HISTORY` head-on), and 5x full
+production `_build_registry().fetch_all()` runs all returned correct
+DBMF data. Root cause was established by reading yfinance's own source
+directly, not by reproducing the exact race locally — consistent with
+this being a rare timing-dependent race, not a deterministic bug.
+
+**Fix:** removed the redundant `DBMF_3M_RETURN` FetchSpec and its
+dedicated fetcher (`fetch_dbmf_3m_return`) entirely, rather than adding
+more locking around a bug inside yfinance's own internals. `thesis.py`'s
+DBMF §13 evaluator now derives the 3-month return directly from
+`TREND_SIGNAL_HISTORY:DBMF`'s already-fetched closes (DBMF is already
+one of the 8 held instruments in that batch) — same
+`n = min(64, len(closes))` window, same formula, but DBMF's price
+history is now fetched once per session instead of twice. This removes
+the race's precondition outright rather than papering over it.
+
+Files changed: `analysis/thesis.py` (derivation logic),
+`data/fetchers/yfinance_fetcher.py` (removed `fetch_dbmf_3m_return` +
+its dispatch branch), `data/m18_registry.py` (removed the FetchSpec).
+Tests updated: `tests/test_stage1/test_fetchers.py` (spec count
+46→45), `tests/test_stage3/test_thesis.py` (the 4 tests in
+`TestDbmfOwnPerformance` now feed a synthetic closes list via a
+`_closes_for_return()` helper instead of a pre-computed
+`return_3m_pct`). Full suite: 947 passed / 46 skipped / 0 failed (test
+count has grown since README.md's 645-test snapshot as of 2026-06-20).
+
+Commit: `516352e`.
