@@ -283,7 +283,24 @@ class TestResolutionOrderAndScope:
 class TestDbmfOwnPerformance:
     """ENG-30: DBMF_3M_return < -3% while B+C >= 55% — a compound AND of
     two clauses in one condition string, both parsed from the text
-    itself, not hardcoded."""
+    itself, not hardcoded.
+
+    ENG-68 (2026-07-21): the underlying reading changed from a dedicated
+    DBMF_3M_RETURN FetchSpec (removed — it raced against
+    TREND_SIGNAL_HISTORY's own concurrent fetch of DBMF inside yfinance's
+    shared._DFS global, a confirmed yfinance thread-safety issue, not a
+    bug in this codebase) to a derivation from TREND_SIGNAL_HISTORY:DBMF's
+    closes, already fetched as part of the 8-held-instrument batch. These
+    tests now feed a synthetic closes list instead of a pre-computed
+    return_3m_pct."""
+
+    @staticmethod
+    def _closes_for_return(pct: float, n: int = 64) -> list:
+        """n-length closes list whose (last/first - 1)*100 == pct exactly,
+        matching the same n=min(64, len(closes)) window thesis.py uses."""
+        base = 100.0
+        last = base * (1 + pct / 100)
+        return [base] * (n - 1) + [last]
 
     def _entry(self) -> ThesisConditionEntry:
         return ThesisConditionEntry(
@@ -297,8 +314,10 @@ class TestDbmfOwnPerformance:
 
     def test_both_clauses_true_fires_failure(self, cal):
         cal.thesis_conditions["DBMF"] = self._entry()
-        readings = {"DBMF_3M_RETURN": DataReading(
-            "DBMF_3M_RETURN", {"return_3m_pct": -5.2}, DataSource.YFINANCE, datetime(2026, 7, 14),
+        readings = {"TREND_SIGNAL_HISTORY:DBMF": DataReading(
+            "TREND_SIGNAL_HISTORY:DBMF",
+            {"symbol": "DBMF", "closes": self._closes_for_return(-5.2), "n_days": 64},
+            DataSource.YFINANCE, datetime(2026, 7, 14),
         )}
         results = evaluate_thesis_conditions(["DBMF"], readings, _probs(B=30, C=30), None, cal, {})
         assert results[0].status == ThesisStatus.FAILED
@@ -307,8 +326,10 @@ class TestDbmfOwnPerformance:
     def test_return_ok_does_not_fire_even_if_bc_high(self, cal):
         """B+C >= 55% alone must not fire — both clauses are ANDed."""
         cal.thesis_conditions["DBMF"] = self._entry()
-        readings = {"DBMF_3M_RETURN": DataReading(
-            "DBMF_3M_RETURN", {"return_3m_pct": 0.5}, DataSource.YFINANCE, datetime(2026, 7, 14),
+        readings = {"TREND_SIGNAL_HISTORY:DBMF": DataReading(
+            "TREND_SIGNAL_HISTORY:DBMF",
+            {"symbol": "DBMF", "closes": self._closes_for_return(0.5), "n_days": 64},
+            DataSource.YFINANCE, datetime(2026, 7, 14),
         )}
         results = evaluate_thesis_conditions(["DBMF"], readings, _probs(B=30, C=30), None, cal, {})
         assert results[0].status == ThesisStatus.ACTIVE
@@ -318,8 +339,10 @@ class TestDbmfOwnPerformance:
         the condition is specifically about underperforming ITS OWN
         scenario, not a bad return in any regime."""
         cal.thesis_conditions["DBMF"] = self._entry()
-        readings = {"DBMF_3M_RETURN": DataReading(
-            "DBMF_3M_RETURN", {"return_3m_pct": -8.0}, DataSource.YFINANCE, datetime(2026, 7, 14),
+        readings = {"TREND_SIGNAL_HISTORY:DBMF": DataReading(
+            "TREND_SIGNAL_HISTORY:DBMF",
+            {"symbol": "DBMF", "closes": self._closes_for_return(-8.0), "n_days": 64},
+            DataSource.YFINANCE, datetime(2026, 7, 14),
         )}
         results = evaluate_thesis_conditions(["DBMF"], readings, _probs(A=60, B=10, C=10, D=10, E=5, F=5), None, cal, {})
         assert results[0].status == ThesisStatus.ACTIVE
@@ -327,7 +350,7 @@ class TestDbmfOwnPerformance:
     def test_missing_reading_flagged_not_silently_false(self, cal):
         cal.thesis_conditions["DBMF"] = self._entry()
         results = evaluate_thesis_conditions(["DBMF"], {}, _probs(B=30, C=30), None, cal, {})
-        assert any("DBMF_3M_RETURN" in f for f in results[0].quality_flags)
+        assert any("TREND_SIGNAL_HISTORY:DBMF" in f for f in results[0].quality_flags)
 
 
 class TestCopxChinaDemandCollapseStreak:

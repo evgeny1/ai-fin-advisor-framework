@@ -148,14 +148,33 @@ def _eval_simple_numeric(
     if m:
         return_op, return_thresh = m.group(1), float(m.group(2))
         bc_op, bc_thresh = m.group(3), float(m.group(4))
-        r = readings.get("DBMF_3M_RETURN")
+        # ENG-68: derive from TREND_SIGNAL_HISTORY:DBMF's already-fetched
+        # closes rather than a second, dedicated yf.download("DBMF", ...)
+        # call. The old dedicated DBMF_3M_RETURN FetchSpec raced against
+        # this same batch fetch inside yfinance's own shared._DFS global
+        # (confirmed: yfinance/multi.py resets shared._DFS = {} per
+        # download() call and waits on `len(shared._DFS) < len(tickers)` —
+        # a COUNT check, not a key check — so a straggler worker thread
+        # from one download() finishing late can satisfy a DIFFERENT,
+        # concurrent download()'s wait condition with the wrong ticker's
+        # data. DBMF was uniquely exposed because it was fetched via BOTH
+        # a solo call and as one of the 8 held instruments in the
+        # TREND_SIGNAL_HISTORY batch, in the same fetch_all() run.
+        # Fetching it only once, via the batch, removes the race outright
+        # rather than trying to lock around a bug inside yfinance itself).
+        r = readings.get("TREND_SIGNAL_HISTORY:DBMF")
         if r is None or not r.is_valid:
-            flags.append("DBMF_3M_RETURN: reading unavailable")
+            flags.append("TREND_SIGNAL_HISTORY:DBMF: reading unavailable (DBMF_3M_return)")
             return None
-        dbmf_return = r.value.get("return_3m_pct") if isinstance(r.value, dict) else None
-        if dbmf_return is None:
-            flags.append("DBMF_3M_RETURN: reading malformed (no return_3m_pct)")
+        closes = r.value.get("closes") if isinstance(r.value, dict) else None
+        if not closes:
+            flags.append("TREND_SIGNAL_HISTORY:DBMF: reading malformed (no closes)")
             return None
+        n = min(64, len(closes))
+        if n < 2 or closes[-n] == 0:
+            flags.append("TREND_SIGNAL_HISTORY:DBMF: insufficient history for 3m return")
+            return None
+        dbmf_return = round((closes[-1] / closes[-n] - 1) * 100, 2)
         return_hit = _cmp(return_op, dbmf_return, return_thresh)
         bc_hit = _cmp(bc_op, probs.B + probs.C, bc_thresh)
         return return_hit and bc_hit

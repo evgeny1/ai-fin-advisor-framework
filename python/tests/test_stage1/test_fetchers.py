@@ -29,7 +29,7 @@ class TestM18Registry:
         assert len(ids) == len(set(ids)), "Duplicate FetchSpec IDs in M18 registry"
 
     def test_expected_spec_count(self):
-        # 46 specs defined in M18 (update this when adding new series).
+        # 45 specs defined in M18 (update this when adding new series).
         # +1 vs prior count (43): REAL_YIELD_10Y_TREND (GAP-16 follow-up,
         # real-yield proxy correction, 2026-06-21).
         # +1 vs prior count (44): TREND_SIGNAL_HISTORY (ENG-50/ENG-55,
@@ -38,8 +38,20 @@ class TestM18Registry:
         # +1 vs prior count (45): DBMF_3M_RETURN (ENG-30, 2026-07-14 --
         # DBMF's own trailing 3-month return, feeds its
         # "DBMF_3M_return < -3% while B+C >= 55%" failure_signal).
-        assert len(_ALL_SPECS) == 46, (
-            f"Expected 46 specs, found {len(_ALL_SPECS)}. "
+        # -1 back to 45 (ENG-68, 2026-07-21): DBMF_3M_RETURN removed as a
+        # separate FetchSpec. It raced against TREND_SIGNAL_HISTORY's own
+        # batch fetch of DBMF (DBMF is one of the 8 held instruments in
+        # that batch) inside yfinance's shared._DFS global, which is not
+        # thread-safe across concurrent download() calls for the same
+        # ticker (confirmed against the installed yfinance source: a
+        # length-only `len(shared._DFS) < len(tickers)` wait condition, not
+        # a key check, so a straggler worker thread from one call can
+        # satisfy a different concurrent call's wait with the wrong
+        # ticker's data). thesis.py now derives DBMF's 3-month return
+        # directly from TREND_SIGNAL_HISTORY:DBMF's closes instead of a
+        # second, redundant, racing yf.download("DBMF", ...) call.
+        assert len(_ALL_SPECS) == 45, (
+            f"Expected 45 specs, found {len(_ALL_SPECS)}. "
             "Update this count when adding/removing series."
         )
 
