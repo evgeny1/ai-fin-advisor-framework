@@ -352,6 +352,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-67 | OPEN | MEDIUM | bug | C_check_brent auto-scorer forces score=0 whenever Brent is >15% below the $110 nominal trigger, regardless of whether a T1-verified supply event (e.g. tonight's Hormuz blockade) is active -- can silently understate C; existing above-trigger branch already defers to Claude, below-trigger branch should too |
 | ENG-68 | CLOSED 2026-07-21 | HIGH | data-integrity | DBMF_3M_RETURN data reading returned MAGS's price series -- yfinance concurrent-fetch race; fixed by removing the redundant FetchSpec and deriving DBMF's 3M return from TREND_SIGNAL_HISTORY:DBMF instead |
 | ENG-69 | OPEN | HIGH | data-integrity | NASDAQ_30D_RETURN data reading (-25.23%, current 55.8) cross-contaminated with SIVR's series -- same ENG-27/ENG-68 failure signature, different FetchSpec; caused a false-positive MAGS section-13 FAILED read this session |
+| ENG-70 | OPEN | HIGH | data-integrity | holdings_30d_returns systematically overstated SGOL (-8.92%/-13.86% vs verified -2.46%) and SIVR (-21.89%/-22.26% vs verified -9.9%) in BOTH consecutive runs this session -- consistent wrongness, not a random flip, suggests a lookback-window/indexing bug distinct from ENG-27/68/69's race condition; caused a false-positive SIVR Sec9.5 role-repricing warning (real underperformance -10.4pp, below its 15pp threshold) |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -403,6 +404,25 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 ---
 
 ## Part 1 — Engineering Items
+
+### ENG-70 -- holdings_30d_returns systematically wrong for SGOL/SIVR (both runs, not a random flip)
+<!-- ITEM
+Status:    OPEN
+Severity:  HIGH
+Category:  data-integrity
+Opened:    2026-07-22
+Area:      python/advisor -- holdings_30d_returns computation path (Sec9.5 RoleRepricingDivergence input); distinct from TREND_SIGNAL_HISTORY, which was independently verified correct for the same tickers/window
+Related:   ENG-69 (same session, different mechanism -- ENG-69 was a one-off cross-ticker race flip; this is a consistent bias reproduced across two separate advisor_run_computation() calls)
+-->
+
+**Description:** Live M05 session, 2026-07-22, second half. Two separate advisor_run_computation() calls in the same session both reported SGOL and SIVR 30-day returns far more negative than reality: SGOL -8.92% then -13.86% (verified actual, via market_data_mcp period=1m: -2.46%); SIVR -21.89% then -22.26% (verified actual: -9.9%). Unlike AIPO/MAGS/NASDAQ_30D_RETURN in the same session (ENG-69), which flipped sign or value randomly call-to-call -- consistent with the known ENG-27 concurrent-yfinance-fetch race -- SGOL/SIVR were wrong in the SAME direction (overstated decline) both times, with different-but-similarly-wrong magnitudes. This pattern does not match a random race flip; it looks more like a lookback-window or array-indexing bug specific to how holdings_30d_returns resolves these two tickers (e.g. reading a stale/longer-window closing price as the '30 days ago' anchor). Cross-checked against TREND_SIGNAL_HISTORY:SGOL and TREND_SIGNAL_HISTORY:SIVR (both fetched in the same run) -- the raw daily closes in those arrays are internally consistent with the verified market_data_mcp figures, meaning the raw price data was fetched correctly; the bug is specifically in whatever holdings_30d_returns does with it (a separate calculation path, not a raw-fetch contamination).
+
+**Live impact this session:** the corrupted SIVR figure fed Sec9.5 RoleRepricingDivergence and produced a role-repricing warning (SIVR breaching its 15pp inflation_hedge_precious_metals threshold) in BOTH runs. On verified data, SIVR's real underperformance vs broad market is only ~10.4pp -- below the 15pp threshold. This warning is a false positive and was not acted on. AIPO's warning (run 1 only; run 2 missed it via ENG-69's unrelated sign-flip) held up under verified data (-13.4pp, above its 10pp threshold) -- that one is real.
+
+**Suggested fix direction:** isolate holdings_30d_returns's calculation (likely in the same module that produces Sec9.5 inputs) and compare its lookback-day/index logic against TREND_SIGNAL_HISTORY's, which is known-correct for the same tickers over the same window. Given two independently wrong-but-consistent readings for the SAME two tickers (not a random pair each time), suspect a ticker-specific data-shape issue (e.g. SGOL/SIVR fetched via a different code path than XAR/MLPX/DBMF/COPX, which were all correct both runs) rather than a generic off-by-N bug.
+
+Not fixed this session (advisory session, no code changes) -- flagged for the next coding session. Recommend triaging together with ENG-69 since both surfaced in the same session, but keep them as separate items given the distinct failure signature.
+
 
 ### ENG-69 -- NASDAQ_30D_RETURN data reading cross-contaminated with SIVR's series
 <!-- ITEM
