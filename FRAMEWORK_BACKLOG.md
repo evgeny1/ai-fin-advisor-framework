@@ -1,4 +1,4 @@
-# Framework Backlog — Engineering Gaps, TODOs & Open Items
+﻿# Framework Backlog — Engineering Gaps, TODOs & Open Items
 
 <!--
   Purpose: single canonical tracker for ENGINEERING/ARCHITECTURE backlog items —
@@ -33,6 +33,14 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
+**Last updated:** 2026-07-22, live advisory session (ENG-69 OPENED -- NASDAQ_30D_RETURN
+data reading returned -25.23% with current:55.8, matching SIVR's price rather than any
+real Nasdaq level; direct market_data_mcp verification shows Nasdaq Composite's actual
+30d return is -1.26%. Same cross-contamination signature as ENG-68 [closed one day
+prior], different FetchSpec. Caused a false-positive MAGS section-13 FAILED read this
+session, which was NOT acted on. Not fixed this session (advisory session, no code
+changes) -- flagged for next coding session; see full entry in Part 1.)
+Prior:
 **Last updated:** 2026-07-21, coding session (ENG-68 CLOSED — root cause
 confirmed by reading the installed yfinance source directly: `download()`
 resets a global `shared._DFS = {}` per call and waits on a COUNT check
@@ -342,6 +350,8 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-65 | CLOSED | HIGH | bug | directional_trend()'s unconditional "no reversal" veto (built to match DBMF's own §13 text) silently suppressed real, material trends for every other caller -- SGOL/SIVR's own price, GAP-16's real-yield/DXY gate, URA/COPX conditions; now an explicit require_no_reversal opt-in, kept only for DBMF's own documented strategy-backdrop condition |
 | ENG-66 | CLOSED 2026-07-14 (COPX leg only) | MEDIUM | functional-gap | COPX's "China demand collapse >=2 consecutive months" §13 condition has no evaluator (same consecutive-period problem as ENG-26/31) -- the one genuinely new gap from a full coverage audit that otherwise reconfirmed ENG-26/30/31/34 are still open; also documents an Objectives-file column misread (concentration_cap vs drawdown_tolerance) found in the same pass, still UNRESOLVED, no ENG number yet |
 | ENG-67 | OPEN | MEDIUM | bug | C_check_brent auto-scorer forces score=0 whenever Brent is >15% below the $110 nominal trigger, regardless of whether a T1-verified supply event (e.g. tonight's Hormuz blockade) is active -- can silently understate C; existing above-trigger branch already defers to Claude, below-trigger branch should too |
+| ENG-68 | CLOSED 2026-07-21 | HIGH | data-integrity | DBMF_3M_RETURN data reading returned MAGS's price series -- yfinance concurrent-fetch race; fixed by removing the redundant FetchSpec and deriving DBMF's 3M return from TREND_SIGNAL_HISTORY:DBMF instead |
+| ENG-69 | OPEN | HIGH | data-integrity | NASDAQ_30D_RETURN data reading (-25.23%, current 55.8) cross-contaminated with SIVR's series -- same ENG-27/ENG-68 failure signature, different FetchSpec; caused a false-positive MAGS section-13 FAILED read this session |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -393,6 +403,25 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 ---
 
 ## Part 1 — Engineering Items
+
+### ENG-69 -- NASDAQ_30D_RETURN data reading cross-contaminated with SIVR's series
+<!-- ITEM
+Status:    OPEN
+Severity:  HIGH
+Category:  data-integrity
+Opened:    2026-07-22
+Area:      python/advisor -- likely yfinance_fetcher.py / fetch_registry.py, NASDAQ_30D_RETURN FetchSpec
+Related:   ENG-68 (same failure signature, closed one day prior, for DBMF_3M_RETURN), ENG-27 (original yfinance concurrent-fetch cross-contamination root cause)
+-->
+
+**Description:** Live M05 session, 2026-07-22. advisor_run_computation()'s market_data.NASDAQ_30D_RETURN reading returned {return_30d_pct: -25.23, current: 55.8}. Direct verification via market_data_mcp:market_get_history (symbol ^IXIC, period 1m) shows the Nasdaq Composite's actual 30-day return is -1.26% (26,166.60 -> 25,837.21, 2026-06-22 to 2026-07-21) -- nowhere near -25.23%. The current: 55.8 figure does not match any plausible Nasdaq index/ETF level; it is suspiciously close to SIVR's actual price this session (~$55.80-56.98 per market_data.PRICE:SIVR / holdings_30d_returns.SIVR: -21.89%), suggesting the same class of cross-ticker contamination as ENG-68 (concurrent yf.download() race per yfinance issue #2557) -- but on a different data reading than the one ENG-68's fix (removing the redundant DBMF_3M_RETURN FetchSpec) addressed. ENG-68's fix was a point patch for one manifestation, not the underlying race-condition risk shared across all FetchSpecs that share a concurrent batch.
+
+**Live impact this session:** the corrupted reading fed tsc_evaluations and caused MAGS's section-13 'Nasdaq 30d return <= -10% (sustained tech correction)' condition to report status: FAILED. This is a false positive -- the real Nasdaq 30d return (-1.26%) is far from the -10% threshold. Treated as unresolved/not-failed in this session's briefing and write-back, same handling pattern used for ENG-68's DBMF figure when it was caught live.
+
+**Suggested fix direction:** identify which FetchSpec produces NASDAQ_30D_RETURN and whether it shares a concurrent yf.download() batch with a SIVR-touching spec; apply the same fix pattern as ENG-68 (derive from an already-fetched, non-racing series, or isolate the fetch). Given ENG-27's root cause is shared yfinance global state under concurrent fetches, this can in principle contaminate any FetchSpec overlapping another in the same batch -- a systemic audit of all concurrent FetchSpecs may be warranted rather than patching one symbol at a time as each is caught live.
+
+Not fixed this session (advisory session, no code changes) -- flagged for the next coding session.
+
 
 ### ENG-48 — advisor_write_back's 90s safety-timeout races its own actual completion time
 **CLOSED** 2026-07-14 (HIGH, bug). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.
