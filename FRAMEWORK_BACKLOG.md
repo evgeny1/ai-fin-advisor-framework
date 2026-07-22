@@ -33,6 +33,20 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
+**Last updated:** 2026-07-22, coding session (ENG-69 and ENG-70 CLOSED — both root
+causes confirmed and fixed same session. ENG-69: added a shared `_extract_closes()`
+ticker-identity check to yfinance_fetcher.py, applied to all 5 single-ticker
+`yf.download()` call sites; fails loudly on a ticker mismatch instead of silently
+computing a real-looking result from the wrong ticker. ENG-70: `_fetch_holdings_30d_raw`
+(mcp_server.py) was using `series.iloc[0]` — the full ~35-trading-day fetch window's
+first day — as its "30 days ago" baseline instead of `n=22` trading days back like
+every other 30d-return fetcher in this codebase; confirmed exactly via market_data_mcp
+against SGOL/SIVR's real prices. Also wrapped that function's download in the shared
+`_yf_lock_guard()`, which it had previously bypassed. 14 new regression tests added
+(6 in test_yfinance_unit.py, 8 in a new test_holdings_30d_raw.py — this function had
+zero prior coverage). Full suite: 961 passed / 46 skipped, 0 failed. See Part 1 for
+both closed entries.)
+Prior:
 **Last updated:** 2026-07-22, live advisory session (ENG-69 OPENED -- NASDAQ_30D_RETURN
 data reading returned -25.23% with current:55.8, matching SIVR's price rather than any
 real Nasdaq level; direct market_data_mcp verification shows Nasdaq Composite's actual
@@ -351,8 +365,8 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-66 | CLOSED 2026-07-14 (COPX leg only) | MEDIUM | functional-gap | COPX's "China demand collapse >=2 consecutive months" §13 condition has no evaluator (same consecutive-period problem as ENG-26/31) -- the one genuinely new gap from a full coverage audit that otherwise reconfirmed ENG-26/30/31/34 are still open; also documents an Objectives-file column misread (concentration_cap vs drawdown_tolerance) found in the same pass, still UNRESOLVED, no ENG number yet |
 | ENG-67 | OPEN | MEDIUM | bug | C_check_brent auto-scorer forces score=0 whenever Brent is >15% below the $110 nominal trigger, regardless of whether a T1-verified supply event (e.g. tonight's Hormuz blockade) is active -- can silently understate C; existing above-trigger branch already defers to Claude, below-trigger branch should too |
 | ENG-68 | CLOSED 2026-07-21 | HIGH | data-integrity | DBMF_3M_RETURN data reading returned MAGS's price series -- yfinance concurrent-fetch race; fixed by removing the redundant FetchSpec and deriving DBMF's 3M return from TREND_SIGNAL_HISTORY:DBMF instead |
-| ENG-69 | OPEN | HIGH | data-integrity | NASDAQ_30D_RETURN data reading (-25.23%, current 55.8) cross-contaminated with SIVR's series -- same ENG-27/ENG-68 failure signature, different FetchSpec; caused a false-positive MAGS section-13 FAILED read this session |
-| ENG-70 | OPEN | HIGH | data-integrity | holdings_30d_returns systematically overstated SGOL (-8.92%/-13.86% vs verified -2.46%) and SIVR (-21.89%/-22.26% vs verified -9.9%) in BOTH consecutive runs this session -- consistent wrongness, not a random flip, suggests a lookback-window/indexing bug distinct from ENG-27/68/69's race condition; caused a false-positive SIVR Sec9.5 role-repricing warning (real underperformance -10.4pp, below its 15pp threshold) |
+| ENG-69 | CLOSED 2026-07-22 | HIGH | data-integrity | NASDAQ_30D_RETURN data reading (-25.23%, current 55.8) cross-contaminated with SIVR's series -- same ENG-27/ENG-68 failure signature, different FetchSpec; fixed via a shared ticker-identity check (`_extract_closes()`) applied to all 5 single-ticker yf.download() call sites in yfinance_fetcher.py -- fails loudly on mismatch instead of silently trusting the wrong ticker |
+| ENG-70 | CLOSED 2026-07-22 | HIGH | data-integrity | holdings_30d_returns systematically overstated SGOL (-8.92%/-13.86% vs verified -2.46%) and SIVR (-21.89%/-22.26% vs verified -9.9%) in BOTH consecutive runs this session -- root cause confirmed as `_fetch_holdings_30d_raw` using the fetch window's FIRST day (iloc[0]) as baseline instead of ~22 trading days back; fixed to match the n=22 convention used everywhere else, plus wrapped in the shared _yf_lock_guard() it had been bypassing |
 | ENG-1 | CLOSED | CRITICAL | data-integrity | §8 write-back format incompatible with parser |
 | ENG-2 | CLOSED | HIGH | architecture | Module necessity review (M01–M19) |
 | ENG-3 | CLOSED | HIGH | architecture | Pattern A / Pattern B duplication & convergence decision |
@@ -407,10 +421,11 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 
 ### ENG-70 -- holdings_30d_returns systematically wrong for SGOL/SIVR (both runs, not a random flip)
 <!-- ITEM
-Status:    OPEN
+Status:    CLOSED
 Severity:  HIGH
 Category:  data-integrity
 Opened:    2026-07-22
+Closed:    2026-07-22 (same-day coding session)
 Area:      python/advisor -- holdings_30d_returns computation path (Sec9.5 RoleRepricingDivergence input); distinct from TREND_SIGNAL_HISTORY, which was independently verified correct for the same tickers/window
 Related:   ENG-69 (same session, different mechanism -- ENG-69 was a one-off cross-ticker race flip; this is a consistent bias reproduced across two separate advisor_run_computation() calls)
 -->
@@ -421,15 +436,37 @@ Related:   ENG-69 (same session, different mechanism -- ENG-69 was a one-off cro
 
 **Suggested fix direction:** isolate holdings_30d_returns's calculation (likely in the same module that produces Sec9.5 inputs) and compare its lookback-day/index logic against TREND_SIGNAL_HISTORY's, which is known-correct for the same tickers over the same window. Given two independently wrong-but-consistent readings for the SAME two tickers (not a random pair each time), suspect a ticker-specific data-shape issue (e.g. SGOL/SIVR fetched via a different code path than XAR/MLPX/DBMF/COPX, which were all correct both runs) rather than a generic off-by-N bug.
 
-Not fixed this session (advisory session, no code changes) -- flagged for the next coding session. Recommend triaging together with ENG-69 since both surfaced in the same session, but keep them as separate items given the distinct failure signature.
+**Resolution (2026-07-22, coding session):** Confirmed empirically via
+market_data_mcp, not just inferred: SGOL's -8.92% figure was an EXACT
+match for its full 2026-06-02->07-21 window return (42.72 -> 38.91), and
+SIVR's -21.89% likewise exactly matched its full-window return
+(71.44 -> 55.8). `_fetch_holdings_30d_raw` (mcp_server.py) was computing
+`series.iloc[-1] / series.iloc[0] - 1` -- the FIRST day of its entire
+~35-trading-day fetch window -- instead of `n = min(22, len(series))`
+and `series.iloc[-n]`, the convention every other 30d-return fetcher in
+yfinance_fetcher.py already uses (fetch_nasdaq_trailing,
+fetch_broad_equity_trailing). Confirmed independent of ENG-69: XAR was
+also cross-checked against the correct SGOL/SIVR raw history in
+TREND_SIGNAL_HISTORY, ruling out a fetch-layer problem. Fix: corrected
+the baseline index to `iloc[-n]`, and separately wrapped the function's
+download call in `_yf_lock_guard()` (it had bypassed the shared lock
+entirely on the theory that fetch_all() finishing means yfinance is
+fully quiet by then -- true for this codebase's own call sites, but not
+a guarantee against a straggler thread from an earlier batch, per
+ENG-69's mechanism). Added 8 new tests in a new
+`test_mcp/test_holdings_30d_raw.py` (zero prior coverage existed) --
+covering the corrected baseline against both synthetic and the real
+2026-07-22 SGOL/SIVR price data, and that the shared lock is now
+actually used. Full suite: 961 passed / 46 skipped, 0 failed.
 
 
 ### ENG-69 -- NASDAQ_30D_RETURN data reading cross-contaminated with SIVR's series
 <!-- ITEM
-Status:    OPEN
+Status:    CLOSED
 Severity:  HIGH
 Category:  data-integrity
 Opened:    2026-07-22
+Closed:    2026-07-22 (same-day coding session)
 Area:      python/advisor -- likely yfinance_fetcher.py / fetch_registry.py, NASDAQ_30D_RETURN FetchSpec
 Related:   ENG-68 (same failure signature, closed one day prior, for DBMF_3M_RETURN), ENG-27 (original yfinance concurrent-fetch cross-contamination root cause)
 -->
@@ -440,7 +477,40 @@ Related:   ENG-68 (same failure signature, closed one day prior, for DBMF_3M_RET
 
 **Suggested fix direction:** identify which FetchSpec produces NASDAQ_30D_RETURN and whether it shares a concurrent yf.download() batch with a SIVR-touching spec; apply the same fix pattern as ENG-68 (derive from an already-fetched, non-racing series, or isolate the fetch). Given ENG-27's root cause is shared yfinance global state under concurrent fetches, this can in principle contaminate any FetchSpec overlapping another in the same batch -- a systemic audit of all concurrent FetchSpecs may be warranted rather than patching one symbol at a time as each is caught live.
 
-Not fixed this session (advisory session, no code changes) -- flagged for the next coding session.
+**Resolution (2026-07-22, coding session):** Did the systemic audit
+rather than a point patch, per the suggested fix direction. Confirmed
+the exact mechanism by reading the installed yfinance 0.2.58 source
+directly (`multi.py`): the threaded `download()` path waits on
+`while len(shared._DFS) < len(tickers): sleep(...)` -- a COUNT check,
+not a KEY check -- even for a single-ticker request. A straggler worker
+thread left over from an earlier, unrelated `yf.download()` call (e.g.
+TREND_SIGNAL_HISTORY's 16-symbol batch, which includes SIVR) can satisfy
+that count with a DIFFERENT ticker's data after the next call resets
+`shared._DFS`. None of the single-ticker fetchers in yfinance_fetcher.py
+verified the ticker's *identity* in the response -- only that a "Close"
+column existed at all (the price-TYPE level, not the ticker level).
+
+Fix: added a shared `_extract_closes(df, symbol, context)` helper that
+verifies `symbol` is actually present among the ticker-level columns in
+the response before extracting data, raising loudly (citing ENG-69)
+instead of silently substituting the wrong ticker's numbers. Applied to
+all 5 single-ticker `yf.download()` call sites: `fetch_vix_history`,
+`fetch_broad_equity_trailing`, `fetch_nasdaq_trailing`,
+`fetch_weekly_trend`, `fetch_instrument_history`. `fetch_trend_signal_histories`
+(the 16-symbol batch) already did correct per-symbol presence checks and
+needed no change. Added 6 new regression tests in
+`test_stage1/test_yfinance_unit.py`, including a realistic
+`(Price, Ticker)` MultiIndex mock (`_mock_download_multi`) needed to
+exercise the identity check at all -- the existing single-level
+`_mock_download()` mock has no ticker information and can't represent
+this failure mode. Full suite: 961 passed / 46 skipped, 0 failed.
+
+Note: this fixes the *silent-corruption* symptom (fail loud instead of
+wrong) for all affected fetchers, not the underlying yfinance thread-
+safety issue itself (external, not fixable from this codebase -- same
+conclusion ENG-68's TRADEOFFS entry already reached). A straggler thread
+can still cause a fetch to *fail* under this fix; it can no longer cause
+one to silently return the wrong ticker's data.
 
 
 ### ENG-48 — advisor_write_back's 90s safety-timeout races its own actual completion time

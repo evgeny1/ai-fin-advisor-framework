@@ -372,3 +372,94 @@ class TestYfLockGuard:
             with _yf_lock_guard(timeout=1.0):
                 raise ValueError("simulated fetch failure inside the guard")
         assert not _YF_LOCK.locked()
+
+
+# ── ENG-69: ticker-identity verification (_extract_closes) ───────────────────
+# yfinance 0.2.58's threaded download() path waits on a COUNT of entries in
+# its shared results dict, not a KEY check (see yfinance/multi.py) -- a
+# straggler thread from an earlier, unrelated batch call can satisfy that
+# count with the WRONG ticker's data. Confirmed live 2026-07-22:
+# NASDAQ_30D_RETURN (^IXIC) returned SIVR's series this way. _mock_download()
+# above builds a single-level Close column with no ticker information at all
+# (real yf.download() always keeps a ticker level), so it can't exercise this
+# check -- these tests use a realistic MultiIndex mock instead.
+
+def _mock_download_multi(ticker_closes: dict) -> pd.DataFrame:
+    """Build a mock yf.download() return value with a REAL yfinance-shaped
+    (Price, Ticker) MultiIndex column structure -- matching what
+    yf.download(..., group_by='column') actually returns (the ticker level
+    is always present, even for a single requested ticker, since this
+    codebase never overrides multi_level_index=True). Needed to exercise
+    ENG-69's ticker-identity check, which the plain _mock_download() mock
+    structurally cannot represent (it has no ticker level at all)."""
+    n = len(next(iter(ticker_closes.values())))
+    index = pd.date_range("2026-01-01", periods=n, freq="B")
+    data = {("Close", ticker): closes for ticker, closes in ticker_closes.items()}
+    df = pd.DataFrame(data, index=index)
+    df.columns = pd.MultiIndex.from_tuples(df.columns, names=["Price", "Ticker"])
+    return df
+
+
+class TestExtractClosesTickerIdentity:
+    """Direct tests of the _extract_closes() helper itself."""
+
+    def test_correct_ticker_extracts_normally(self):
+        from advisor.data.fetchers.yfinance_fetcher import _extract_closes
+        df = _mock_download_multi({"^IXIC": [100.0, 101.0, 102.0]})
+        closes = _extract_closes(df, "^IXIC", "NASDAQ_30D_RETURN")
+        assert closes == [100.0, 101.0, 102.0]
+
+    def test_wrong_ticker_in_response_raises(self):
+        """The exact ENG-69 shape: requested ^IXIC, response only has SIVR."""
+        from advisor.data.fetchers.yfinance_fetcher import _extract_closes
+        df = _mock_download_multi({"SIVR": [55.8, 56.9, 57.1]})
+        with pytest.raises(RuntimeError, match="ENG-69"):
+            _extract_closes(df, "^IXIC", "NASDAQ_30D_RETURN")
+
+    def test_series_shape_without_ticker_level_falls_back_to_trusting_it(self):
+        """A bare-Series Close block (no ticker level) can't be checked --
+        fall back rather than fail on a shape our real call sites never
+        actually produce (see docstring on _extract_closes)."""
+        from advisor.data.fetchers.yfinance_fetcher import _extract_closes
+        closes = _mock_download(closes=[10.0, 11.0, 12.0])
+        result = _extract_closes(closes, "^VIX", "VIX_30D_AVG")
+        assert result == [10.0, 11.0, 12.0]
+
+
+class TestFetchNasdaqTrailingTickerIdentity:
+
+    def test_wrong_ticker_response_raises_not_silently_wrong(self):
+        """Regression test for the exact live incident: NASDAQ_30D_RETURN
+        must fail loudly, not compute a real-looking return from SIVR's
+        price series, when the yfinance response doesn't actually contain
+        ^IXIC."""
+        from advisor.data.fetchers.yfinance_fetcher import fetch_nasdaq_trailing
+        df = _mock_download_multi({"SIVR": [60.0] * 20 + [55.8] * 12})
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.download",
+                   return_value=df):
+            with pytest.raises(RuntimeError, match="ENG-69"):
+                fetch_nasdaq_trailing(_spec("NASDAQ_30D_RETURN"))
+
+    def test_correct_ticker_still_computes_normally_with_realistic_shape(self):
+        """Sanity check: the identity check must not break the happy path
+        once the mock actually models yfinance's real MultiIndex shape."""
+        from advisor.data.fetchers.yfinance_fetcher import fetch_nasdaq_trailing
+        closes = [100.0] * 29 + [89.0] * 21
+        df = _mock_download_multi({"^IXIC": closes})
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.download",
+                   return_value=df):
+            readings = fetch_nasdaq_trailing(_spec("NASDAQ_30D_RETURN"))
+        assert readings[0].value["return_30d_pct"] == pytest.approx(-11.0, abs=0.1)
+
+
+class TestFetchWeeklyTrendTickerIdentity:
+
+    def test_wrong_ticker_response_degrades_gracefully_not_silently(self):
+        from advisor.data.fetchers.yfinance_fetcher import fetch_weekly_trend
+        df = _mock_download_multi({"MAGS": [1.0, 2.0, 3.0, 4.0]})
+        with patch("advisor.data.fetchers.yfinance_fetcher.yf.download",
+                   return_value=df):
+            readings = fetch_weekly_trend(_spec("GOLD_TREND"), "GC=F", weeks=8)
+        assert readings[0].value is None
+        assert any("FETCH_FAILED" in f and "ENG-69" in f
+                  for f in readings[0].quality_flags)

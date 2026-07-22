@@ -82,6 +82,50 @@ def _yf_lock_guard(timeout: float = _YF_LOCK_TIMEOUT_SECONDS):
     finally:
         _YF_LOCK.release()
 
+
+# ENG-69 (2026-07-22): yfinance 0.2.58's threaded download() path waits on a
+# COUNT of entries in its shared results dict (see yfinance/multi.py:
+# `while len(shared._DFS) < len(tickers): sleep(...)`), not a KEY check --
+# even for a single requested ticker. A straggler worker thread left over
+# from an earlier, unrelated yf.download() call (e.g. TREND_SIGNAL_HISTORY's
+# 16-symbol batch) can satisfy that count with a DIFFERENT ticker's data
+# after THIS call's own shared._DFS reset. Confirmed live: NASDAQ_30D_RETURN
+# (^IXIC) returned SIVR's series this way -- the old "Close" in df.columns
+# check only verified the price-TYPE level was present, never that the
+# requested symbol specifically was among the ticker-level columns actually
+# returned. _yf_lock_guard() serializes this codebase's OWN call sites but
+# cannot stop a straggler thread from a PRIOR call outliving the lock hold
+# that spawned it -- this check is the backstop: fail loud instead of
+# silently computing a real-looking result from the wrong ticker.
+def _extract_closes(df: "pd.DataFrame", symbol: str, context: str) -> List[float]:
+    """Verify `symbol` is present in a yf.download() response and return its
+    dropna'd, flattened Close values. Raises RuntimeError on mismatch rather
+    than returning another ticker's data. `context` (usually spec.id) is
+    included in the error for log/flag readability.
+
+    Real yf.download() calls in this file always keep the ticker level in
+    df["Close"]'s columns (multi_level_index defaults True and is never
+    overridden here), so `close_block` is expected to be a DataFrame with
+    `.columns`. If it's a bare Series instead (only reachable via a test
+    mock that doesn't model the ticker level, or a future yfinance version
+    that behaves differently) there's no ticker information to check against
+    -- fall back to trusting it rather than failing on a shape our own real
+    call sites never actually produce.
+    """
+    close_block = df["Close"]
+    if not hasattr(close_block, "columns"):
+        return close_block.dropna().values.flatten().tolist()
+    cols = list(close_block.columns)
+    if symbol not in cols:
+        raise RuntimeError(
+            f"{context}: expected {symbol!r} in yfinance response, got "
+            f"{cols!r} instead -- likely cross-ticker contamination "
+            f"(ENG-69), not genuine data unavailability. Treating as a "
+            f"failed fetch rather than trusting the wrong ticker's numbers."
+        )
+    return close_block[symbol].dropna().values.flatten().tolist()
+
+
 # ── Symbol map: spec.id → yfinance ticker ─────────────────────────────────────
 _SYMBOL_MAP: Dict[str, str] = {
     # Energy
@@ -236,8 +280,7 @@ def fetch_vix_history(spec: FetchSpec) -> List[DataReading]:
         df = yf.download("^VIX", start=start.isoformat(), progress=False, auto_adjust=True)
     if df.empty or "Close" not in df.columns:
         raise RuntimeError("^VIX history returned empty")
-    closes_raw = df["Close"].dropna()
-    closes = closes_raw.values.flatten().tolist()   # flatten handles multi-index DataFrame columns
+    closes = _extract_closes(df, "^VIX", spec.id)
     if not closes:
         raise RuntimeError("^VIX history returned empty")
     n = 30 if spec.id == "VIX_30D_AVG" else 62
@@ -262,8 +305,7 @@ def fetch_broad_equity_trailing(spec: FetchSpec) -> List[DataReading]:
         df = yf.download("^GSPC", start=start.isoformat(), progress=False, auto_adjust=True)
     if df.empty or "Close" not in df.columns:
         raise RuntimeError("^GSPC history returned empty")
-    raw = df["Close"].dropna()
-    closes = raw.values.flatten().tolist()
+    closes = _extract_closes(df, "^GSPC", spec.id)
     if not closes:
         raise RuntimeError("^GSPC history returned empty")
     current = closes[-1]
@@ -294,8 +336,7 @@ def fetch_nasdaq_trailing(spec: FetchSpec) -> List[DataReading]:
         df = yf.download("^IXIC", start=start.isoformat(), progress=False, auto_adjust=True)
     if df.empty or "Close" not in df.columns:
         raise RuntimeError("^IXIC history returned empty")
-    raw = df["Close"].dropna()
-    closes = raw.values.flatten().tolist()
+    closes = _extract_closes(df, "^IXIC", spec.id)
     if not closes:
         raise RuntimeError("^IXIC history returned empty")
     n = min(22, len(closes))
@@ -331,8 +372,12 @@ def fetch_weekly_trend(spec: FetchSpec, symbol: str, weeks: int) -> List[DataRea
                             fetched_at=datetime.datetime.utcnow(),
                             quality_flags=[f"UNAVAILABLE: {symbol} weekly history empty "
                                           "(illiquid contract or delisted)"])]
-    closes_raw = df["Close"].dropna()
-    closes = [round(float(c), 4) for c in closes_raw.values.flatten().tolist()]
+    try:
+        closes = [round(float(c), 4) for c in _extract_closes(df, symbol, spec.id)]
+    except RuntimeError as e:
+        return [DataReading(spec_id=spec.id, value=None, source=DataSource.YFINANCE,
+                            fetched_at=datetime.datetime.utcnow(),
+                            quality_flags=[f"FETCH_FAILED: {e}"])]
     if not closes:
         return [DataReading(spec_id=spec.id, value=None, source=DataSource.YFINANCE,
                             fetched_at=datetime.datetime.utcnow(),
@@ -480,12 +525,23 @@ def fetch_instrument_history(spec: FetchSpec, symbol: str,
     end = end or datetime.date.today().isoformat()
     with _yf_lock_guard():
         df = yf.download(symbol, start=start, end=end, progress=False, auto_adjust=True)
-    if df.empty:
+    if df.empty or "Close" not in df.columns:
         return [DataReading(spec_id=f"{spec.id}:{symbol}", value=None,
                             source=DataSource.YFINANCE,
                             fetched_at=datetime.datetime.utcnow(),
                             quality_flags=["FETCH_FAILED: empty history"])]
-    closes = df["Close"].dropna().values.flatten().tolist()
+    try:
+        closes = _extract_closes(df, symbol, spec.id)
+    except RuntimeError as e:
+        return [DataReading(spec_id=f"{spec.id}:{symbol}", value=None,
+                            source=DataSource.YFINANCE,
+                            fetched_at=datetime.datetime.utcnow(),
+                            quality_flags=[f"FETCH_FAILED: {e}"])]
+    if not closes:
+        return [DataReading(spec_id=f"{spec.id}:{symbol}", value=None,
+                            source=DataSource.YFINANCE,
+                            fetched_at=datetime.datetime.utcnow(),
+                            quality_flags=["FETCH_FAILED: empty history"])]
     base, last = closes[0], closes[-1]
     return [DataReading(
         spec_id=f"{spec.id}:{symbol}",

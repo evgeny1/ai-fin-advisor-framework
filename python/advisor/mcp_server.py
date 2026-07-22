@@ -238,28 +238,63 @@ logger = logging.getLogger(__name__)
 def _fetch_holdings_30d_raw(alloc_tickers: List[str]) -> Dict[str, Optional[float]]:
     """
     Direct yfinance batch download for RoleRepricingDivergence's 30d
-    returns. This bypasses FetchRegistry/yfinance_fetcher.py's
-    _yf_lock_guard on purpose -- it runs once, synchronously, after
-    fetch_all() has already finished, so there's no concurrent lock
-    contention here to guard against. The risk is the same underlying one
-    ENG-40 fixed elsewhere though: yfinance/Yahoo Finance can retry without
-    an overall bound. Found 2026-06-24: this call site was the second,
-    separate place that bug lived -- fetch_registry.py and
+    returns. Runs once, synchronously, after fetch_all() has already
+    finished and its own ThreadPoolExecutor has shut down. The risk is the
+    same underlying one ENG-40 fixed elsewhere: yfinance/Yahoo Finance can
+    retry without an overall bound. Found 2026-06-24: this call site was
+    the second, separate place that bug lived -- fetch_registry.py and
     yfinance_fetcher.py's per-fetch timeouts don't cover it because it
     never goes through either of them. Caller wraps this in a hard
     wall-clock bound (see Step 4b below); this function itself stays
     unbounded so the bound lives in one place (_TOOL_EXECUTOR), not two.
+
+    ENG-70 (2026-07-22) fixed two separate bugs found live in the same
+    session:
+
+    1. This used to skip _yf_lock_guard() entirely on the theory that
+       fetch_all() finishing means yfinance is fully quiet by the time
+       Step 4b runs. That's true for THIS codebase's own call sites, but
+       not necessarily for yfinance's OWN internal worker threads --
+       ENG-27/68/69 all confirmed a straggler thread from an earlier
+       yf.download() batch (e.g. TREND_SIGNAL_HISTORY, which fetches
+       these SAME tickers) can outlive the call that spawned it and write
+       into a LATER call's freshly-reset shared._DFS. Skipping the lock
+       gave this function no protection at all against that -- it now
+       uses the same guard every other yfinance call site in this
+       codebase does. This doesn't eliminate the risk (a straggler can
+       still outlive the lock holder, per ENG-69's mechanism) but removes
+       the one clearly-avoidable extra exposure this function carried by
+       opting out.
+
+    2. Independently, the return was computed as
+       `series.iloc[-1] / series.iloc[0] - 1` -- the FIRST day of the
+       entire ~35-trading-day fetch window, not ~22 trading days back.
+       Every other "30d return" fetcher in yfinance_fetcher.py
+       (fetch_nasdaq_trailing, fetch_broad_equity_trailing) uses
+       n = min(22, len(closes)) and indexes closes[-n]; this one didn't,
+       silently computing something closer to a 35-trading-day return.
+       Confirmed live: SGOL's reported -8.92% was an exact match for its
+       full 2026-06-02→07-21 window return via market_data_mcp; the real
+       ~30-calendar-day figure (2026-06-22→07-21) is -2.46%. Same pattern
+       confirmed for SIVR (-21.89% reported vs. -9.9% actual). This bug
+       is independent of #1 -- it would overstate the same way even with
+       perfectly clean, uncontaminated data.
     """
     import datetime as _dt
     import yfinance as _yf_local
+    from .data.fetchers.yfinance_fetcher import _yf_lock_guard
 
     holdings_30d: Dict[str, Optional[float]] = {}
     end_dt   = _dt.date.today()
-    start_dt = end_dt - _dt.timedelta(days=50)  # 50 cal days ≈ 35 trading days
-    hist = _yf_local.download(
-        alloc_tickers, start=start_dt.isoformat(),
-        end=end_dt.isoformat(), progress=False, auto_adjust=True,
-    )
+    start_dt = end_dt - _dt.timedelta(days=50)  # 50 cal days ≈ 35 trading days --
+                                                 # generous margin for holidays/
+                                                 # weekends around the ~22-trading-
+                                                 # day window actually used below
+    with _yf_lock_guard():
+        hist = _yf_local.download(
+            alloc_tickers, start=start_dt.isoformat(),
+            end=end_dt.isoformat(), progress=False, auto_adjust=True,
+        )
     if not hist.empty:
         closes = hist["Close"] if "Close" in hist.columns else hist
         for ticker in alloc_tickers:
@@ -269,8 +304,12 @@ def _fetch_holdings_30d_raw(alloc_tickers: List[str]) -> Dict[str, Optional[floa
             if col is not None:
                 series = col.dropna()
                 if len(series) >= 2:
+                    n = min(22, len(series))  # ~30 calendar days ≈ 22 trading
+                                               # days -- same convention as
+                                               # fetch_nasdaq_trailing /
+                                               # fetch_broad_equity_trailing
                     holdings_30d[ticker] = float(
-                        series.iloc[-1] / series.iloc[0] - 1
+                        series.iloc[-1] / series.iloc[-n] - 1
                     )
     return holdings_30d
 
