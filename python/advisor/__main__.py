@@ -131,6 +131,10 @@ def _build_registry():
     # here handles the FRED_SPREADSHEET_TAB source specs not covered by yfinance.
     registry.register_fetcher(DataSource.FRED_SPREADSHEET_TAB, fred.fetch_yield_curve_fred)
 
+    # ── FINRA margin statistics (ENG-54): direct finra.org xlsx fetch ─────────
+    from .data.fetchers import finra_fetcher
+    registry.register_fetcher(DataSource.FINRA_WEB, finra_fetcher.fetch_margin_debt)
+
     # ── FMP: registered for future use when plan tier is upgraded ─────────────
     # Currently no active FetchSpecs use FMP sources (all moved to yfinance after
     # shadow session June 10 confirmed 403 with standalone key). These become
@@ -442,8 +446,13 @@ def cmd_evaluate_trend_signal() -> None:
     # that came back flagged the first time.
     registry = _build_registry()
     readings = []
+    # FINRA_MARGIN_DEBT added to this loop by ENG-54: the derived
+    # margin_debt_fragility_flag needs the reading on the CLI fallback path
+    # too, so the shadow trial's log carries the flag regardless of which
+    # entry point ran (same parity rationale as the five trend series).
     for spec_id in ("DXY_TREND", "BRENT_TREND", "GOLD_TREND",
-                    "SP500_TREND", "REAL_YIELD_10Y_TREND"):
+                    "SP500_TREND", "REAL_YIELD_10Y_TREND",
+                    "FINRA_MARGIN_DEBT"):
         first = registry.fetch_one(spec_id)
         if first and any(r.quality_flags for r in first):
             retry = registry.fetch_one(spec_id)

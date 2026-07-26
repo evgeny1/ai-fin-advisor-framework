@@ -398,7 +398,15 @@ def _parse_cascade(text: str) -> CascadeBlock:
 
     # §12.3 — private credit / margin chain (Mode | Parameter | Threshold | ...)
     rows123 = {r[1]: r[2] for r in _table_rows(s123) if len(r) >= 3}
-    margin_pct  = _s(r"(\d+(?:\.\d+)?)\s*%", rows123.get("margin_MoM_decline", "5%"), 5.0)
+    # Sign convention (ENG-54 fix, 2026-07-26): §12.3 writes the FIRES
+    # threshold as a decline ("≥ −5% MoM") but this regex captures only the
+    # magnitude, so the parsed value must be NEGATED here — cascade.py's
+    # `margin_mom_pct <= c.margin_mom_decline_pct` comparison and the
+    # test fixture (CascadeBlock(margin_mom_decline_pct=-5.0)) both assume
+    # the stored threshold is negative. Before this fix the parser stored
+    # +5.0, which would have fired CHAIN_3 on virtually every month —
+    # dormant only because FINRA_MARGIN_DEBT had no live fetcher until now.
+    margin_pct  = -abs(_s(r"(\d+(?:\.\d+)?)\s*%", rows123.get("margin_MoM_decline", "5%"), 5.0))
     gate_count  = int(_s(r"(\d+)\+", rows123.get("gate_count_alert", "3+"), 3.0))
 
     # §12.4 — manufacturing / corporate stress chain

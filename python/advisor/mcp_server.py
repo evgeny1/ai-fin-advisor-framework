@@ -603,6 +603,13 @@ def _tool_run_computation(floor_account_weights_json: Optional[Any] = None) -> s
     except Exception as e:
         result["flags"].append(f"⚠ FRED fetcher unavailable: {e}")
 
+    try:
+        from .data.fetchers import finra_fetcher
+        registry.register_fetcher(DataSource.FINRA_WEB,
+                                   finra_fetcher.fetch_margin_debt)
+    except Exception as e:
+        result["flags"].append(f"⚠ FINRA fetcher unavailable: {e}")
+
     readings = registry.fetch_all()
     _cache["readings"] = readings
     readings_by_id = {r.spec_id: r for r in readings}
@@ -1489,9 +1496,27 @@ def _tool_evaluate_trend_signal(
             dominant_directives[ticker] = None
             result["flags"].append(f"⚠ {ticker}: dominantDirective failed — {e}")
 
-    # ── Margin debt (ENG-54 not yet wired — explicit null, not silently absent) ─
-    margin_debt_flag = None
-    margin_debt_note = "ENG-54 not yet wired — margin_debt_fragility_flag unavailable this session"
+    # ── Margin debt fragility flag (ENG-54) ───────────────────────────────
+    # Derived from the FINRA_MARGIN_DEBT reading fetched by
+    # advisor_run_computation (live path: session cache; CLI fallback path:
+    # the readings the CLI reconstructed and passed in — parity by
+    # construction, both go through readings_list). Reuses only §12.3's
+    # already-calibrated CHAIN_3 conditions — see
+    # trend_signal.derive_margin_fragility_flag for the value semantics.
+    from .analysis.trend_signal import derive_margin_fragility_flag
+
+    margin_reading = next(
+        (r for r in readings_list if getattr(r, "spec_id", None) == "FINRA_MARGIN_DEBT"),
+        None,
+    )
+    margin_value = (
+        margin_reading.value
+        if margin_reading is not None and margin_reading.is_valid
+        else None
+    )
+    margin_debt_flag, margin_debt_note = derive_margin_fragility_flag(
+        margin_value, cal.cascade.margin_mom_decline_pct,
+    )
 
     signals = evaluate_all_trend_signals(
         held_tickers=held_tickers,

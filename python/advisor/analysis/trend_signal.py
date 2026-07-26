@@ -371,6 +371,68 @@ def _mlpx_hy_oas_confirms(hy_oas_readings: List[Tuple[str, Optional[int]]]) -> T
     return (now_bps < prior_bps), flags
 
 
+# ── ENG-54: margin-debt fragility flag ──────────────────────────────────────
+
+def derive_margin_fragility_flag(
+    margin_value: "Optional[Dict]",
+    margin_mom_decline_pct: float,
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Derive the trend layer's margin_debt_fragility_flag from the
+    FINRA_MARGIN_DEBT reading value (data/fetchers/finra_fetcher.py).
+
+    Deliberately reuses ONLY the two conditions Calibration_State.md §12.3
+    already calibrates for CHAIN_3 — no new thresholds are invented here
+    (a YoY-growth-based fragility read would need its own M16-style
+    calibration decision first; see FRAMEWORK_BACKLOG.md ENG-54):
+
+      UNWIND_ONSET  — MoM change <= margin_mom_decline_pct (§12.3 FIRES
+                      threshold, stored NEGATIVE, e.g. -5.0): the violent
+                      deleveraging the fragility overlay exists to warn
+                      about is actively underway.
+      RECORD_WATCH  — margin debt at all-time nominal record (§12.3 WATCH
+                      condition): rally is maximally leverage-funded;
+                      STRENGTHENING momentum reads carry unwind fragility.
+      NORMAL        — neither calibrated condition met.
+      None          — reading unavailable this session (flag cannot be
+                      derived; note says why). Same explicit-null posture
+                      the field has had since its ENG-50 schema stub.
+
+    UNWIND_ONSET takes precedence over RECORD_WATCH (in practice mutually
+    exclusive — a >=5% MoM decline from a record means the record was last
+    month, not this one — but the precedence is defined, not assumed).
+
+    Shadow-mode discipline: this flag is LOGGED alongside the rs_signal
+    (TrendSignalStore.json) and surfaced informationally — it does not
+    modify rs_signal, feeds nothing into M03, and whether it ever formally
+    discounts a STRENGTHENING read is an ENG-50 trial-checkpoint decision,
+    same as trend-vs-EV conflict authority.
+    """
+    if not margin_value or not isinstance(margin_value, dict):
+        return None, (
+            "FINRA_MARGIN_DEBT unavailable this session — "
+            "margin_debt_fragility_flag cannot be derived"
+        )
+
+    mom_pct = margin_value.get("mom_pct")
+    at_record = margin_value.get("at_nominal_record")
+    latest_month = margin_value.get("latest_month", "?")
+
+    if mom_pct is not None and mom_pct <= margin_mom_decline_pct:
+        return "UNWIND_ONSET", (
+            f"margin debt MoM {mom_pct:+.1f}% <= {margin_mom_decline_pct:.1f}% "
+            f"(§12.3 CHAIN_3 FIRES threshold) as of {latest_month} — "
+            f"leveraged unwind underway"
+        )
+    if at_record is True:
+        return "RECORD_WATCH", (
+            f"margin debt at all-time nominal record as of {latest_month} "
+            f"(§12.3 CHAIN_3 WATCH condition) — rally leverage-funded; "
+            f"STRENGTHENING reads carry elevated unwind fragility"
+        )
+    return "NORMAL", None
+
+
 # ── Main entry point ────────────────────────────────────────────────────────
 
 def evaluate_all_trend_signals(

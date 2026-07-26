@@ -401,3 +401,28 @@ class TestParseCalibrationState:
 
     def test_cascade_wired(self):
         assert self.state.cascade.bankruptcy_watch_quarterly == 220
+
+
+# ── ENG-54: §12.3 margin threshold sign convention ───────────────────────────
+
+class TestCascadeMarginSignConvention:
+    """ENG-54 (2026-07-26): the §12.3 FIRES threshold is written as a
+    decline ("≥ −5% MoM") but the magnitude-only regex parsed it to +5.0,
+    while cascade.py's `margin_mom_pct <= threshold` comparison and the
+    test conftest's hand-built CascadeBlock both assume it is stored
+    NEGATIVE — with +5.0, CHAIN_3 would have fired on virtually every
+    month. Dormant only because FINRA_MARGIN_DEBT had no live Pattern B
+    fetcher until ENG-54; this is the parser-level regression lock the
+    original suite lacked (fixture bypassed the parser entirely)."""
+
+    def test_margin_mom_decline_parses_negative(self):
+        from advisor.config.calibration import parse_calibration_state
+
+        cal = parse_calibration_state(FIXTURE)
+        assert cal.cascade.margin_mom_decline_pct == -5.0
+
+    def test_gate_count_alert_unaffected(self):
+        from advisor.config.calibration import parse_calibration_state
+
+        cal = parse_calibration_state(FIXTURE)
+        assert cal.cascade.gate_count_alert == 3

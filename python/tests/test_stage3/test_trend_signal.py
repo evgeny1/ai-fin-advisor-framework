@@ -495,3 +495,64 @@ class TestEvaluateAllTrendSignals:
         # gets require_no_reversal.
         assert signals[0].own_short_dir == "up"
         assert signals[0].own_medium_dir == "up"
+
+
+# ── ENG-54: margin-debt fragility flag derivation ────────────────────────────
+
+class TestDeriveMarginFragilityFlag:
+    """ENG-54 (2026-07-26): derive_margin_fragility_flag() reuses ONLY the
+    two Calibration_State.md §12.3 conditions CHAIN_3 already calibrates
+    (FIRES threshold stored NEGATIVE per the ENG-54 parser sign fix; WATCH
+    on all-time nominal record) — no new thresholds. Shadow-mode: the flag
+    is logged alongside rs_signal, never modifies it, never feeds M03."""
+
+    THRESHOLD = -5.0  # §12.3 FIRES threshold, negative-stored convention
+
+    def test_unavailable_reading_derives_none_with_note(self):
+        from advisor.analysis.trend_signal import derive_margin_fragility_flag
+
+        flag, note = derive_margin_fragility_flag(None, self.THRESHOLD)
+        assert flag is None
+        assert note is not None and "unavailable" in note
+
+    def test_unwind_onset_on_mom_at_or_below_threshold(self):
+        from advisor.analysis.trend_signal import derive_margin_fragility_flag
+
+        flag, note = derive_margin_fragility_flag(
+            {"mom_pct": -6.2, "at_nominal_record": False, "latest_month": "2026-06"},
+            self.THRESHOLD,
+        )
+        assert flag == "UNWIND_ONSET"
+        assert "FIRES" in note
+
+    def test_record_watch_when_at_record_and_mom_benign(self):
+        from advisor.analysis.trend_signal import derive_margin_fragility_flag
+
+        # The live 2026-06 shape: record high, MoM +6.11%
+        flag, note = derive_margin_fragility_flag(
+            {"mom_pct": 6.11, "at_nominal_record": True, "latest_month": "2026-06"},
+            self.THRESHOLD,
+        )
+        assert flag == "RECORD_WATCH"
+        assert "record" in note
+
+    def test_normal_when_neither_condition_met(self):
+        from advisor.analysis.trend_signal import derive_margin_fragility_flag
+
+        flag, note = derive_margin_fragility_flag(
+            {"mom_pct": 2.1, "at_nominal_record": False, "latest_month": "2026-06"},
+            self.THRESHOLD,
+        )
+        assert flag == "NORMAL"
+        assert note is None
+
+    def test_unwind_takes_precedence_over_record(self):
+        from advisor.analysis.trend_signal import derive_margin_fragility_flag
+
+        # Constructed both-true case (mutually exclusive in real data —
+        # precedence is defined, not assumed)
+        flag, _ = derive_margin_fragility_flag(
+            {"mom_pct": -7.0, "at_nominal_record": True, "latest_month": "2026-06"},
+            self.THRESHOLD,
+        )
+        assert flag == "UNWIND_ONSET"

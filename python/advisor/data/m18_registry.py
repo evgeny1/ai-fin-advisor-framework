@@ -314,13 +314,21 @@ _ALL_SPECS: list[FetchSpec] = [
 
     FetchSpec(
         id="FINRA_MARGIN_DEBT",
-        source=DataSource.ALLOCATION_SPREADSHEET_FINRA,
-        description="FINRA monthly margin debit balances. Current: $1.304T Apr 2026 "
-                    "(all-time nominal record). CHAIN_3_WATCH=TRUE.",
+        source=DataSource.FINRA_WEB,
+        description="FINRA monthly margin debit balances (Rule 4521(d)), fetched from "
+                    "finra.org's margin-statistics.xlsx (full history Jan 1997+, so the "
+                    "all-time-record check is computed, not hardcoded). ENG-54 (2026-07-26): "
+                    "repointed from the manual ALLOCATION_SPREADSHEET_FINRA tab, which had "
+                    "no Pattern B fetcher — CHAIN_3 was unscoreable live until this. "
+                    "Publication: third week of the month following the reference month, "
+                    "hence acceptable_lag_days=55 (reference month-end is routinely ~50 "
+                    "days old just before a release).",
         update_frequency=UpdateFrequency.MONTHLY,
-        acceptable_lag_days=30,
-        consumer=["M17"],
-        calibration_use="CHAIN_3 §12.3: WATCH on record; FIRES on -5% MoM or gate_count>=3",
+        acceptable_lag_days=55,
+        consumer=["M17", "ENG-50"],
+        calibration_use="CHAIN_3 §12.3: WATCH on record; FIRES on -5% MoM or gate_count>=3. "
+                        "Also derives the ENG-50 trend layer's margin_debt_fragility_flag "
+                        "(same two §12.3 conditions, no new thresholds).",
     ),
 
     FetchSpec(

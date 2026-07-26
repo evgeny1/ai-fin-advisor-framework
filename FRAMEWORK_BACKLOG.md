@@ -33,6 +33,28 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
+**Last updated:** 2026-07-26, coding session part 2 (ENG-54 CLOSED — direct
+finra.org margin-statistics.xlsx fetcher built (new DataSource.FINRA_WEB,
+finra_fetcher.py), registered in Pattern B + Pattern A + the ENG-33 CLI
+fallback. FINRA_MARGIN_DEBT is now fetchable live for the first time: M17
+CHAIN_3 becomes scoreable (it had silently reported "cannot be scored" every
+session — its ALLOCATION_SPREADSHEET_FINRA source never had a Pattern B
+fetcher), and the ENG-50 trend layer's margin_debt_fragility_flag now
+derives (RECORD_WATCH / UNWIND_ONSET / NORMAL, reusing ONLY §12.3's
+already-calibrated CHAIN_3 conditions — no new thresholds). En route, found
+and fixed a latent ENG-1-class sign bug: calibration.py parsed the §12.3
+FIRES threshold to +5.0 while cascade.py and the test fixture both assume
+−5.0 — CHAIN_3 would have fired on virtually every month once the data went
+live. Live-verified end-to-end on real data (Jun-2026: $1.502T, all-time
+record, MoM +6.11%, YoY +49.02% → flag RECORD_WATCH). acceptable_lag_days
+30→55 (FINRA publishes 3rd week of the following month). 20 tests added;
+full suite 996 passed / 46 skipped / 0 failed. M18.md → v1.5. Three
+calibration observations logged for client review in the resolution
+(implementation-vs-§12.3-text leniency; stale Notes figures; candidate YoY
+fragility threshold). ⚠ Claude Desktop restart required before the next
+advisory session to load the new fetcher. See Part 1 for the full
+resolution. Earlier same session: ENG-49 CLOSED, commit 558f915.)
+Prior:
 **Last updated:** 2026-07-26, coding session (ENG-49 CLOSED — the per-step
 write-back progress instrumentation the item was opened for is now built:
 `.write_back_progress.json` (local-only, gitignored) records every step
@@ -362,7 +384,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ENG-51 | CLOSED | MEDIUM | architecture | V4: split instrument classification (§11) out of Calibration_State.md into its own persistence entity |
 | ENG-52 | CLOSED | MEDIUM | hygiene | V4: structured parseable entry format (front-matter block) for Session_Log.md, Calibration_State.md, FRAMEWORK_BACKLOG.md |
 | ENG-53 | CLOSED | MEDIUM | architecture | V4: calendar-age archival mechanism for Session_Log.md (and candidate extension to other growing files) |
-| ENG-54 | OPEN | MEDIUM | infrastructure | V4: FINRA margin debt series has no M18 DATA_REGISTRY_ENTRY or fetch path |
+| ENG-54 | CLOSED 2026-07-26 | MEDIUM | infrastructure | V4: FINRA margin debt — direct finra.org xlsx fetcher (FINRA_WEB) built, CHAIN_3 scoreable live for the first time, trend layer's margin_debt_fragility_flag now derives (RECORD_WATCH/UNWIND_ONSET/NORMAL from §12.3's already-calibrated conditions only); latent §12.3 threshold sign bug (+5.0 parsed vs −5.0 assumed) found and fixed en route |
 | ENG-55 | CLOSED | HIGH | functional-gap | V4: relative-strength formula + peer-basket definition for trend layer — needs its own dedicated session, real judgment calls involved |
 | ENG-56 | OPEN | LOW | hygiene | Retrofit ENG-52 front-matter onto pre-v1.46 §3 entries (inconsistent legacy title-line conventions) |
 | ENG-57 | CLOSED | HIGH | functional-gap | V4: persistence + MCP wiring for the ENG-55 trend/rotation signal — new 6th MCP tool, TrendSignalStore.json, batched daily-history fetch |
@@ -768,12 +790,13 @@ strict to ever fire usefully, once more live trial data accumulates.
 
 ### ENG-54 — V4: FINRA margin debt series has no M18 DATA_REGISTRY_ENTRY
 <!-- ITEM
-Status:    OPEN
+Status:    CLOSED
 Severity:  MEDIUM
 Category:  infrastructure
 Opened:    2026-07-06
-Area:      M18_MarketDataFetch.md (new DATA_REGISTRY_ENTRY); new fetcher module
-Related:   ENG-50 (consumer of this data)
+Closed:    2026-07-26
+Area:      python/advisor/data/fetchers/finra_fetcher.py (new); m18_registry.py; config/calibration.py; analysis/trend_signal.py; mcp_server.py; __main__.py; M18_MarketDataFetch.md
+Related:   ENG-50 (consumer of this data — margin_debt_fragility_flag now live)
 -->
 
 **Description:** Client wants margin-debt trend as a fragility discount
@@ -788,6 +811,115 @@ the timing job stays with the price/relative-strength side of ENG-50.
 ENG-50's overall shape is settled; identify the specific FINRA published
 series/URL and confirm it's fetchable via the existing web_fetch/
 web_search tools or needs a dedicated scraper.
+
+**Resolution (2026-07-26, coding session):** Built, live-verified against
+real FINRA data, and wired into both consumers. Investigation first
+surfaced that the gap was larger than this item's title: an M18
+`FINRA_MARGIN_DEBT` FetchSpec and a fully-calibrated M17 CHAIN_3 consumer
+(cascade.py) already existed, but the spec's source
+(`ALLOCATION_SPREADSHEET_FINRA`, a manually-maintained spreadsheet tab)
+had NO Pattern B fetcher — so CHAIN_3 had been reporting "cannot be
+scored" in every live session, not just the trend flag being null.
+
+*Source (characterized + probed live):* FINRA's official Rule 4521(d)
+margin statistics — finra.org publishes an HTML table (trailing ~13
+months) plus a full-history Excel download,
+`https://www.finra.org/sites/default/files/2021-03/margin-statistics.xlsx`
+(one sheet, header + one row per month newest-first, Jan 1997 → present;
+"Debit Balances in Customers' Securities Margin Accounts" in $M). FINRA
+states explicitly that no API or data feeds exist — the xlsx IS the
+sanctioned machine path. Live probe from this machine: HTTP 200, no auth,
+20KB; Jun-2026 = $1,502,072M (all-time nominal record, MoM +6.11%,
+YoY +49.02%), exactly matching the HTML table. Publication is the third
+week of the month following the reference month, so the spec's old
+`acceptable_lag_days=30` was structurally too tight (reference month-end
+is routinely ~50 days old just before a release) — now 55.
+
+*New fetcher* (`data/fetchers/finra_fetcher.py`,
+`DataSource.FINRA_WEB`): fetches the xlsx (UA header, 30s timeout),
+locates header row and debit column BY NAME (a renamed/absent column is a
+loud ValueError, never a silent wrong-column read — same
+degrade-never-lie posture as ENG-69's ticker-identity check), and derives
+the full metric set from history: `current`, `mom_pct`,
+`at_nominal_record` (the exact CHAIN_3 key contract, verified against
+cascade.py's own lookups — the record check is now COMPUTED over the full
+history, not a hardcoded description string), plus audit context
+(latest_month, yoy_pct, record_value/month, 13-month history_tail).
+`gate_count_90d` is deliberately absent — that is qualitative
+private-credit redemption-gate data from a different source, never
+derivable from FINRA statistics. Failures degrade to a FETCH_FAILED
+invalid reading (pre-ENG-54 behavior); successful readings keep
+quality_flags empty (the CLI retry loop keys off flags). Registered in
+Pattern B (mcp_server Step 2), Pattern A (`_build_registry`), and the
+ENG-33 CLI fallback's fetch loop (`cmd_evaluate_trend_signal`) — MCP/CLI
+parity by construction, both paths flow through `readings_list`.
+
+*LATENT SIGN BUG found and fixed while activating this path (ENG-1-class
+silent parser failure):* `calibration.py` parsed §12.3's
+"margin_MoM_decline ≥ −5% MoM" FIRES threshold with a magnitude-only
+regex → stored **+5.0**, while cascade.py's
+`margin_mom_pct <= c.margin_mom_decline_pct` comparison and the stage-3
+test conftest's hand-built `CascadeBlock(margin_mom_decline_pct=-5.0)`
+both assume the threshold is stored **negative**. With +5.0, CHAIN_3
+would have FIRED on virtually every month — proven live against the
+parsed real Calibration_State.md (+3.0 MoM ≤ +5.0 → fires). Dormant only
+because the reading was never valid in Pattern B; the existing tests
+passed because the fixture bypassed the parser entirely. Fixed:
+`margin_pct = -abs(parsed)` with a full sign-convention comment;
+parser-level regression tests added (the assertion the original suite
+never had), plus the two CHAIN_3 direction cases it never covered
+(+6.1% MoM at record → NO fire but WATCH armed; −5.0 exactly → fires,
+<= boundary).
+
+*Trend-layer flag* (`analysis/trend_signal.py:
+derive_margin_fragility_flag`): deliberately reuses ONLY the two
+conditions §12.3 already calibrates — NO new thresholds invented.
+`UNWIND_ONSET` (MoM ≤ FIRES threshold) takes precedence over
+`RECORD_WATCH` (at all-time nominal record, the WATCH condition), else
+`NORMAL`; unavailable reading → `None` + explanatory note (the field's
+explicit-null posture since its ENG-50 schema stub). Shadow-mode
+discipline preserved: the flag is logged alongside rs_signal in
+TrendSignalStore.json and surfaced informationally — it does not modify
+rs_signal, feeds nothing into M03, and whether it ever formally discounts
+a STRENGTHENING read is an ENG-50 trial-checkpoint decision. Live
+derivation on real data: RECORD_WATCH (correct — Jun-2026 is the record).
+
+*Tests:* 20 added across 4 files (new
+`test_stage1/test_finra_fetcher.py` — 11: parse metrics, record
+true/false, negative MoM, YoY 13-month gate, preamble-resilient header
+detection, missing-column loud failure, chronological ordering, HTTP
+degrade, CHAIN_3 contract keys + clean flags, spec repoint;
+`test_stage2/test_calibration_parser.py` — 2 sign-convention locks;
+`test_stage3/test_cascade.py` — 2 direction locks;
+`test_stage3/test_trend_signal.py` — 5 flag-derivation cases incl.
+precedence). Full suite: 996 passed / 46 skipped / 0 failed.
+
+*Also:* M18_MarketDataFetch.md v1.5 — FINRA_WEB source documented,
+ALLOCATION_SPREADSHEET_FINRA marked RETIRED AS A SOURCE, the "FINRA
+Statistics" spreadsheet tab block marked LEGACY (no data path reads it;
+retire at next spreadsheet cleanup — its post-split location was never
+verified anyway, per ENG-62's open note). Claude Desktop restart required
+before the next advisory session so the MCP server picks up the new
+fetcher.
+
+**Three observations logged for the client (NOT changed unilaterally —
+methodology/calibration decisions):**
+1. cascade.py fires CHAIN_3 on any ≤ −5% MoM, without §12.3's own "after
+   record high" qualifier — the implementation is slightly more lenient
+   than the calibration text. Decide whether to add the record-history
+   gate (the fetcher already supplies the data to do it) or amend §12.3's
+   wording to match the implementation.
+2. §12.3's Notes column ("current +6.8% MoM") is stale — Jun-2026 actual
+   is +6.11% MoM, and the record value in the old M18 description
+   ($1.304T Apr) was two months behind. Both static-figure homes are now
+   superseded by the computed feed; a Notes cleanup at the next audit
+   would prevent future confusion.
+3. Candidate future calibration: a YoY-growth-based fragility condition.
+   Jun-2026 YoY is +49.0% — the same excess-leverage signature that
+   marked the 2000/2007/2021 cycle tops (sustained margin-YoY minus
+   SPX-YoY above ~+20pp). Adding it would be a NEW threshold and needs
+   the M16 process + explicit sign-off; the flag deliberately does not
+   use it today.
 
 ### ENG-55 — V4: relative-strength formula + peer-basket definition (dedicated session)
 **CLOSED** 2026-07-07 (HIGH, functional-gap). Full description and resolution: see `FRAMEWORK_BACKLOG_ARCHIVE.md`.

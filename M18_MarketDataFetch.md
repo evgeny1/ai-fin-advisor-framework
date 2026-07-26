@@ -1,9 +1,9 @@
 # M18 — Market Data Fetch
-<!-- Version: 1.4 | Updated: see git log -->
+<!-- Version: 1.5 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M18_MarketDataFetch
-  Version:         1.4
+  Version:         1.5
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: new series added, source changed, or lag tolerance changed.
                     NEVER register DATA_REGISTRY_ENTRIES in any other module — add here only;
@@ -46,8 +46,19 @@ MODULE MarketDataFetch {
   //                                  GOOGLEFINANCE). T1 (live, ~20-min delay).
   //                                  Used as T1 crosscheck gate — see ALLOCATION_PRICE_CROSSCHECK.
   //
-  //   ALLOCATION_SPREADSHEET_FINRA — FINRA margin statistics tab in allocation sheet.
-  //                                  T1 (monthly update, sourced from FINRA.org).
+  //   ALLOCATION_SPREADSHEET_FINRA — RETIRED AS A SOURCE (ENG-54, 2026-07-26).
+  //                                  Was: FINRA margin statistics tab in allocation
+  //                                  sheet, manually maintained, no Pattern B fetcher
+  //                                  (CHAIN_3 unscoreable live). FINRA_MARGIN_DEBT now
+  //                                  uses FINRA_WEB (below).
+  //
+  //   FINRA_WEB                   — direct fetch of finra.org's official
+  //                                  margin-statistics.xlsx (Rule 4521(d) data, full
+  //                                  history Jan 1997+, published 3rd week of the
+  //                                  following month). T1 (primary source, FINRA
+  //                                  itself). FINRA states no API/data feeds exist —
+  //                                  the xlsx download IS the sanctioned path.
+  //                                  Fetcher: python/advisor/data/fetchers/finra_fetcher.py
   //
   //   YFINANCE_MCP                — market_data MCP server (yfinance). Four tools:
   //                                 market_get_quotes  — current price + day change
@@ -418,7 +429,13 @@ MODULE MarketDataFetch {
     TAB "FINRA Statistics" {
       confirmed:     true
       content:       "FINRA monthly margin debit balances (FINRA_MARGIN_DEBT)"
-      series_ids:    [FINRA_MARGIN_DEBT]
+      series_ids:    []
+      status:        "LEGACY — no longer consumed (ENG-54, 2026-07-26).
+                      FINRA_MARGIN_DEBT is now fetched via FINRA_WEB directly
+                      from finra.org's margin-statistics.xlsx. This tab (its
+                      post-2026-07-12-split location was never verified — see
+                      ENG-62's open note) can be retired at the next
+                      spreadsheet cleanup; no data path reads it."
     }
 
     TAB "Other Indexes" {

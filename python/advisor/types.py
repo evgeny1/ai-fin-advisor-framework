@@ -17,6 +17,7 @@ class DataSource(Enum):
     FRED_SPREADSHEET_TAB          = "FRED_SPREADSHEET_TAB"
     ALLOCATION_SPREADSHEET_FINRA  = "ALLOCATION_SPREADSHEET_FINRA"
     ALLOCATION_SPREADSHEET_OTHER  = "ALLOCATION_SPREADSHEET_OTHER"
+    FINRA_WEB                     = "FINRA_WEB"         # ENG-54: finra.org margin-statistics.xlsx direct fetch
     YFINANCE                      = "YFINANCE"          # Python direct — was YFINANCE_MCP
     FMP_CHART                     = "FMP_CHART"
     FMP_ECONOMICS_TREASURY_RATES  = "FMP_ECONOMICS_TREASURY_RATES"

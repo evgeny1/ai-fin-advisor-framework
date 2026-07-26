@@ -376,3 +376,29 @@ class TestAssessCascadeLevel:
         flags = sig.quality_flags
         # No duplicates
         assert len(flags) == len(set(flags))
+
+
+# ── ENG-54: CHAIN_3 sign-direction regression locks ──────────────────────────
+
+class TestChain3SignDirection:
+    """ENG-54 (2026-07-26): with a live FINRA_MARGIN_DEBT feed, the
+    comparison direction matters for the first time. These lock the cases
+    the original suite never covered: a MoM INCREASE (the normal
+    leverage-building month, e.g. Jun-26's +6.1%) must NOT fire, and the
+    threshold boundary itself (<= semantics) must fire exactly."""
+
+    def test_chain3_does_not_fire_on_mom_increase(self, cal: CalibrationState):
+        readings = {
+            "FINRA_MARGIN_DEBT": _r("FMD", {"current": 1500.0, "mom_pct": 6.1,
+                                             "at_nominal_record": True}),
+        }
+        score, fires, watch, _ = sector_stress_score(readings, cal)
+        assert fires["CHAIN_3"] is False   # increase never fires the decline mode
+        assert watch["CHAIN_3"] is True    # record still arms the WATCH
+
+    def test_chain3_fires_exactly_at_threshold_boundary(self, cal: CalibrationState):
+        readings = {
+            "FINRA_MARGIN_DEBT": _r("FMD", {"current": 900.0, "mom_pct": -5.0}),
+        }
+        score, fires, _, _ = sector_stress_score(readings, cal)
+        assert fires["CHAIN_3"] is True    # <= semantics: -5.0 vs -5.0 fires
