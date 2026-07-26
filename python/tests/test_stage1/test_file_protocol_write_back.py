@@ -125,3 +125,142 @@ class TestGitCommitBackgroundsPush:
         # Give the background thread a moment to hit (and swallow) the
         # simulated failure before the test process moves on.
         time.sleep(0.2)
+
+
+# ── ENG-49: per-step progress instrumentation ────────────────────────────────
+
+import json
+
+
+class TestWriteBackProgressInstrumentation:
+    """ENG-49 (FRAMEWORK_BACKLOG.md): every write-back step boundary records
+    a progress marker to .write_back_progress.json so a TIMEOUT can be
+    triaged from the record directly. Instrumentation is best-effort: it
+    must never raise, and a broken progress file must never break the
+    actual write-back."""
+
+    def test_report_and_read_round_trip(self, tmp_path):
+        file_protocol.report_write_back_progress("GIT_ADD", detail="a, b", base=tmp_path)
+        entry = file_protocol.read_write_back_progress(base=tmp_path)
+        assert entry is not None
+        assert entry["step"] == "GIT_ADD"
+        assert entry["detail"] == "a, b"
+        assert isinstance(entry["ts"], float)
+        assert "ts_iso" in entry and "pid" in entry
+
+    def test_report_never_raises_on_unwritable_base(self, tmp_path):
+        # Nonexistent nested directory — write_text will fail internally;
+        # the reporter must swallow it (instrumentation can never break
+        # the write-back it instruments).
+        bad_base = tmp_path / "does" / "not" / "exist"
+        file_protocol.report_write_back_progress("COMPACT", base=bad_base)  # no raise
+
+    def test_read_returns_none_when_file_missing(self, tmp_path):
+        assert file_protocol.read_write_back_progress(base=tmp_path) is None
+
+    def test_read_returns_none_on_corrupt_json(self, tmp_path):
+        (tmp_path / file_protocol.PROGRESS_FILE).write_text(
+            "{not valid json", encoding="utf-8"
+        )
+        assert file_protocol.read_write_back_progress(base=tmp_path) is None
+
+    def test_read_returns_none_on_wrong_shape(self, tmp_path):
+        # Valid JSON but not a progress entry (no 'step' key) — must be
+        # treated as unavailable, not passed through to enrich a TIMEOUT.
+        (tmp_path / file_protocol.PROGRESS_FILE).write_text(
+            json.dumps(["a", "list"]), encoding="utf-8"
+        )
+        assert file_protocol.read_write_back_progress(base=tmp_path) is None
+
+    def test_git_commit_records_step_sequence(self, tmp_path, monkeypatch):
+        """_git_commit must record GIT_ADD → GIT_COMMIT → COMMIT_DONE(sha)
+        → PUSH_BACKGROUNDED(sha), in that order, synchronously."""
+        recorded = []
+        monkeypatch.setattr(
+            file_protocol, "report_write_back_progress",
+            lambda step, detail="", base=None: recorded.append((step, detail)),
+        )
+        push_started = threading.Event()
+        push_completed = threading.Event()
+        monkeypatch.setattr(
+            file_protocol.subprocess, "run",
+            _fake_git_run_factory(0.0, push_started, push_completed, sha="fee1dea"),
+        )
+
+        sha = file_protocol._git_commit(tmp_path, ["Session_Log.md"], "test")
+        steps = [s for s, _ in recorded]
+        assert steps == ["GIT_ADD", "GIT_COMMIT", "COMMIT_DONE", "PUSH_BACKGROUNDED"]
+        assert recorded[0][1] == "Session_Log.md"     # GIT_ADD detail = files
+        assert recorded[2][1] == sha == "fee1dea"     # COMMIT_DONE detail = sha
+        assert recorded[3][1] == sha                  # PUSH_BACKGROUNDED detail = sha
+
+    def test_write_back_dry_run_records_expected_sequence(self, tmp_path, monkeypatch):
+        """dry_run write-back with no calibration state and no archives:
+        COMPACT → WRITE_SESSION_LOG → WRITE_PORTFOLIO_STATE → DRY_RUN_DONE,
+        with no calibration step and no git steps."""
+        from advisor.types import SessionType
+
+        monkeypatch.setenv("ADVISOR_FRAMEWORK_PATH", str(tmp_path))
+        recorded = []
+        monkeypatch.setattr(
+            file_protocol, "report_write_back_progress",
+            lambda step, detail="", base=None: recorded.append(step),
+        )
+
+        file_protocol.write_back(
+            calibration_state=None,
+            session_log="# Session Log\n",
+            portfolio_state="# Portfolio State\n",
+            session_type=SessionType.FULL_DESKTOP,
+            dry_run=True,
+        )
+        assert recorded == [
+            "COMPACT", "WRITE_SESSION_LOG", "WRITE_PORTFOLIO_STATE", "DRY_RUN_DONE",
+        ]
+
+    def test_write_back_records_calibration_step_when_given(self, tmp_path, monkeypatch):
+        from advisor.types import SessionType
+
+        monkeypatch.setenv("ADVISOR_FRAMEWORK_PATH", str(tmp_path))
+        recorded = []
+        monkeypatch.setattr(
+            file_protocol, "report_write_back_progress",
+            lambda step, detail="", base=None: recorded.append(step),
+        )
+
+        file_protocol.write_back(
+            calibration_state="# Calibration State\n",
+            session_log="# Session Log\n",
+            portfolio_state="# Portfolio State\n",
+            session_type=SessionType.FULL_DESKTOP,
+            dry_run=True,
+        )
+        assert recorded == [
+            "COMPACT", "WRITE_CALIBRATION_STATE", "WRITE_SESSION_LOG",
+            "WRITE_PORTFOLIO_STATE", "DRY_RUN_DONE",
+        ]
+
+    def test_progress_file_final_state_after_real_commit(self, tmp_path, monkeypatch):
+        """Un-mocked reporter through _git_commit: the file on disk must
+        end at PUSH_BACKGROUNDED with the commit sha as detail."""
+        push_started = threading.Event()
+        push_completed = threading.Event()
+        monkeypatch.setattr(
+            file_protocol.subprocess, "run",
+            _fake_git_run_factory(0.0, push_started, push_completed, sha="0ddba11"),
+        )
+
+        file_protocol._git_commit(tmp_path, ["Session_Log.md"], "test")
+        entry = file_protocol.read_write_back_progress(base=tmp_path)
+        assert entry is not None
+        assert entry["step"] == "PUSH_BACKGROUNDED"
+        assert entry["detail"] == "0ddba11"
+
+    def test_progress_file_is_gitignored(self):
+        """The progress file is local-only working state (like
+        .git-commit-msg.txt) — it must never be committable."""
+        from pathlib import Path
+
+        repo_root = Path(__file__).resolve().parents[3]
+        gitignore = (repo_root / ".gitignore").read_text(encoding="utf-8")
+        assert file_protocol.PROGRESS_FILE in gitignore

@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import subprocess
 import datetime
+import json
 import logging
 import os
 import threading
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -32,6 +34,52 @@ _DEFAULT_PATH = Path(
 def framework_path() -> Path:
     custom = os.environ.get("ADVISOR_FRAMEWORK_PATH")
     return Path(custom) if custom else _DEFAULT_PATH
+
+
+# ── ENG-49: write-back per-step progress instrumentation ─────────────────────
+# Local-only, gitignored (like .git-commit-msg.txt). Written at each step
+# boundary of write_back()/_git_commit() so a TIMEOUT can be triaged from
+# the progress record directly (mcp_server._write_back_with_verification
+# embeds the last-reached step in the TIMEOUT response), instead of the
+# manual `git status`+`git diff` forensic pass ENG-49 was opened to
+# eliminate. Instrumentation is best-effort by design: every write swallows
+# its own exceptions — a broken progress file must never break, slow, or
+# fail the actual write-back.
+
+PROGRESS_FILE = ".write_back_progress.json"
+
+
+def report_write_back_progress(
+    step: str, detail: str = "", base: Optional[Path] = None
+) -> None:
+    """Record the write-back step just reached. Never raises."""
+    try:
+        payload = {
+            "step": step,
+            "detail": detail,
+            "ts": time.time(),
+            "ts_iso": datetime.datetime.now().isoformat(timespec="milliseconds"),
+            "pid": os.getpid(),
+        }
+        ((base or framework_path()) / PROGRESS_FILE).write_text(
+            json.dumps(payload), encoding="utf-8"
+        )
+    except Exception:
+        logger.debug("write-back progress write failed (non-fatal)", exc_info=True)
+
+
+def read_write_back_progress(base: Optional[Path] = None) -> Optional[dict]:
+    """
+    Read the last recorded write-back progress entry, or None if the file
+    is missing/unreadable/corrupt. Never raises — callers treat None as
+    "no progress information available," not as a signal either way.
+    """
+    try:
+        raw = ((base or framework_path()) / PROGRESS_FILE).read_text(encoding="utf-8")
+        data = json.loads(raw)
+        return data if isinstance(data, dict) and "step" in data else None
+    except Exception:
+        return None
 
 
 # ── Framework file reads ──────────────────────────────────────────────────────
@@ -318,23 +366,32 @@ def write_back(
     today = datetime.date.today().isoformat()
     files_written = []
 
+    report_write_back_progress("COMPACT", base=base)
     session_log, archive_files = _compact_session_log(session_log, base)
 
     if calibration_state is not None:
+        report_write_back_progress("WRITE_CALIBRATION_STATE", base=base)
         _safe_write(base / "Calibration_State.md", calibration_state)
         files_written.append("Calibration_State.md")
 
+    report_write_back_progress("WRITE_SESSION_LOG", base=base)
     _safe_write(base / "Session_Log.md", session_log)
     files_written.append("Session_Log.md")
 
+    report_write_back_progress("WRITE_PORTFOLIO_STATE", base=base)
     _safe_write(base / "Portfolio_State.md", portfolio_state)
     files_written.append("Portfolio_State.md")
 
+    if archive_files:
+        report_write_back_progress(
+            "WRITE_ARCHIVES", detail=", ".join(sorted(archive_files)), base=base
+        )
     for archive_filename, archive_content in archive_files.items():
         _safe_write(base / archive_filename, archive_content)
         files_written.append(archive_filename)
 
     if dry_run:
+        report_write_back_progress("DRY_RUN_DONE", base=base)
         logger.info(f"[DRY RUN] Would commit: {files_written}")
         return "dry-run"
 
@@ -380,9 +437,12 @@ def _git_commit(repo: Path, files: list[str], message: str) -> str:
         )
         return result.stdout.strip()
 
+    report_write_back_progress("GIT_ADD", detail=", ".join(files), base=repo)
     git("add", *files)
+    report_write_back_progress("GIT_COMMIT", base=repo)
     git("commit", "-m", message)
     sha = git("rev-parse", "--short", "HEAD")
+    report_write_back_progress("COMMIT_DONE", detail=sha, base=repo)
 
     def _push_in_background() -> None:
         try:
@@ -413,6 +473,7 @@ def _git_commit(repo: Path, files: list[str], message: str) -> str:
     threading.Thread(
         target=_push_in_background, name="advisor_git_push", daemon=True
     ).start()
+    report_write_back_progress("PUSH_BACKGROUNDED", detail=sha, base=repo)
 
     return sha
 

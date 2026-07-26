@@ -33,6 +33,18 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
+**Last updated:** 2026-07-26, coding session (ENG-49 CLOSED — the per-step
+write-back progress instrumentation the item was opened for is now built:
+`.write_back_progress.json` (local-only, gitignored) records every step
+boundary RENDER → COMPACT → file writes → GIT_ADD → GIT_COMMIT →
+COMMIT_DONE → PUSH_BACKGROUNDED, and `_write_back_with_verification()`
+embeds the last-reached step + triage note directly in a genuine TIMEOUT
+response (with a staleness guard against prior-call files), eliminating
+the manual `git status`/`git diff` forensic pass. Instrumentation is
+best-effort by design — progress writes swallow their own failures and
+can never break the write-back. 15 tests added, 1 updated; full suite
+976 passed / 46 skipped / 0 failed. See Part 1 for the full resolution.)
+Prior:
 **Last updated:** 2026-07-22, coding session (ENG-69 and ENG-70 CLOSED — both root
 causes confirmed and fixed same session. ENG-69: added a shared `_extract_closes()`
 ticker-identity check to yfinance_fetcher.py, applied to all 5 single-ticker
@@ -345,7 +357,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 | ID | Status | Severity | Category | Title |
 |---|---|---|---|---|
 | ENG-48 | CLOSED 2026-07-14 | HIGH | bug | advisor_write_back's 90s safety-timeout races its own actual completion time — reports TIMEOUT while succeeding server-side |
-| ENG-49 | MITIGATED 2026-07-14 (root fix — full step instrumentation — not built) | HIGH | bug | advisor_write_back TIMEOUT with a genuinely incomplete server-side operation — files+archive rendered and written, but git add/commit never ran, distinct from ENG-48's "actually succeeded" pattern |
+| ENG-49 | CLOSED 2026-07-26 | HIGH | bug | advisor_write_back TIMEOUT with a genuinely incomplete server-side operation — per-step progress instrumentation (.write_back_progress.json, gitignored) now records every step boundary, and a genuine TIMEOUT response carries the last-reached step + triage note directly, replacing the manual git status/git diff forensic pass |
 | ENG-50 | OPEN | HIGH | architecture | V4: Trend/Rotation Signal Layer — deterministic price/relative-strength module, additive to scenario engine, shadow-mode trial before any authority decision |
 | ENG-51 | CLOSED | MEDIUM | architecture | V4: split instrument classification (§11) out of Calibration_State.md into its own persistence entity |
 | ENG-52 | CLOSED | MEDIUM | hygiene | V4: structured parseable entry format (front-matter block) for Session_Log.md, Calibration_State.md, FRAMEWORK_BACKLOG.md |
@@ -518,11 +530,12 @@ one to silently return the wrong ticker's data.
 
 ### ENG-49 — advisor_write_back TIMEOUT with genuinely incomplete server-side work
 <!-- ITEM
-Status:    OPEN
+Status:    CLOSED
 Severity:  HIGH
 Category:  bug
 Opened:    2026-07-03
-Area:      python/advisor/mcp_server.py — _tool_write_back()
+Closed:    2026-07-26
+Area:      python/advisor/mcp_server.py — _tool_write_back(); python/advisor/data/file_protocol.py
 Related:   ENG-48 (same symptom, different mechanism — see Description)
 -->
 
@@ -592,6 +605,55 @@ reliably means "verified no new commit landed, something is actually
 stuck," which is a strictly better diagnostic starting point than before,
 but "which step" still requires the same manual `git status`/`git diff`
 forensic pass this item was opened to eliminate.
+
+**RESOLUTION (2026-07-26, coding session):** the per-step instrumentation
+this item was opened for is now built. Mechanism:
+
+- `file_protocol.py` gains `report_write_back_progress(step, detail, base)`
+  and `read_write_back_progress(base)` around a new local-only, gitignored
+  progress file `.write_back_progress.json` (same convention as
+  `.git-commit-msg.txt`). Every write of it swallows its own exceptions —
+  instrumentation can never break, slow, or fail the write-back it
+  observes; a missing/corrupt/wrong-shape file reads as None, never raises.
+- Step markers written at every boundary, in order: `RENDER` (in
+  `_tool_write_back`, before §8-entry build + Portfolio_State render) →
+  `COMPACT` → `WRITE_CALIBRATION_STATE`? → `WRITE_SESSION_LOG` →
+  `WRITE_PORTFOLIO_STATE` → `WRITE_ARCHIVES`? → `GIT_ADD` → `GIT_COMMIT` →
+  `COMMIT_DONE(sha)` → `PUSH_BACKGROUNDED(sha)` (plus `DRY_RUN_DONE` on the
+  dry-run path). This directly brackets this item's confirmed failure
+  boundary ("between file-write and git add").
+- `_write_back_with_verification()` (mcp_server.py): on a genuine TIMEOUT —
+  i.e. only after the ENG-48 grace-poll confirms no new commit landed —
+  the TIMEOUT response itself is enriched with `last_step`,
+  `last_step_detail`, `last_step_ts`, and a `triage_note` spelling out the
+  step order and where the stall sits. A staleness guard
+  (`progress.ts >= call_started_ts`) prevents a file left by a PRIOR
+  successful call from being misattributed to the stuck one; stale/missing
+  progress reports `last_step: null` with an explicit fall-back-to-git-status
+  note. `status` stays `TIMEOUT` — never upgraded — and the original error
+  text is preserved. OK / OK_DELAYED / dry-run responses are untouched.
+
+Net effect: a future occurrence is triaged from the tool's own TIMEOUT
+response, eliminating the manual `git status`+`git diff` forensic pass —
+exactly the "one shared diagnostic, not one shared assumption" this item
+asked for, and ENG-48's HEAD-verification now composes with it (commit
+verification first, step attribution second). The underlying stall's root
+cause remains un-root-caused (plausibly ENG-33's client-transport family,
+plausibly a genuine server-side stall — the instrumentation is what will
+tell them apart on the next occurrence); if a recurrence shows a
+reproducible per-step pattern, open a NEW item with that evidence rather
+than reopening this one.
+
+Tests: 15 added, 1 updated (`test_stage1/test_file_protocol_write_back.py`
+`TestWriteBackProgressInstrumentation` — round-trip, never-raises,
+missing/corrupt/wrong-shape reads, `_git_commit` step sequence + details,
+`write_back` dry-run sequences with/without calibration state, final
+on-disk state after a real commit, gitignore presence;
+`test_mcp/test_write_back_verification.py` `TestTimeoutProgressEnrichment`
+— fresh-progress embedding, stale-progress guard, missing-progress
+fallback, error-text preservation, OK_DELAYED-not-enriched; the existing
+`test_timeout_stands_when_no_commit_ever_lands` updated for the enriched
+contract). Full suite: 976 passed / 46 skipped / 0 failed.
 
 ### ENG-50 — V4: Trend/Rotation Signal Layer (design + shadow-mode trial)
 <!-- ITEM

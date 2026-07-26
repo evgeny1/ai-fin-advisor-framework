@@ -183,6 +183,7 @@ def _write_back_with_verification(
     `git status` before retrying rather than assuming success or failure.
     """
     head_before = None if dry_run else _git_head_short()
+    call_started_ts = time.time()  # ENG-49: staleness bound for progress reads
 
     result = _with_timeout(
         _tool_write_back, 90.0,
@@ -227,9 +228,42 @@ def _write_back_with_verification(
     # No new commit even after the grace window -- either still genuinely
     # running (should be rare now that git push runs in the background,
     # see the ENG-48 fix in file_protocol.py) or genuinely stuck (ENG-49).
-    # Original TIMEOUT result stands; its own message already advises
-    # checking `git log` before retrying.
-    return result
+    # ENG-49 instrumentation: enrich the TIMEOUT with the last progress
+    # step recorded FOR THIS CALL (ts >= call_started_ts guards against
+    # misattributing a stale file left by a prior, successful call), so
+    # triage happens from this response directly instead of a manual
+    # `git status`/`git diff` forensic pass.
+    from .data.file_protocol import read_write_back_progress
+
+    try:
+        payload = json.loads(result)
+    except (json.JSONDecodeError, TypeError):
+        return result  # not JSON — pass through untouched
+
+    progress = read_write_back_progress()
+    if progress and progress.get("ts", 0) >= call_started_ts:
+        payload["last_step"] = progress.get("step")
+        payload["last_step_detail"] = progress.get("detail", "")
+        payload["last_step_ts"] = progress.get("ts_iso")
+        payload["triage_note"] = (
+            f"Per-step progress (ENG-49): the write-back reached step "
+            f"'{progress.get('step')}' before stalling. Steps run in order "
+            f"RENDER -> COMPACT -> WRITE_CALIBRATION_STATE? -> "
+            f"WRITE_SESSION_LOG -> WRITE_PORTFOLIO_STATE -> WRITE_ARCHIVES? "
+            f"-> GIT_ADD -> GIT_COMMIT -> COMMIT_DONE -> PUSH_BACKGROUNDED, "
+            f"so everything before the reported step completed; the stall "
+            f"is at or immediately after it."
+        )
+    else:
+        payload["last_step"] = None
+        payload["triage_note"] = (
+            "Per-step progress (ENG-49): no progress marker was recorded "
+            "for this call (progress file missing, unreadable, or stale "
+            "from a prior call) — the call likely stalled before "
+            "_tool_write_back's first RENDER marker, or progress writes "
+            "themselves are failing. Fall back to `git status`/`git diff`."
+        )
+    return _dumps(payload)
 
 
 logger = logging.getLogger(__name__)
@@ -1293,7 +1327,9 @@ def _tool_write_back(
     dry_run: bool,
     session_type: str,
 ) -> str:
-    from .data.file_protocol import read_session_log, write_back
+    from .data.file_protocol import (
+        read_session_log, write_back, report_write_back_progress,
+    )
     from .types import SessionType
 
     probs = _cache.get("scenario_probs")
@@ -1302,6 +1338,12 @@ def _tool_write_back(
     cal = _cache.get("cal")
     if cal is None:
         return _err("No calibration state cached. Call advisor_run_computation first.")
+
+    # ENG-49: first progress marker of the call — everything from here to
+    # write_back()'s COMPACT marker is §8-entry build + Portfolio_State
+    # rendering, so a TIMEOUT showing last_step=RENDER localizes a stall
+    # to that stage.
+    report_write_back_progress("RENDER")
 
     today = datetime.date.today().isoformat()
     p = probs
