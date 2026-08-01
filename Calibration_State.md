@@ -2266,6 +2266,25 @@ to do later.
     — not eligible for formal §4.1 adoption before March 31, 2027 at the
     earliest. No §4.1 change, no XAR execution this session — HOLD/frozen
     status stands per the hand-off.
+47. [P0] broad_market_equity_international — full 6-cell M16 review needed
+    ASAP, not deferred to the next scheduled audit (client instruction,
+    2026-07-31: "I want to do this asap and not wait for the next audit").
+    [P0] rather than [P1] because it is money-relevant now: this role
+    directly drives VYMI (68% weight) and COPX (25% weight) in §11, and
+    VYMI is a core (15% target) holding in the just-adopted Acc4 dividend
+    sleeve. Preliminary L1-L4 pass done 2026-07-31 (§3 log, same date) —
+    real T1/T2 data gathered (direct EFA price history 2001+, MSCI EAFE
+    index annual returns pre-2001) for all six scenarios; four of six
+    cells (B, C, D, E) show real analogs materially more severe on the
+    conservative end than the current v1.0 unaudited baseline, all in the
+    same (more-pessimistic) direction. NOT ADOPTED — Layer 4 neutral-
+    distribution check failed by a wide margin (double-digit pp gap vs.
+    the ~2-4% real long-run anchor), meaning the preliminary conservative
+    ends likely over-weight worst-single-instance severity rather than a
+    genuinely-conservative-but-typical bound. Dedicated re-evaluation
+    session needed to do the reconciliation properly (see hand-off issued
+    same session) before this can reach HIGH confidence and be adopted
+    with client confirmation, per M16 GUARD.
 
 ---
 
