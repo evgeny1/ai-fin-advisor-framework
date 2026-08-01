@@ -430,14 +430,107 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   downstream of two separate open calibration questions simultaneously — still
   more exposed to the June 30 audit outcome than RSP/VTI/QQQM (BMED now
   resolved for those too) or MLPX/DBMF/AIPO (none open).
-- ENTRY EXTENSION GUARD (2026-06-29, market_data_mcp T1, 63 trading days in
-  the trailing-90-calendar-day window): current $32.09 (Jun 26) vs 90d
-  trailing avg $31.43 = +2.11% above avg. Threshold (broad_market_equity_domestic,
-  dominant role at 49% weight): 15%. CLEARS comfortably.
-- ADOPTION TRIGGER: none set — candidate under evaluation per client request
-  (index-fund simplification review, June 29, 2026 session). Not adoptable
-  until the two PENDING dependencies above are resolved at the June 30 audit.
-- CURRENT PORTFOLIO ALLOCATION: NONE.
+- ENTRY EXTENSION GUARD (2026-07-31 refresh, market_data_mcp T1, 63 trading
+  days in the trailing-90-calendar-day window): current $33.41 (Jul 30) vs
+  90d trailing avg $32.18 = +3.81% above avg. Threshold (broad_market_equity_domestic,
+  dominant role at 49% weight): 15%. CLEARS comfortably. (Prior 2026-06-29
+  check: +2.11%, also clear — refreshed rather than reused since >30 days stale.)
+- ADOPTION TRIGGER: ADOPTED 2026-07-31 — client decision, following a
+  10.16yr backtest comparison (bt_compare/bt_optimize) against VYM, VYMI,
+  SPYD, and RSP: SCHD dominates on every risk-adjusted metric tested
+  (CAGR 13.03%, Sharpe 0.585, Sortino 0.676, max DD -33.37% — all best of
+  the five), and an unconstrained Sharpe-maximizing grid search over the
+  same five candidates independently converges on ~100% SCHD. Status
+  upgraded from "candidate, not allocated" — this label was stale even
+  before today's decision, since SCHD has been an actual live holding in
+  Primary IRA (3080-6469, ~5.16%) since before this file's 2026-06-29 note
+  was written; see FRAMEWORK_BACKLOG.md §11-bookkeeping item. The
+  healthcare_defensive_equity and consumer_defensive_equity PENDING cells
+  below are unchanged by this decision — they remain a live EV-precision
+  caveat for the briefing, not a gate on holding the instrument. Per-cell
+  status as of this session's Calibration_State.md §4.1: consumer_defensive_equity
+  now A★B★C★D★F★, only E remains ⚑ PENDING (improved from "D/E/F PENDING"
+  at the time this note was first written); healthcare_defensive_equity now
+  A✓D✓F✓ (reviewed 2026-07-03, v1.55), B/C revised-proposed [-9,-2] MEDIUM
+  confidence LOGGED PENDING, E remains ⚑ PENDING (improved from "ALL six
+  PENDING").
+- CURRENT PORTFOLIO ALLOCATION: Primary IRA (3080-6469) ~5.16% (pre-existing,
+  now correctly reflected here instead of "NONE"). Taxable Acc4 (6668-9768)
+  target 35% — ADOPTED 2026-07-31 as the core holding of a redesigned
+  dividend/AI-bubble-protection sleeve (replacing AIPO/DBMF/COPX/RSP/VYM/
+  SPYD in that account's target mix); gradual buy-in schedule to be set in
+  a subsequent session per client instruction. See Session_Log.md §8
+  2026-07-31 for full portfolio-level rationale and backtest detail.
+
+#### VYMI
+- Components: broad_market_equity_international (0.68) + consumer_defensive_equity (0.13) + healthcare_defensive_equity (0.08) + inflation_hedge_commodity_linked (0.11)
+- Basis: Vanguard International High Dividend Yield ETF. Tracks FTSE
+  All-World ex-US High Dividend Yield Index — developed + emerging market
+  ex-US equities screened for above-average forecast dividend yield,
+  market-cap sampled (~1,500-1,577 holdings per 2026-04-30 N-PORT filing).
+  AUM: ~$19.5-20.0B, growing (+$9.16B trailing 1yr, +$1.43B trailing 3mo per
+  etfdb.com). Expense ratio: 0.07%. Inception: Feb 25, 2016 (~10.4yr track
+  record).
+- M07 STATUS: PASS (advisor_check_instrument_candidate, 2026-07-31). AUM
+  well above the $100M/10yr-horizon floor. foreign_concentration_pct=100%
+  does NOT trigger Guard 2 — that guard applies only to active_fund/sector_ETF
+  instrument_type; VYMI is passive_broad (market-cap-sampled broad index,
+  not a concentrated regional/sector bet). No K-1. Not commodity-dependent.
+- passive_mandate_eligible: true (broad ex-US index fund, sampling
+  methodology, no single-theme or single-country concentration; no
+  individual holding >2% per Benzinga top-10 detail).
+- Classification basis (2026-07-31, sector-bucket level, fresh search this
+  session, MEDIUM confidence — NOT a full 1,500+-name binding-driver audit,
+  same caveat class as SCHD/RSP/QQQM/VTI): top holdings per GuruFocus
+  N-PORT (2026-04-30) and Benzinga: HSBC Holdings (~1.38%), Roche Holding
+  (top-5), Nestle SA (~1.90%), Toyota Motor Corp (~1.53%), Royal Bank of
+  Canada (~1.17%), TotalEnergies SE (~1.13%), Commonwealth Bank of
+  Australia (~1.24%), Allianz SE (~1.10%) — Financials-heavy (HSBC/RBC/
+  Commonwealth Bank/Allianz ≈ 30-35%) with Consumer Staples (Nestle ≈13%),
+  Health Care (Roche ≈8%), Energy (TotalEnergies ≈11%), and Consumer
+  Discretionary (Toyota) diversification. Zero US mega-cap tech exposure
+  by construction (ex-US index) — this is the specific property motivating
+  its inclusion in the Acc4 AI-bubble-protection redesign. Sector mapping:
+  Financials/Industrials/Discretionary/Communication/Materials/Utilities
+  residual (≈68%) -> broad_market_equity_international as undifferentiated
+  international (dominant bucket, same treatment RSP/VTI get for BMED);
+  Consumer Staples ≈13% -> consumer_defensive_equity; Health Care ≈8% ->
+  healthcare_defensive_equity; Energy ≈11% -> inflation_hedge_commodity_linked.
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7);
+  not stored here.
+- CAVEAT: broad_market_equity_international carries NO confidence markers
+  in the live §4.1 table (v1.0 unaudited baseline — the same gap
+  broad_market_equity_domestic had before its June 2026 M16 review). VYMI's
+  actual behavior (value tilt, ex-US, P/E ~12.2x vs. SPY's mid-20s per
+  Investing.com 2026-07-23, low correlation to US mega-cap tech) is likely
+  under-represented by this role's current calibration, which reads as
+  benchmarked against a broader/growthier international index than VYMI
+  actually is. A dedicated M16 4-layer review of this role is flagged for
+  a future coding/audit session before treating VYMI's EV number as
+  decision-grade — until then, treat the qualitative case (diversification,
+  valuation, zero Mag7 exposure) as primary and the EV figure as directional
+  only.
+- ENTRY EXTENSION GUARD (2026-07-31, market_data_mcp T1, 63 trading days in
+  the trailing-90-calendar-day window): current $104.09 (Jul 30) vs 90d
+  trailing avg $99.18 = +4.95% above avg. Threshold (broad_market_equity_international,
+  dominant role at 68% weight): 15%. CLEARS comfortably.
+- ADOPTION TRIGGER: ADOPTED 2026-07-31 — client decision, Acc4 dividend/
+  AI-bubble-protection sleeve redesign. Backtested (bt_compare, 2016-06 to
+  2026-07, 10.16yr solo): CAGR 11.06%, Sharpe 0.477, max DD -40.00%
+  (weakest standalone risk-adjusted profile of the four dividend
+  candidates tested) — included at a controlled 15% weight specifically
+  for its ex-US/zero-Mag7-concentration diversification value, not for its
+  standalone risk-adjusted case. Full 10yr portfolio-level backtest
+  (MLPX/SCHD/VYMI/XAR/BIL-proxy) shows max drawdown balloons to -36.40%
+  once the COVID crash is included (vs. -14.78% in the 6yr-only,
+  SGOV-limited window) — this is a real, disclosed limitation: the design
+  protects well in 2018-style and 2022-style grinding bears/inflation
+  shocks but did NOT protect in the COVID acute panic (portfolio -33.28%
+  vs. SPY -31.98% in that specific 23-trading-day window). See Session_Log.md
+  §8 2026-07-31 for full detail.
+- CURRENT PORTFOLIO ALLOCATION: Taxable Acc4 (6668-9768) target 15%,
+  pending gradual buy-in per client instruction (session 2026-07-31) —
+  execution schedule to be finalized in a subsequent session.
 
 #### URA
 - Components: real_asset_contracted_revenue (0.50) + inflation_hedge_commodity_linked (0.30) + secular_technology_growth (0.20)

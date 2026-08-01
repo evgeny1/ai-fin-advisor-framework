@@ -2,10 +2,120 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.66  Last updated: July 14, 2026. v1.66: GAP-17 approach
+# Version: 1.67  Last updated: July 31, 2026. v1.67: SCHD status corrected
+from stale "candidate, not allocated" (it was already a live Primary IRA
+holding, ~5.16%, before this label was ever accurate) to formally ADOPTED —
+core holding of a redesigned Acc4 dividend/AI-bubble-protection sleeve, 35%
+target. VYMI newly classified (§11 ComponentVector added) and ADOPTED, 15%
+Acc4 target. Both decided per client instruction following a 10.16yr
+bt_compare/bt_optimize backtest of five dividend candidates (SCHD, VYM,
+VYMI, SPYD, RSP): SCHD dominates on every risk-adjusted metric tested
+(CAGR 13.03%, Sharpe 0.585, max DD -33.37% — all best of the five), and an
+unconstrained Sharpe-maximizing grid search over the same five
+independently converges on ~100% SCHD. XLE evaluated and REJECTED —
+disqualified under M07 Guard 3 (commodity-dependent revenue, no contract
+backstop) and separately confirmed empirically (bt_compare: MLPX/XLE
+blends raise vol and max DD vs. MLPX alone for a negligible ~0.2pp CAGR
+gain — not real diversification, just correlated noise). SPYD and RSP
+evaluated and NOT adopted for this redesign: SPYD empirically dominated on
+every metric (standalone max DD -46.42%); RSP gets ~zero weight in every
+Sharpe-optimal blend tested and shows >100% down-capture vs. SPY historically
+(does not actually reduce broad-market drawdown despite lower Mag7
+concentration — a real, counterintuitive finding worth remembering before
+reaching for it again on de-concentration grounds alone). Acc4's prior
+AIPO/DBMF/COPX/RSP/VYM/SPYD target weights are all superseded by this
+redesign. Full detail, including the honest deeper-backtest finding that
+this design's true max drawdown is -36.40% (not -14.78%) once the COVID
+crash is included in the test window: §3 log 2026-07-31; Session_Log.md
+§8 2026-07-31.
+
+v1.66: GAP-17 approach
 decided by Evgeny — flip-within-role (targeted Scenario C/E sign revision),
 not a new RoleID split. Numbers not yet derived; still LOW confidence,
 still gated to March 31, 2027 at the earliest. §6 item 46 updated.
+
+---
+version: v1.67
+category: Acc4 dividend sleeve redesign — SCHD/VYMI adoption, XAR unchanged
+---
+2026-07-31 (v1.67) - Full §3 detail for the v1.67 header summary above.
+Client requested a dividend-maximizing, AI-bubble-protection-oriented,
+thesis-monitored (not hard-floored) redesign of Taxable Acc4 (6668-9768),
+10% self-imposed drawdown/volatility tolerance for this specific exercise
+(note: this is tighter than Acc4's Objectives-file drawdown_tolerance of
+0.25 — a client-specified constraint for this redesign, not a change to
+the account's registered objective; flagged for client awareness, not
+auto-reconciled). Candidates evaluated: MLPX/XLE split, VYM/VYMI split,
+SPYD, SCHD (added after client correctly flagged its omission from the
+initial candidate set — no good reason for the omission, noted directly).
+M07.AutoDisqualify(): VYM/VYMI/SPYD/SCHD all PASS; XLE DISQUALIFIED (Guard
+3, commodity-dependent revenue with no contract backstop — direct E&P/
+integrated-major exposure, unlike MLPX's contracted midstream toll-taker
+model).
+Backtest work (portfolio_backtest_mcp, real yfinance total-return data,
+not simulated): (1) Solo comparison of SCHD/VYM/VYMI/SPYD/RSP, 2016-06 to
+2026-07 (10.16yr): SCHD best on every metric (CAGR 13.03%, Sharpe 0.585,
+Sortino 0.676, max DD -33.37%); SPYD worst (CAGR 9.14%, max DD -46.42%,
+down-capture 91.7% vs SPY); RSP down-capture 102.2% (captures MORE than
+100% of SPY's downside historically — equal-weight de-concentration has
+not empirically reduced broad-drawdown risk for this instrument). (2)
+bt_optimize, same 5 symbols, unconstrained grid search, sort=sharpe: top
+result is 90/10 SCHD/VYMI (Sharpe 0.586); SPYD and RSP receive ZERO weight
+in every one of the top 10 results. (3) MLPX vs. XLE vs. MLPX/XLE blends,
+2020-07 to 2026-07 (5yr, as client requested): blending XLE into MLPX at
+any tested ratio (50/50, 70/30) raises volatility and max DD while
+LOWERING Sharpe/Sortino/Calmar vs. MLPX alone, for a ~0.2pp CAGR gain —
+empirically confirms the M07 disqualification from an independent angle
+(MLPX and XLE are correlated on the same energy cycle; blending them adds
+noise, not diversification). (4) Full 5-instrument Acc4 portfolio backtest,
+2020-07 to 2026-07 (6yr, SGOV-limited): "B" (MLPX25/SCHD35/VYMI15/XAR10/
+SGOV15) beats the original client-requested mix (MLPX23/VYM20/VYMI15/
+SPYD12/XAR10/RSP8/SGOV12) on every metric (Sharpe 1.005 vs 0.984, max DD
+-14.78% vs -16.08%) while paying a HIGHER cumulative yield (6.35% vs
+6.05%) — dropping SPYD/RSP/VYM cost nothing.
+CLIENT-REQUESTED DEEPER BACKTEST (SGOV substituted with BIL, a
+longer-history T-bill proxy, for analysis purposes only — SGOV remains
+the actual instrument to hold; BIL was never proposed as a real holding):
+extending the window to 2016-06 (VYMI's own inception is the binding
+constraint on this specific 5-instrument set; GFC and dot-com remain
+unreachable with VYMI in the mix — bt_stress confirms 0 trading days
+available for the "gfc" named period) revealed a materially different risk
+picture than the 6yr window showed: max drawdown -36.40% (not -14.78%),
+worst year -8.26% (2018, not the +1.73%-to-+3.78% range seen in every
+6yr-window portfolio), Sharpe drops to 0.584. bt_stress isolates why:
+during the COVID acute crash (Feb19-Mar20 2020, 23 trading days) the
+portfolio returned -33.28% vs. SPY's -31.98% — slightly WORSE than the
+benchmark, because MLPX (energy), XAR (aerospace/defense, commercial
+aviation supply-chain exposure), and VYMI (international, -19.14% in
+March 2020 alone) all sold off together in that specific indiscriminate,
+correlations-to-1 panic. By contrast, in the 2018 Q4 selloff (-13.58% vs
+SPY -17.16%) and the 2022 full-year inflation shock (+2.61% vs SPY
+-18.43%) the design provided real, substantial protection — these are the
+closest historical analogs to the framework's current B/C-dominant
+scenario read. DISCLOSED CONCLUSION, stated directly to client: this
+design manages grinding bear markets and stagflation-style regimes well:
+it does NOT reliably cap losses in a genuine indiscriminate systemic
+panic. The "10% drawdown tolerance" framing holds for the scenarios the
+framework's own taxonomy treats as most probable; it is not a guarantee
+against a 2020-style shock.
+ADOPTION: client adopted "B" (MLPX25/SCHD35/VYMI15/XAR10/SGOV15 — SGOV,
+not BIL, for actual holding) for gradual buy-in; phasing schedule deferred
+to a subsequent session per client request. SCHD and VYMI formally added/
+corrected in §11 (Instrument_Classification.md) same session — see those
+entries for full ComponentVector, M07, EntryExtensionGuard, and CAVEAT
+detail. AIPO/DBMF/COPX/RSP dropped from Acc4's target entirely (AIPO:
+already independently disqualified track-record <3yr, and the most
+AI-capex-exposed holding in the account; DBMF: no meaningful yield, off-
+thesis for this specific redesign, plus a fresh, unrelated §13 thesis-
+sustaining-condition FAILED flag from earlier this same session; COPX:
+partial AI-adjacent exposure via grid/copper-for-data-center demand, low
+yield; RSP: empirically does not reduce broad-drawdown risk per above,
+despite fitting the de-concentration thesis conceptually). NOT addressed
+this session, flagged for a future one: AIPO is also held in Primary IRA
+(~13.28%) and Primary Roth (~23.25%) — the AI-bubble-protection work done
+here covered Acc4 only; those two accounts' AIPO exposure is materially
+larger in relative terms and has not yet been reviewed against the same
+PDF-derived thesis.
 
 v1.65: geopolitical_premium
 XAR sign-question fresh re-verification (coding session, GAP-17 opened) --
