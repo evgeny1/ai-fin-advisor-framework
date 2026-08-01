@@ -524,8 +524,8 @@ next_session_flags:
   stored path reference.'
 
 ---
-entry_id: 2026-07-31T20:26
-date: '2026-07-31'
+entry_id: 2026-08-01T00:32
+date: '2026-08-01'
 session_type: full M05 session
 status: current
 scenario_probabilities: {A: 20.2222, B: 40.4444, C: 30.3333, D: 3.0, E: 3.0, F: 3.0}
@@ -575,6 +575,13 @@ open_decisions:
 - SCHD and VYMI formally adopted in Sec11 this session (v1.67) -- re-evaluate whether
   other accounts (Primary IRA/Roth, Acc3) would benefit from the same dividend-sleeve
   logic
+- 'broad_market_equity_international: preliminary M16 4-layer review completed this
+  session (real data, all six scenarios) but NOT adopted -- Layer 4 neutral-distribution
+  check failed by a wide margin, meaning the naive worst-instance conservative ends
+  over-weight tail severity. Logged as Sec6 item 47 [P0] per client''s explicit instruction
+  to fast-track rather than wait for the next scheduled audit. A dedicated re-evaluation
+  session hand-off was drafted and issued this session, pre-loaded with all gathered
+  data, ready to run.'
 next_session_flags:
 - Gradual buy-in schedule for Acc4 Portfolio B -- explicit client request for next
   session
@@ -583,5 +590,10 @@ next_session_flags:
 - Floor Defense Guard design -- priority, still not started, now more urgent given
   this session's floor breach finding
 - CASH ticker Sec11 entry -- coding session item
-- broad_market_equity_international role flagged for a dedicated M16 4-layer review
-  (currently v1.0 unaudited, underpins VYMI's EV)
+- 'broad_market_equity_international (Sec6 item 47, [P0]): dedicated re-evaluation
+  session hand-off is ready and was issued this session -- preliminary L1-L4 data
+  already gathered 2026-07-31 (real EFA + MSCI EAFE historical analogs for all six
+  scenarios), so the next session should NOT re-research from scratch. It needs to
+  do the Layer 4 reconciliation (separating conservative-but-typical from worst-single-instance,
+  same technique as BMED''s C revision) before this can reach HIGH confidence and
+  be adopted with client confirmation. Affects VYMI (68% weight) and COPX (25% weight).'

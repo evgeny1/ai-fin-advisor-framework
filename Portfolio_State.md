@@ -1,4 +1,4 @@
-# Portfolio State — 2026-07-31
+# Portfolio State — 2026-08-01
 
 **Calibration State:** 1.66
 **Scenario probabilities:** A=20% / B=40% / C=30% / D=3% / E=3% / F=3%
@@ -20,5 +20,6 @@
 - DBMF/MLPX/SGOV 40/40/20 simplification for Primary IRA/Roth/Acc4 -- status unclear now that Acc4 is being redesigned around the dividend sleeve instead; needs re-evaluation, may be superseded
 - XAR GAP-17 -- still gated to March 2027 audit, unchanged
 - SCHD and VYMI formally adopted in Sec11 this session (v1.67) -- re-evaluate whether other accounts (Primary IRA/Roth, Acc3) would benefit from the same dividend-sleeve logic
+- broad_market_equity_international: preliminary M16 4-layer review completed this session (real data, all six scenarios) but NOT adopted -- Layer 4 neutral-distribution check failed by a wide margin, meaning the naive worst-instance conservative ends over-weight tail severity. Logged as Sec6 item 47 [P0] per client's explicit instruction to fast-track rather than wait for the next scheduled audit. A dedicated re-evaluation session hand-off was drafted and issued this session, pre-loaded with all gathered data, ready to run.
 
 _Generated via MCP (Pattern B — Claude app)._
