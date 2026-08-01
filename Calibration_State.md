@@ -117,6 +117,78 @@ here covered Acc4 only; those two accounts' AIPO exposure is materially
 larger in relative terms and has not yet been reviewed against the same
 PDF-derived thesis.
 
+---
+version: v1.67-proposal
+category: broad_market_equity_international full 6-cell M16 review (PROPOSED, NOT ADOPTED)
+---
+2026-07-31 - broad_market_equity_international: first-ever M16.CalibrationMethodology()
+4-layer review (role was v1.0 unaudited baseline, no confidence markers, since
+inception -- gap surfaced by VYMI's adoption this session, client requested the
+review directly: "let's do this").
+L1: role currently [4,9]/[-5,-1]/[-6,-2]/[-8,-3]/[-10,-4]/[3,8] (A-F), no
+confidence markers, never reviewed.
+L2 (T1/T2 real data, market_data_mcp direct EFA price history where available
+2001+, MSCI EAFE index annual returns pre-2001 via Novel Investor/MSCI-sourced
+table, cross-validated against EFA where both exist -- e.g. 2022 index -14.01%
+vs EFA -14.06%, 2003 index +39.17% vs EFA +35.66%, consistent within a few
+points):
+  A (1991/2003/2016): +12.50% / +35-39% / +1.5-3%. Current conservative (4%)
+    sits ABOVE the weakest real analog (2016) -- possibly too optimistic.
+  B (1973-1982 ex-shock-years/2022): 1973 -14.17%, 2022 -14.06% -- two
+    independent analogs converge tightly. Other decade years were strongly
+    mixed (1975 +37%, 1978 +34%, 1981/82 near-flat). Current conservative
+    (-5%) sits well ABOVE both modern/historical worst-case convergence points
+    -- likely too optimistic.
+  C (1974/1979-80/2022 H1): 1974 -22.15%, 2022 H1 -19.35% (computed) converge;
+    1979/1980 were actually +6% to +24% -- same acute-shock-vs-sustained-grind
+    bifurcation BMED already has documented. Current conservative (-6%) sits
+    well above the acute-shock reading.
+  D (2008-09/2020): 2008 full year -41.61% (EFA)/-43.06% (index) -- a real,
+    severe deflationary-recession outcome. 2020 full year was actually +7.34%/
+    +8.28% (V-shaped policy-driven recovery) despite an acute crash of -33.9%
+    intra-year -- genuine policy-response-dependent bifurcation, not a data
+    error. Current conservative (-8%) is dramatically more mild than the 2008
+    outcome.
+  E (2008 acute/1998 LTCM): 2008 Sept15-Nov20 acute window ~-38.2% (computed).
+    1998 was actually +20.33% for the full year -- a genuinely contained
+    systemic near-miss coexisting with a strong bull-market year. Current
+    conservative (-10%) sits well above the 2008 acute reading.
+  F (1995-2000/2017-2019/2023-2024): mixed but mostly positive, annualized
+    roughly 9-11% across both modern 3-year and 2-year windows via direct EFA
+    data; current [3,8] is the closest-to-consistent of the six cells, maybe
+    modestly conservative on the upside.
+L3: the B/C/D/E findings all point the same direction -- real historical
+  analogs are materially more severe on the conservative/low end than the
+  current v1.0 baseline across four of six cells, not just one. This is
+  consistent with the role having been a placeholder default rather than a
+  reviewed calibration since inception. The A/D/E bifurcations (2016 vs 2003;
+  2008 vs 2020; 2008 acute vs 1998) are genuine, not noise -- they reflect
+  different sub-mechanisms (currency/relative-strength cycles for A;
+  policy-response speed for D; containment vs contagion for E) that a single
+  point estimate cannot capture, mirroring exactly the kind of bifurcation
+  already documented for BMED's own B/C cells.
+L4: naive neutral-distribution (A35/B15/C15/D10/E5/F20) check using the
+  more-severe candidate conservative ends failed the usual ~3pp consistency
+  band by a wide margin (double-digit gap vs. the ~2-4% real long-run EFA
+  anchor implied by its 20-30yr CAGR history). This is itself informative:
+  it means naively substituting "worst single historical instance" for each
+  cell's conservative end over-weights tail severity relative to what a
+  reviewed, genuinely-conservative-but-plausible bound should be. Reconciling
+  this properly (separating "conservative but typical" from "worst-ever
+  instance," the way BMED's C revision distinguished the 2003 Iraq analog
+  from the 1990 recession confound) is real work that a single session
+  shouldn't rush.
+DISPOSITION: NOT ADOPTED. Per M11/M16 GUARD, a fresh MEDIUM-confidence
+multi-cell proposal is not adoptable intra-session regardless of how
+convergent the L2 evidence looks -- deferred to the next scheduled audit.
+Directionally: the honest, actionable takeaway for THIS session is that the
+gap in VYMI's EV caveat (logged in Instrument_Classification.md today) likely
+runs in the PESSIMISTIC direction once this role is properly calibrated --
+i.e., VYMI's true conservative EV is more likely to be worse than what the
+pipeline currently computes using the v1.0 baseline, not better. Flagged for
+the next scheduled audit as a priority item (affects VYMI at 68% weight and
+COPX at 25% weight in Sec11).
+
 v1.65: geopolitical_premium
 XAR sign-question fresh re-verification (coding session, GAP-17 opened) --
 6 independently-dated inflection points (3 escalation/3 de-escalation,
