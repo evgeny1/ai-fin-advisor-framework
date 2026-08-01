@@ -444,7 +444,8 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   upgraded from "candidate, not allocated" — this label was stale even
   before today's decision, since SCHD has been an actual live holding in
   Primary IRA (3080-6469, ~5.16%) since before this file's 2026-06-29 note
-  was written; see FRAMEWORK_BACKLOG.md §11-bookkeeping item. The
+  was written; this was a bookkeeping gap (never a tracked FRAMEWORK_BACKLOG.md
+  item — checked, no entry exists), now closed by this edit. The
   healthcare_defensive_equity and consumer_defensive_equity PENDING cells
   below are unchanged by this decision — they remain a live EV-precision
   caveat for the briefing, not a gate on holding the instrument. Per-cell
