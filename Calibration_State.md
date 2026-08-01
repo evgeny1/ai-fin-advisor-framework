@@ -2,7 +2,15 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.68  Last updated: August 1, 2026. v1.68: broad_market_equity_international
+# Version: 1.69  Last updated: August 1, 2026. v1.69: broad_market_equity_international
+Scenario F ADOPTED [3,8]->[8,14], HIGH confidence, client-confirmed same session ("why
+wait?" -- declined to hold for full-row resolution once the tradeoff was shown not to
+favor waiting). A/B/C/D/E unchanged in the live table, remain open per §6 item 47.
+VYMI EV -2.24%->-2.13%, COPX +2.76%->+2.79% (both immaterial under current B/C-dominant
+probabilities -- confirms the real gap is still B/C, both open). Full detail: §3 log
+entry 2026-08-01 (v1.69).
+
+v1.68: broad_market_equity_international
 full M16 4-layer review completed (re-evaluation session continuing 2026-07-31's
 preliminary pass). Real T1 institutional Layer 1 anchor established for the first time
 (AQR Jan-2026 CMA, Dec-31-2025 data: Global Dev. ex-US equity 4.9% real, 5-10yr,
@@ -134,6 +142,38 @@ this session, flagged for a future one: AIPO is also held in Primary IRA
 here covered Acc4 only; those two accounts' AIPO exposure is materially
 larger in relative terms and has not yet been reviewed against the same
 PDF-derived thesis.
+
+---
+version: v1.69
+category: broad_market_equity_international Scenario F ADOPTED (HIGH confidence)
+---
+2026-08-01 (same session as v1.68, continued) - client explicitly declined to hold F
+for full-row resolution ("why wait?") after being shown the anti-cherry-picking
+tradeoff -- on reflection the tradeoff doesn't actually favor waiting: A/B/C are
+MEDIUM and gated to the Sept 30 audit regardless of whether F moves today (M16 GUARD
+blocks their intra-session adoption either way); D/E need genuinely new evidence (a
+tiebreaker D analog, the 1998 acute-window data for E) that arrives from doing the
+work, not from elapsed time; and the "don't cherry-pick" instruction's actual
+requirement is transparency about a partial resolution, not lockstep adoption of the
+whole row -- which this entry, plus the still-open §6 item 47 for A/B/C/D/E, provides.
+ADOPTED: Scenario F [3,8] -> [8,14], HIGH confidence per the 2026-08-01 v1.68 L1-L4
+analysis (3 converging modern-era analogs at 9-11% annualized via direct EFA data,
+minor <1pp structural adjustment, institutional Layer 1 agreement within ~1pp via
+AQR/Fidelity). Table updated same session, ★ marker applied. A/B/C/D/E cells
+unchanged in the live table (still ⚑/⚠-flagged per v1.68), remain open per §6 item 47.
+POST_AUDIT_ALWAYS (M16 §6) recompute: VYMI's blended conservative EV (68% BMEI weight
++ 13% consumer_defensive_equity + 8% healthcare_defensive_equity + 11%
+inflation_hedge_commodity_linked, weighted by the current operating scenario
+probabilities from Session_Log.md §8 2026-08-01: A=20.2222/B=40.4444/C=30.3333/D=3/
+E=3/F=3) moves from -2.24% to -2.13% (+0.11pp) on F's adoption alone; COPX (75%
+inflation_hedge_commodity_linked + 25% BMEI) moves from +2.76% to +2.79% (+0.04pp).
+Both changes are immaterial under today's B/C-dominant distribution, as flagged in
+v1.68 -- confirms F's adoption doesn't address the actual money-relevant gap, which
+remains B/C, both still open. Hand-computed (Claude), not yet Python-verified --
+calculator_mcp was unresponsive both times it was tried this session; re-verify via
+the CLI or MCP once confirmed responsive. No change to §11 Instrument_Classification.md
+needed -- VYMI/COPX EV is computed fresh each session via blendedScenarioReturn(), not
+stored there.
 
 ---
 version: v1.68
@@ -2033,7 +2073,7 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 | rate_sensitive_income_short_duration | [1, 3]★ | [1, 3] | [1, 3] | [1, 4]★ | [-2, 2] | [1, 3] |
 | rate_sensitive_income_long_duration | [3, 7] | [-4, -1] | [-5, -2] | [5, 10] | [-10, -3] | [-4, -1] |
 | broad_market_equity_domestic | [10, 20]★ | [-2, +5]★ | [-4, -1]⚠ | [-12, -4]✓ | [-8, -3]✓ | [7, 14]✓ |
-| broad_market_equity_international | [4, 9] | [-5, -1] | [-6, -2] | [-8, -3] | [-10, -4] | [3, 8] |
+| broad_market_equity_international | [4, 9]⚑ | [-5, -1]⚑ | [-6, -2]⚑ | [-8, -3]⚠ | [-10, -4]⚠ | [8, 14]★ |
 | secular_technology_growth | [6, 16] | [-2, +4]★ | [+2, +8] | [-6, 0]⚑ | [-12, -3]⚑ | [4, 11] |
 | inflation_linked_sovereign | [-2, 1]★ | [1, 4]✓ | [1, 4]✓ | [0, 3]★ | [-1, 2]✓ | [-1, 1]★ |
 | real_estate_equity_income | [5, 9]⚑ | [-6, -1]⚠ | [-10, -4]⚠ | [-3, 2]⚠ | [-10, -3]⚠ | [5, 9]⚑ |
@@ -2415,17 +2455,20 @@ to do later.
     — not eligible for formal §4.1 adoption before March 31, 2027 at the
     earliest. No §4.1 change, no XAR execution this session — HOLD/frozen
     status stands per the hand-off.
-47. [P0] broad_market_equity_international — STATUS UPDATED 2026-08-01
-    (re-evaluation session; §3 log entry same date has full detail, not
-    repeated here). Real T1 Layer 1 anchor established for the first time
-    (AQR 2026 CMA: ~4.5% real, range 4.0-5.0%, cross-checked within ~1pp
-    against Fidelity) — replaces the old unsourced "~1-4%" placeholder.
+47. [P1] broad_market_equity_international — STATUS UPDATED 2026-08-01
+    (re-evaluation session; §3 log entries same date, v1.68/v1.69, have
+    full detail, not repeated here). Real T1 Layer 1 anchor established
+    for the first time (AQR 2026 CMA: ~4.5% real, range 4.0-5.0%, cross-
+    checked within ~1pp against Fidelity) — replaces the old unsourced
+    "~1-4%" placeholder. Downgraded from [P0] to [P1]: the only genuinely
+    money-relevant cells (B/C, ~71% combined weight in the current
+    operating distribution) are logged with concrete proposals awaiting
+    the Sept 30 audit; nothing actionable remains to fast-track.
     Per-cell outcome:
-      - F: [3,8] -> [8,14] proposed, HIGH confidence, READY for adoption
-        with explicit client confirmation — NOT YET ADOPTED. Client asked
-        explicitly whether to adopt F now (an explicit, stated exception)
-        or hold for full-row resolution, per the anti-cherry-picking rule
-        below — awaiting answer. [P0] retained until this is resolved.
+      - F: ADOPTED 2026-08-01 (v1.69), [3,8] -> [8,14], HIGH confidence,
+        client-confirmed same session. VYMI EV -2.24%->-2.13%, COPX
+        +2.76%->+2.79% (both immaterial under current B/C-dominant
+        probabilities).
       - A: [4,9] -> [2,10] proposed, MEDIUM. LOGGED PENDING, next scheduled
         audit (Sept 30, 2026) at the earliest per M16 GUARD.
       - B: [-5,-1] -> [-12,-6] proposed, MEDIUM. LOGGED PENDING, Sept 30
@@ -2446,16 +2489,19 @@ to do later.
         actual 1998 Aug-Oct acute-window EFA/MSCI EAFE return before any
         Layer 3 comparison is attempted — concrete task, not just
         "pending."
-    ANTI-CHERRY-PICKING RULE (client instruction, 2026-08-01): do not adopt
-    F alone while B/C (which carry ~71% combined weight in the current
-    operating scenario distribution, vs. F's 3%) remain open — that would
-    leave the table net-optimistically-biased during the gap. Illustrative
-    hand-computed EV impact (not Python-verified this session — see §3 log
-    calculator_mcp note): adopting F alone moves VYMI's blended EV by only
-    about +0.10pp under current operating probabilities (B/C dominant);
-    the real money-relevant fix is still B/C, both open. Full six-cell
-    illustrative recompute: VYMI -2.24% (current) -> -6.81% (if A/B/C/F
-    all applied, informational only); COPX +2.76% -> +1.07%. Next scheduled
+    ANTI-CHERRY-PICKING CHECK (client instruction, 2026-08-01): raised
+    before adopting F alone, since B/C (~71% combined weight in the
+    current operating distribution, vs. F's 3%) remain open. RESOLVED
+    same session — client declined to hold F ("why wait?"): the check's
+    actual requirement is transparency about a partial resolution (this
+    item), not lockstep adoption of the full row, and B/C's MEDIUM status
+    already blocks their own intra-session adoption regardless of what
+    happens to F. F adopted 2026-08-01 (v1.69) on that basis. Illustrative
+    hand-computed six-cell EV (not Python-verified — see §3 log
+    calculator_mcp note): VYMI -2.24% (pre-session) -> -2.13% (F adopted,
+    actual) -> -6.81% (if A/B/C also applied, informational only, NOT
+    adopted); COPX +2.76% -> +2.79% (actual) -> +1.07% (illustrative).
+    The real money-relevant fix is still B/C, both open. Next scheduled
     audit: Sept 30, 2026.
 
 ---
