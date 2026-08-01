@@ -2474,11 +2474,25 @@ to do later.
       - B: [-5,-1] -> [-12,-6] proposed, MEDIUM. LOGGED PENDING, Sept 30
         audit. Uses the acute-onset 1973/2022 analog (not the later mixed
         decade years) as the more relevant match for this role's current
-        onset-like B character.
+        onset-like B character. CHECKED for a 3rd analog (1990 Iraqi
+        invasion of Kuwait, oil doubled $17->$36-40/bbl, coincided with
+        the 1990-91 US recession) — DISQUALIFIED: EAFE's own 1970-89 vs.
+        1990-2009 annualized return dropped from 15.21%/yr to 4.05%/yr,
+        "a big reason" (per source) being the Japanese asset bubble
+        bursting starting in 1990 — Japan's outsized EAFE weight at the
+        time means any 1990 international-equity reading is dominated by
+        that unrelated structural event, not a clean read on the oil-
+        shock mechanism. Same type of confound BMED's own 1990-recession-
+        confound entry warns about, applied here to reject rather than
+        accept a candidate. Stays at 2 analogs — capped below HIGH by
+        M16's 3+-analog requirement regardless of how tightly the 2
+        converge.
       - C: [-6,-2] -> [-19,-10] proposed, MEDIUM. LOGGED PENDING, Sept 30
         audit. Same acute-vs-grind bifurcation logic as BMED's own C cell,
         resolved here because (unlike BMED) a genuine acute-shock analog
-        exists for this role's current situation.
+        exists for this role's current situation. Same 1990-candidate
+        check and same disqualification applies here (Japan-bubble
+        confound) — stays at 2 analogs.
       - D: NOT revised — genuine unresolved bifurcation (2008 balance-sheet
         recession -41/-43% vs. 2020 policy-buffered V-shaped +7/+8% full
         year). NEXT STEP: need a 3rd analog or a defensible, consistently-
