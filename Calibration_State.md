@@ -2,7 +2,25 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.67  Last updated: July 31, 2026. v1.67: SCHD status corrected
+# Version: 1.68  Last updated: August 1, 2026. v1.68: broad_market_equity_international
+full M16 4-layer review completed (re-evaluation session continuing 2026-07-31's
+preliminary pass). Real T1 institutional Layer 1 anchor established for the first time
+(AQR Jan-2026 CMA, Dec-31-2025 data: Global Dev. ex-US equity 4.9% real, 5-10yr,
+cross-checked within ~1pp against Fidelity's ~4.5-4.9% real-equivalent estimate --
+prior placeholder anchor was an unsourced generic "broad_market ~1-4%" band). Per-cell
+outcome: F revised [3,8]->[8,14] HIGH confidence (3 converging modern-era analogs,
+minor structural adjustment) -- READY, NOT YET ADOPTED pending explicit client
+decision on whether to adopt now or hold for full-row resolution (per client's own
+anti-cherry-picking instruction this session). A/B/C reconciled to MEDIUM-confidence
+proposals (bounded structural adjustments distinguishing acute-shock analogs from
+sustained-grind confounds, same technique as BMED's C revision) -- LOGGED PENDING, not
+adopted, per M16 GUARD. D/E found to have genuine, not-yet-resolvable bifurcations
+(2008 balance-sheet recession vs. 2020 policy-buffered V-shaped recovery for D;
+time-window mismatch between 2008's acute Sep-Nov window and 1998's full-year figure
+for E) -- deferred with concrete next steps, not forced through. Full detail: §3 log
+entry 2026-08-01; §6 item 47 updated same date.
+
+v1.67: SCHD status corrected
 from stale "candidate, not allocated" (it was already a live Primary IRA
 holding, ~5.16%, before this label was ever accurate) to formally ADOPTED —
 core holding of a redesigned Acc4 dividend/AI-bubble-protection sleeve, 35%
@@ -116,6 +134,137 @@ this session, flagged for a future one: AIPO is also held in Primary IRA
 here covered Acc4 only; those two accounts' AIPO exposure is materially
 larger in relative terms and has not yet been reviewed against the same
 PDF-derived thesis.
+
+---
+version: v1.68
+category: broad_market_equity_international full 6-cell M16 review (re-evaluation session
+continuing 2026-07-31's preliminary pass) -- F ready pending client decision, A/B/C logged
+MEDIUM, D/E deferred with concrete next steps
+---
+2026-08-01 - broad_market_equity_international: completed the Layer 3/4 reconciliation
+flagged as unfinished in the 2026-07-31 preliminary pass (see that entry below for full
+L2 historical analog detail, not repeated here).
+
+L1 (NEW this session -- 2026-07-31's "L1" only restated current table values, it was
+not an actual institutional cross-reference): pulled real T1 anchors. AQR Capital Market
+Assumptions, 2026 Issue 1 (Thomas Maloney, Portfolio Solutions Group), data as of
+2025-12-31: "Global Dev. ex US" equity local real return 4.9% (5-10yr horizon), down
+from 5.3% a year earlier -- cap-weighted average of Eurozone/UK/Japan components,
+transparent yield-plus-growth methodology (dividend yield + real EPS growth, no mean-
+reversion assumed). Cross-referenced: Fidelity's non-US developed-equity assumption
+(~7.1% nominal, 20yr horizon, per Morningstar's 2026 CMA roundup) implies ~4.5-4.9%
+real after a ~2.2-2.6% inflation assumption -- within ~0.3pp of AQR. Vanguard's own
+commentary (2026 VEMO) ranks non-US developed equity among its top-3 five-to-10yr
+risk-return profiles but a specific current cited numeric wasn't located this session
+beyond a crowd-sourced ~5.7-7.7% nominal range (Bogleheads-reported, T3, directional
+corroboration only) -- real-equivalent ~4.0-4.4%, roughly 0.5-0.9pp below AQR/Fidelity.
+NET: institutional agreement within ~1pp across the two T1/T2-grade sources (AQR,
+Fidelity-via-Morningstar) -- replaces the old undifferentiated "broad_market ~1-4%"
+placeholder with a materially higher, better-cited anchor of ~4.5% real (range
+4.0-5.0%). Notably this now sits ABOVE AQR's own US-large-cap anchor (3.9% real) --
+consistent with every source's 2026 theme that compressed US richness has pushed
+forward ex-US real return expectations above domestic for the first time in years.
+
+L3/L4 per cell (Layer 2 analogs unchanged from 2026-07-31, see that entry below):
+
+Scenario A: 3 analogs span an enormous range (1991 +12.50%, 2003 +35-39%, 2016
++1.5-3%) -- real dispersion, not institutional-style convergence, because the analogs
+represent different DEGREES of resolution (2003 = decisive war-ending + bull-market
+onset; 2016 = a much weaker commodity-cycle stabilization, arguably a softer proxy for
+this role's specific "war de-escalation" framing but not clearly disqualifiable as an
+analog). Current conservative (4) sits ABOVE even the weakest genuine analog (2016,
+1.5-3) -- the honest, non-cherry-picked move is a modest DOWNWARD revision toward the
+weak-analog reading, not a large upward one that would require discarding 2016 without
+a falsifiable reason. PROPOSED: [4,9] -> [2,10] (upside widened toward 2003's extreme,
+conservative lowered ~2pp toward 2016). Structural adjustment ~2pp, bounded.
+CONFIDENCE: MEDIUM (3 analogs present but dispersion too wide for HIGH's implicit
+tight-convergence bar; institutional agreement satisfied at row level).
+
+Scenario B: 2 analogs (1973 -14.17%, 2022 -14.06%) converge to within 0.11pp -- a
+genuinely striking cross-era match for the ACUTE stagflation-ONSET year specifically.
+"Other decade years mixed" (1975 +37%, 1978 +34%) reflects LATER, sustained-regime
+years of the same 1973-82 episode, not the onset shock -- same acute-vs-sustained-grind
+duality as BMED's own B/C cells. This framework's current B is itself onset/acute in
+character (ongoing Iran/Hormuz war, Fed holding with hawkish dissent against
+decelerating growth -- see Session_Log.md 2026-08-01 entry) rather than a multi-year
+entrenched regime, so the acute-onset analog is the more relevant one, not the later
+mixed years. Structural adjustment: today's international-developed CAPE sits near its
+historical median (AQR, L1 above) vs. richer valuations in other periods -- argues for
+a modest LESS-severe adjustment off the raw -14% analog. PROPOSED: [-5,-1] ->
+[-12,-6] (conservative -5->-12, applying a +2pp structural discount off the -14% raw
+analog for today's non-stretched valuations). Structural adjustment ~2pp, bounded.
+CONFIDENCE: MEDIUM (only 2 analogs, tight convergence, caps below HIGH's 3+ analog
+requirement regardless of how clean the convergence is).
+
+Scenario C: 2 acute-shock analogs converge tightly (1974 -22.15%, 2022 H1 -19.35%,
+~3pp apart); 1979-80 were genuinely positive (+6 to +24%) -- the EXACT same
+acute-shock-vs-non-recessionary-grind bifurcation BMED's own C cell hit (see
+Calibration_State.md §3 2026-06-30 -- "conservative bound for pure non-recessionary C
+is not derivable from a drawdown analog"). Unlike BMED's case, a genuine drawdown
+analog IS available here (1974/2022 H1) because 1979-80's positive-return mechanism
+(sustained second-order oil shock without an acute financial-market panic) is
+different in kind from 1974/2022 H1's acute character -- this session's C reads
+closer to the acute case given the live Hormuz situation. Same valuation-based
+structural adjustment as B (~2-3pp, non-stretched current valuations). PROPOSED:
+[-6,-2] -> [-19,-10] (conservative -6 -> -19). CONFIDENCE: MEDIUM (2 tight analogs,
+same analog-count cap as B).
+
+Scenario D: NOT revised this session -- genuine, unresolved bifurcation. 2008 full
+year -41.61%(EFA)/-43.06%(index) vs. 2020 full year +7.34%/+8.28% (despite a -33.9%
+intra-year crash) are not just different magnitudes but plausibly different MECHANISMS
+(2008 = slow-healing balance-sheet recession; 2020 = liquidity panic met with an
+unprecedented, uniquely fast fiscal/monetary response) -- exactly the kind of
+structural question M16 Layer 3 requires a falsifiable difference for, not an assumed
+one. Discounting 2020 as "doesn't count" without independent support would itself be
+a >3pp structural adjustment dominating the estimate (LOW-confidence territory) and
+would repeat the error the client's own BMED 1990-recession-confound precedent warns
+against (§3 2026-06-30) if done without real justification. NEXT STEP: needs either
+(a) a third D analog to break the tie, or (b) a defensible, consistently-applied
+criterion for classifying deflationary-recession sub-mechanisms (financial-balance-
+sheet vs. policy-buffered-liquidity), not invented ad hoc for this one role. Current
+[-8,-3] stands, flagged likely too mild vs. 2008 but not revisable without that work.
+
+Scenario E: NOT revised this session -- same-shape issue as D, plus a data
+comparability problem not caught on 2026-07-31: the 2008 reading (~-38.2%) is an
+ACUTE sub-year window (Sep15-Nov20), while the 1998 reading (+20.33%) is a FULL
+CALENDAR YEAR -- not like-for-like. 1998's own acute LTCM window (roughly Aug-Oct
+1998) is the correct comparator and was not pulled this session. NEXT STEP: fetch
+EFA/MSCI EAFE returns for the actual 1998 Aug-Oct acute window before any Layer 3
+comparison is attempted -- until then this cell cannot honestly move past its current
+unreviewed state. Current [-10,-4] stands.
+
+Scenario F: 3 modern analogs (1995-2000, 2017-2019, 2023-2024) all positive, all
+clustering 9-11% annualized via direct EFA data -- no bifurcation, no confound
+identified, the cleanest cell of the six. Structural adjustment minimal (<1pp) --
+today's non-stretched valuations arguably support a small upward tilt but nothing
+material. PROPOSED: [3,8] -> [8,14] (conservative raised to the low end of the
+9-11% cluster with a small margin, upside similarly raised). CONFIDENCE: HIGH (3+
+analogs, tight modern-era convergence, institutional agreement satisfied via L1
+above, structural adjustment minor).
+
+Layer 4 (neutral distribution A35/B15/C15/D10/E5/F20, confirmed used -- NOT the
+operating distribution): weighting the six PROPOSED conservative ends above (A=2,
+B=-12, C=-19, D=-8 unchanged, E=-10 unchanged, F=8) gives 0.35(2)+0.15(-12)+
+0.15(-19)+0.10(-8)+0.05(-10)+0.20(8) = 0.70-1.80-2.85-0.80-0.50+1.60 = -3.65.
+Compared to the L1 anchor (~4.5% real, range 4.0-5.0%): gap is ~8.15pp -- still
+outside the 3.0pp PASS band, but a large improvement over 2026-07-31's "double-digit
+gap." DOCUMENT_AND_FLAG per M16 Layer 4 rule, reason (a): D/E's un-revised, likely-
+too-mild current values are dragging the neutral-distribution weighted average down
+without yet reflecting the more-severe true readings those two cells probably need --
+this gap should close further once D/E get their dedicated work, not before.
+
+DISPOSITION: F is HIGH confidence and M16-eligible for intra-session adoption with
+explicit client confirmation. A/B/C are MEDIUM -- LOGGED PENDING per GUARD, not
+adopted regardless of client preference. D/E are explicitly deferred with concrete
+next steps (not just re-logged "pending"). Per client's own instruction this session
+not to adopt only the convenient half of a split finding: F's revision is presented to
+the client for an explicit choice between adopting F now (a deliberate, stated
+exception) or holding all six cells for resolution together at the next full audit --
+either way is a client decision, not assumed here. Full VYMI/COPX EV recompute
+(current vs. illustrative-fully-revised) presented in-session alongside this choice;
+note the calculator_mcp audit cross-check tool was unresponsive this session (two
+4-minute timeouts) so those EV figures are Claude-hand-computed, not Python-verified --
+flagged for re-verification once that server is confirmed responsive again.
 
 ---
 version: v1.67-proposal
@@ -2266,25 +2415,48 @@ to do later.
     — not eligible for formal §4.1 adoption before March 31, 2027 at the
     earliest. No §4.1 change, no XAR execution this session — HOLD/frozen
     status stands per the hand-off.
-47. [P0] broad_market_equity_international — full 6-cell M16 review needed
-    ASAP, not deferred to the next scheduled audit (client instruction,
-    2026-07-31: "I want to do this asap and not wait for the next audit").
-    [P0] rather than [P1] because it is money-relevant now: this role
-    directly drives VYMI (68% weight) and COPX (25% weight) in §11, and
-    VYMI is a core (15% target) holding in the just-adopted Acc4 dividend
-    sleeve. Preliminary L1-L4 pass done 2026-07-31 (§3 log, same date) —
-    real T1/T2 data gathered (direct EFA price history 2001+, MSCI EAFE
-    index annual returns pre-2001) for all six scenarios; four of six
-    cells (B, C, D, E) show real analogs materially more severe on the
-    conservative end than the current v1.0 unaudited baseline, all in the
-    same (more-pessimistic) direction. NOT ADOPTED — Layer 4 neutral-
-    distribution check failed by a wide margin (double-digit pp gap vs.
-    the ~2-4% real long-run anchor), meaning the preliminary conservative
-    ends likely over-weight worst-single-instance severity rather than a
-    genuinely-conservative-but-typical bound. Dedicated re-evaluation
-    session needed to do the reconciliation properly (see hand-off issued
-    same session) before this can reach HIGH confidence and be adopted
-    with client confirmation, per M16 GUARD.
+47. [P0] broad_market_equity_international — STATUS UPDATED 2026-08-01
+    (re-evaluation session; §3 log entry same date has full detail, not
+    repeated here). Real T1 Layer 1 anchor established for the first time
+    (AQR 2026 CMA: ~4.5% real, range 4.0-5.0%, cross-checked within ~1pp
+    against Fidelity) — replaces the old unsourced "~1-4%" placeholder.
+    Per-cell outcome:
+      - F: [3,8] -> [8,14] proposed, HIGH confidence, READY for adoption
+        with explicit client confirmation — NOT YET ADOPTED. Client asked
+        explicitly whether to adopt F now (an explicit, stated exception)
+        or hold for full-row resolution, per the anti-cherry-picking rule
+        below — awaiting answer. [P0] retained until this is resolved.
+      - A: [4,9] -> [2,10] proposed, MEDIUM. LOGGED PENDING, next scheduled
+        audit (Sept 30, 2026) at the earliest per M16 GUARD.
+      - B: [-5,-1] -> [-12,-6] proposed, MEDIUM. LOGGED PENDING, Sept 30
+        audit. Uses the acute-onset 1973/2022 analog (not the later mixed
+        decade years) as the more relevant match for this role's current
+        onset-like B character.
+      - C: [-6,-2] -> [-19,-10] proposed, MEDIUM. LOGGED PENDING, Sept 30
+        audit. Same acute-vs-grind bifurcation logic as BMED's own C cell,
+        resolved here because (unlike BMED) a genuine acute-shock analog
+        exists for this role's current situation.
+      - D: NOT revised — genuine unresolved bifurcation (2008 balance-sheet
+        recession -41/-43% vs. 2020 policy-buffered V-shaped +7/+8% full
+        year). NEXT STEP: need a 3rd analog or a defensible, consistently-
+        applied sub-mechanism classification criterion before this can
+        move — concrete task, not just "pending."
+      - E: NOT revised — 2008 acute-window (-38.2%) vs. 1998 FULL-YEAR
+        (+20.33%) is not a like-for-like comparison. NEXT STEP: fetch the
+        actual 1998 Aug-Oct acute-window EFA/MSCI EAFE return before any
+        Layer 3 comparison is attempted — concrete task, not just
+        "pending."
+    ANTI-CHERRY-PICKING RULE (client instruction, 2026-08-01): do not adopt
+    F alone while B/C (which carry ~71% combined weight in the current
+    operating scenario distribution, vs. F's 3%) remain open — that would
+    leave the table net-optimistically-biased during the gap. Illustrative
+    hand-computed EV impact (not Python-verified this session — see §3 log
+    calculator_mcp note): adopting F alone moves VYMI's blended EV by only
+    about +0.10pp under current operating probabilities (B/C dominant);
+    the real money-relevant fix is still B/C, both open. Full six-cell
+    illustrative recompute: VYMI -2.24% (current) -> -6.81% (if A/B/C/F
+    all applied, informational only); COPX +2.76% -> +1.07%. Next scheduled
+    audit: Sept 30, 2026.
 
 ---
 
