@@ -1,9 +1,9 @@
 # M12 — File Access Protocol
-<!-- Version: Amendment 11 | Updated: see git log -->
+<!-- Version: Amendment 12 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M12_DriveProtocol
-  Version:         Amendment 11
+  Version:         Amendment 12
   Sub-project:     DATA_INTELLIGENCE
   Reason to change: file access sources, write toolchain, or session type rules change.
   Inputs consumed:  (infrastructure — reads and writes framework files; no domain inputs)
@@ -88,6 +88,26 @@ MODULE FileProtocol {
         // objective_type, floor_nominal_loss, concentration_cap,
         // drawdown_tolerance) — the source for advisor_evaluate_allocation()'s
         // per-account scalar parameters.
+        //
+        // ⚠ READ METHOD, confirmed 2026-08-03 (repeat of an earlier-caught
+        // concentration_cap/drawdown_tolerance column-confusion bug —
+        // FRAMEWORK_BACKLOG.md, same symptom, root cause not fixed the first
+        // time): `floor_nominal_loss` in this sheet is a native Google
+        // Sheets checkbox (TRUE/FALSE), not typed text. Google Drive:
+        // read_file_content's natural-language export silently DROPS
+        // checkbox cell values — every column after floor_nominal_loss then
+        // shifts one position left in the flattened text, so what looks
+        // like "...,TARGET_THEN_RETURN,0.4,0.35" is actually
+        // objective_type, [missing FALSE], concentration_cap=0.4,
+        // drawdown_tolerance=0.35. concentration_cap is 0.4 for EVERY
+        // account (uniform); drawdown_tolerance varies (0.35/0.35/0.25/0/
+        // 0.2/0.2) and was the value silently misread as concentration_cap.
+        // ALWAYS use `Google Drive:download_file_content` with
+        // `exportMimeType: "text/csv"` for this file specifically (base64-
+        // decode the result) — never read_file_content's natural-language
+        // mode. No Sheets cell-edit tool is available in this toolset to
+        // fix the checkbox formatting at the source, so this read-method
+        // requirement is the durable fix until one is.
       }
       // All three: Prices live via GOOGLEFINANCE — treat as current at time of
       // fetch. Framework never writes to any Allocation file. Read by Claude

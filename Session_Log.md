@@ -635,11 +635,25 @@ open_triggers:
   unresolved, needs investigation before further ADD conviction
 - 'FLOOR_BREACH: both Relative accounts confirmed again with live Aug 3 data and the
   session''s revised probabilities (A now 27.3%, up from 20.2%) -- IRA -0.75%/Roth
-  -2.02% at current holdings. A tested candidate rotation (AIPO->0, MLPX->20% cap,
-  fund SCHD+VYMI) improves both (-0.48%/-1.58%) but clears neither -- RecalibrationSequence
-  now specced (M13 v1.5) but not implemented'
-- 'NEW: MLPX exceeds the 20% concentration cap in BOTH Relative accounts (25.5% IRA,
-  34.0% Roth) -- pre-existing, surfaced for the first time this session, not yet addressed'
+  -2.02% at current holdings. Two candidate rotations tested (AIPO->0, funding
+  SCHD+VYMI): AIPO-only trim gives -0.55%/-1.86%; additionally trimming MLPX (a
+  discretionary choice, NOT a cap-compliance requirement -- see correction below)
+  gives -0.48%/-1.58%. Neither variant clears either floor -- RecalibrationSequence
+  now specced (M13 v1.5) but not implemented.'
+- 'CORRECTION (2026-08-03, same session, client-caught): the prior entry in this
+  write-back incorrectly stated MLPX breaches a 20% concentration cap in both
+  Relative accounts. The "Allocation - Objectives" file was misread --
+  concentration_cap is 0.4 for every account (uniform), not 0.2; drawdown_tolerance
+  (0.2 for the Relative accounts) was the value silently read into
+  concentration_cap''s slot instead. Root cause: floor_nominal_loss in that sheet is
+  a native Google Sheets checkbox (TRUE/FALSE) and Google Drive:read_file_content''s
+  natural-language export silently drops checkbox cell values, shifting every later
+  column left by one. This is a REPEAT of an earlier-caught instance of the exact
+  same bug (FRAMEWORK_BACKLOG.md). Fix: M12_DriveProtocol.md (Amendment 12) now
+  mandates CSV export via Google Drive:download_file_content for this file, never
+  the natural-language mode. MLPX does NOT breach any concentration cap at its
+  current weight in either Relative account -- the two candidate rotations above
+  were re-run with the corrected 0.4 cap and 0.2 drawdown_tolerance.'
 - 'NEW: AIPO role-repricing warning (-10.62% 30d vs +1.57% broad market, 12.19pp underperformance)
   plus this session''s trend signal read WEAKENING (short -6.31pp, medium -7.62pp)
   -- consistent negative momentum; directive stays HOLD (shadow-only, does not override)'
@@ -667,8 +681,6 @@ open_decisions:
   threshold, 15%), not just worst_scenario; GUARD against presenting a partial improvement
   as RESOLVED. NOT implemented in Python. ENG-24 (closed without this definition existing)
   should be reopened or superseded at the next coding session.'
-- MLPX concentration-cap breach in both Relative accounts -- newly surfaced, not yet
-  addressed; likely folds into RecalibrationSequence's eventual search once implemented.
 - 'Acc4 dividend/AI-bubble redesign: client has begun manually executing the rotation
   -- live Allocation sheet shows SCHD 10%/VYMI 5% targets, partial progress toward
   the v1.67-adopted MLPX25/SCHD35/VYMI15/XAR10/SGOV15 target. Gradual buy-in schedule
@@ -682,7 +694,6 @@ next_session_flags:
   the greedy-vs-LP design choice for real (coding session)'
 - ENG-24 should be reopened or superseded -- closed previously without RecalibrationSequence's
   definition ever existing
-- MLPX concentration-cap breach in Relative IRA/Roth needs a resolution path
 - Relative IRA/Roth floor breach + SCHD/VYMI rotation -- awaiting client decision
   from this session
 - AIPO M07.AutoDisqualify() was assumed transferable from the Acc4 finding but not
