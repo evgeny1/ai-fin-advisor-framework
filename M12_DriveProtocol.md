@@ -92,22 +92,31 @@ MODULE FileProtocol {
         // ⚠ READ METHOD, confirmed 2026-08-03 (repeat of an earlier-caught
         // concentration_cap/drawdown_tolerance column-confusion bug —
         // FRAMEWORK_BACKLOG.md, same symptom, root cause not fixed the first
-        // time): `floor_nominal_loss` in this sheet is a native Google
-        // Sheets checkbox (TRUE/FALSE), not typed text. Google Drive:
-        // read_file_content's natural-language export silently DROPS
-        // checkbox cell values — every column after floor_nominal_loss then
-        // shifts one position left in the flattened text, so what looks
-        // like "...,TARGET_THEN_RETURN,0.4,0.35" is actually
-        // objective_type, [missing FALSE], concentration_cap=0.4,
-        // drawdown_tolerance=0.35. concentration_cap is 0.4 for EVERY
-        // account (uniform); drawdown_tolerance varies (0.35/0.35/0.25/0/
-        // 0.2/0.2) and was the value silently misread as concentration_cap.
+        // time): `floor_nominal_loss` in this sheet is a plain TEXT cell
+        // containing the literal string "TRUE"/"FALSE" (client-confirmed
+        // 2026-08-03 — NOT a checkbox; an earlier version of this note
+        // wrongly guessed checkbox formatting as the mechanism without
+        // verifying it, which was itself a mistake worth flagging: the
+        // failure mode below was confirmed by testing, the checkbox
+        // explanation for WHY it happens was not, and got stated as fact
+        // anyway). Google Drive:read_file_content's natural-language export
+        // still silently DROPS this specific cell's value regardless of the
+        // exact reason — every column after floor_nominal_loss then shifts
+        // one position left in the flattened text, so what looks like
+        // "...,TARGET_THEN_RETURN,0.4,0.35" is actually objective_type,
+        // [missing FALSE], concentration_cap=0.4, drawdown_tolerance=0.35.
+        // concentration_cap is 0.4 for EVERY account (uniform);
+        // drawdown_tolerance varies (0.35/0.35/0.25/0/0.2/0.2) and was the
+        // value silently misread as concentration_cap. Mechanism behind the
+        // drop is UNCONFIRMED — possibly the literal string "FALSE"
+        // specifically being treated as an empty/suppressible value by the
+        // natural-language renderer, but that is a guess, not verified;
+        // don't restate it as fact either.
         // ALWAYS use `Google Drive:download_file_content` with
         // `exportMimeType: "text/csv"` for this file specifically (base64-
         // decode the result) — never read_file_content's natural-language
-        // mode. No Sheets cell-edit tool is available in this toolset to
-        // fix the checkbox formatting at the source, so this read-method
-        // requirement is the durable fix until one is.
+        // mode. This read-method requirement is the durable fix regardless
+        // of the unresolved mechanism question.
       }
       // All three: Prices live via GOOGLEFINANCE — treat as current at time of
       // fetch. Framework never writes to any Allocation file. Read by Claude

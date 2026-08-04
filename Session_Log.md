@@ -645,13 +645,16 @@ open_triggers:
   Relative accounts. The "Allocation - Objectives" file was misread --
   concentration_cap is 0.4 for every account (uniform), not 0.2; drawdown_tolerance
   (0.2 for the Relative accounts) was the value silently read into
-  concentration_cap''s slot instead. Root cause: floor_nominal_loss in that sheet is
-  a native Google Sheets checkbox (TRUE/FALSE) and Google Drive:read_file_content''s
-  natural-language export silently drops checkbox cell values, shifting every later
-  column left by one. This is a REPEAT of an earlier-caught instance of the exact
-  same bug (FRAMEWORK_BACKLOG.md). Fix: M12_DriveProtocol.md (Amendment 12) now
-  mandates CSV export via Google Drive:download_file_content for this file, never
-  the natural-language mode. MLPX does NOT breach any concentration cap at its
+  concentration_cap''s slot instead. Google Drive:read_file_content''s
+  natural-language export silently drops floor_nominal_loss''s value, shifting
+  every later column left by one -- CORRECTED SAME SESSION: floor_nominal_loss is
+  a plain TEXT cell ("TRUE"/"FALSE"), not a checkbox as an earlier version of this
+  note claimed without verifying it first; the exact rendering-pipeline reason for
+  the drop remains unconfirmed, only the failure mode and the fix are. This is a
+  REPEAT of an earlier-caught instance of the same underlying bug
+  (FRAMEWORK_BACKLOG.md). Fix: M12_DriveProtocol.md (Amendment 12) now mandates CSV
+  export via Google Drive:download_file_content for this file, never the
+  natural-language mode. MLPX does NOT breach any concentration cap at its
   current weight in either Relative account -- the two candidate rotations above
   were re-run with the corrected 0.4 cap and 0.2 drawdown_tolerance.'
 - 'NEW: AIPO role-repricing warning (-10.62% 30d vs +1.57% broad market, 12.19pp underperformance)
