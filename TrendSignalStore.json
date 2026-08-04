@@ -109,6 +109,18 @@
       "price_at_signal": 28.45,
       "quality_flags": [],
       "rs_signal": "WEAKENING"
+    },
+    "2026-08-03": {
+      "comparator_detail": "0.671xPAVE+0.195xQQQM+0.134xURA (renormalized, PDT+UNCLASSIFIED excluded)",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "-7.62pp",
+      "own_short_dir": "-6.31pp",
+      "price_at_signal": 28.63,
+      "quality_flags": [],
+      "rs_signal": "WEAKENING"
     }
   },
   "COPX": {
@@ -219,6 +231,18 @@
       "own_medium_dir": "-4.56pp",
       "own_short_dir": "+2.62pp",
       "price_at_signal": 79.5,
+      "quality_flags": [],
+      "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-08-03": {
+      "comparator_detail": "0.75xHG=F+0.25xVEA",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "-4.91pp",
+      "own_short_dir": "+3.39pp",
+      "price_at_signal": 78.86,
       "quality_flags": [],
       "rs_signal": "INCONCLUSIVE"
     }
@@ -357,6 +381,21 @@
         "DBMF: macro confirmation gate computed no clear agreement this session"
       ],
       "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-08-03": {
+      "comparator_detail": "own-trend confirmed by DXY direction + 4-market breadth (>=3/4 trending)",
+      "comparator_mode": "own_trend_confirmed",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": null,
+      "own_short_dir": null,
+      "price_at_signal": 30.92,
+      "quality_flags": [
+        "DBMF: own short-window trend indeterminate \u2014 breadth check skipped",
+        "DBMF: macro confirmation gate computed no clear agreement this session"
+      ],
+      "rs_signal": "INCONCLUSIVE"
     }
   },
   "MAGS": {
@@ -467,6 +506,18 @@
       "own_medium_dir": "-7.40pp",
       "own_short_dir": "+6.55pp",
       "price_at_signal": 63.92,
+      "quality_flags": [],
+      "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-08-03": {
+      "comparator_detail": "QQQM",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "-3.59pp",
+      "own_short_dir": "+5.31pp",
+      "price_at_signal": 65.96,
       "quality_flags": [],
       "rs_signal": "INCONCLUSIVE"
     }
@@ -602,6 +653,20 @@
         "MLPX: HY_OAS confirmation approximated from Session_Log.md \u00a77 session cadence, not a true fixed-trading-day lookback \u2014 known v1 simplification"
       ],
       "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-08-03": {
+      "comparator_detail": "BZ=F return-spread, HY_OAS confirmation gate",
+      "comparator_mode": "hybrid",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "+20.94pp",
+      "own_short_dir": "-22.45pp",
+      "price_at_signal": 75.08,
+      "quality_flags": [
+        "MLPX: HY_OAS confirmation approximated from Session_Log.md \u00a77 session cadence, not a true fixed-trading-day lookback \u2014 known v1 simplification"
+      ],
+      "rs_signal": "INCONCLUSIVE"
     }
   },
   "SGOL": {
@@ -730,6 +795,21 @@
       "own_medium_dir": "down",
       "own_short_dir": "up",
       "price_at_signal": 39.14,
+      "quality_flags": [
+        "SGOL: real-yield/DXY agreement gate computed no clear agreement this session",
+        "SGOL: macro confirmation gate computed no clear agreement this session"
+      ],
+      "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-08-03": {
+      "comparator_detail": "own-trend confirmed by REAL_YIELD_10Y_TREND + DXY agreement gate",
+      "comparator_mode": "own_trend_confirmed",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "down",
+      "own_short_dir": null,
+      "price_at_signal": 38.57,
       "quality_flags": [
         "SGOL: real-yield/DXY agreement gate computed no clear agreement this session",
         "SGOL: macro confirmation gate computed no clear agreement this session"
@@ -868,6 +948,21 @@
         "SIVR: macro confirmation gate computed no clear agreement this session"
       ],
       "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-08-03": {
+      "comparator_detail": "own-trend confirmed by REAL_YIELD_10Y_TREND + DXY agreement gate (v1 simplification, same as SGOL)",
+      "comparator_mode": "own_trend_confirmed",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "down",
+      "own_short_dir": "down",
+      "price_at_signal": 55.05,
+      "quality_flags": [
+        "SIVR: real-yield/DXY agreement gate computed no clear agreement this session",
+        "SIVR: macro confirmation gate computed no clear agreement this session"
+      ],
+      "rs_signal": "INCONCLUSIVE"
     }
   },
   "XAR": {
@@ -980,7 +1075,19 @@
       "price_at_signal": 262.83,
       "quality_flags": [],
       "rs_signal": "WEAKENING"
+    },
+    "2026-08-03": {
+      "comparator_detail": "0.5xITA+0.5xPPA",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "-5.13pp",
+      "own_short_dir": "-5.37pp",
+      "price_at_signal": 264.86,
+      "quality_flags": [],
+      "rs_signal": "WEAKENING"
     }
   },
-  "last_updated": "2026-07-31"
+  "last_updated": "2026-08-03"
 }
