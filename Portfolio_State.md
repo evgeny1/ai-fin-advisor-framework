@@ -1,25 +1,29 @@
-# Portfolio State — 2026-08-01
+# Portfolio State — 2026-08-03
 
-**Calibration State:** 1.66
-**Scenario probabilities:** A=20% / B=40% / C=30% / D=3% / E=3% / F=3%
-**Primary driver:** Real economic data (Q2 GDP deceleration to 1.5%, June CPI deceleration to 3.5% YoY, June payrolls +57k) diverged from the oil-driven inflation-acceleration narrative that drove C higher last session; Fed held 9-3 with hawkish dissent amid the ongoing, unresolved Iran/Hormuz war (Senate blocked NDAA 50-46 and reconciliation funding remains uncertain -- correction to prior tracking, which had assumed House passage implied Senate progress). Net effect: B rose to dominant (40.4%) on the Fed's hold-with-constraint stance against decelerating growth; C eased to 30.3% on the absence of confirmed CPI reacceleration; A rose to 20.2% on calm credit plus resilient GDP/Fed language -- crossing the floor probability threshold and triggering FLOOR_BREACH on both Relative accounts even at their already-planned rebalance targets.
+**Calibration State:** 1.69
+**Scenario probabilities:** A=27% / B=36% / C=27% / D=3% / E=3% / F=3%
+**Primary driver:** Fed's hawkish July 29 hold (9-3, dot plot shifted to a 3.8% year-end median vs the current 3.5-3.75% range, cuts pushed to 2027-28) kept B's constraint mechanism intact. Iran/Hormuz: a planned major US-Israeli strike (discussed at the July 31 Camp David meeting, timed before Aug 3 market open) was cancelled hours before execution, with negotiations announced as "imminent" -- Brent fell 6.87% same day. Scored conservatively as still-active conflict (chokepoint check unchanged at 2, no confirmed de-escalation event), given the extensive pattern this year of announced deals/pauses that didn't hold (June 14 MoU broke down in July after Iran struck 3 vessels). Net effect: A rose materially (20.2%->27.3%) on the calmer tape; C eased (30.3%->27.3%) as Brent remains 23.7% below its trigger with no CPI reacceleration confirmed; B eased slightly (40.4%->36.4%) but stays dominant. No new CPI/GDP/payrolls prints since last session -- July Employment (Aug 7) and July CPI (Aug 12) still pending.
 
 ## Open Triggers
-- Iran/Hormuz war ongoing, no de-escalation; Senate blocked NDAA (50-46) and reconciliation funding remains uncertain -- correction to prior tracking which assumed House passage implied Senate progress toward signature
-- July CPI (Aug 12) and July Employment Situation (Aug 7) are key tests of whether June's deceleration (CPI 4.2%->3.5% YoY, payrolls to +57k) persists or reverses
-- China NBS Manufacturing PMI printed 49.2 (July, back into contraction from 50.3) -- watch August print; still >=49 sustaining threshold for COPX Sec13 this month
-- DBMF Sec13 thesis-sustaining condition FAILED this session (all 4 tracked comparator markets in mean-reversion 4+ weeks) -- distinct from the already-fixed ENG-68 data bug; needs investigation before further ADD conviction
-- FLOOR_BREACH: both Relative accounts (IRA ...469, Roth ...466) breach floor under Scenario A (20.2% prob) even at already-planned rebalance targets (worst-case -1.01%/-1.07%) -- Floor Defense Guard design is now urgent, not just a backlog item
-- CASH sub-position missing from Sec11 causing minor per-call classification errors in Relative accounts and Acc4 (immaterial to weight, <0.02%) -- coding session item
-- Hyperscaler AI capex guidance intact/raised this week (Microsoft maintained, Meta/Amazon/Alphabet raised) -- relevant given AIPO is still held in Primary IRA/Roth
+- Iran/Hormuz: planned major strike cancelled Aug 2-3, negotiations announced as imminent, Brent -6.87% same day -- NOT scored as confirmed de-escalation given this year's repeated pattern of announced-then-broken deals (June 14 MoU, multiple threatened-then-walked-back strikes per AP reporting Aug 2-3); chokepoint still verified active (IMO-confirmed seafarer casualties, ongoing vessel attacks)
+- July Employment Situation (Aug 7) and July CPI (Aug 12) still pending -- key tests of whether June's deceleration (CPI 4.2%->3.5% YoY, payrolls to +57k) persists or reverses
+- China NBS Manufacturing PMI 49.2 (July) -- still >=49 sustaining threshold for COPX Sec13; watch August print
+- DBMF Sec13 thesis-sustaining condition still FAILED; this session's trend signal read INCONCLUSIVE with 'macro confirmation gate computed no clear agreement' -- unresolved, needs investigation before further ADD conviction
+- FLOOR_BREACH: both Relative accounts confirmed again with live Aug 3 data and the session's revised probabilities (A now 27.3%, up from 20.2%) -- IRA -0.75%/Roth -2.02% at current holdings. A tested candidate rotation (AIPO->0, MLPX->20% cap, fund SCHD+VYMI) improves both (-0.48%/-1.58%) but clears neither -- RecalibrationSequence now specced (M13 v1.5) but not implemented
+- NEW: MLPX exceeds the 20% concentration cap in BOTH Relative accounts (25.5% IRA, 34.0% Roth) -- pre-existing, surfaced for the first time this session, not yet addressed
+- NEW: AIPO role-repricing warning (-10.62% 30d vs +1.57% broad market, 12.19pp underperformance) plus this session's trend signal read WEAKENING (short -6.31pp, medium -7.62pp) -- consistent negative momentum; directive stays HOLD (shadow-only, does not override)
+- XAR trend signal read WEAKENING (short -5.37pp, medium -5.13pp) this session -- separate matter from the GAP-17 sign-calibration issue, logged alongside it for visibility
+- CASH sub-position missing from Sec11 -- coding session item, immaterial to weight
+- Hyperscaler AI capex guidance intact/raised -- relevant given AIPO still held in Primary IRA/Roth
 
 ## Open Decisions
-- Relative IRA/Roth rebalances: still pending execution AND now complicated by the floor breach finding -- planned targets don't clear the floor either; needs Floor Defense Guard design before further action, not just staged-vs-lump-sum timing
-- Acc4 dividend/AI-bubble-protection redesign: ADOPTED this session -- target MLPX 25% / SCHD 35% / VYMI 15% / XAR 10% / SGOV 15%, replacing AIPO/DBMF/COPX/RSP entirely. Gradual buy-in schedule to be set in next session per client request.
-- AIPO exposure NOT yet addressed in Primary IRA (~13.28%) or Primary Roth (~23.25%) -- the AI-bubble PDF thesis and AutoDisqualify finding were applied to Acc4 only so far; these two accounts carry proportionally larger AIPO weight and haven't been reviewed
-- DBMF/MLPX/SGOV 40/40/20 simplification for Primary IRA/Roth/Acc4 -- status unclear now that Acc4 is being redesigned around the dividend sleeve instead; needs re-evaluation, may be superseded
-- XAR GAP-17 -- still gated to March 2027 audit, unchanged
-- SCHD and VYMI formally adopted in Sec11 this session (v1.67) -- re-evaluate whether other accounts (Primary IRA/Roth, Acc3) would benefit from the same dividend-sleeve logic
-- broad_market_equity_international: preliminary M16 4-layer review completed this session (real data, all six scenarios) but NOT adopted -- Layer 4 neutral-distribution check failed by a wide margin, meaning the naive worst-instance conservative ends over-weight tail severity. Logged as Sec6 item 47 [P0] per client's explicit instruction to fast-track rather than wait for the next scheduled audit. A dedicated re-evaluation session hand-off was drafted and issued this session, pre-loaded with all gathered data, ready to run.
+- broad_market_equity_international: Scenario F ADOPTED this session (v1.69) [3,8]->[8,14], HIGH confidence, client-confirmed. A/B/C reconciled to MEDIUM proposals ([2,10]/[-12,-6]/[-19,-10]) and LOGGED PENDING the Sept 30 audit per M16 GUARD -- not adopted. D/E explicitly deferred with concrete next steps (D needs a 3rd analog or a defensible balance-sheet-recession vs policy-buffered-panic criterion; E needs the actual 1998 Aug-Oct acute-window EFA/MSCI EAFE return, not the full-year figure). A 1990 Gulf War 3rd-analog candidate for B/C was checked and disqualified (EAFE dominated by the Japan asset-bubble collapse that year, not the oil shock -- confound, logged to Sec6 item 47).
+- Relative IRA/Roth SCHD/VYMI rotation: tested, not executed. Improves but does not clear the floor breach in either account. Client asked to choose between executing the partial-improvement version now (tracked as a known residual, same as the pre-existing breach) or holding until RecalibrationSequence exists -- undecided as of this write-back.
+- RecalibrationSequence: SPECCED this session (M13_GrowthObjectives.md v1.5) -- greedy iterative reallocation searching ALL qualifying scenarios simultaneously (Sec4.4 threshold, 15%), not just worst_scenario; GUARD against presenting a partial improvement as RESOLVED. NOT implemented in Python. ENG-24 (closed without this definition existing) should be reopened or superseded at the next coding session.
+- MLPX concentration-cap breach in both Relative accounts -- newly surfaced, not yet addressed; likely folds into RecalibrationSequence's eventual search once implemented.
+- Acc4 dividend/AI-bubble redesign: client has begun manually executing the rotation -- live Allocation sheet shows SCHD 10%/VYMI 5% targets, partial progress toward the v1.67-adopted MLPX25/SCHD35/VYMI15/XAR10/SGOV15 target. Gradual buy-in schedule still not formally set.
+- AIPO exposure in Primary IRA (~13.28%) and Primary Roth (~23.25%) still not reviewed against the AI-bubble PDF thesis -- Acc4-only so far.
+- SCHD/VYMI dividend-sleeve logic still not evaluated for Primary IRA/Roth or Acc3.
+- XAR GAP-17 -- unchanged, still gated to March 2027 audit.
 
 _Generated via MCP (Pattern B — Claude app)._
