@@ -1,9 +1,9 @@
 # M13 — Growth Objectives
-<!-- Version: 1.4 | Updated: see git log -->
+<!-- Version: 1.5 | Updated: see git log -->
 
 <!-- MODULE MANIFEST
   ID:              M13_GrowthObjectives
-  Version:         1.4
+  Version:         1.5
   Sub-project:     PORTFOLIO_ADVISOR
   Reason to change: account objective logic, feasibility methodology, or recalibration sequence changes.
                     Return table values: go to CALIBRATION_STATE §4 only — not here.
@@ -132,6 +132,142 @@ MODULE GrowthObjectives {
   //   PRESERVATION        — feasible iff portfolio_return >= 0; failure fires
   //                         RecalibrationSequence at FLOOR_PROTECTION priority
   // @see python/advisor/portfolio/allocation.py feasibility_check()
+
+  // ─── RECALIBRATION SEQUENCE ──────────────────────────────────────────────
+  // SPEC ONLY, added 2026-08-03 (re-evaluation/ad-hoc session, client-drafted
+  // via chat) -- NO PYTHON IMPLEMENTATION. FeasibilityCheck has referenced
+  // "fires RecalibrationSequence" by name since this file's earliest version
+  // without this function ever being defined; ENG-24 (CLOSED) noted "no
+  // Python implementation -- still 100% manual" but never wrote down what
+  // "manual" means step by step either. This block is that missing
+  // definition. ("Floor Defense Guard" in Session_Log.md/Portfolio_State.md
+  // open items 2026-07-31 onward was informal session shorthand for this
+  // same gap -- not a separate thing, and not itself ever specified anywhere
+  // before this entry.)
+  //
+  // Distinguish carefully from the per-instrument "floor" already computed
+  // by ComputeFloor() (§4.4 Base floor / Minimum floor -- a REDUCE_TO_MIN
+  // resting point for ONE instrument). RecalibrationSequence operates on the
+  // OTHER floor concept: the account-level §4.4 floor_nominal_loss_probability_
+  // threshold (currently 15%, CALIBRATION_DATED) -- no nominal portfolio loss
+  // allowed in any scenario at or above that probability.
+
+  FUNCTION RecalibrationSequence(account, current_weights, breach) {
+
+    REQUIRE: breach.floor_breached == true
+    REQUIRE: account.objective_type IN [FLOOR_THEN_RETURN, PRESERVATION]
+
+    // STEP 1 -- qualifying constraint set
+    // breach.worst_scenario is a DIAGNOSTIC (the single worst-return
+    // qualifying scenario) -- it is NOT the full constraint set. Every
+    // scenario at or above the threshold must independently clear zero.
+    // Confirmed live 2026-08-03: at that session's operating probabilities
+    // (A=27.3/B=36.4/C=27.3/D=E=F=3), THREE scenarios (A, B, C) cleared the
+    // 15% bar simultaneously on both Relative accounts, but
+    // advisor_evaluate_allocation() only ever surfaced worst_scenario "A" --
+    // B and C's individual portfolio returns were never actually checked
+    // against zero in that session. This is exactly the gap this step
+    // closes.
+    Q = { s IN SCENARIOS : prob(s) >= CALIBRATION_STATE.§4.4.
+          floor_nominal_loss_probability_threshold }
+
+    // STEP 2 -- eligible universe
+    // U = current holdings, plus any instrument already ADOPTED in §11 for
+    // a role this account is permitted to hold (do not introduce a
+    // candidate ticker here that hasn't cleared M07.AutoDisqualify() --
+    // re-check existing holdings too, not just new candidates, since
+    // eligibility metrics can change session to session; @see "How to make
+    // a recommendation" in Project_Instructions_MCP.md).
+    U = tickers(current_weights) UNION AdoptedCandidatesForAccount(account)
+
+    // STEP 3 -- greedy iterative reallocation (primary method)
+    // Full LP (scipy.optimize.linprog over the same constraints) was
+    // considered and set aside for v1: this framework's own bias throughout
+    // (M06.SimplicityTest, transparent step-by-step procedures everywhere
+    // else) favors an auditable, one-move-at-a-time search whose
+    // intermediate states can be logged and reviewed, over an opaque
+    // solver call. Revisit LP as a v2 upgrade path if greedy search proves
+    // too slow or gets stuck short of a solution the LP relaxation would
+    // find (a real risk -- greedy is not guaranteed optimal or even
+    // complete). Track that comparison as its own coding-session item, not
+    // decided finally here.
+    //
+    // reference = current_weights (deviation-minimization anchor -- prefer
+    // the smallest total turnover that clears the floor, not the
+    // highest-return solution; turnover has tax/transaction-cost
+    // consequences this function does not otherwise price in)
+    //
+    // bounded_step = 2pp per iteration (CALIBRATION_DATED -- placeholder,
+    // needs a real value set at implementation time)
+    //
+    // WHILE NOT (ALL s IN Q: PortfolioReturn(w, s) >= 0) AND U has untried
+    // moves:
+    //   worst = ARGMIN_{s IN Q} PortfolioReturn(w, s)
+    //   donor = ARGMIN_{i IN U : w[i] > ComputeFloor(i)} r[i][worst]
+    //           // worst performer under the currently-binding scenario,
+    //           // above its OWN per-instrument floor -- never trim an
+    //           // instrument below its own ComputeFloor() point inside
+    //           // this search; if every instrument is already at its
+    //           // floor, that instrument drops out of the donor pool
+    //   receiver = ARGMAX_{i IN U : w[i] < concentration_cap} r[i][worst]
+    //           // best performer under the binding scenario, below its cap
+    //   step = MIN(donor.available_weight, receiver.headroom_to_cap,
+    //              bounded_step)
+    //   move `step` from donor to receiver
+    //   recompute PortfolioReturn(w, s) for ALL s IN Q via
+    //   M15.blendedScenarioReturn() -- not just the previously-worst one;
+    //   a move that fixes one scenario can push a different qualifying
+    //   scenario negative
+
+    // STEP 4 -- outcome
+    // IF ALL s IN Q: PortfolioReturn(w, s) >= 0:
+    //   RETURN { status: RESOLVED, proposed_allocations: w,
+    //            per_scenario_returns: {s: PortfolioReturn(w,s) for s in Q},
+    //            iterations, tickers_touched }
+    // ELSE:
+    //   RETURN { status: NO_SOLUTION_IN_UNIVERSE,
+    //            best_attempt: w, remaining_shortfall_pp,
+    //            per_scenario_returns: {s: PortfolioReturn(w,s) for s in Q},
+    //            message: "No reallocation within the current §11-eligible
+    //                      universe clears the floor across all qualifying
+    //                      scenarios. Options: (a) external cash
+    //                      contribution; (b) revisit
+    //                      floor_nominal_loss_probability_threshold or
+    //                      objective_type itself with the client -- a
+    //                      calibration/objective question, not something
+    //                      this function should silently work around; (c)
+    //                      source a new instrument/role candidate via
+    //                      M07.AutoDisqualify() + M16 calibration." }
+
+    GUARD RecalibrationOutputHandling {
+      NEVER: treat a RESOLVED result as authorization to execute -- output
+             is a CANDIDATE proposed_allocations only. Still routes through
+             the full "How to make a recommendation" chain (M06.SimplicityTest,
+             M07.AutoDisqualify on any newly-introduced ticker,
+             M06.TaxPlacement, M06.HoldJustification if applicable) and
+             REQUIRES explicit client confirmation before any trade.
+      NEVER: report a partial improvement (worst_return_pct less negative
+             but still < 0 for any s IN Q) as RESOLVED, or elide the
+             RESOLVED/NO_SOLUTION_IN_UNIVERSE distinction in a briefing or
+             chat response. This is not a hypothetical failure mode -- it is
+             exactly what happened in the 2026-08-03 session, where a
+             directionally-helpful hand-tested reallocation (floor breach
+             -0.75%->-0.48% IRA, -2.02%->-1.58% Roth) was presented without
+             a status flag distinguishing "improved" from "cleared," and
+             both accounts in fact stayed floor_breached=true throughout.
+      ALWAYS: report the FULL per_scenario_returns set for Q, not just
+              whichever scenario was worst before the search started.
+    }
+
+    RETURN
+  }
+  // @see python/advisor/portfolio/allocation.py -- NOT YET IMPLEMENTED;
+  // wiring this in (plus the Step 3 greedy-vs-LP decision) is a dedicated
+  // coding-session item, not something to build inside an advisory session.
+  // Suggest opening as a new FRAMEWORK_BACKLOG.md ENG item at next coding
+  // session (ENG-24 should be reopened or superseded -- it was closed
+  // without this definition existing, which is the actual gap).
+
 
   // ─── PASSIVE MANDATE ABSENT WARNING ─────────────────────────────────────
   // SUPERSEDED (confirmed during ENG-2 module necessity review, 2026-06-17; wiring
