@@ -378,6 +378,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 
 | ID | Status | Severity | Category | Title |
 |---|---|---|---|---|
+| ENG-71 | CLOSED 2026-08-07 | HIGH | bug | _tool_evaluate_trend_signal() hardcoded held_tickers to TREND_SIGNAL_CONFIG's own key set instead of deriving from §11.3 non-candidate instruments -- violated README §5 design principle 4 (never hardcode instrument tickers in code); confirmed real-world impact: SIVR/COPX/MAGS kept getting evaluated after being fully exited from the live portfolio |
 | ENG-48 | CLOSED 2026-07-14 | HIGH | bug | advisor_write_back's 90s safety-timeout races its own actual completion time — reports TIMEOUT while succeeding server-side |
 | ENG-49 | CLOSED 2026-07-26 | HIGH | bug | advisor_write_back TIMEOUT with a genuinely incomplete server-side operation — per-step progress instrumentation (.write_back_progress.json, gitignored) now records every step boundary, and a genuine TIMEOUT response carries the last-reached step + triage note directly, replacing the manual git status/git diff forensic pass |
 | ENG-50 | OPEN | HIGH | architecture | V4: Trend/Rotation Signal Layer — deterministic price/relative-strength module, additive to scenario engine, shadow-mode trial before any authority decision |
@@ -452,6 +453,34 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 ---
 
 ## Part 1 — Engineering Items
+
+### ENG-71 -- _tool_evaluate_trend_signal() hardcoded held_tickers instead of deriving from §11.3
+<!-- ITEM
+Status:    CLOSED
+Severity:  HIGH
+Category:  bug
+Opened:    2026-08-07
+Closed:    2026-08-07 (same-day advisory session -- caught live, fixed same session)
+Area:      python/advisor/mcp_server.py (_tool_evaluate_trend_signal), Instrument_Classification.md §11.3/§11.4
+Related:   ENG-50/ENG-55 (the trend/rotation signal layer this belongs to), README §5 design principle 4 ("never hardcode instrument tickers... in code or module files") and §5.2 (open/closed principle)
+-->
+
+**Description:** Live advisory session, 2026-08-07. Client reported having fully exited SIVR, COPX, and MAGS positions, and asked why `advisor_evaluate_trend_signal()` kept computing signals for tickers no longer held. Traced via the codebase-memory-mcp call graph to `mcp_server.py`'s `_tool_evaluate_trend_signal()`:
+
+```python
+held_tickers = list(TREND_SIGNAL_CONFIG.keys())
+```
+
+`TREND_SIGNAL_CONFIG` (in `analysis/trend_signal.py`) is a fixed dict of the 8 ENG-55-scoped comparator formulas (MLPX, DBMF, XAR, AIPO, COPX, SGOL, SIVR, MAGS) -- a legitimate place to store *how* to evaluate each of those tickers, but never intended as a claim about which of them are *currently held*. The M19 thesis-condition call earlier in the same file (`evaluate_thesis_conditions`) already derives `held_tickers` correctly: `[t for t, e in cal.instruments.items() if not e.is_candidate]` -- i.e. from Instrument_Classification.md §11.3 (non-candidate = actively allocated) via the real parser (`config/calibration.py`'s `_parse_instruments()`, which sets `is_candidate` purely from which of §11.3/§11.4 a `#### TICKER` block sits under). The trend-signal tool never used this pattern and instead enumerated its own fixed key set, so a ticker stayed "in scope" for trend evaluation indefinitely after being fully exited, regardless of what the Allocation sheets or Instrument_Classification.md actually said.
+
+**Live impact this session:** SIVR, COPX, and MAGS were still being fetched, evaluated, and written to TrendSignalStore.json every session despite zero shares held in any of the six accounts -- confirmed by cross-checking the live Allocation sheets against `held_tickers` output. No incorrect EV/allocation numbers resulted (blendedScenarioReturn()/FeasibilityCheck() are gated separately and correctly exclude non-candidate instruments), but the shadow-mode trial's data was accumulating signal history for positions that no longer existed, and the client-facing briefing was surfacing WEAKENING/STRENGTHENING reads for instruments with no bearing on the actual portfolio.
+
+**Resolution (2026-08-07, same session):** Changed `held_tickers` in `_tool_evaluate_trend_signal()` to the same derivation the M19 call already uses: `[t for t, e in cal.instruments.items() if not e.is_candidate]`. `TREND_SIGNAL_CONFIG.get(ticker)`'s existing `None` skip still naturally limits actual evaluation to the ENG-55-scoped instruments; this only fixes which of those are in scope for a given session. Also updated Instrument_Classification.md: moved SIVR, COPX, and MAGS §11.3 entries to §11.4 (each annotated `EXITED (2026-08-08)`, distinct from §11.4's other never-yet-purchased candidates), retaining their full classification detail for blendedScenarioReturn() continuity if re-entered later, per the precedent already set for VTI's earlier elimination. DBMF was deliberately left untouched -- client described a partial exit verbally, but the Allocation sheets still showed the full position at the time of this fix, and framework state was updated to match the sheets (source of truth), not the unconfirmed verbal description.
+
+Two existing tests had hardcoded 8-ticker-set assertions that depended on the live Instrument_Classification.md content (`test_mcp/test_evaluate_trend_signal_cli.py::test_json_file_input_runs_end_to_end`, `test_mcp/test_pattern_b_pipeline.py::test_trend_signal_completes_after_scoring`) -- both updated to the new 5-ticker set. Added one new regression test (`test_evaluate_trend_signal_cli.py::test_candidate_instrument_excluded_from_held_tickers`) that doesn't depend on today's specific portfolio state: it moves AIPO into §11.4 within an isolated copy and asserts it drops out of the output, proving the derivation mechanism itself rather than just today's snapshot. Full suite: 997 passed / 46 skipped, 0 failures.
+
+No `Project_Instructions_MCP.md` update needed (README §9) -- the tool's name, parameters, and return shape are unchanged; only the internal `held_tickers` derivation logic changed.
+
 
 ### ENG-70 -- holdings_30d_returns systematically wrong for SGOL/SIVR (both runs, not a random flip)
 <!-- ITEM

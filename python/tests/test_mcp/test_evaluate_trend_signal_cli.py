@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import sys
 from datetime import datetime
 
@@ -125,7 +126,11 @@ def test_json_file_input_runs_end_to_end(tmp_path, isolated_framework,
     out = json.loads(capsys.readouterr().out)
     assert out["status"] == "OK", f"CLI fallback failed: {out}"
     tickers = {s["ticker"] for s in out["trend_signals"]}
-    assert tickers == {"MLPX", "DBMF", "XAR", "AIPO", "COPX", "SGOL", "SIVR", "MAGS"}
+    # ENG-71: held_tickers now derives from §11.3 non-candidate instruments,
+    # not TREND_SIGNAL_CONFIG's fixed key set — SIVR/COPX/MAGS moved to
+    # §11.4 (exited) as of this fix, so only these 5 remain in scope
+    # against the real Instrument_Classification.md this fixture copies.
+    assert tickers == {"MLPX", "DBMF", "XAR", "AIPO", "SGOL"}
     for s in out["trend_signals"]:
         # ENG-60: no network at all means every ticker is missing its
         # own-price basis -- DATA_UNAVAILABLE, not INCONCLUSIVE.
@@ -134,6 +139,52 @@ def test_json_file_input_runs_end_to_end(tmp_path, isolated_framework,
 
     # The store update ran on the CLI path — the reason this fallback exists.
     assert (isolated_framework / "TrendSignalStore.json").exists()
+
+
+@skip_if_missing
+def test_candidate_instrument_excluded_from_held_tickers(tmp_path, isolated_framework,
+                                                          no_network, monkeypatch, capsys):
+    """ENG-71 regression test. held_tickers must derive from §11.3
+    non-candidate instruments, not from TREND_SIGNAL_CONFIG's own fixed key
+    set -- proven by moving a real, currently-active ticker that DOES have a
+    TREND_SIGNAL_CONFIG entry (AIPO, chosen arbitrarily) into §11.4 within
+    the isolated copy only, and confirming it drops out of the output. The
+    live framework file is never touched by this test."""
+    ic_path = isolated_framework / "Instrument_Classification.md"
+    text = ic_path.read_text(encoding="utf-8")
+    i113 = text.index("### 11.3 Instrument Classification Table")
+    i114 = text.index("### 11.4 Candidate Instruments")
+    s113 = text[i113:i114]
+    m = re.search(r"(?m)^#### AIPO\n", s113)
+    assert m, "AIPO block not found in §11.3 -- fixture assumption broke, update this test"
+    m2 = re.search(r"(?m)^#### ", s113[m.end():])
+    end = m.end() + m2.start() if m2 else len(s113)
+    aipo_block = s113[m.start():end]
+    new_s113 = s113.replace(aipo_block, "")
+    rest = text[i114:]
+    vnq_idx = rest.index("#### VNQ")
+    new_text = text[:i113] + new_s113 + rest[:vnq_idx] + aipo_block + rest[vnq_idx:]
+    ic_path.write_text(new_text, encoding="utf-8")
+
+    input_path = tmp_path / "input.json"
+    input_path.write_text(json.dumps({"scenario_probs": _PROBS}))
+    monkeypatch.setattr(sys, "argv", [
+        "__main__.py", "evaluate-trend-signal", "--json-file", str(input_path),
+    ])
+    cmd_evaluate_trend_signal()
+
+    out = json.loads(capsys.readouterr().out)
+    assert out["status"] == "OK", f"CLI fallback failed: {out}"
+    tickers = {s["ticker"] for s in out["trend_signals"]}
+    assert "AIPO" not in tickers, (
+        "AIPO has a TREND_SIGNAL_CONFIG entry and was moved to §11.4 "
+        "(is_candidate=True) in this isolated copy -- it must be excluded "
+        "from held_tickers, proving the list derives from current holdings "
+        "rather than from TREND_SIGNAL_CONFIG's own fixed key set (ENG-71)"
+    )
+    assert "MLPX" in tickers and "XAR" in tickers, (
+        "other real §11.3 non-candidate tickers with configs must still be present"
+    )
 
 
 @skip_if_missing

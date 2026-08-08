@@ -1437,7 +1437,15 @@ def _tool_evaluate_trend_signal(
     from .data.trend_signal_store import update_trend_signal_store
     from .types import FetchSpec, DataSource, UpdateFrequency
 
-    held_tickers = list(TREND_SIGNAL_CONFIG.keys())
+    # ENG-71: held_tickers must derive from actual current holdings (§11.3
+    # non-candidate instruments), same pattern the M19 TSC/range-position
+    # calls already use above (see cal_for_tsc.instruments.items()) — never
+    # from TREND_SIGNAL_CONFIG's own keys, which is a fixed enumeration of
+    # every ticker this module HAS a comparator formula for, not a claim
+    # about what's currently held. TREND_SIGNAL_CONFIG.get(ticker) below
+    # still naturally limits actual evaluation to the ENG-55-scoped
+    # instruments; this only fixes which of THOSE are in scope this session.
+    held_tickers = [t for t, e in cal.instruments.items() if not e.is_candidate]
     dominant_scenario = max(("A", "B", "C", "D", "E", "F"), key=lambda s: getattr(probs, s))
 
     result: Dict[str, Any] = {"status": "OK", "flags": []}

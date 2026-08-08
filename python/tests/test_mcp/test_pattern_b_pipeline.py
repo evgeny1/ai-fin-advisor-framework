@@ -307,7 +307,11 @@ def test_trend_signal_completes_after_scoring(pipeline_dir, no_network):
 
     signals = result["trend_signals"]
     tickers = {s["ticker"] for s in signals}
-    assert tickers == {"MLPX", "DBMF", "XAR", "AIPO", "COPX", "SGOL", "SIVR", "MAGS"}
+    # ENG-71: held_tickers now derives from §11.3 non-candidate instruments,
+    # not TREND_SIGNAL_CONFIG's fixed key set — SIVR/COPX/MAGS moved to
+    # §11.4 (exited) as of this fix, so only these 5 remain in scope
+    # against the real Instrument_Classification.md pipeline_dir copies.
+    assert tickers == {"MLPX", "DBMF", "XAR", "AIPO", "SGOL"}
     for s in signals:
         assert s["rs_signal"] == "DATA_UNAVAILABLE"
         assert s["quality_flags"], f"{s['ticker']}: expected a flag explaining DATA_UNAVAILABLE"

@@ -156,22 +156,6 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - Target allocation (v1.22, unchanged — see open decision): **7% Primary IRA; 7% Primary Roth**; 8% Primary Taxable; 6% Relative IRA; 10% Relative Roth.
 - ⚠️ TARGET REVIEW IN PROGRESS: Client deliberating IRA/Roth 7%→3% + DBMF bump (+4pp). At corrected EV +3.28%, the substitution thesis (DBMF +11.02%) remains strongly dominant in EV terms. EV differential vs DBMF = −7.74pp/year. However, AIPO now holds a valid thesis position at #3 rank. The reduction is still EV-optimal — but AIPO is no longer marginal. Client decision pending; allocation sheet unchanged.
 - ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or this section's EV): Mode 1 return-spread vs a weighted composite of 0.671×PAVE + 0.195×QQQM + 0.134×URA. Reuses AIPO's own ComponentVector weights (RAC 0.55/STG 0.16/IHC 0.11, renormalized over their 0.82 sum) as the composite blend weights; PDT (0.04) and UNCLASSIFIED (0.07, bitcoin miners) excluded per the client-confirmed 10%-materiality rule, same threshold that kept COPX's 25% BMEI slice in. See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
-#### MAGS
-- Components: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15)
-- passive_mandate_eligible: false
-- Last reviewed: 2026-05-30 (v1.23 — hold-only override confirmed)
-- ⚠ EV deterioration: from −1.77% (C=44, D=3) to −2.17% (C=41, D=5). D scenario deeply negative (−13.70% blended) — increasing D weight amplifies drag. Override remains in force but EV trendline is worsening.
-- **HOLD-ONLY OVERRIDE CONFIRMED (v1.23, May 30, 2026): No ADD at EV −2.17%. Override justified solely by absence of positive-EV secular_technology_growth alternative (URA covers RAC/IHC/STG partially; application-layer gap remains unresolved). Revisit if secular_technology_growth B adjudication at June 30 produces a materially different B conservative value.**
-- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
-  - NOTE: STG B adoption improves MAGS EV from −2.17% to −0.94%. HOLD-only override basis
-    partially changes: EV is now −0.94% (below zero but less negative). Override remains in
-    force — still negative EV; no secular_technology_growth positive-EV alternative confirmed.
-    Revisit at June 30 if STG D/E adoption further affects ranking.
-- Target allocation (v1.22): **3% Primary IRA; 4% Primary Roth**; 3% Relative IRA; 8% Relative Roth. (Reduced v1.22 to fund URA addition; EV improvement +0.04pp per account.)
-- TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY. Swap structure generates phantom taxable gains in losing years.
-- MAGS vs AGIX upgrade evaluation: monitor Anthropic IPO news. Assess at Q3 2026 or earlier on announcement.
-- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or this section's EV): Mode 1 return-spread vs QQQM alone. MAGS's own thesis is concentrated mega-cap tech, so comparing it to the framework's own established, more-diversified STG proxy directly reads whether the concentration is currently outperforming or underperforming the broader AI-capex trade. See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
-
 #### DBMF
 - Components: systematic_trend_following (1.00)
 - passive_mandate_eligible: false
@@ -191,53 +175,6 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   - Primary Taxable: 10%
   - Relative IRA: 15% (CONFIRMED EXECUTED v1.18 — increased from 12%)
   - Relative Roth: 20% (CONFIRMED EXECUTED v1.18 — increased from 18%)
-
-#### SIVR
-- Components: inflation_hedge_precious_metals (0.55) + inflation_hedge_commodity_linked (0.45)
-- passive_mandate_eligible: false
-- Basis: Aberdeen Standard Physical Silver Shares ETF. Tracks spot silver price via physical silver bullion. Lower cost alternative to SLV (0.30% ER vs 0.50%)
-- AUM: ~$5.5B. Expense ratio: 0.30%. Custodian: ICBC Standard Bank (UK).
-- Last reviewed: 2026-05-26 (v1.21 — B-component arithmetic corrected)
-- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
-- TAX PLACEMENT: Retirement accounts preferred. Physical silver ETF is classified as a collectible; capital gains taxed at 28% max rate in taxable accounts.
-- ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026). 90d trailing average ~$78-82; guard threshold ~$94-98; current ~$71.82 — well below threshold.
-- **GAP-16 sub-condition drivers (within-scenario range position, v1.42; real-yield driver
-  corrected v1.44; PROMOTED FROM ADVISORY-ONLY TO LIVE EV ADJUSTMENT v1.46):** same two
-  drivers as SGOL — real yield (REAL_YIELD_10Y_TREND = DGS10−T10YIE) and DXY direction —
-  since SIVR's 0.55 IHP weight inherits the same monetary-debasement mechanism and the same
-  bounded EV adjustment mechanics. Evaluated each session by analysis/range_position.py; see
-  the SGOL §11.3 entry above for the full v1.46 mechanism description (not repeated here).
-- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or the GAP-16 EV mechanism above): Mode 2 own-trend confirmed by the same REAL_YIELD_10Y_TREND + DXY agreement gate as SGOL (v1 simplification, client-confirmed — SIVR's IHC slice arguably behaves more like COPX's industrial-commodity comparator, but treating it identically to SGOL is the simpler v1 default). See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
-- Target allocation (v1.18 CONFIRMED):
-  - Primary IRA: 4%
-  - Primary Roth: 5%
-  - Relative IRA: 6% (CONFIRMED EXECUTED v1.18 — increased from 3%)
-  - Relative Roth: 4% (CONFIRMED EXECUTED v1.18 — new position; was 0%)
-
-#### COPX
-- Components: inflation_hedge_commodity_linked (0.75) + broad_market_equity_international (0.25)
-- passive_mandate_eligible: false
-- Basis: Global X Copper Miners ETF. Tracks Solactive Global Copper Miners Total Return Index. 41 holdings across global copper mining companies.
-- AUM: $6.86B. Expense ratio: 0.65%. Inception: 2010-04-19.
-- Country breakdown (Jan 31, 2026): Canada 36.68%, China 9.62%, US 9.59%, Japan 7.92%, Australia 7.86%, Poland 5.93%, Sweden 5.35%, UK 5.12%, Switzerland 4.82%, Others 7.13%.
-- M07 STATUS: PASS — Canada 36.68% below 40% single-country threshold. Regional ruling per v1.13: Canada + US are separate political/economic regimes. RULING: PASS. Confirmed as formal framework policy 2026-07-03 (v1.58, §6 item 26 closed) — amber flag cleared.
-- Last reviewed: 2026-05-07 (v1.14 — entry guard cleared)
-- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+2.60%** (updated v1.19; prior at C=44: +2.88%). Ranked #4.
-  - A:  (0.75×2 + 0.25×4) = 2.50% × 0.07 = +0.175%
-  - B:  (0.75×6 + 0.25×(-5)) = 3.25% × 0.36 = +1.170%
-  - C:  (0.75×7 + 0.25×(-6)) = 3.75% × 0.41 = +1.538%
-  - D:  (0.75×(-8) + 0.25×(-8)) = -8.00% × 0.05 = -0.400%
-  - E:  (0.75×2 + 0.25×(-10)) = -1.00% × 0.04 = -0.040%
-  - F:  (0.75×2 + 0.25×3) = 2.25% × 0.07 = +0.158%
-  - Total floor: +2.601% ≈ +2.60%. Mining-leverage adjusted estimate: ~+3.2-4.0%.
-- GAP-16 sub-condition drivers PROPOSED 2026-07-03 (v1.59, §6 item 44) — NOT YET WIRED (documentation only): DXY_TREND + Brent trend as an imperfect commodity-complex proxy. Flagged: COPX is industrial-metals/copper-mining, not energy, so Brent stands in directionally (both correlate with global growth/reflation and dollar weakness) rather than precisely — a copper-specific series or China PMI would be more accurate but needs new M18 fetcher work (China PMI isn't currently a DataReading, only used ad-hoc via web_search this session).
-- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or this section's EV): Mode 1 return-spread vs a weighted composite of 0.75×HG=F (copper futures, direct — more precise than the imperfect Brent proxy GAP-16 flags above) + 0.25×VEA (BMEI slice, clears the 10%-materiality threshold comfortably so it's kept rather than excluded). See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
-- TAX PLACEMENT: ALL ACCOUNTS.
-- ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026) at $83.35. 90d avg ~$85-90; threshold ~$102-106.
-  ⚠️ Price update (v1.29, June 2, 2026): COPX closed **$93.66** (+4.00%). 90d reference window has shifted
-  (now March 3–June 2). Original clearing is stale for ADD purposes — must recompute 90d trailing avg from
-  T1 price data before any ADD. No ADD planned; at target (2% IRA, 7% Taxable).
-- Target allocation (v1.13): 2% Primary IRA; 7% Primary Taxable.
 
 #### VTIP
 - Components: inflation_linked_sovereign (1.00)
@@ -266,6 +203,72 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
      They are distinct from §11.3 active instruments. Do NOT include in ValidateClassifications() HARD_STOP check.
      Do NOT include in EV rank tables or FeasibilityCheck() computations unless specifically evaluating for addition.
      Adoption triggers are listed per instrument. M07 screens and §4.1 calibration may be incomplete. -->
+
+#### MAGS
+- **EXITED (2026-08-08): fully sold out of all accounts. Retained here (moved from Â§11.3) for reference and blendedScenarioReturn() continuity should the position be re-entered -- not currently allocated, do not include in EV rank tables or FeasibilityCheck() per this section's own governing rule.**
+- Components: secular_technology_growth (0.85) + broad_market_equity_domestic (0.15)
+- passive_mandate_eligible: false
+- Last reviewed: 2026-05-30 (v1.23 — hold-only override confirmed)
+- ⚠ EV deterioration: from −1.77% (C=44, D=3) to −2.17% (C=41, D=5). D scenario deeply negative (−13.70% blended) — increasing D weight amplifies drag. Override remains in force but EV trendline is worsening.
+- **HOLD-ONLY OVERRIDE CONFIRMED (v1.23, May 30, 2026): No ADD at EV −2.17%. Override justified solely by absence of positive-EV secular_technology_growth alternative (URA covers RAC/IHC/STG partially; application-layer gap remains unresolved). Revisit if secular_technology_growth B adjudication at June 30 produces a materially different B conservative value.**
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
+  - NOTE: STG B adoption improves MAGS EV from −2.17% to −0.94%. HOLD-only override basis
+    partially changes: EV is now −0.94% (below zero but less negative). Override remains in
+    force — still negative EV; no secular_technology_growth positive-EV alternative confirmed.
+    Revisit at June 30 if STG D/E adoption further affects ranking.
+- Target allocation (v1.22): **3% Primary IRA; 4% Primary Roth**; 3% Relative IRA; 8% Relative Roth. (Reduced v1.22 to fund URA addition; EV improvement +0.04pp per account.)
+- TAX PLACEMENT: RETIREMENT ACCOUNTS ONLY. Swap structure generates phantom taxable gains in losing years.
+- MAGS vs AGIX upgrade evaluation: monitor Anthropic IPO news. Assess at Q3 2026 or earlier on announcement.
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or this section's EV): Mode 1 return-spread vs QQQM alone. MAGS's own thesis is concentrated mega-cap tech, so comparing it to the framework's own established, more-diversified STG proxy directly reads whether the concentration is currently outperforming or underperforming the broader AI-capex trade. See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
+
+#### SIVR
+- **EXITED (2026-08-08): fully sold out of all accounts. Retained here (moved from Â§11.3) for reference and blendedScenarioReturn() continuity should the position be re-entered -- not currently allocated, do not include in EV rank tables or FeasibilityCheck() per this section's own governing rule.**
+- Components: inflation_hedge_precious_metals (0.55) + inflation_hedge_commodity_linked (0.45)
+- passive_mandate_eligible: false
+- Basis: Aberdeen Standard Physical Silver Shares ETF. Tracks spot silver price via physical silver bullion. Lower cost alternative to SLV (0.30% ER vs 0.50%)
+- AUM: ~$5.5B. Expense ratio: 0.30%. Custodian: ICBC Standard Bank (UK).
+- Last reviewed: 2026-05-26 (v1.21 — B-component arithmetic corrected)
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
+- TAX PLACEMENT: Retirement accounts preferred. Physical silver ETF is classified as a collectible; capital gains taxed at 28% max rate in taxable accounts.
+- ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026). 90d trailing average ~$78-82; guard threshold ~$94-98; current ~$71.82 — well below threshold.
+- **GAP-16 sub-condition drivers (within-scenario range position, v1.42; real-yield driver
+  corrected v1.44; PROMOTED FROM ADVISORY-ONLY TO LIVE EV ADJUSTMENT v1.46):** same two
+  drivers as SGOL — real yield (REAL_YIELD_10Y_TREND = DGS10−T10YIE) and DXY direction —
+  since SIVR's 0.55 IHP weight inherits the same monetary-debasement mechanism and the same
+  bounded EV adjustment mechanics. Evaluated each session by analysis/range_position.py; see
+  the SGOL §11.3 entry above for the full v1.46 mechanism description (not repeated here).
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or the GAP-16 EV mechanism above): Mode 2 own-trend confirmed by the same REAL_YIELD_10Y_TREND + DXY agreement gate as SGOL (v1 simplification, client-confirmed — SIVR's IHC slice arguably behaves more like COPX's industrial-commodity comparator, but treating it identically to SGOL is the simpler v1 default). See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
+- Target allocation (v1.18 CONFIRMED):
+  - Primary IRA: 4%
+  - Primary Roth: 5%
+  - Relative IRA: 6% (CONFIRMED EXECUTED v1.18 — increased from 3%)
+  - Relative Roth: 4% (CONFIRMED EXECUTED v1.18 — new position; was 0%)
+
+#### COPX
+- **EXITED (2026-08-08): fully sold out of all accounts. Retained here (moved from Â§11.3) for reference and blendedScenarioReturn() continuity should the position be re-entered -- not currently allocated, do not include in EV rank tables or FeasibilityCheck() per this section's own governing rule.**
+- Components: inflation_hedge_commodity_linked (0.75) + broad_market_equity_international (0.25)
+- passive_mandate_eligible: false
+- Basis: Global X Copper Miners ETF. Tracks Solactive Global Copper Miners Total Return Index. 41 holdings across global copper mining companies.
+- AUM: $6.86B. Expense ratio: 0.65%. Inception: 2010-04-19.
+- Country breakdown (Jan 31, 2026): Canada 36.68%, China 9.62%, US 9.59%, Japan 7.92%, Australia 7.86%, Poland 5.93%, Sweden 5.35%, UK 5.12%, Switzerland 4.82%, Others 7.13%.
+- M07 STATUS: PASS — Canada 36.68% below 40% single-country threshold. Regional ruling per v1.13: Canada + US are separate political/economic regimes. RULING: PASS. Confirmed as formal framework policy 2026-07-03 (v1.58, §6 item 26 closed) — amber flag cleared.
+- Last reviewed: 2026-05-07 (v1.14 — entry guard cleared)
+- EV (A=7/B=36/C=41/D=5/E=4/F=7): **+2.60%** (updated v1.19; prior at C=44: +2.88%). Ranked #4.
+  - A:  (0.75×2 + 0.25×4) = 2.50% × 0.07 = +0.175%
+  - B:  (0.75×6 + 0.25×(-5)) = 3.25% × 0.36 = +1.170%
+  - C:  (0.75×7 + 0.25×(-6)) = 3.75% × 0.41 = +1.538%
+  - D:  (0.75×(-8) + 0.25×(-8)) = -8.00% × 0.05 = -0.400%
+  - E:  (0.75×2 + 0.25×(-10)) = -1.00% × 0.04 = -0.040%
+  - F:  (0.75×2 + 0.25×3) = 2.25% × 0.07 = +0.158%
+  - Total floor: +2.601% ≈ +2.60%. Mining-leverage adjusted estimate: ~+3.2-4.0%.
+- GAP-16 sub-condition drivers PROPOSED 2026-07-03 (v1.59, §6 item 44) — NOT YET WIRED (documentation only): DXY_TREND + Brent trend as an imperfect commodity-complex proxy. Flagged: COPX is industrial-metals/copper-mining, not energy, so Brent stands in directionally (both correlate with global growth/reflation and dollar weakness) rather than precisely — a copper-specific series or China PMI would be more accurate but needs new M18 fetcher work (China PMI isn't currently a DataReading, only used ad-hoc via web_search this session).
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or this section's EV): Mode 1 return-spread vs a weighted composite of 0.75×HG=F (copper futures, direct — more precise than the imperfect Brent proxy GAP-16 flags above) + 0.25×VEA (BMEI slice, clears the 10%-materiality threshold comfortably so it's kept rather than excluded). See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
+- TAX PLACEMENT: ALL ACCOUNTS.
+- ENTRY EXTENSION GUARD: CLEARED (v1.14, May 7, 2026) at $83.35. 90d avg ~$85-90; threshold ~$102-106.
+  ⚠️ Price update (v1.29, June 2, 2026): COPX closed **$93.66** (+4.00%). 90d reference window has shifted
+  (now March 3–June 2). Original clearing is stale for ADD purposes — must recompute 90d trailing avg from
+  T1 price data before any ADD. No ADD planned; at target (2% IRA, 7% Taxable).
+- Target allocation (v1.13): 2% Primary IRA; 7% Primary Taxable.
 
 #### VNQ
 - Components: real_estate_equity_income (0.60) + rate_sensitive_income_long_duration (0.22) + secular_technology_growth (0.12) + broad_market_equity_domestic (0.06)
