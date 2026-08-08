@@ -707,3 +707,99 @@ next_session_flags:
 - broad_market_equity_international A/B/C MEDIUM proposals due at Sept 30 audit; D/E
   need their specific next-step data gathered first (3rd D analog; 1998 Aug-Oct acute-window
   EAFE/EFA return for E)
+
+---
+entry_id: 2026-08-08T00:37
+date: '2026-08-08'
+session_type: full M05 session
+status: current
+scenario_probabilities: {A: 20.2222, B: 40.4444, C: 30.3333, D: 3.0, E: 3.0, F: 3.0}
+primary_driver: 'Fed''s July 29 hawkish hold (3.50-3.75%, 3 dissents favoring a hike,
+  dot plot lifted to 3.8% year-end median) remained B''s binding constraint for a
+  second session. The only actual evidence shift vs. prior session was A_check_energy
+  (2->1) -- confirmed against real daily Brent closes, not weekly proxies: longest
+  consecutive-decline streak in the trailing 3 weeks is 3 trading days, never 5, and
+  the most recent two sessions are a bounce off the Aug 4 low. A fell 27.3%->20.2%
+  on this single check change; B/C''s rises to 40.4%/30.3% are a mechanical artifact
+  of the redistribution formula (both scenarios'' own raw scores were unchanged from
+  last session), not new evidence for either. Today''s July jobs report (payrolls
+  -23K, first contraction in months, May/June revised down a combined -103K) is a
+  genuine but not-yet-triggering challenger to B -- unemployment rate fell to 4.1%
+  on falling participation, so D''s formal trigger wasn''t met. Both Relative accounts''
+  floor check came back CLEAR this session (was breach last session), driven by A''s
+  decline. Separately, this session found and fixed a real code bug (ENG-71): advisor_evaluate_trend_signal''s
+  held_tickers was hardcoded to TREND_SIGNAL_CONFIG''s own key set instead of deriving
+  from current holdings, so SIVR/COPX/MAGS kept being evaluated after full exit --
+  fixed, tested (997 passed/46 skipped/0 failed), committed and pushed (189d6a5).'
+open_triggers:
+- 'Iran/Hormuz chokepoint remains T1-verified active (Bloomberg Aug 4: traffic ''at
+  a trickle''), no confirmed de-escalation despite Oman-mediated talks -- C_check_chokepoint
+  stays at 2 until a dateable de-escalation event fires'
+- July CPI (Aug 12, 8:30am ET) and its effect on B/C -- current CPI 3.5% YoY, decelerating
+  from May's 4.2%
+- DBMF Sec13 thesis-sustaining condition FAILED this session (first confirmed fire,
+  not just unevaluable) -- all 4 tracked comparator markets in mean-reversion mode
+  simultaneously for >=4 consecutive weeks; this session's trend signal separately
+  read INCONCLUSIVE with both confirmation-gate legs flagged 'no clear agreement'
+  -- two independent systems flagging DBMF as unsettled from different angles, needs
+  real review before further ADD conviction despite the position-sizing math still
+  returning ADD
+- AIPO trend signal WEAKENING, and worsened on the medium-term window vs last session
+  (short -6.31pp->-5.29pp, easing; medium -7.62pp->-10.04pp, intensifying) -- directly
+  relevant to client's own stated AIPO exit trigger ('as soon as its momentum breaks
+  again or it has fully recovered')
+- CCC OAS diverging from the calm HY/IG composite (+53bps/30d, +97bps/90d, now 69bps
+  above its own 180d median of 948bps) -- narrow, not D-triggering, but a real tail-widening-first
+  pattern worth tracking in isolation per the asymmetric-weighting rule
+- MOVE index 30d/90d rolling averages not computable -- market_get_history's ^MOVE
+  series hard-stops at 2026-07-17 regardless of requested range; genuine data-source
+  gap, not a fetch failure, unresolved
+- 'Sept 30 audit: broad_market_equity_international A/B/C MEDIUM-confidence proposals
+  ([2,10]/[-12,-6]/[-19,-10]) pending adjudication; D/E still need their specific
+  next-step data (3rd D analog; 1998 Aug-Oct acute-window EAFE/EFA return for E)'
+- XAR two-quarter procedural gate to March 2027 unchanged -- GAP-17 sign-split (T1
+  price history inverse to assumed geopolitical_premium sign) still unresolved
+open_decisions:
+- 'Relative IRA (...469) / Relative Roth (...466): floor check CLEAR this session
+  at current holdings and probabilities (IRA feasible=true portfolio_return=2.76%,
+  Roth feasible=true portfolio_return=1.56%) -- was a confirmed breach last session
+  under higher Scenario A. SCHD/VYMI partial rotation was tested and improves the
+  margin further but is not required to clear. Undecided: hold current allocation
+  now that it clears, or execute the rotation anyway as a buffer against A snapping
+  back up. Presented to client this session, not yet answered.'
+- 'Taxable Acc4 (6668-9768): target column already shows the full v1.67-adopted target
+  (SCHD 35%/VYMI 15%/XAR 10%/MLPX 25%/SGOV 15%, AIPO/DBMF/RSP -> 0%), further along
+  than previously recorded. Current holdings still show AIPO ~13.7%/DBMF ~6.4%/RSP
+  ~5.1% actually held, with real outstanding trade volumes to sell down to target
+  (~$35.7k AIPO, ~$16.6k DBMF, ~$13.4k RSP). Status unconfirmed -- client has not
+  clarified whether this sell-down is actively in progress, stalled, or deliberately
+  gradual. Presented to client this session, not yet answered.'
+- 'DBMF: client confirms the position has been reduced from an earlier (unknown to
+  this framework) size, with full exit planned ''gradually, probably next week.''
+  Current confirmed share counts per live Allocation sheet: 536 shares Acc4 (target
+  already 0% -- part of the Acc4 sell-down above), 541 shares Relative IRA (target
+  still 17%, no exit discussed for this position specifically). No specific execution
+  plan or timeline confirmed for the Relative IRA shares.'
+- AIPO exposure in Primary IRA (~13.28%) and Primary Roth (~23.25%) still not reviewed
+  against the AI-bubble thesis applied to Acc4 -- carried forward, unresolved.
+- SCHD/VYMI dividend-sleeve logic still not evaluated for Primary IRA/Roth or Acc3
+  -- carried forward, unresolved.
+next_session_flags:
+- Relative IRA/Roth SCHD/VYMI rotation decision -- awaiting client answer (see open_decisions)
+- Acc4 sell-down status -- confirm with client whether in-progress/stalled/deliberate
+  pace (see open_decisions)
+- DBMF full-exit timeline ('gradually, probably next week' per client, 2026-08-07)
+  -- re-check both accounts' share counts next session; Relative IRA's 541-share position
+  specifically has no stated exit plan and needs its own discussion, separate from
+  the Acc4 sell-down
+- DBMF Sec13 FAILED status (first confirmed fire this session) -- needs an actual
+  review of whether HOLD/ADD stance should change, not just carried forward silently
+  again
+- ENG-71 (held_tickers hardcoding in advisor_evaluate_trend_signal) fixed, tested,
+  committed and pushed (189d6a5) this session -- confirm next session's trend-signal
+  output naturally reflects only current holdings with no special handling needed
+- July CPI (Aug 12) and August China NBS Manufacturing PMI (~Aug 31) both pending
+  -- will move B/C and, if COPX is ever re-entered, its Sec13 China-demand condition
+  respectively
+- MOVE index 30d/90d average still uncomputable via market_get_history (series stops
+  2026-07-17) -- check whether this data source gap has resolved
