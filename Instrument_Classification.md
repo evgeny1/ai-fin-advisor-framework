@@ -156,26 +156,6 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - Target allocation (v1.22, unchanged — see open decision): **7% Primary IRA; 7% Primary Roth**; 8% Primary Taxable; 6% Relative IRA; 10% Relative Roth.
 - ⚠️ TARGET REVIEW IN PROGRESS: Client deliberating IRA/Roth 7%→3% + DBMF bump (+4pp). At corrected EV +3.28%, the substitution thesis (DBMF +11.02%) remains strongly dominant in EV terms. EV differential vs DBMF = −7.74pp/year. However, AIPO now holds a valid thesis position at #3 rank. The reduction is still EV-optimal — but AIPO is no longer marginal. Client decision pending; allocation sheet unchanged.
 - ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or this section's EV): Mode 1 return-spread vs a weighted composite of 0.671×PAVE + 0.195×QQQM + 0.134×URA. Reuses AIPO's own ComponentVector weights (RAC 0.55/STG 0.16/IHC 0.11, renormalized over their 0.82 sum) as the composite blend weights; PDT (0.04) and UNCLASSIFIED (0.07, bitcoin miners) excluded per the client-confirmed 10%-materiality rule, same threshold that kept COPX's 25% BMEI slice in. See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
-#### DBMF
-- Components: systematic_trend_following (1.00)
-- passive_mandate_eligible: false
-- Basis: iMGP DBi Managed Futures Strategy ETF. Actively managed. Replicates top CTA hedge fund portfolios using T-bill collateral + equity/commodity/bond/currency swap agreements. Strategy: systematic trend-following across all major asset classes.
-- K-1: NONE — 1940 Act registered fund (ETF structure). No K-1 issued.
-- AUM: $3.51B. Expense ratio: 0.85%. Inception: 2019-05-08. 1-year total return: +27.3%.
-- Last reviewed: 2026-05-06 (v1.13, initial classification)
-- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
-- TAX PLACEMENT: ALL ACCOUNTS. No K-1. No swap phantom gain issue.
-- GAP-16 sub-condition drivers PROPOSED 2026-07-03 (v1.59, §6 item 44) — NOT YET WIRED to any live EV adjustment (documentation only; range_position.py has no per-role branch for this yet): DXY_TREND direction + cross-asset trend breadth (Brent/Gold/DXY/S&P — reuses the same 4-market check already computed for the §13 TSC evaluation, no new fetch). Strong clean DXY trend + high breadth (3-4 of 4 trending) = tailwind (tracks toward DBMF's upside); flat DXY + low breadth (0-1 trending) = headwind (tracks toward conservative end).
-- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03): Mode 2 own-trend confirmed by DXY direction + the same 4-market breadth concept as the GAP-16 line above, reimplemented independently rather than sharing GAP-16's own decision logic, per the coupling-risk discipline in FRAMEWORK_BACKLOG_ARCHIVE.md's ENG-55 writeup. See analysis/trend_signal.py.
-- ENTRY EXTENSION GUARD: N/A — systematic_trend_following role is explicitly exempt (§9.3).
-- KEY RISK: Trend-reversal events (Scenario A normalization) produce material losses (-12% conservative). A=7% weight creates -0.84% EV drag — priced into EV computation. DBMF and MLPX are partially inversely correlated in A (MLPX appreciates as energy normalizes; DBMF loses as commodity trends reverse) — portfolio diversification benefit.
-- Target allocation (v1.18 CONFIRMED):
-  - Primary IRA: 15%
-  - Primary Roth: 17%
-  - Primary Taxable: 10%
-  - Relative IRA: 15% (CONFIRMED EXECUTED v1.18 — increased from 12%)
-  - Relative Roth: 20% (CONFIRMED EXECUTED v1.18 — increased from 18%)
-
 #### VTIP
 - Components: inflation_linked_sovereign (1.00)
 - passive_mandate_eligible: false
@@ -269,6 +249,27 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   (now March 3–June 2). Original clearing is stale for ADD purposes — must recompute 90d trailing avg from
   T1 price data before any ADD. No ADD planned; at target (2% IRA, 7% Taxable).
 - Target allocation (v1.13): 2% Primary IRA; 7% Primary Taxable.
+
+#### DBMF
+- **EXITED (confirmed 2026-08-15, client): fully sold out of all accounts — zero shares first observed 2026-08-14 in all three Allocation sheets (Primary IRA/Roth, Taxable Acc4, Relative IRA/Roth), unconfirmed that session; client-confirmed intentional/complete 2026-08-15 session. Retained here (moved from §11.3) for reference and blendedScenarioReturn() continuity should the position be re-entered — not currently allocated, do not include in EV rank tables or FeasibilityCheck() per this section's own governing rule.**
+- Components: systematic_trend_following (1.00)
+- passive_mandate_eligible: false
+- Basis: iMGP DBi Managed Futures Strategy ETF. Actively managed. Replicates top CTA hedge fund portfolios using T-bill collateral + equity/commodity/bond/currency swap agreements. Strategy: systematic trend-following across all major asset classes.
+- K-1: NONE — 1940 Act registered fund (ETF structure). No K-1 issued.
+- AUM: $3.51B. Expense ratio: 0.85%. Inception: 2019-05-08. 1-year total return: +27.3%.
+- Last reviewed: 2026-05-06 (v1.13, initial classification)
+- EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7) -- not stored here; see live computation each session.
+- TAX PLACEMENT: ALL ACCOUNTS. No K-1. No swap phantom gain issue.
+- GAP-16 sub-condition drivers PROPOSED 2026-07-03 (v1.59, §6 item 44) — NOT YET WIRED to any live EV adjustment (documentation only; range_position.py has no per-role branch for this yet): DXY_TREND direction + cross-asset trend breadth (Brent/Gold/DXY/S&P — reuses the same 4-market check already computed for the §13 TSC evaluation, no new fetch). Strong clean DXY trend + high breadth (3-4 of 4 trending) = tailwind (tracks toward DBMF's upside); flat DXY + low breadth (0-1 trending) = headwind (tracks toward conservative end).
+- ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03): Mode 2 own-trend confirmed by DXY direction + the same 4-market breadth concept as the GAP-16 line above, reimplemented independently rather than sharing GAP-16's own decision logic, per the coupling-risk discipline in FRAMEWORK_BACKLOG_ARCHIVE.md's ENG-55 writeup. See analysis/trend_signal.py.
+- ENTRY EXTENSION GUARD: N/A — systematic_trend_following role is explicitly exempt (§9.3).
+- KEY RISK: Trend-reversal events (Scenario A normalization) produce material losses (-12% conservative). A=7% weight creates -0.84% EV drag — priced into EV computation. DBMF and MLPX are partially inversely correlated in A (MLPX appreciates as energy normalizes; DBMF loses as commodity trends reverse) — portfolio diversification benefit.
+- Target allocation (v1.18 CONFIRMED, pre-exit):
+  - Primary IRA: 15%
+  - Primary Roth: 17%
+  - Primary Taxable: 10%
+  - Relative IRA: 15% (CONFIRMED EXECUTED v1.18 — increased from 12%)
+  - Relative Roth: 20% (CONFIRMED EXECUTED v1.18 — increased from 18%)
 
 #### VNQ
 - Components: real_estate_equity_income (0.60) + rate_sensitive_income_long_duration (0.22) + secular_technology_growth (0.12) + broad_market_equity_domestic (0.06)
