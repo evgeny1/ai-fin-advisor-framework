@@ -361,8 +361,23 @@ default thing to do wrong if you're not watching for it.
   possible mass-deletion event. Recovery that worked: write the recovered
   content to a *different* filename, then `ren` it into the original name
   once the lock clears (rename succeeded well before direct writes to the
-  exact original name did). Waiting it out (a few minutes) also works;
-  there's no need to restart Drive or anything more invasive.
+  exact original name did). Waiting it out (a few minutes) worked in the
+  original 2026-06-20 incident — but **updated 2026-08-14: not reliably**.
+  A second occurrence (triggered by an interrupted `git stash`, not the
+  same drastic-content-change trigger as the first) stayed locked through
+  four separate waits (45s/90s/180s/120s, ~10+ min cumulative, confirmed
+  still denied via Desktop Commander, PowerShell `Get-Content`, and raw
+  .NET `File.ReadAllBytes` each time) and only cleared after Evgeny
+  restarted the Drive Desktop app directly. Whether more waiting alone
+  would eventually have worked is unknown — not tested past that point.
+  Revised guidance: try waiting a few minutes first (cheap, sometimes
+  sufficient per the original incident), but if it's still locked past
+  ~10 minutes, restarting Drive is a legitimate next step, not overkill —
+  don't keep polling indefinitely. Two prior write attempts to two
+  different recovery filenames both reported success but never landed on
+  disk during this second incident, only becoming visible after the
+  restart — worth checking `Get-ChildItem`/`dir` directly rather than
+  trusting a tool's own success report while the lock is active.
 - **Spawning the financial-advisor MCP server via a `cmd.exe /c cd /d ... &&
   ...` shell wrapper breaks on this repo's space-containing path.** Claude
   Desktop's MCP config schema has no `cwd` field, so the natural fix for
