@@ -2,7 +2,24 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.69  Last updated: August 1, 2026. v1.69: broad_market_equity_international
+# Version: 1.70  Last updated: August 14, 2026. v1.70: GAP-18 opened --
+inflation_linked_sovereign (VTIP) GAP-16-style range-position generalization,
+companion to FRAMEWORK_BACKLOG ENG-72 (coding session, engineering side).
+Role-specific width gate DECIDED (Evgeny): 2.0pp for inflation_linked_sovereign
+vs. IHP's 6.0pp, PROVISIONAL pending audit -- same treatment the original
+25%/3pp GAP-16 magnitude parameters got. Signal pair DECIDED via real T1 data,
+not the working hypothesis: real yield (REAL_YIELD_10Y_TREND) AND DXY both
+kept, mirroring SGOL/SIVR -- 2yr weekly correlation analysis (104 obs,
+market_data_mcp + FRED) found DXY's correlation with VTIP weekly returns
+(-0.328, p=0.0007) not weaker than real yield's (-0.300, p=0.0020), only
+weakly collinear with it (+0.148), and retaining ~8pp of incremental R^2 in
+a joint OLS -- the "drop DXY" hypothesis this item opened with was wrong.
+NUMERIC_CONDITIONS/§13 M19 sustaining-condition coverage (the OTHER gap
+ENG-72 names) is explicitly NOT addressed by this item -- separate, still-
+fully-open design question. Full detail: §3 log entry 2026-08-14 (v1.70);
+§6 item 48 (new).
+
+v1.69: broad_market_equity_international
 Scenario F ADOPTED [3,8]->[8,14], HIGH confidence, client-confirmed same session ("why
 wait?" -- declined to hold for full-row resolution once the tradeoff was shown not to
 favor waiting). A/B/C/D/E unchanged in the live table, remain open per §6 item 47.
@@ -623,6 +640,90 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+---
+entry_id: 2026-08-14T16:00
+date: '2026-08-14'
+version: v1.70
+category: inflation_linked_sovereign (VTIP) — GAP-16-style range-position generalization (GAP-18 opened, coding session)
+---
+2026-08-14 (v1.70) - Coding session, companion to FRAMEWORK_BACKLOG ENG-72
+(opened same day, advisory session, "not a quick patch" per that item's own
+framing). Scope: this entry covers ONLY the GAP-16-style range-position
+mechanism half of ENG-72 — whether/how VTIP gets a real-yield/DXY sub-
+condition read the way SGOL/SIVR do. The OTHER gap ENG-72 names (VTIP has
+no §13 M19 sustaining-condition entry at all — no data-driven thesis-
+failure signal) is NOT addressed here; still fully open, needs its own
+design pass (what would make VTIP's inflation-hedge thesis actually fail?).
+
+TRIGGER: VTIP's realized ~1yr return (~-1.2%) sits below its §4.1 Scenario C
+range [+1,+4]% despite Scenario C's defining CPI-acceleration condition
+being nominally live. Investigation (this session) found July CPI 3.4% YoY
+(BLS, third straight deceleration: 4.2%->3.5%->3.4%) while REAL_YIELD_10Y_TREND
+drifted UP over the same window (2.18%->2.39%) -- the [1,4]% range blends
+CPI accrual (mechanical, near-guaranteed) and real-yield price effect
+(currently working against the position), with no sub-condition tracking
+either separately. GAP-16 already solves exactly this class of problem for
+inflation_hedge_precious_metals; this item generalizes it.
+
+THREE OPEN QUESTIONS RESOLVED THIS SESSION (Evgeny + data, not assumed):
+
+1. WIDTH GATE: VTIP's Scenario C range is 3pp wide -- below GAP-16's 6.0pp
+   _WIDE_RANGE_THRESHOLD_PP gate; a literal port would never fire. DECIDED:
+   role-specific lower gate, not "widen VTIP's range via M16 first." Value:
+   2.0pp for inflation_linked_sovereign specifically (vs. 6.0pp default/IHP).
+   PROVISIONAL, not run through M16.CalibrationMethodology() -- same
+   treatment the original GAP-16 25%/3pp adjustment-magnitude parameters
+   got (§6 item 43): the MECHANISM (role-specific gate) is not provisional,
+   only this specific number is, pending audit. Chosen to clear VTIP's
+   current 3pp range with margin, without being loose enough to fire on
+   noise for any future narrow-range role.
+
+2. SIGNAL PAIR: GAP-16 uses real-yield + DXY for SGOL/SIVR (dollar-priced
+   metals). Working hypothesis going in was "drop DXY, VTIP is a TIPS fund,
+   DXY is the wrong second leg" -- explicitly NOT assumed, checked against
+   real data instead per Evgeny's instruction. market_data_mcp (VTIP, DXY,
+   2yr daily) + FRED (DGS10, T10YIE, 2yr daily), resampled to 104 weekly
+   (Friday-ending) observations, real_yield = DGS10-T10YIE:
+     corr(VTIP weekly return, real-yield weekly change):  -0.300 (p=0.0020)
+     corr(VTIP weekly return, DXY weekly return):         -0.328 (p=0.0007)
+     corr(real-yield change, DXY return) [collinearity]:  +0.148
+     OLS real_yield-only R^2 = 0.090; real_yield+DXY R^2 = 0.172
+       (incremental R^2 from adding DXY: +0.082)
+   Both signs match the existing SGOL/SIVR convention exactly (real yield
+   up = headwind, DXY up = headwind) -- no sign inversion needed. Stability
+   check: split-half (first 52 vs. last 52 weeks) gave -0.268/-0.295 vs.
+   -0.368/-0.369 -- not a fluke from one regime, held up in both halves,
+   DXY's relationship if anything strengthened in the more recent half.
+   DECIDED: keep BOTH signals, same pair and same sign convention as
+   SGOL/SIVR. The "drop DXY" hypothesis this item opened with is WRONG --
+   real yield alone would have thrown away real, independent, statistically
+   significant, non-collinear information. Live 8-week window at decision
+   time (2026-06-19 to 2026-08-14): real yield +0.18pp (mild headwind), DXY
+   -0.88% (mild tailwind) -- a genuinely mixed read today, not clean either
+   way.
+
+3. IMPLEMENTATION SHAPE: DECIDED (Evgeny) -- generalize range_position.py
+   into a role-parameterized version rather than a second VTIP-specific
+   path. Per §6 item 44's own prior finding, apply_range_position_adjustment()/
+   clean_signal_role_map() already generalize to any role_id; only the
+   IHP-specific evaluate_range_position_advisories()/_ihp_sub_conditions()
+   pair and the flat _WIDE_RANGE_THRESHOLD_PP constant are role-hardcoded.
+   Existing GAP-16 test suite (test_stage3/test_range_position.py,
+   test_stage3/test_instruments.py::TestBlendedScenarioReturnRangePositionAdjustment)
+   is the regression baseline -- SGOL/SIVR's live behavior must not change
+   as a byte-for-byte consequence of this refactor. Code change itself is a
+   FRAMEWORK_BACKLOG ENG-72 (Python) item, not logged twice here per this
+   section's own scope rule (engineering narrative belongs in the backlog
+   file, not here) -- this entry documents the calibration/methodology
+   decisions only, per the cross-reference rule ENG-72 itself states
+   ("open the GAP-N entry here first; update the backlog index to match").
+
+§4.1 inflation_linked_sovereign row: UNCHANGED this entry -- this item is
+about a within-range advisory signal, not a §4.1 revision, so M16 GUARD
+NeverReviseWithoutMethodology does not apply here in the first place (same
+posture as GAP-16 itself, which never touched precious_metals' §4.1 table).
+§6 item 48 (new) opened for this item; see there for status tracking.
 
 ---
 entry_id: 2026-07-14T11:00
@@ -2517,6 +2618,24 @@ to do later.
     adopted); COPX +2.76% -> +2.79% (actual) -> +1.07% (illustrative).
     The real money-relevant fix is still B/C, both open. Next scheduled
     audit: Sept 30, 2026.
+48. [P1] GAP-18: inflation_linked_sovereign (VTIP) GAP-16-style
+    range-position generalization (opened 2026-08-14, coding session,
+    companion to FRAMEWORK_BACKLOG ENG-72). Three open questions resolved
+    this session (Evgeny + real T1 data, see §3 log entry 2026-08-14 v1.70
+    for full detail, not repeated here): (1) role-specific width gate,
+    2.0pp for this role vs. IHP's 6.0pp, PROVISIONAL pending audit;
+    (2) signal pair keeps BOTH real-yield AND DXY (2yr weekly correlation
+    data overturned the "drop DXY" working hypothesis -- DXY's correlation
+    with VTIP returns, -0.328 p=0.0007, was not weaker than real yield's,
+    -0.300 p=0.0020, and only weakly collinear with it, +0.148); (3)
+    implementation generalizes range_position.py into a role-parameterized
+    version rather than a second VTIP-specific path, using the existing
+    GAP-16 test suite as the regression baseline. STATUS: decisions made,
+    code change NOT YET DONE as of this entry -- tracked in
+    FRAMEWORK_BACKLOG ENG-72 (Python side). The OTHER half of ENG-72
+    (VTIP has no §13 M19 sustaining-condition entry at all) is explicitly
+    OUT OF SCOPE for GAP-18 -- still fully open, no item number assigned
+    yet, needs its own design pass before one is opened.
 
 ---
 

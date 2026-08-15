@@ -485,6 +485,16 @@ Related:   GAP-16 (Calibration_State.md §3, v1.42 adopted / v1.44 real-yield-dr
 
 **Suggested next step:** resolve questions 1-2 with real data (VTIP price history against REAL_YIELD_10Y_TREND alone, without DXY) before touching code; then decide the generalization shape (Q3) with the existing GAP-16 test suite as the regression baseline.
 
+**Progress note (2026-08-14, coding session, same day):** freshness check run first (README §14 mandatory step) -- index was stale (HEAD had moved cad42ccc->5bb30f5, 5 commits including this item's own opening commit), re-indexed fresh, ADR redrafted. Questions 1-3 above resolved with Evgeny + real data rather than assumed, per this item's own "not a quick patch" framing:
+
+- Q1 (width gate): role-specific lower gate, DECIDED (Evgeny) over "widen VTIP's range via M16 first." Value: 2.0pp for `inflation_linked_sovereign` vs. IHP's 6.0pp default, PROVISIONAL.
+- Q2 (signal pair): checked against real data before deciding, per Evgeny's instruction, rather than assumed. market_data_mcp (VTIP, DXY, 2yr daily) + FRED (DGS10, T10YIE, 2yr daily) resampled to 104 aligned weekly observations: corr(VTIP weekly return, real-yield weekly change) = -0.300 (p=0.0020); corr(VTIP weekly return, DXY weekly return) = -0.328 (p=0.0007); collinearity between the two signals only +0.148; OLS incremental R^2 from adding DXY = +0.082 (nearly doubles R^2 over real-yield-alone). Stable across a first-half/second-half split. **This session's own working hypothesis ("drop DXY") was wrong** -- DXY carries real, statistically significant, largely independent information for this role, same as it does for SGOL/SIVR. DECIDED: keep both signals, same pair/sign convention as IHP.
+- Q3 (implementation shape): DECIDED (Evgeny) -- generalize `range_position.py` into a role-parameterized version, not a second VTIP-specific path. Per Calibration_State.md §6 item 44's prior finding, `apply_range_position_adjustment()`/`clean_signal_role_map()` already generalize to any `role_id`; only `evaluate_range_position_advisories()`/`_ihp_sub_conditions()` and the flat `_WIDE_RANGE_THRESHOLD_PP` constant are IHP-hardcoded. Existing GAP-16 test suite (`test_stage3/test_range_position.py`, `test_stage3/test_instruments.py::TestBlendedScenarioReturnRangePositionAdjustment`) is the regression baseline -- SGOL/SIVR behavior must not change as a side effect.
+
+Calibration-side cross-reference done per this item's own instruction: **GAP-18 opened, Calibration_State.md §6 item 48** (v1.70) -- full decision detail and data logged there (§3 log entry 2026-08-14), not repeated here. §13 M19 sustaining-condition coverage (the other half of this item) remains explicitly out of scope for GAP-18 and for the code change about to be made -- still fully open, no item number assigned.
+
+**Code change not yet made as of this note** -- proceeding to it next, same session.
+
 
 ### ENG-71 -- _tool_evaluate_trend_signal() hardcoded held_tickers instead of deriving from §11.3
 <!-- ITEM
