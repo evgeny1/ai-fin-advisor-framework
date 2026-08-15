@@ -337,12 +337,22 @@ def test_apply_scoring_has_range_position_advisories_key(fresh_cache, no_network
 @skip_if_missing
 def test_range_position_advisory_shape_when_present(fresh_cache, no_network):
     """With no_network (empty readings), any emitted advisory must still
-    be 'inconclusive' with two quality_flags — never a guessed signal."""
+    be 'inconclusive' with two quality_flags — never a guessed signal.
+
+    GAP-18 (2026-08-14): role_id is no longer guaranteed to be IHP alone -
+    inflation_linked_sovereign (VTIP) is now also a registered role (see
+    analysis/range_position.py's _SUB_CONDITION_EVALUATORS). Assert against
+    the known registered-role set and each role's OWN width gate, not a
+    single hardcoded role/threshold, so this test doesn't go stale again
+    the next time a role is added to the registry.
+    """
+    from advisor.analysis.range_position import _WIDE_RANGE_THRESHOLD_PP_BY_ROLE
+
     mcp_server._tool_run_computation()
     answers = _make_stub_answers(mcp_server._cache)
     result = json.loads(mcp_server._tool_apply_scoring(answers))
     for adv in result["range_position_advisories"]:
-        assert adv["role_id"] == "inflation_hedge_precious_metals"
-        assert adv["range_width_pp"] >= 6.0
+        assert adv["role_id"] in _WIDE_RANGE_THRESHOLD_PP_BY_ROLE
+        assert adv["range_width_pp"] >= _WIDE_RANGE_THRESHOLD_PP_BY_ROLE[adv["role_id"]]
         assert adv["signal"] == "inconclusive"
         assert len(adv["quality_flags"]) == 2

@@ -48,8 +48,19 @@ class TestLoadStore:
 
 class TestUpdateTrendSignalStore:
     def test_new_entry_written_and_committed(self, tmp_path):
+        # ENG-73 (2026-08-14): was hardcoded to session_date="2026-07-10"
+        # via _reading()'s default, asserting forward_outcome is None right
+        # after write. That default is now 35 calendar days in the past
+        # (today is 2026-08-14) -- past the ~29-day fill threshold (see
+        # TestForwardOutcomeFill), so the retroactive-fill pass legitimately
+        # finds and fills it, breaking the "freshly written" assumption.
+        # Same class of bug as ENG-46 (hardcoded date going stale as real
+        # time passes) -- fixed the same way, with an explicitly TODAY
+        # session_date instead of a fixed literal, so this test means
+        # "freshly written" regardless of when it's actually run.
+        today = datetime.date.today().isoformat()
         with patch.object(m, "_commit") as fake_commit:
-            summary = m.update_trend_signal_store([_reading()], {"MLPX": 78.42})
+            summary = m.update_trend_signal_store([_reading(session_date=today)], {"MLPX": 78.42})
 
         assert summary["error"] is None
         assert summary["entries_added"] == 1
@@ -57,9 +68,9 @@ class TestUpdateTrendSignalStore:
         fake_commit.assert_called_once()
 
         stored = json.loads((tmp_path / m.STORE_FILENAME).read_text(encoding="utf-8"))
-        assert stored["MLPX"]["2026-07-10"]["rs_signal"] == "STRENGTHENING"
-        assert stored["MLPX"]["2026-07-10"]["price_at_signal"] == 78.42
-        assert stored["MLPX"]["2026-07-10"]["forward_outcome"] is None
+        assert stored["MLPX"][today]["rs_signal"] == "STRENGTHENING"
+        assert stored["MLPX"][today]["price_at_signal"] == 78.42
+        assert stored["MLPX"][today]["forward_outcome"] is None
 
     def test_no_new_entries_and_nothing_due_reports_no_commit(self, tmp_path):
         with patch.object(m, "_commit") as fake_commit:

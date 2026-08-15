@@ -33,6 +33,24 @@
   backlog — that would be ironic given ENG-5/ENG-6 below.
 -->
 
+**Last updated:** 2026-08-14, coding session (ENG-72's GAP-16-style
+range-position half CLOSED — analysis/range_position.py generalized from a
+single hardcoded inflation_hedge_precious_metals role to a per-role registry
+also covering inflation_linked_sovereign (VTIP), per GAP-18 (Calibration_
+State.md §6 item 48 / v1.70): role-specific width gate (2.0pp vs. IHP's
+6.0pp), shared real-yield+DXY sub-condition evaluator confirmed via a 2yr/
+104-week correlation analysis (not assumed — overturned this session's own
+"drop DXY" working hypothesis). Investigation also caught and fixed a real
+bug §6 item 44 had missed: apply_range_position_adjustment() was still
+gating on the old flat width constant even after role_id itself went
+generic, which would have silently no-op'd VTIP's EV adjustment. 10 new
+tests; full suite 1006 passed / 46 skipped / 0 failed. ENG-72's other named
+gap (§13 M19 sustaining-condition coverage for VTIP) stays fully open, no
+item number yet. Same session, unrelated: ENG-73 opened and closed —
+test_new_entry_written_and_committed hardcoded a session_date that outran
+the trend-signal-store retroactive-fill threshold as real time passed,
+same class of bug as ENG-46, fixed the same way.)
+Prior:
 **Last updated:** 2026-07-26, coding session part 2 (ENG-54 CLOSED — direct
 finra.org margin-statistics.xlsx fetcher built (new DataSource.FINRA_WEB,
 finra_fetcher.py), registered in Pattern B + Pattern A + the ENG-33 CLI
@@ -378,7 +396,8 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 
 | ID | Status | Severity | Category | Title |
 |---|---|---|---|---|
-| ENG-72 | OPEN | MEDIUM | functional-gap | VTIP/inflation_linked_sovereign has no §13 M19 coverage and no GAP-16-style real-yield decomposition -- CPI accrual vs real-yield price-effect currently blended into one §4.1 number |
+| ENG-73 | CLOSED 2026-08-14 | LOW | testing | test_new_entry_written_and_committed hardcoded session_date="2026-07-10", asserting forward_outcome stays None right after write -- that date is now past the ~29-day retroactive-fill threshold, so the fill pass legitimately populated it, breaking the test's "freshly written" assumption; same class of bug as ENG-46, fixed the same way (dynamic today-date, not a literal) |
+| ENG-72 | OPEN | MEDIUM | functional-gap | VTIP/inflation_linked_sovereign has no §13 M19 coverage (still fully open) -- GAP-16-style real-yield decomposition half CLOSED 2026-08-14 (range_position.py generalized to a role registry; GAP-18/Calibration_State.md §6 item 48) |
 | ENG-71 | CLOSED 2026-08-07 | HIGH | bug | _tool_evaluate_trend_signal() hardcoded held_tickers to TREND_SIGNAL_CONFIG's own key set instead of deriving from §11.3 non-candidate instruments -- violated README §5 design principle 4 (never hardcode instrument tickers in code); confirmed real-world impact: SIVR/COPX/MAGS kept getting evaluated after being fully exited from the live portfolio |
 | ENG-48 | CLOSED 2026-07-14 | HIGH | bug | advisor_write_back's 90s safety-timeout races its own actual completion time — reports TIMEOUT while succeeding server-side |
 | ENG-49 | CLOSED 2026-07-26 | HIGH | bug | advisor_write_back TIMEOUT with a genuinely incomplete server-side operation — per-step progress instrumentation (.write_back_progress.json, gitignored) now records every step boundary, and a genuine TIMEOUT response carries the last-reached step + triage note directly, replacing the manual git status/git diff forensic pass |
@@ -457,7 +476,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 
 ### ENG-72 -- VTIP/inflation_linked_sovereign: no §13 M19 coverage, no GAP-16-style real-yield decomposition
 <!-- ITEM
-Status:    OPEN
+Status:    OPEN (GAP-16-style range-position half CLOSED 2026-08-14 -- see resolution below; §13 M19 sustaining-condition half still fully open, no item number assigned)
 Severity:  MEDIUM
 Category:  functional-gap
 Opened:    2026-08-14
@@ -493,7 +512,29 @@ Related:   GAP-16 (Calibration_State.md §3, v1.42 adopted / v1.44 real-yield-dr
 
 Calibration-side cross-reference done per this item's own instruction: **GAP-18 opened, Calibration_State.md §6 item 48** (v1.70) -- full decision detail and data logged there (§3 log entry 2026-08-14), not repeated here. §13 M19 sustaining-condition coverage (the other half of this item) remains explicitly out of scope for GAP-18 and for the code change about to be made -- still fully open, no item number assigned.
 
-**Code change not yet made as of this note** -- proceeding to it next, same session.
+**RESOLUTION (2026-08-14, coding session, same day) -- GAP-16-style range-position half CLOSED.** `analysis/range_position.py` generalized from a single hardcoded IHP role to a registry (`_SUB_CONDITION_EVALUATORS`, `_WIDE_RANGE_THRESHOLD_PP_BY_ROLE`) supporting `inflation_hedge_precious_metals` (6.0pp gate, unchanged) and `inflation_linked_sovereign` (2.0pp gate, GAP-18). Both roles share one evaluator (`_real_yield_dxy_sub_conditions`, renamed from `_ihp_sub_conditions`) since both were confirmed -- not assumed -- to use the same real-yield+DXY pair and sign convention (see Calibration_State.md §3 2026-08-14 for the data).
+
+**Investigation caught a real bug beyond what §6 item 44 had claimed:** item 44's note that `apply_range_position_adjustment()`/`clean_signal_role_map()` "already generalize to any role_id" was only half true -- `clean_signal_role_map()` does, but `apply_range_position_adjustment()` was still independently gating on the flat `_WIDE_RANGE_THRESHOLD_PP` constant even after the role_id parameter itself was generic. Left as-is, `evaluate_range_position_advisories()` would have correctly produced a VTIP advisory using its 2.0pp gate, but `apply_range_position_adjustment()` would then have silently refused to apply the EV adjustment for it (VTIP's 3pp range still < the old flat 6.0pp check) -- the advisory would show up in the briefing but never actually move the EV number. Fixed by routing both call sites through the same `_width_gate_for_role()` helper, with a code comment explaining why that redundancy (design principle 6: defense in depth) must use one shared per-role lookup, not two independently-hardcoded thresholds.
+
+**Tests:** `test_stage3/test_range_position.py` -- added `TestRoleSpecificWidthGate` (4 tests: gate registry contents, per-role values, unregistered-role fallback) and `TestInflationLinkedSovereign` (6 tests: VTIP's real 3pp range fires under its own gate but would not under IHP's; a genuinely narrow range still correctly skipped; sign convention matches IHP; IHP and ILS evaluated independently in the same call without cross-talk; end-to-end through `clean_signal_role_map()`/`apply_range_position_adjustment()` -- this last one is the regression test for the `apply_range_position_adjustment()` bug found above). `test_mcp/test_run_computation.py::test_range_position_advisory_shape_when_present` updated -- was hardcoded to assert `role_id == "inflation_hedge_precious_metals"`; now asserts against the registered-role set and each role's own gate so it won't go stale the next time a role is added. Full suite: 1006 passed / 46 skipped / 0 failed (see ENG-73 for one pre-existing, unrelated failure found and fixed in the same run).
+
+**Not done, still fully open:** the §13 M19 sustaining-condition entry for VTIP (data-driven thesis-failure signal) -- this item's other named gap. No item number assigned yet; needs its own design pass (what would make VTIP's inflation-hedge thesis actually fail?) before one is opened, per this item's own original framing. ENG-72 stays OPEN for that reason.
+
+
+### ENG-73 -- test_new_entry_written_and_committed hardcoded a session_date that outran the retroactive-fill threshold
+<!-- ITEM
+Status:    CLOSED
+Severity:  LOW
+Category:  testing
+Opened:    2026-08-14
+Closed:    2026-08-14 (same-day coding session -- found while running the full suite for ENG-72, fixed same session)
+Area:      python/tests/test_stage1/test_trend_signal_store.py
+Related:   ENG-46 (same class of bug -- a hardcoded date going stale as real time passes)
+-->
+
+**Found:** full-suite run for ENG-72 (unrelated change) turned up one failure in a completely different module: `test_new_entry_written_and_committed` writes a fresh entry via `_reading()`'s default `session_date="2026-07-10"` and asserts `forward_outcome is None` immediately after. `update_trend_signal_store()`'s retroactive-fill pass (see `TestForwardOutcomeFill`) runs on every call and fills any entry past a ~29-calendar-day gap -- today being 2026-08-14, "2026-07-10" is 35 days old, past that threshold, so the fill pass legitimately found and populated it. Confirmed unrelated to the ENG-72 change (different module entirely, `data/trend_signal_store.py` vs. `analysis/range_position.py`) before touching it.
+
+**Resolution:** same fix pattern as ENG-46 -- replaced the hardcoded literal with `datetime.date.today().isoformat()` so the test means "freshly written" regardless of which real date it happens to run on, and updated the assertions' lookup key to match. No other test in the file depends on the "2026-07-10" literal.
 
 
 ### ENG-71 -- _tool_evaluate_trend_signal() hardcoded held_tickers instead of deriving from §11.3
