@@ -378,6 +378,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 
 | ID | Status | Severity | Category | Title |
 |---|---|---|---|---|
+| ENG-72 | OPEN | MEDIUM | functional-gap | VTIP/inflation_linked_sovereign has no §13 M19 coverage and no GAP-16-style real-yield decomposition -- CPI accrual vs real-yield price-effect currently blended into one §4.1 number |
 | ENG-71 | CLOSED 2026-08-07 | HIGH | bug | _tool_evaluate_trend_signal() hardcoded held_tickers to TREND_SIGNAL_CONFIG's own key set instead of deriving from §11.3 non-candidate instruments -- violated README §5 design principle 4 (never hardcode instrument tickers in code); confirmed real-world impact: SIVR/COPX/MAGS kept getting evaluated after being fully exited from the live portfolio |
 | ENG-48 | CLOSED 2026-07-14 | HIGH | bug | advisor_write_back's 90s safety-timeout races its own actual completion time — reports TIMEOUT while succeeding server-side |
 | ENG-49 | CLOSED 2026-07-26 | HIGH | bug | advisor_write_back TIMEOUT with a genuinely incomplete server-side operation — per-step progress instrumentation (.write_back_progress.json, gitignored) now records every step boundary, and a genuine TIMEOUT response carries the last-reached step + triage note directly, replacing the manual git status/git diff forensic pass |
@@ -453,6 +454,37 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 ---
 
 ## Part 1 — Engineering Items
+
+### ENG-72 -- VTIP/inflation_linked_sovereign: no §13 M19 coverage, no GAP-16-style real-yield decomposition
+<!-- ITEM
+Status:    OPEN
+Severity:  MEDIUM
+Category:  functional-gap
+Opened:    2026-08-14
+Area:      python/advisor/analysis/range_position.py (GAP-16 IHP mechanism, candidate generalization target); Instrument_Classification.md §11/§13 (VTIP absent from §13); M19_ThesisSustainingConditions.md NUMERIC_CONDITIONS scope comment; Calibration_State.md §4.1 inflation_linked_sovereign row + §6 (companion GAP-N entry needed, not assigned here); M09_ScenariosABC.md Scenario C rationale text
+Related:   GAP-16 (Calibration_State.md §3, v1.42 adopted / v1.44 real-yield-driver correction via ENG-39) -- this generalizes from the same mechanism; ENG-39; companion-project hand-off, 2026-08-14; this session's own Session_Log.md §8 entry (GAP-16 fired unfavorable on SGOL live this session)
+-->
+
+**Found:** Companion-project hand-off (2026-08-14) flagged that VTIP's realized 1yr return (~-1.2%) sits below the §4.1 Scenario C [+1%,+4%] range for `inflation_linked_sovereign`, despite Scenario C's defining condition (CPI accelerating on the Iran-war energy shock) being live. Verified this session with fresh T1 data: July CPI 3.4% YoY (BLS, Aug 12) -- third straight month of deceleration (4.2%->3.5%->3.4%) -- while REAL_YIELD_10Y_TREND drifted up over the same 8-week window (2.18%->2.39%). The [1,4]% range blends two independent forces -- CPI accrual (mechanical, near-guaranteed) and real-yield price effect (Fed-reaction-function-driven, currently working against the position) -- with no sub-condition tracking either separately for this role.
+
+`M19_ThesisSustainingConditions.md`'s `NUMERIC_CONDITIONS` scope comment lists DBMF, MLPX, MAGS, COPX, URA's price leg, SGOL/SIVR's rate/DXY legs, AIPO, INFL -- VTIP is absent, and there is no §13 entry for it at all. The documented defensive/floor-sleeve exemption (`consumer_defensive_equity`, `rate_sensitive_income_short`, cash-equivalents) does not list `inflation_linked_sovereign`, and unlike those roles it gets its own scenario-conditional directives (Add in B, Hold in C, Reduce in A, pathway-conditional in E) rather than flat treatment -- so its absence from §13 reads as an oversight, not a confirmed scope decision.
+
+**Relationship to GAP-16:** same class of problem GAP-16 already solved for `inflation_hedge_precious_metals` (SGOL/SIVR) -- a real-yield-trend signal, gated on >=6pp §4.1 range width, producing favorable/unfavorable/mixed/inconclusive and a bounded EV adjustment (min(25% of range width, 3pp), conservative-only) to `blended_conservative_return_pct`. Confirmed live and working correctly this session: SGOL's Scenario B [6,12] range (6pp, clears the gate) read unfavorable (real yield trending up, DXY flat/no lean) and the adjustment applied. This is the reference implementation to generalize from, not a reason to build something new.
+
+**Why a literal port doesn't work:** VTIP's Scenario C range is [1,4]% -- 3pp wide, below GAP-16's 6pp width gate. Porting the mechanism verbatim would silently never fire under current §4.1 values. Also, GAP-16's signal pair is real-yield-trend *plus* a DXY agreement gate -- DXY matters for gold because it's globally dollar-priced; TIPS pricing is much more directly a real-yield story, so DXY is probably the wrong second leg here, not just an unmet gate.
+
+**Open questions (deliberate decision needed, not a quick patch -- same posture as ENG-41):**
+1. Width gate: role-specific (lower threshold for `inflation_linked_sovereign`) vs. widening VTIP's own range via a full M16 four-layer methodology pass first?
+2. Signal pair: real-yield-trend alone, or does DXY still carry information for this role? (Working hypothesis is "drop DXY" -- not yet verified against data.)
+3. Implementation shape: generalize `range_position.py`'s IHP-specific logic into a role-parameterized version, or build a second VTIP-specific path? Generalizing risks changing SGOL/SIVR's live behavior without full regression coverage of the existing GAP-16 suite (`test_range_position.py`, `test_instruments.py::TestBlendedScenarioReturnRangePositionAdjustment`).
+4. Directive-language (no code required): Scenario C's `inflation_linked_sovereign` rationale ("CPI accrual positive but modest... Hold -- do NOT trim") reads as a near-term return claim rather than a thesis directive. M09's precious-metals preamble already has the right pattern ("thesis is intact regardless of price drawdown" until a specific invalidation condition fires) -- worth mirroring here.
+
+**Cross-reference required:** the calibration/methodology side of this (whether `inflation_linked_sovereign` gets a §13 entry, its sustaining/failure conditions, any directive-language change) belongs in Calibration_State.md §6 as its own GAP-N entry per this file's own scope boundary -- not assigned here. Open that entry there first; update this file's Part 2 index to match, not the other way around.
+
+**Not fixed this session (advisory session, no code or calibration-file changes) -- flagged for the next coding session.**
+
+**Suggested next step:** resolve questions 1-2 with real data (VTIP price history against REAL_YIELD_10Y_TREND alone, without DXY) before touching code; then decide the generalization shape (Q3) with the existing GAP-16 test suite as the regression baseline.
+
 
 ### ENG-71 -- _tool_evaluate_trend_signal() hardcoded held_tickers instead of deriving from §11.3
 <!-- ITEM
