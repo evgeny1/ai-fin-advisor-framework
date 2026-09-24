@@ -57,22 +57,11 @@ parseable; only §8 had a disambiguation problem worth fixing.
 
 ## Section 7 - Session Observations Log (Credit Readings)
 
-// COMPACTED: 2026-06-19 — rows 2026-05-07 through 2026-05-13 (3 rows: 05-07, 05-11, 05-13) archived to Archive_2026Q2.md, restoring the last-10 retention rule (FRAMEWORK_BACKLOG.md ENG-5)
+// COMPACTED: 2026-09-24 — 10 row(s) older than 90 calendar days archived to Archive_2026Q2.md (FRAMEWORK_BACKLOG.md ENG-53)
 
 | Date | HY OAS (bps) | IG OAS (bps) | CCC OAS (bps) | Source | T1 Flag |
 | --- | --- | --- | --- | --- | --- |
-| 2026-05-22 (full) | **278** | **75** | **939** | **FRED T1 — embedded allocation spreadsheet tab.** May 21 close. MOVE: 79.72 GOOGLEFINANCE. VIX: 16.52. S&P 500: 7,494.81. | **T1 — spreadsheet tab** |
-| 2026-05-25 (research/dev + full M05) | 278 (carry) | 75 (carry) | 939 (carry) | FRED T1 via allocation spreadsheet tab — May 21 close (most recent; May 25 is Sunday/Memorial Day). Also confirmed: BAMLC0A4CBBB (BBB OAS) 94 bps; SOFR 3.51%; DFF 3.62%; SOFR–DFF spread −11bp (normal). MOVE: 78.43 (GOOGLEFINANCE live). VIX: 16.70. S&P 7,473.47 (May 22 close). S&P Futures overnight: 7,268.25 (−2.7%). FINRA margin debt: $1.304T (Apr 2026 record). THREEFYTP10: 0.8117% (May 15 — 14-yr high). Yield curve (FMP May 22): 10Y–2Y +43bp; 10Y–3M +88bp; 30Y 5.07%. BZ=F overnight ~$107.60 (Yahoo Finance pre-market T2, Memorial Day). | **T1 — spreadsheet tab + FMP** |
-| 2026-05-25 (second M05 — v1.20 framework evaluation) | 278 (carry) | 75 (carry) | 939 (carry) | Carry — Memorial Day; no new FRED data. BZ=F intraday (Memorial Day session): ~$93-96 (down ~6% from $100.21 May 22 close) on US-Iran deal optimism. S&P futures: +0.95% (reversed from prior −2.7% overnight). DXY ~98.92. Gold $4,523, Silver $76.15 (May 22). Kevin Warsh sworn in as 17th Fed Chairman May 22. | T1 carry; BZ=F T2 (Investing.com/Trading Economics CFD); equities T2 |
-| 2026-05-29 (Q2 audit — full M05) | **278** | **73** | **935** | **FRED T1 — embedded allocation spreadsheet tab.** May 28 close. MOVE: 70.22 (GOOGLEFINANCE live). VIX: 15.32. S&P: 7,580. DFF: 3.62%. BBB OAS: 93bps. BB OAS: 161bps. KRE: $69.61. BZ=F: ~$91-92 (CNBC/Trading Economics T1, May 29 intraday — down ~19% in May on Iran deal optimism). NatGas (DHHNGSP): $3.10 (May 26). | **T1 — spreadsheet tab** |
-| 2026-06-01 (objective type resolution — ad-hoc) | **274** | **74** | **941** | **FRED T1 — embedded allocation spreadsheet tab.** May 31 close: HY BAMLH0A0HYM2 2.74%, IG BAMLC0A0CM 0.74%, CCC BAMLH0A3HYC 9.41%. MOVE: 73.33 (GOOGLEFINANCE). VIX: 16.05. S&P: 7,599.96. KRE: $68.31. SOFR: 3.63%. DFF: 3.62%. NatGas: $3.10 (May 26 — latest available). | **T1 — spreadsheet tab** |
-| 2026-06-02 (full M05 session — v1.29) | **274** | **74** | **941** | **FRED T1 — embedded allocation spreadsheet tab.** May 31 close (most recent). BZ=F: ~$95.30 (Yahoo Finance T1 close, +3.5% on Iran escalation). DXY: 99.19 (Trading Economics T1). 10Y: 4.51%; 2Y: 4.04%; 30Y: 4.98%; 10Y-2Y: +42bp. S&P open 7,599.96; close 7,609.78 (+0.13%). AIPO: $34.01 (+3.59%); COPX: $93.66 (+4.00%); MLPX: $73.50 (+2.03%). MOVE: 73.33 session-start. All credit thresholds CLEAR. CCC divergence watch active. | **T1 (credit) — spreadsheet tab; T2 (BZ=F, DXY, instruments)** |
-| 2026-06-02 (AIPO classification audit — v1.30) | 274 (carry) | 74 (carry) | 941 (carry) | Carry — ad-hoc classification correction session. No new market data fetched. AIPO ThematicETF_ClassificationAudit() re-run from T1 source (Defiance ETFs official page, 77 holdings, $750.87M AUM). | T1 carry |
-| 2026-06-04 (full M05 — M18 v1.2 re-verification) | 274 (carry) | 74 (carry) | 941 (carry) | FRED T1 via allocation spreadsheet — May 31 close (most recent). MOVE: 71.16 (GOOGLEFINANCE T1 live). VIX: 15.40 (T1 live). S&P: 7,584.31. DXY: 99.43. 10Y: 4.47%; 2Y: 4.05%; 30Y: 4.97%; 10Y-2Y: +42bp. BZ=F: $97.81 (Jun 3 close T1 market_data). KRE: $69.98. All credit thresholds CLEAR. MOVE NORMAL (71.16 < 80). M14 composite HIGH (equity-driven; commodity NOT FIRING — energy_90d +5.52%). | T1 carry (credit); T1 live (MOVE, VIX, S&P, DXY, rates) |
-| 2026-06-07 (audit — framework gap session) | **274** | **74** | **946** | **FRED T1 — embedded allocation spreadsheet tab.** June 4 close: HY BAMLH0A0HYM2 2.74%, IG BAMLC0A0CM 0.74%, CCC BAMLH0A3HYC 9.46%. MOVE: 75.2 (GOOGLEFINANCE). VIX: 21.51 (June 5/7 live). S&P: 7,383.74 (June 5 close — S&P -2.64% on strong May jobs +172k vs +80k expected + semi selloff). KRE: $70.17 (stable). BZ=F: $93.09 (June 5 close, T1 market_data MCP — C-trigger INACTIVE). BBB OAS: 93 bps. SOFR: 3.62%. DFF: 3.62%. NatGas: $3.07 (June 1 latest). THREEFYTP10: 0.7541% (May 29 — latest in spreadsheet). M14 composite MODERATE (energy_90d −5.93% NOT FIRING; broad_equity_30d ~+3.7% MODERATE). CCC +5bps from last reading: divergence watch continues. | **T1 — spreadsheet tab (credit); T1 market_data (BZ=F)** |
-| 2026-06-10 (full M05 — B formal trigger session; v1.33) | **274** | **74** | **946** | **FRED T1 — embedded allocation spreadsheet tab.** June 4 close (most recent; no new FRED push): HY BAMLH0A0HYM2 2.74%, IG BAMLC0A0CM 0.74%, CCC BAMLH0A3HYC 9.46% (carry). MOVE: 77.03 (T1 market_data live). VIX: 20.43 (+2.82% on CPI; prev 19.87). S&P: 7,362.65 (−0.32%). KRE: $72.10 (+1.46% — hawkish). BZ=F: $91.45 (Jun 9 T1 market_data). DXY: 99.85. BBB OAS: 93bps (carry). SOFR: 3.62% (carry). KBE: $65.73 (+1.12%). Schwab T1 screenshot: PAVE $56.095 (SOLD 502sh, gain +$984 absorbed by −$2,778 YTD losses), MLPX $74.37 (+1.46%), DBMF $30.85 (+0.23%), SGOV $100.475 (flat), AIPO $29.71 (−3.94%), XLP $85.17 (+1.27%), COPX $78.64 (−1.87%). All credit thresholds CLEAR. MOVE approaching ELEVATED (77.03 < 80). CCC divergence watch: 5th consecutive session quiet widening. | **T1 — spreadsheet tab (credit, June 4 carry); T1 market_data (MOVE, VIX, S&P, KRE, BZ=F live); T1 Schwab screenshot (position prices)** |
 
----
 
 ## Section 8 - Session State Log
 
@@ -1050,3 +1039,73 @@ next_session_flags:
 - September 15-16 FOMC and September 11 CPI print both due before next likely session
 - Consider completing VTIP evaluate_allocation for Primary Roth / Relative IRA / Relative
   Roth if a fuller VTIP review is wanted
+
+---
+entry_id: 2026-09-24T09:33
+date: '2026-09-24'
+session_type: full M05 session + Q3 audit (early, v1.71)
+status: current
+scenario_probabilities: {A: 5.5294, B: 33.1765, C: 27.6471, D: 3.0, E: 3.0, F: 27.6471}
+primary_driver: 'Fed HIKED 25bp on Sept 16 (12-0, to 3.75-4.00%; dots: 16 of 18 expect
+  another 2026 hike; next FOMC Oct 27-28) -> A_check_fed 0, F_check_fed 2. Aug CPI
+  3.4% YoY flat (MoM +0.4% on gasoline, core 2.4% YoY); Q2 real GDP 1.5% but nominal
+  strong (F_check_gdp 3, Q2 final sales to private domestic purchasers +4.2%); Aug
+  payrolls +162k, unemployment 4.1%; Hormuz chokepoint still T1-active (Iran-Gulf
+  talks postponed indefinitely Sept 13, US blockade/escorts), Brent 99.63 (9.4% below
+  the 110 C-trigger). Scoring: A 10.4->5.5, B 41.8->33.2, C 31.3->27.6, F 10.4->27.6,
+  D/E 3.0. Same session: Q3 audit v1.71 adopted 7 MEDIUM 4.1 cells (BMEI A/B/C, STG
+  D/E/F, RAC A); at the new vector VYMI blended EV -5.02% (REDUCE), SCHD -0.07% (REDUCE_TO_MIN),
+  Primary IRA feasibility shortfall widened to 3.54pp (portfolio 0.80% vs required
+  4.34%).'
+open_triggers:
+- FOMC hiked to 3.75-4.00% on Sept 16 (12-0); 16 of 18 dots expect another 2026 hike,
+  markets price December; next FOMC Oct 27-28
+- 'Data calendar: JOLTS Sept 29, BEA 2026 annual update Sept 30, Sept jobs report
+  Oct 2, Sept CPI Oct 14 (Aug CPI was 3.4% YoY, core 2.4%)'
+- 'Iran/Hormuz chokepoint T1-active: Iran-Gulf talks on the Omani reopening plan postponed
+  indefinitely Sept 13, US naval blockade and tanker escorts continue; Brent 99.63,
+  9.4% below the 110 C-trigger; C_check_chokepoint stays 2'
+- 'Long end: 10Y 4.96%, 30Y 5.29% (M17 E warning 5.50%), term premium 0.96 (warning
+  1.00), MOVE 95.45 (+21.5% on the day), e_pathway_type RESERVE_EROSION'
+- CCC OAS 1,075bps still sharply diverging from HY 268 / IG 77 - unresolved tail-widening-first
+  pattern; FINRA margin debt 1.454T (record 1.502T in June)
+- 'Trend signals 2026-09-24 (shadow mode, never a directive): MLPX WEAKENING (-41.16pp
+  medium), XAR WEAKENING (-4.79pp), AIPO INCONCLUSIVE (-12.01pp medium), SGOL INCONCLUSIVE'
+- 'Q3 audit v1.71 is PARTIAL: threshold audits (2, 9, 10, MOVE, Fed-response sub-variable),
+  BMEI D/E, GP E, and L1 anchors for XLV/FLOT/EM/RE still open - Calibration_State
+  6 item 49'
+- 'Anthropic IPO: Nasdaq venue reported Sept 13, October listing possible, no public
+  terms (item 16 re-check only if a position in the space is considered)'
+open_decisions:
+- 'Client decision needed: M16 amendment for an anchor-substitution path for narrow-sector
+  roles; until then geopolitical_premium A [-4,+1] stays blocked at [-2,3] (Calibration_State
+  6 item 51; ~0.19pp XAR EV at A ~10%, less at the new A 5.5%)'
+- VYMI (EV -5.02%, REDUCE) and SCHD (EV -0.07%, REDUCE_TO_MIN) now carry framework
+  REDUCE directives after v1.71; they are ~11.4% and ~22.4% of the total portfolio.
+  M06 HoldJustification with EV math is required before any hold recommendation; sheet
+  targets are not changed by this session
+- Acc4 (6668-9768) sheet targets (AIPO 14 / SCHD 24 / VYMI 12 / XAR 10 / RSP 5 / MLPX
+  20 / SGOV 15) differ from the adopted 2026-07-31 design (MLPX25/SCHD35/VYMI15/XAR10/SGOV15,
+  AIPO/RSP dropped) - reconcile
+- Primary IRA feasibility shortfall widened to 3.54pp (0.80% vs 4.34% required; was
+  2.46pp on Aug 15) - most of the drop is the v1.71 adoptions plus F rising to 27.6%;
+  separately, unadopted XLV B/C [-9,-2] are live in SCHD/VYMI EV (about -0.84pp on
+  SCHD) - adopt or revert once an L1 anchor is sourced (Calibration_State 6 item 50)
+- Primary Roth AIPO is 22.88% vs a 0% target (sell-down pending); Primary IRA AIPO
+  13.4% and Acc4 AIPO 13.4% still unreviewed against the AI-bubble thesis
+- SCHD, VYMI, RSP are held but registered under 11.4 candidates, so they miss ValidateClassifications/holdings
+  fetch/trend-signal set (ENG-75); move to 11.3 in a coding session
+- 'Relative IRA/Roth: floor check CLEAR at the new vector; SCHD/VYMI rotation there
+  not executed and not decided'
+next_session_flags:
+- 'Data before the next session: JOLTS Sept 29, Sept jobs Oct 2, Sept CPI Oct 14,
+  FOMC Oct 27-28'
+- Finish the Q3 audit remainder (Calibration_State 6 item 49) and the L1 anchors for
+  XLV/FLOT/EM/RE (item 50)
+- 'Coding session: ENG-74 (7 stale tests: 2026-06-01 seed aged out of 90-day compaction;
+  DBMF hardcoded after exit) and ENG-75 (SCHD/VYMI/RSP registry)'
+- advisor_evaluate_trend_signal MCP call hit the 60s timeout again but had completed
+  and written TrendSignalStore.json locally (uncommitted) - committed manually as
+  8e7f32c; recurring pattern, worth a note against ENG-64
+- VTIP range_position_advisory fired this session (B, unfavorable, real yield up)
+  - the Aug 15 miss was not investigated; consider closing that flag
