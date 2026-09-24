@@ -45,9 +45,9 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 | A | 6% | 16% | ⚑ provisional | Fed cuts; AI capex expands; multiple expansion |
 | B | -2% | +4% | ★ ADOPTED HIGH (v1.27) | Q1 2026 as sustained B analogue confirmed; contract lock-in; [-12,-3] REJECTED. |
 | C | +2% | +8% | ⚑ provisional | Q1 2026 empirical: Azure +40%, AWS +28%, META +33%. AI enterprise contracts multi-year. Single data point; audit June 30. |
-| D | -6% | 0% | ⚑ PENDING June 30 | 2008-09 2yr annualized NDX -5.1% real. 1 analogue. Rederived from [-20,-8] (was 1yr acute — wrong convention). |
-| E | -12% | -3% | ⚑ PENDING June 30 | 2008 Q4 acute annualized. 1 analogue. Rederived from [-18,-6]. |
-| F | 4% | 11% | ⚑ PENDING June 30 | Strong nominal demand; rising rates partially compress multiples. Proposed revision [8,20] logged 2026-06-25 (MEDIUM confidence) — two clean multi-year QQQ analogs (2017-19, 2023-24) support a materially higher range; capex-sustainability structural risk (§6 item 37) argues against adopting the raw historical average. Current operative value [4,11] unchanged pending formal adoption. Full 4-layer detail: §3 log 2026-06-25; §6 item 23[15]. |
+| D | -6% | 0% | ◆ ADOPTED MEDIUM (Q3 audit 2026-09-24, v1.71) | 2008-09 2yr annualized NDX -5.1% real. 1 analogue. Rederived from [-20,-8] (was 1yr acute — wrong convention). |
+| E | -12% | -3% | ◆ ADOPTED MEDIUM (Q3 audit 2026-09-24, v1.71) | 2008 Q4 acute annualized. 1 analogue. Rederived from [-18,-6]. |
+| F | 8% | 20% | ◆ ADOPTED MEDIUM (Q3 audit 2026-09-24, v1.71; was [4,11]) | Strong nominal demand; rising rates partially compress multiples. Two clean multi-year QQQ analogs (2017-19, 2023-24); capex-sustainability structural risk (§6 item 37) documented in Layer 3. Full 4-layer detail: §3 log 2026-06-25; §6 item 23[15]. |
 
 ### 11.3 Instrument Classification Table
 
@@ -67,7 +67,7 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
 - Target: 12% structural across applicable accounts (Primary IRA, Primary Roth, Taxable Acc4). CONFIRMED AT TARGET.
 - Client preference: exit excess XAR at ~$265 on a conflict-resumption spike. EXECUTED — reduction to 12% confirmed via allocation sheet May 6.
 - HoldJustification: break-even peace probability <5.6%; opportunity cost vs MLPX -4.21%/year (at v1.19 probs).
-- ⚠ Deal trajectory (A rising): geopolitical_premium A return proposed revision to [-6,0] pending June 30. If adopted, XAR EV would decline further.
+- ⚠ Deal trajectory (A rising): geopolitical_premium A return proposed revision is [-4,+1] (MEDIUM), adjudicated at the Q3 audit 2026-09-24 and NOT adopted (no Layer 1 anchor, Calibration_State §6 item 51); the older [-6,0] figure was rejected in v1.27. If it is adopted later, XAR EV declines by roughly 0.19pp at A ~10%.
 - ENG-50/ENG-55 trend/rotation comparator (2026-07-07, shadow-mode only — never feeds M03 or this section's EV): Mode 1 return-spread vs 0.5×ITA+0.5×PPA (defense/aerospace equity peers). Orthogonal to the geopolitical_premium sign-flip review noted above — this reads whether XAR is out/underperforming the sector, not whether the sector's assumed EV sign is correct. See FRAMEWORK_BACKLOG_ARCHIVE.md ENG-55 and analysis/trend_signal.py.
 
 #### MLPX
@@ -503,7 +503,16 @@ NOTE: §4.1 is authoritative for return values. This table shows operative value
   healthcare_defensive_equity; Energy ≈11% -> inflation_hedge_commodity_linked.
 - EV: computed fresh each session via M15.blendedScenarioReturn() (ENG-7);
   not stored here.
-- CAVEAT: broad_market_equity_international carries NO confidence markers
+- UPDATE 2026-09-24 (v1.71): the M16 review flagged below was completed (v1.67-v1.69).
+  broad_market_equity_international A/B/C are now ADOPTED ◆ MEDIUM at the Q3 audit
+  (A [2,10], B [-12,-6], C [-19,-10]); F is ★ HIGH [8,14]; D/E stay ⚠ LOW and are
+  likely too mild, and the row's Layer 4 gap (8.15pp) is documented, not closed.
+  VYMI's blended EV falls about 4.9pp at the last (2026-08-15, stale) probabilities --
+  roughly -2% to about -7%, hand + calculator_mcp, not pipeline-verified. The 15% Acc4
+  target now needs an explicit M06.HoldJustification with EV math at the next full
+  advisory session (qualitative reasoning alone does not satisfy it). The paragraph
+  below is the pre-review caveat, kept for the record.
+- CAVEAT (pre-review, superseded above): broad_market_equity_international carries NO confidence markers
   in the live §4.1 table (v1.0 unaudited baseline — the same gap
   broad_market_equity_domestic had before its June 2026 M16 review). VYMI's
   actual behavior (value tilt, ex-US, P/E ~12.2x vs. SPY's mid-20s per

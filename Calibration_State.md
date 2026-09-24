@@ -2,7 +2,19 @@
 
 Persistent framework configuration — load at every session start alongside Session Log.
 
-# Version: 1.70  Last updated: August 14, 2026. v1.70: GAP-18 opened --
+# Version: 1.71  Last updated: September 24, 2026. v1.71: Q3 audit run early --
+counted as the Q3 audit dated 2026-09-24 (six days ahead of the Sept 30 schedule)
+per client instruction. 7 MEDIUM cells ADOPTED (new marker ◆): real_asset_contracted_revenue
+A [3,7]->[8,18]; secular_technology_growth D [-6,0], E [-12,-3], F [4,11]->[8,20];
+broad_market_equity_international A [4,9]->[2,10], B [-5,-1]->[-12,-6], C [-6,-2]->[-19,-10].
+D/E of broad_market_equity_international stay LOW and un-revised, so its Layer 4 gap
+is documented, not closed. geopolitical_premium A, healthcare B/C, floating_rate D/E,
+emerging_market F, real_estate A/F NOT adopted (no Layer 1 anchor documented) -- §6 items 49-52.
+Finding: the return-table parser is marker-agnostic, so unadopted ⚑ values are live in EV.
+Held-instrument EV effect (hand + calculator_mcp, at the STALE 2026-08-15 probabilities,
+not a fresh session): VYMI -4.90pp, AIPO +0.35pp, MLPX +0.26pp. Full detail: §3 log 2026-09-24 (v1.71).
+
+v1.70: GAP-18 opened --
 inflation_linked_sovereign (VTIP) GAP-16-style range-position generalization,
 companion to FRAMEWORK_BACKLOG ENG-72 (coding session, engineering side).
 Role-specific width gate DECIDED (Evgeny): 2.0pp for inflation_linked_sovereign
@@ -640,6 +652,51 @@ This file is loaded as Project Knowledge every advisory session; engineering
 narrative here costs every session for zero advisory benefit. See
 FRAMEWORK_BACKLOG_ARCHIVE.md for the engineering-side history of entries
 trimmed out in this cleanup.
+
+---
+entry_id: 2026-09-24T12:00
+date: '2026-09-24'
+version: v1.71
+category: Q3 audit (run early, counted as Q3) — §4.1 MEDIUM adoptions; unadopted-value finding
+---
+2026-09-24 (v1.71) - Q3 full audit, run six days ahead of the Sept 30 date on
+explicit client instruction and counted as the Q3 audit (M16 §6: MEDIUM
+proposals are adoptable at the scheduled audit only; the pending evidence is
+fixed and does not change between now and Sept 30). Layer 4 run at the
+neutral distribution A35/B15/C15/D10/E5/F20 (NOT the operating one), math
+via calculator_mcp scenario_weighted_ev, not by hand.
+ADOPTED (marker ◆, MEDIUM):
+- real_asset_contracted_revenue A [3,7]->[8,18]. 1 analog (2016 MLP rebound),
+  L1 infrastructure ~4-5% real. L4 = +4.40% (8/6/8/-6/-10/3) -> PASS. Detail: v1.53.
+- secular_technology_growth D [-6,0], E [-12,-3], F [4,11]->[8,20]. D/E 1 analog
+  each (2008-09 2yr annualized; 2008 Q4 acute), F 2 analogs (2017-19, 2023-24
+  QQQ) with the capex-sustainability risk (§6 item 37) documented in L3.
+  L1 ~1% real (VCMM 0-2, RA ~1). L4 = +2.50% (6/-2/2/-6/-12/8), gap +1.5pp -> PASS.
+  Detail: v1.27, 2026-06-25.
+- broad_market_equity_international A [4,9]->[2,10], B [-5,-1]->[-12,-6],
+  C [-6,-2]->[-19,-10]. L1 AQR 2026 CMA ~4.5% real (4.0-5.0), Fidelity
+  cross-check within ~1pp. B/C 2 tight analogs each (1973/2022; 1974/2022 H1),
+  A 3 analogs. L4 = -3.65% (2/-12/-19/-8/-10/8) vs 4.5% -> gap 8.15pp,
+  DOCUMENT_AND_FLAG (a): D/E are un-revised and likely too mild, which drags
+  the neutral weighted average down. Not closed; D/E next steps stay open in
+  §6 item 47. Detail: v1.67-proposal, v1.68, v1.69.
+NOT ADOPTED (values unchanged):
+- geopolitical_premium A [-2,3]->[-4,+1]: role-level Layer 1 gap (v1.64: no T1
+  institutional source publishes defense-sector CMAs). M16 §4 requires L1 for
+  ANY revision, so this cannot be adopted as written; needs a client decision
+  on an anchor-substitution path for narrow-sector roles. §6 item 51.
+- healthcare B/C, floating_rate D/E, emerging_market F, real_estate A/F: no L1
+  anchor documented (FLOT's entry says so explicitly). Left as ⚑, not formalized. §6 item 50.
+FINDING: calibration.py _parse_cell is marker-agnostic, so ⚑/⚠ values are LIVE
+in EV. git confirms v1.55 (a1ee4d0) and v1.56 (ea9ca5b) rewrote the table cells
+in place (XLV B/C [1,4]/[-2,3]->[-9,-2]; FLOT D/E [-10,-4]/[-8,-2]->[-2,1]/[-4,0])
+while their §3 entries say "LOGGED PENDING, NOT ADOPTED". XLV B/C therefore feed
+held-instrument EV today via SCHD (0.16) and VYMI (0.08).
+EV EFFECT of the 7 adoptions, at the 2026-08-15 §8 vector (A10.44/B41.78/C31.33/
+D3/E3/F10.44 -- 40 days stale, NOT a fresh session): VYMI -4.90pp (BMEI 0.68 x
+dA-2/dB-7/dC-13); AIPO +0.35pp (RAC 0.55 x dA+5, STG 0.16 x dF+4); MLPX +0.26pp
+(RAC 0.50 x dA+5). Consistent with the -2.13% -> -6.81% illustrative figure from
+v1.69 for VYMI. Re-verify through the pipeline at the next full M05 session.
 
 ---
 entry_id: 2026-08-14T16:00
@@ -2134,7 +2191,7 @@ BZ=F Jun 5 T1: $93.09. M14 composite MODERATE (step-down from HIGH). No §4.1 ch
 
 ## Section 4 - Growth Objectives: Return Table and Multipliers
 
-All values CALIBRATION_DATED. Last calibrated: May 6, 2026 (v1.13 — 5 new roles fully calibrated; systematic_trend_following A/B/C and consumer_defensive_equity B adopted HIGH confidence; all other new role values PENDING June 30). Full empirical audit: June 30, 2026.
+All values CALIBRATION_DATED. Last calibrated: May 6, 2026 (v1.13 — 5 new roles fully calibrated; systematic_trend_following A/B/C and consumer_defensive_equity B adopted HIGH confidence; all other new role values PENDING June 30). Full empirical audit: June 30, 2026. Q3 audit run 2026-09-24 (v1.71 — 7 cells adopted MEDIUM ◆, see §6 item 49; individual-cell dates below are the authoritative calibration dates, this line is not).
 
 CALIBRATION PROPOSALS ADOPTED April 30, 2026:
 - secular_technology_growth Scenario C: [-2%,+4%]->[+2%,+8%]
@@ -2163,19 +2220,20 @@ Institutional unconditional anchors (real, 10yr, neutral distribution A=35/B=15/
 ⚑ = PENDING June 30 (MEDIUM confidence — M16 calibration required before formal adoption).
 ⚠ = PENDING June 30 (LOW confidence — irreconcilable historical anchors; requires deeper analysis).
 ✓ = REVIEWED 2026-06-25 (M16 4-layer run completed; current value confirmed consistent with available data — no revision proposed, not a formal HIGH-confidence adoption).
+◆ = ADOPTED at the Q3 audit, 2026-09-24 (v1.71), MEDIUM confidence per M16 §4 (adoption of MEDIUM proposals is permitted at a scheduled full audit only). Conservative end used for all EV math; upside disclosed only. Parsed as confidence MEDIUM (unmarked in calibration.py _CELL_RE — no code change needed). Convention note (v1.71): the parser is marker-agnostic, so a ⚑/⚠ cell's value is LIVE in EV whether or not it has been formally adopted — see §6 item 50.
 
 | Role | Scenario A | Scenario B | Scenario C | Scenario D | Scenario E | Scenario F |
 | --- | --- | --- | --- | --- | --- | --- |
 | geopolitical_premium | [-2, 3] | [2, 6] | [4, 10] | [-4, 0] | [1, 5] | [1, 4] |
 | inflation_hedge_precious_metals | [-2, 2]★ | [6, 12] | [-2, 6] | [-3, 3]★ | [10, 20] | [-3, 1] |
 | inflation_hedge_commodity_linked | [2, 6] | [6, 12] | [7, 13] | [-8, -2] | [2, 6] | [2, 5] |
-| real_asset_contracted_revenue | [3, 7] | [6, 14] | [8, 16] | [-6, 2]★ | [-10, 0]★ | [3, 7] |
+| real_asset_contracted_revenue | [8, 18]◆ | [6, 14] | [8, 16] | [-6, 2]★ | [-10, 0]★ | [3, 7] |
 | policy_driven_thematic_equity | [4, 8] | [-3, 1] | [-1, 3] | [-5, -1] | [-6, -2] | [4, 8] |
 | rate_sensitive_income_short_duration | [1, 3]★ | [1, 3] | [1, 3] | [1, 4]★ | [-2, 2] | [1, 3] |
 | rate_sensitive_income_long_duration | [3, 7] | [-4, -1] | [-5, -2] | [5, 10] | [-10, -3] | [-4, -1] |
 | broad_market_equity_domestic | [10, 20]★ | [-2, +5]★ | [-4, -1]⚠ | [-12, -4]✓ | [-8, -3]✓ | [7, 14]✓ |
-| broad_market_equity_international | [4, 9]⚑ | [-5, -1]⚑ | [-6, -2]⚑ | [-8, -3]⚠ | [-10, -4]⚠ | [8, 14]★ |
-| secular_technology_growth | [6, 16] | [-2, +4]★ | [+2, +8] | [-6, 0]⚑ | [-12, -3]⚑ | [4, 11] |
+| broad_market_equity_international | [2, 10]◆ | [-12, -6]◆ | [-19, -10]◆ | [-8, -3]⚠ | [-10, -4]⚠ | [8, 14]★ |
+| secular_technology_growth | [6, 16] | [-2, +4]★ | [+2, +8] | [-6, 0]◆ | [-12, -3]◆ | [8, 20]◆ |
 | inflation_linked_sovereign | [-2, 1]★ | [1, 4]✓ | [1, 4]✓ | [0, 3]★ | [-1, 2]✓ | [-1, 1]★ |
 | real_estate_equity_income | [5, 9]⚑ | [-6, -1]⚠ | [-10, -4]⚠ | [-3, 2]⚠ | [-10, -3]⚠ | [5, 9]⚑ |
 | systematic_trend_following | [-12, -3]★ | [+15, +30]★ | [+18, +35]★ | [-5, +15]★ | [-8, +8]★ | [-5, +3]★ |
@@ -2287,7 +2345,7 @@ Weighted multiplier (A=7/B=36/C=41/D=5/E=4/F=7) = 0.07×3.1+0.36×1.3+0.41×1.3+
 | Date | Type | Scope |
 | --- | --- | --- |
 | 2026-06-30 | Q2 first full audit | All calibration-dated thresholds; section 4 return table and multipliers; M14/M10/M15 thresholds; restore multipliers if commodity-linked added post-war; AIPO ThematicETF_ClassificationAudit — COMPLETE v1.14 (§11 revised; EV +2.16% at v1.19 probs; confirm at Q2 for weight drift); AIPO/PAVE ETN overlap check; MOVE index integration assessment — MOVE at 78.43 as of May 25 (elevated; formal threshold pending); MAGS vs AGIX reassessment if Anthropic IPO announced; secular_technology_growth empirical validation; formal adoption of §6 item 23 pending proposals; populate all PENDING §4.1 values (M16.CalibrationMethodology() 4-layer required for all MEDIUM/LOW confidence cells); resolve real_estate_equity_income leverage-adjusted calibration; COPX M07 regional ruling formal confirmation; URA full M07+M15 evaluation; SIVR+COPX entry guard 90d trailing price computation — CLEARED v1.14; DBMF D/E/F formal adoption; Brent C-trigger clock threshold review; PAVE IIJA reauthorization assessment (Sep 30 deadline approaching); M17 §12 first formal audit and threshold calibration; M18 allocation spreadsheet series gap resolution (add DGS10, DGS2, T10YIE, T5YIE, DXY, NASDAQ, DOW, Russell 2000 to spreadsheet tabs or Session Summary tab) |
-| 2026-09-30 | Q3 | Full audit all calibration-dated thresholds |
+| 2026-09-30 | Q3 | Full audit all calibration-dated thresholds. PARTIALLY RUN 2026-09-24 (v1.71): §4.1 MEDIUM adoptions done (7 cells); threshold audits, remaining §4.1 cells and roles still open -- §6 item 49 |
 | 2026-12-31 | Q4 | Full audit |
 | 2027-03-31 | Q1 2027 | Full audit |
 
@@ -2331,11 +2389,11 @@ to do later.
 11. First audit section 9 M14 thresholds (divergence, underweight, entry extension).
 12. First audit section 10 M08 ETF classification thresholds.
 13. XAR: re-verify at Q2 (standard staleness check; composition drift). XAR now at 12% target across all applicable accounts — confirm structural target remains appropriate.
-13a. [NEW 2026-07-08, v1.64] geopolitical_premium A: MEDIUM-confidence proposal [-2,+3]→[-4,+1] (§6 item 23[8]) was explicitly slated for June 30 adjudication and never resolved — carry to September 30 audit as OVERDUE, not routine. See §3 log entry 2026-07-08 (v1.64).
+13a. [ADJUDICATED 2026-09-24, v1.71 -- NOT ADOPTED, no Layer 1 anchor; decision needed, see item 51] [NEW 2026-07-08, v1.64] geopolitical_premium A: MEDIUM-confidence proposal [-2,+3]→[-4,+1] (§6 item 23[8]) was explicitly slated for June 30 adjudication and never resolved — carry to September 30 audit as OVERDUE, not routine. See §3 log entry 2026-07-08 (v1.64).
 13b. [NEW 2026-07-08, v1.64] geopolitical_premium E: directional concern flagged, not resolved — current §4.1 [+1,+5] (positive) sits uncomfortably against the one available (non-independent) data point, PPA -17.3% in Oct 2008's acute panic month. Row's weakest-evidenced cell (0 independent analogues). Needs a dedicated pass, not a same-session guess. See §3 log entry 2026-07-08 (v1.64).
 14. [CLOSED 2026-07-03, v1.58] First audit §11 classification weights — all instruments including AIPO, MAGS, and all v1.13 additions. AIPO's >5pp drift was already caught and corrected by v1.30 (June 2) before this session started; all other held instruments checked and either single-role/mandate-fixed (no drift risk) or recently reviewed. See §3 log entry 2026-07-03 (v1.58).
 15. [CLOSED 2026-07-03, v1.58] AIPO ThematicETF_ClassificationAudit() — superseded by the full 77-holding re-audit already completed at v1.30 (June 2, 2026), which is more current and more rigorous than this item's v1.14 baseline. Weight drift and materiality both addressed there.
-16. [CHECKED 2026-07-03, v1.60 — NOT YET TRIGGERED] MAGS vs AGIX: Anthropic confidentially filed a draft S-1 with the SEC June 1, 2026, press reports pointing to an October 2026 Nasdaq target — but no ticker, price, or public S-1 yet, and the filing itself says timing depends on market conditions. Short of "announced or completed" (a confidential filing isn't public terms), but materially closer than when this item was written. Re-check before Q3 given the reported timeline; no re-evaluation possible yet since there are no public terms to evaluate.
+16. [RE-CHECKED 2026-09-24, v1.71 — STILL NOT TRIGGERED, and largely moot: MAGS was fully EXITED 2026-08-08, so there is no live position to compare. Bloomberg reported 2026-09-13 that Nasdaq was chosen as the venue with an October listing possible; still no confirmed date, ticker, price range or public prospectus in any source found. Re-check when terms are public, only if a position in the space is being considered.] [CHECKED 2026-07-03, v1.60 — NOT YET TRIGGERED] MAGS vs AGIX: Anthropic confidentially filed a draft S-1 with the SEC June 1, 2026, press reports pointing to an October 2026 Nasdaq target — but no ticker, price, or public S-1 yet, and the filing itself says timing depends on market conditions. Short of "announced or completed" (a confidential filing isn't public terms), but materially closer than when this item was written. Re-check before Q3 given the reported timeline; no re-evaluation possible yet since there are no public terms to evaluate.
 17. [CONFIRMED 2026-07-03, v1.61] Review §11 role registry for new structural drivers. Confirmed complete/non-redundant against everything found this session — every issue was calibration/classification within existing roles, never a missing or redundant role. AI application layer gap sub-note stands, partially eased by AIPO's v1.30 reclassification but not closed.
 18. MOVE index: assess formal integration into M11/M14 as supplementary credit/volatility signal. MOVE at 78.43 as of May 25 (elevated but below 80 threshold watch). Approved source URLs confirmed May 11 (§1). Allocation spreadsheet MOVE tab confirmed. If MOVE sustained above 100 before Q2, accelerate formal integration. Q2 audit: establish formal MOVE threshold and integrate into M14/M11 signal framework.
 19. Add Fed response function sub-variable to Scenario C scoring (design proposal Apr 29).
@@ -2556,7 +2614,10 @@ to do later.
     — not eligible for formal §4.1 adoption before March 31, 2027 at the
     earliest. No §4.1 change, no XAR execution this session — HOLD/frozen
     status stands per the hand-off.
-47. [P1] broad_market_equity_international — STATUS UPDATED 2026-08-01
+47. [P1] broad_market_equity_international — UPDATE 2026-09-24 (v1.71): A/B/C
+    ADOPTED ◆ MEDIUM at the Q3 audit; D/E still open (next steps in item 49(a)).
+    The per-cell text below is the 2026-08-01 status, kept for the record.
+    STATUS UPDATED 2026-08-01
     (re-evaluation session; §3 log entries same date, v1.68/v1.69, have
     full detail, not repeated here). Real T1 Layer 1 anchor established
     for the first time (AQR 2026 CMA: ~4.5% real, range 4.0-5.0%, cross-
@@ -2636,6 +2697,78 @@ to do later.
     (VTIP has no §13 M19 sustaining-condition entry at all) is explicitly
     OUT OF SCOPE for GAP-18 -- still fully open, no item number assigned
     yet, needs its own design pass before one is opened.
+49. [P1] Q3 AUDIT 2026-09-24 (v1.71) -- OUTCOME AND CARRY-FORWARD. Run six days
+    early on client instruction, counted as the Q3 audit. Full detail: §3 log
+    2026-09-24. ADOPTED (◆ MEDIUM, 7 cells): RAC A [8,18]; STG D [-6,0], E [-12,-3],
+    F [8,20]; BMEI A [2,10], B [-12,-6], C [-19,-10]. Closes item 23 [2], [3], [13],
+    [15] and item 47's A/B/C. Not adopted: see items 50-51. STILL OPEN after this
+    audit, with concrete next steps:
+      (a) BMEI D and E (item 47): D needs a 3rd analog or a consistent
+          sub-mechanism criterion (2008 balance-sheet vs 2020 policy-buffered);
+          E needs EFA/MSCI EAFE for the 1998 Aug-Oct acute window, not the full
+          year. Until then BMEI's L4 gap (8.15pp) stays documented, not closed.
+      (b) Need new evidence before any decision: GP E (item 13b); BMED C
+          (item 42, a methodology call, not more analog search); IHC A;
+          rate_sensitive_income_long_duration (whole row never reviewed, E looks
+          suspect); real_estate B/C/D/E; EM D/E (acute-trough data); XLV E;
+          consumer_defensive E; FLOT C nominal-vs-real flag.
+      (c) Not adoptable now: BALT (item 45, LOW, no client decision on pursuing);
+          GP C/XAR sign revision (item 46, gated to March 31, 2027).
+      (d) Threshold audits never run: §2 energy/macro (item 7), §9 M14 (11),
+          §10 (12), MOVE integration (18), Fed-response sub-variable (19),
+          Credit items 3-6 remain blocked on ENG-43. NOT done in this pass.
+          (Item 16, MAGS-vs-AGIX, WAS re-checked: not triggered, moot since MAGS exited.)
+      (e) Coding/backtest sessions, not audit work: item 43 (GAP-16 25%/3pp),
+          item 44 code branch, item 48 / ENG-72.
+      (f) The operating distribution is stale (last §8 2026-08-15). A full M05
+          session is needed before any adopted cell's EV effect is treated as
+          decision-grade.
+50. [P1] UNADOPTED VALUES ARE LIVE (found 2026-09-24). calibration.py
+    _parse_cell ignores the ⚑/⚠ marker for value selection, so ⚑/⚠ cells feed EV
+    exactly like adopted ones. Git shows v1.55/v1.56 rewrote XLV B/C and FLOT
+    D/E in place while their §3 entries say "LOGGED PENDING, NOT ADOPTED"; EM F
+    and RE A/F look like the same pattern (v1.57, v1.54; not git-verified). Live
+    money effect: XLV B/C [-9,-2] flow into held SCHD (0.16) and VYMI (0.08);
+    the rest touch candidates only (VNQ, FLOT, XLV, VWO). NEXT STEP: (1) source
+    a real L1 anchor for each (JPM LTCMA / Vanguard VCMM / AQR CMA health-care,
+    floating-rate credit, EM, and REIT lines) and adopt or revert each cell on
+    that basis; (2) decide the convention going forward -- either ⚑ cells hold
+    the OLD value with the proposal only in the log (matches M16 GUARD), or ⚑
+    explicitly means "operative provisional" and the M16 GUARD wording is
+    amended. Do not leave both conventions in the table.
+51. [P1] geopolitical_premium A [-4,+1] and the narrow-sector Layer 1 gap. v1.64
+    found no T1 institutional source publishes defense-sector return assumptions,
+    so every GP cell is capped at LOW, and M16 §4 requires an L1 anchor for ANY
+    revision. GP A (item 13a, overdue since June 30) therefore could not be
+    adopted at this audit; it stays [-2,3]. DECISION NEEDED from client (M16
+    amendment, not an audit call): allow an anchor-substitution path for
+    narrow-sector roles (e.g. sector-index long-run real return plus a stated
+    haircut), or keep GP LOW permanently. Live cost of waiting: XAR (90% GP)
+    A-scenario conservative end is ~2pp too high, about -0.19pp XAR EV at
+    A ~10%. Also covers GP E (item 13b).
+52. [P1] SCHD and VYMI are held / targeted but registered under §11.4
+    "Candidate (Not Currently Allocated)" in Instrument_Classification.md. Live
+    effect, verified 2026-09-24: market_data_mcp/instruments.json (written from
+    §11.3) lists VTI, XAR, MLPX, SGOL, SGOV, AIPO, VTIP, XLP -- no SCHD, no
+    VYMI -- so both bypass ValidateClassifications() HARD_STOP scope, the M18
+    holdings fetch, RoleRepricingDivergence, and the ENG-71 trend-signal ticker
+    set. SCHD has been a live Primary IRA holding since before June; Acc4
+    targets are SCHD 35% / VYMI 15%. NEXT STEP: move both entries to §11.3
+    and confirm advisor_run_computation / advisor_evaluate_trend_signal handle
+    tickers with no ENG-55 comparator (XLP, VTIP, SGOV already lack one and
+    work, so likely fine) -- do it in a coding session, per the README protocol.
+    Also stale: the "Consolidated Target Allocations (v1.22)" table still
+    lists DBMF, SIVR, COPX, MAGS (all EXITED Aug 2026) and PAVE (has no §11
+    entry at all).
+53. [P2] Housekeeping found 2026-09-24: (a) §3 holds ~22 entries against the
+    stated "last 10", and 4 more (v1.67, v1.69, v1.68, v1.67-proposal) sit in the
+    file header block above Section 1 instead of §3 -- CompactCalibrationLog is
+    overdue and needs those relocated first; run it as its own step (it moves
+    ~1,000 lines to Calibration_Log.md); (b) the 39 legacy
+    untagged items (1-39) were never relabeled P0/P1/P2, deferred from June 30;
+    (c) item 23's body is stale for every item now adopted; (d) §11.3 XAR note
+    still cites a "[-6,0]" GP A proposal that was rejected in v1.27 (the live
+    proposal is [-4,+1], item 51).
 
 ---
 
