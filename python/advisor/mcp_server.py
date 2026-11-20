@@ -144,6 +144,7 @@ def _git_head_short() -> Optional[str]:
     try:
         result = subprocess.run(
             ["git", "-C", str(framework_path()), "rev-parse", "HEAD"],
+            stdin=subprocess.DEVNULL,  # ENG-76: never inherit the MCP stdin pipe
             capture_output=True, text=True, check=True, timeout=5.0,
         )
         return result.stdout.strip()

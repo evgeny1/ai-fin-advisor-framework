@@ -94,9 +94,10 @@ def _commit(message: str) -> None:
     successful run's commit picks up the diff."""
     repo = framework_path()
     git_env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
-    subprocess.run(["git", "-C", str(repo), "add", STORE_FILENAME],
+    # ENG-76: stdin=DEVNULL -- never inherit the MCP stdin pipe (Windows deadlock).
+    subprocess.run(["git", "-C", str(repo), "add", STORE_FILENAME], stdin=subprocess.DEVNULL,
                    check=True, capture_output=True, text=True, env=git_env, timeout=30.0)
-    subprocess.run(["git", "-C", str(repo), "commit", "-m", message],
+    subprocess.run(["git", "-C", str(repo), "commit", "-m", message], stdin=subprocess.DEVNULL,
                    check=True, capture_output=True, text=True, env=git_env, timeout=30.0)
 
 

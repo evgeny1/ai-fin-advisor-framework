@@ -396,6 +396,7 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 
 | ID | Status | Severity | Category | Title |
 |---|---|---|---|---|
+| ENG-76 | CLOSED 2026-11-20 | HIGH | reliability | Root cause of the recurring ENG-33/ENG-49-family MCP hangs (request reaches the server, no response until the client sends another message). Windows: the MCP stdio transport keeps a synchronous ReadFile pending on the stdin pipe; the first numpy DLL load (lazy, via yfinance_fetcher -> pandas) and any git subprocess that inherits stdin block behind it. Fixed by isolating the transport's stdin at server startup (advisor/stdio_isolation.py) + stdin=DEVNULL on every subprocess call; verified live over real MCP stdio (HEAD: hung >60s; fixed: 14.3s) |
 | ENG-75 | OPEN | MEDIUM | data-integrity | SCHD and VYMI are held/targeted (SCHD live in Primary IRA; Acc4 targets 35%/15%) but registered under Instrument_Classification.md §11.4 "Candidate (Not Currently Allocated)", so market_data_mcp/instruments.json (built from §11.3) omits both -- they bypass ValidateClassifications() scope, the M18 holdings fetch, RoleRepricingDivergence, and the ENG-71 trend-signal ticker set. Fix = move both entries to §11.3 in a coding session and confirm tickers without an ENG-55 comparator are handled. Found in the 2026-09-24 Q3 audit; Calibration_State.md §6 item 52 |
 | ENG-74 | OPEN | LOW | testing | 7 pre-existing test failures found 2026-09-24, none caused by the v1.71 calibration edits: (a) 5 tests in test_mcp/test_write_back_format.py and test_pattern_b_pipeline.py use a SEED_LOG entry dated 2026-06-01, which ENG-53's 90-day calendar-age compaction now archives on write-back (115 days old today; started failing ~2026-08-30) -- same class as ENG-46/ENG-73, fix = date-relative seed; (b) 2 trend-signal tests (test_evaluate_trend_signal_cli.py::test_json_file_input_runs_end_to_end, test_pattern_b_pipeline.py::test_trend_signal_completes_after_scoring) hardcode DBMF in the expected held-ticker set, but DBMF was reclassified §11.3 -> §11.4 EXITED on 2026-08-15 (ENG-71 now derives held tickers from live §11.3, so the tests, not the tool, are stale). Suite otherwise 999 passed / 46 skipped |
 | ENG-73 | CLOSED 2026-08-14 | LOW | testing | test_new_entry_written_and_committed hardcoded session_date="2026-07-10", asserting forward_outcome stays None right after write -- that date is now past the ~29-day retroactive-fill threshold, so the fill pass legitimately populated it, breaking the test's "freshly written" assumption; same class of bug as ENG-46, fixed the same way (dynamic today-date, not a literal) |
@@ -475,6 +476,27 @@ Closed items: full descriptions and resolutions live in `FRAMEWORK_BACKLOG_ARCHI
 ---
 
 ## Part 1 — Engineering Items
+
+### ENG-76 -- MCP tool calls deadlock behind the stdio transport's pending stdin read (Windows)
+<!-- ITEM
+Status:    CLOSED 2026-11-20
+Severity:  HIGH
+Category:  reliability
+Opened:    2026-11-20
+Area:      python/advisor/stdio_isolation.py (new); __main__.py mcp-server branch; subprocess calls in mcp_server.py, data/file_protocol.py, data/credit_history_store.py, data/trend_signal_store.py
+Related:   ENG-33, ENG-48, ENG-49 (same symptom family; ENG-33's "client-side transport hang" diagnosis was the visible half of this), ENG-43, ENG-50
+-->
+
+**Symptom (2026-11-20):** `advisor_run_computation` returned nothing for 4 min. Bridge log (`%LOCALAPPDATA%\Claude\Logs\mcp-server-financial-advisor.log` -- note: the MSIX build logs there, not `%APPDATA%\Claude\logs`, which stopped updating 2026-09-27) showed the call arriving at 21:15:53Z and the server's response going out 8 ms after the client's own `notifications/cancelled` at 21:19:53Z. The 180s `_with_timeout()` guard never produced a TIMEOUT. CreditHistoryStore.json was then written 5s after the cancel, and its `git commit` hung as an orphaned process (no index.lock).
+
+**Root cause (reproduced outside MCP):** the MCP SDK keeps a thread permanently blocked in a synchronous `ReadFile` on the stdin pipe. On Windows, other operations touching that handle block until the read completes: (1) the first import of numpy's `_multiarray_umath` (its DLL's C-runtime init inspects the standard handles), which happens lazily on the first `advisor_run_computation` of a server process; (2) `subprocess.run` without `stdin=`, which duplicates the inherited stdin handle before `timeout=` starts counting, and Git for Windows' msys runtime then blocks the same way in the child. A harness with a stdin-reader thread reproduced both: nothing progressed for 118s until a line was written to stdin, then everything completed. This also explains the historical pattern: tools that spawn git (write_back, evaluate_trend_signal, run_computation's once-a-day credit-history commit) or that are first to load numpy hang; check_instrument_candidate/apply_scoring never did.
+
+**Fix:** `isolate_stdin_for_mcp()` runs before the transport starts: the transport gets a private non-inheritable `os.dup()` of the pipe; fd 0 and the Win32 `STD_INPUT_HANDLE` are pointed at NUL, so DLL init, libraries and child processes never touch the client pipe. Never raises (falls back to the original stdin and logs to stderr). Plus explicit `stdin=subprocess.DEVNULL` on all 5 git call sites, for when the code runs outside the server entry point.
+
+**Verification:** `tests/test_mcp/test_stdin_isolation.py` (AST check that every `subprocess.*` call in advisor/ sets `stdin=`; Windows end-to-end check that numpy import + a default-stdin git call complete behind a blocked reader and the transport still receives client data). Control run with isolation removed: blocked until the client wrote. `test_file_protocol_write_back.py` fakes now assert `stdin is DEVNULL`. Full suite: 980 passed / 46 skipped / 7 failed -- the same 7 pre-existing failures as unmodified HEAD (ENG-74). Live over real MCP stdio via the SDK client launching run_mcp_server.py: unmodified HEAD hung >60s; fixed code returned OK in 14.3s (59/66 specs valid).
+
+**Follow-ups:** the ENG-33 CLI fallbacks in Project_Instructions_MCP.md stay valid but should no longer be needed; worth noting there once a few sessions run clean. Claude Desktop must be fully restarted to load the fix.
+
 
 ### ENG-72 -- VTIP/inflation_linked_sovereign: no §13 M19 coverage, no GAP-16-style real-yield decomposition
 <!-- ITEM

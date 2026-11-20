@@ -18,6 +18,7 @@ still complete on its own.
 """
 from __future__ import annotations
 
+import subprocess
 import threading
 import time
 from types import SimpleNamespace
@@ -34,7 +35,10 @@ def _fake_git_run_factory(push_delay: float, push_started: threading.Event,
     before "completing", signalling both events around the sleep so a test
     can distinguish "started" from "actually finished"."""
 
-    def fake_run(cmd, capture_output=True, text=True, check=True, env=None, timeout=None):
+    def fake_run(cmd, capture_output=True, text=True, check=True, env=None, timeout=None,
+                 stdin=None):
+        # ENG-76: git must never inherit the MCP server's stdin pipe.
+        assert stdin is subprocess.DEVNULL, f"git {cmd[3:]} called without stdin=DEVNULL"
         args = cmd[3:]  # strip ["git", "-C", repo]
         if args and args[0] == "push":
             push_started.set()
@@ -108,7 +112,9 @@ class TestGitCommitBackgroundsPush:
         daemon thread that silently loses the warning log."""
         import subprocess as _subprocess
 
-        def fake_run(cmd, capture_output=True, text=True, check=True, env=None, timeout=None):
+        def fake_run(cmd, capture_output=True, text=True, check=True, env=None, timeout=None,
+                     stdin=None):
+            assert stdin is subprocess.DEVNULL  # ENG-76
             args = cmd[3:]
             if args and args[0] == "push":
                 raise _subprocess.CalledProcessError(1, cmd, stderr="simulated push failure")

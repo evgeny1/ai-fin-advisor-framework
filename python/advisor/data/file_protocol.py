@@ -432,6 +432,7 @@ def _git_commit(repo: Path, files: list[str], message: str) -> str:
     def git(*args: str, timeout: float = 60.0) -> str:
         result = subprocess.run(
             ["git", "-C", str(repo)] + list(args),
+            stdin=subprocess.DEVNULL,  # ENG-76: never inherit the MCP stdin pipe
             capture_output=True, text=True, check=True,
             env=git_env, timeout=timeout,
         )

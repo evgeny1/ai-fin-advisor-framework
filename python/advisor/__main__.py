@@ -474,6 +474,9 @@ def main() -> None:
     cmd = " ".join(args[:2]) if len(args) >= 2 else args[0]
 
     if args[0] == "mcp-server":
+        # ENG-76: must run before anything reads stdin (see stdio_isolation.py).
+        from .stdio_isolation import isolate_stdin_for_mcp
+        isolate_stdin_for_mcp()
         from .mcp_server import mcp
         mcp.run()   # blocks; stdio transport for Claude Desktop
         return
