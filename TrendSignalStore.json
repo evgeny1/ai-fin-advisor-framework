@@ -251,7 +251,14 @@
       "comparator_detail": "0.671xPAVE+0.195xQQQM+0.134xURA (renormalized, PDT+UNCLASSIFIED excluded)",
       "comparator_mode": "return_spread",
       "dominant_directive_conflict_aware": "HOLD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 57,
+        "matched_signal": null,
+        "price_at_check": 22.08,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "-12.01pp",
       "own_short_dir": "-0.60pp",
@@ -263,7 +270,14 @@
       "comparator_detail": "0.671xPAVE+0.195xQQQM+0.134xURA (renormalized, PDT+UNCLASSIFIED excluded)",
       "comparator_mode": "return_spread",
       "dominant_directive_conflict_aware": "HOLD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 53,
+        "matched_signal": null,
+        "price_at_check": 22.08,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "-8.93pp",
       "own_short_dir": "-0.24pp",
@@ -275,13 +289,32 @@
       "comparator_detail": "0.671xPAVE+0.195xQQQM+0.134xURA (renormalized, PDT+UNCLASSIFIED excluded)",
       "comparator_mode": "return_spread",
       "dominant_directive_conflict_aware": "HOLD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 39,
+        "matched_signal": null,
+        "price_at_check": 22.08,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "-5.79pp",
       "own_short_dir": "-1.33pp",
       "price_at_signal": 28.84,
       "quality_flags": [],
       "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-11-20": {
+      "comparator_detail": "0.671xPAVE+0.195xQQQM+0.134xURA (renormalized, PDT+UNCLASSIFIED excluded)",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "-12.37pp",
+      "own_short_dir": "-6.20pp",
+      "price_at_signal": 22.08,
+      "quality_flags": [],
+      "rs_signal": "WEAKENING"
     }
   },
   "COPX": {
@@ -1202,7 +1235,14 @@
       "comparator_detail": "BZ=F return-spread, HY_OAS confirmation gate",
       "comparator_mode": "hybrid",
       "dominant_directive_conflict_aware": "HOLD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 57,
+        "matched_signal": true,
+        "price_at_check": 69.89,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "-41.16pp",
       "own_short_dir": "-14.38pp",
@@ -1216,7 +1256,14 @@
       "comparator_detail": "BZ=F return-spread, HY_OAS confirmation gate",
       "comparator_mode": "hybrid",
       "dominant_directive_conflict_aware": "HOLD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 53,
+        "matched_signal": null,
+        "price_at_check": 69.89,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "-49.50pp",
       "own_short_dir": "-25.11pp",
@@ -1231,11 +1278,32 @@
       "comparator_detail": "BZ=F return-spread, HY_OAS confirmation gate",
       "comparator_mode": "hybrid",
       "dominant_directive_conflict_aware": "HOLD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 39,
+        "matched_signal": null,
+        "price_at_check": 69.89,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "-29.54pp",
       "own_short_dir": "-1.43pp",
       "price_at_signal": 72.15,
+      "quality_flags": [
+        "MLPX: insufficient HY_OAS session history for confirmation gate"
+      ],
+      "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-11-20": {
+      "comparator_detail": "BZ=F return-spread, HY_OAS confirmation gate",
+      "comparator_mode": "hybrid",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "-2.42pp",
+      "own_short_dir": "+11.42pp",
+      "price_at_signal": 69.89,
       "quality_flags": [
         "MLPX: insufficient HY_OAS session history for confirmation gate"
       ],
@@ -1527,7 +1595,14 @@
       "comparator_detail": "own-trend confirmed by REAL_YIELD_10Y_TREND + DXY agreement gate",
       "comparator_mode": "own_trend_confirmed",
       "dominant_directive_conflict_aware": "ADD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 57,
+        "matched_signal": null,
+        "price_at_check": 34.81,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "up",
       "own_short_dir": "down",
@@ -1542,7 +1617,14 @@
       "comparator_detail": "own-trend confirmed by REAL_YIELD_10Y_TREND + DXY agreement gate",
       "comparator_mode": "own_trend_confirmed",
       "dominant_directive_conflict_aware": "ADD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 53,
+        "matched_signal": null,
+        "price_at_check": 34.81,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "up",
       "own_short_dir": "down",
@@ -1557,12 +1639,34 @@
       "comparator_detail": "own-trend confirmed by REAL_YIELD_10Y_TREND + DXY agreement gate",
       "comparator_mode": "own_trend_confirmed",
       "dominant_directive_conflict_aware": "ADD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 39,
+        "matched_signal": null,
+        "price_at_check": 34.81,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "up",
       "own_short_dir": "down",
       "price_at_signal": 39.92,
       "quality_flags": [],
+      "rs_signal": "INCONCLUSIVE"
+    },
+    "2026-11-20": {
+      "comparator_detail": "own-trend confirmed by REAL_YIELD_10Y_TREND + DXY agreement gate",
+      "comparator_mode": "own_trend_confirmed",
+      "dominant_directive_conflict_aware": "ADD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "down",
+      "own_short_dir": "down",
+      "price_at_signal": 34.81,
+      "quality_flags": [
+        "SGOL: real-yield/DXY agreement gate computed no clear agreement this session",
+        "SGOL: macro confirmation gate computed no clear agreement this session"
+      ],
       "rs_signal": "INCONCLUSIVE"
     }
   },
@@ -2038,7 +2142,14 @@
       "comparator_detail": "0.5xITA+0.5xPPA",
       "comparator_mode": "return_spread",
       "dominant_directive_conflict_aware": "HOLD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 57,
+        "matched_signal": true,
+        "price_at_check": 215.19,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "-4.79pp",
       "own_short_dir": "-3.22pp",
@@ -2050,7 +2161,14 @@
       "comparator_detail": "0.5xITA+0.5xPPA",
       "comparator_mode": "return_spread",
       "dominant_directive_conflict_aware": "HOLD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 53,
+        "matched_signal": null,
+        "price_at_check": 215.19,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "-4.15pp",
       "own_short_dir": "-1.60pp",
@@ -2062,14 +2180,33 @@
       "comparator_detail": "0.5xITA+0.5xPPA",
       "comparator_mode": "return_spread",
       "dominant_directive_conflict_aware": "HOLD",
-      "forward_outcome": null,
+      "forward_outcome": {
+        "actual_check_date": "2026-11-20",
+        "actual_gap_calendar_days": 39,
+        "matched_signal": true,
+        "price_at_check": 215.19,
+        "price_direction_since_signal": "down",
+        "target_gap_trading_days": 21
+      },
       "margin_debt_fragility_flag": null,
       "own_medium_dir": "-2.67pp",
       "own_short_dir": "-2.22pp",
       "price_at_signal": 228.36,
       "quality_flags": [],
       "rs_signal": "WEAKENING"
+    },
+    "2026-11-20": {
+      "comparator_detail": "0.5xITA+0.5xPPA",
+      "comparator_mode": "return_spread",
+      "dominant_directive_conflict_aware": "HOLD",
+      "forward_outcome": null,
+      "margin_debt_fragility_flag": null,
+      "own_medium_dir": "-8.10pp",
+      "own_short_dir": "-1.15pp",
+      "price_at_signal": 215.19,
+      "quality_flags": [],
+      "rs_signal": "INCONCLUSIVE"
     }
   },
-  "last_updated": "2026-10-12"
+  "last_updated": "2026-11-20"
 }
